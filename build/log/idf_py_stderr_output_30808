@@ -1,0 +1,94 @@
+Command: cmake -G Ninja -B D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=True D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1
+info: Default value for ESP_SLEEP_PSRAM_LEAKAGE_WORKAROUND in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+info: Default value for SPIRAM_BOOT_HW_INIT in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+info: Default value for SPIRAM_BOOT_INIT in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+info: Default value for SPIRAM_PRE_CONFIGURE_MEMORY_PROTECTION in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+info: Default value for SPIRAM_MALLOC_ALWAYSINTERNAL in sdkconfig is 16384 but it is  according to Kconfig.
+Using default value from sdkconfig (16384).
+info: Default value for SPIRAM_MALLOC_RESERVE_INTERNAL in sdkconfig is 32768 but it is  according to Kconfig.
+Using default value from sdkconfig (32768).
+info: Default value for FATFS_ALLOC_PREFER_EXTRAM in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+info: Default value for FREERTOS_TASK_CREATE_ALLOW_EXT_MEM in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+Configuration Report                                                           
++-----------------------------------------------------------------------------+
+|  Parser Version: 1                                                          |
+|  Verbosity: default                                                         |
+|  Defaults policy: sdkconfig                                                 |
+|  Status: Finished with notifications                                        |
+|                                                                             |
+| Default Value Mismatch                                                      |
+| +-------------------------------------------------------------------------+ |
+| | Using sdkconfig default values                                       |  | |
+| | Choice symbols with different default selection between sdkconfig    |  | |
+| | and Kconfig                                                          |  | |
+| | SPIRAM_USE: Kconfig default selection: choice deselected, sdkconfig  |  | |
+| | default selection: SPIRAM_USE_MALLOC                                 |  | |
+| | SPIRAM_TYPE: Kconfig default selection: choice deselected, sdkconfig |  | |
+| | default selection: SPIRAM_TYPE_AUTO                                  |  | |
+| +-------------------------------------------------------------------------+ |
++-----------------------------------------------------------------------------+
+CMake Warning at C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/Users/artur/esp/v6.0/esp-idf/components/esp_wifi/wifi_apps/roaming_app/include'
+  belongs to component esp_wifi but is being used by component
+  wpa_supplicant.  It is recommended to define the component dependency for
+  wpa_supplicant on the component esp_wifi, i.e.  'idf_component_register(...
+  PRIV_REQUIRES esp_wifi)' in the CMakeLists.txt of wpa_supplicant, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component esp_wifi.
+Call Stack (most recent call first):
+  C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/Users/artur/esp/v6.0/esp-idf/CMakeLists.txt:338 (__component_validation_run_checks)
+
+
+CMake Warning at C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/Users/artur/esp/v6.0/esp-idf/components/esp_wifi/wifi_apps/roaming_app/src'
+  belongs to component esp_wifi but is being used by component
+  wpa_supplicant.  It is recommended to define the component dependency for
+  wpa_supplicant on the component esp_wifi, i.e.  'idf_component_register(...
+  PRIV_REQUIRES esp_wifi)' in the CMakeLists.txt of wpa_supplicant, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component esp_wifi.
+Call Stack (most recent call first):
+  C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/Users/artur/esp/v6.0/esp-idf/CMakeLists.txt:338 (__component_validation_run_checks)
+
+
+CMake Warning at C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/Users/artur/esp/v6.0/esp-idf/components/wpa_supplicant/src' belongs to
+  component wpa_supplicant but is being used by component esp_wifi.  It is
+  recommended to define the component dependency for esp_wifi on the
+  component wpa_supplicant, i.e.  'idf_component_register(...  PRIV_REQUIRES
+  wpa_supplicant)' in the CMakeLists.txt of esp_wifi, and specify the
+  included directory as idf_component_register(...  PRIV_INCLUDE_DIRS <dir
+  relative to component>) in the CMakeLists.txt of component wpa_supplicant.
+Call Stack (most recent call first):
+  C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/Users/artur/esp/v6.0/esp-idf/CMakeLists.txt:338 (__component_validation_run_checks)
+
+
+CMake Warning at C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/Users/artur/esp/v6.0/esp-idf/components/wpa_supplicant/esp_supplicant/src'
+  belongs to component wpa_supplicant but is being used by component
+  esp_wifi.  It is recommended to define the component dependency for
+  esp_wifi on the component wpa_supplicant, i.e.  'idf_component_register(...
+  PRIV_REQUIRES wpa_supplicant)' in the CMakeLists.txt of esp_wifi, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component wpa_supplicant.
+Call Stack (most recent call first):
+  C:/Users/artur/esp/v6.0/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/Users/artur/esp/v6.0/esp-idf/CMakeLists.txt:338 (__component_validation_run_checks)
+
+

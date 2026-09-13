@@ -1,0 +1,405 @@
+Command: C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe C:\Users\artur\esp\v6.0\esp-idf\tools/idf_monitor.py -p COM8 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\mota_can_reader.elf D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\bootloader\bootloader.elf --force-color -m 'C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe' 'C:\Users\artur\esp\v6.0\esp-idf\tools\idf.py' '--build-dir' 'build_fresh' '-p' 'COM8'
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x28 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x1588
+load:0x403c8700,len:0xda0
+load:0x403cb700,len:0x2fa0
+entry 0x403c8908
+[0;32mI (24) boot: ESP-IDF v6.0-beta1-624-g6534932340 2nd stage bootloader[0m
+[0;32mI (25) boot: compile time Sep 13 2026 13:35:14[0m
+[0;32mI (25) boot: Multicore bootloader[0m
+[0;32mI (27) boot: chip revision: v0.2[0m
+[0;32mI (29) boot: efuse block revision: v1.3[0m
+[0;32mI (33) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (37) boot.esp32s3: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32s3: SPI Flash Size : 16MB[0m
+[0;32mI (45) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (52) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (78) boot: End of partition table[0m
+[0;32mI (81) esp_image: segment 0: paddr=00010020 vaddr=3c070020 size=186b4h (100020) map[0m
+[0;32mI (106) esp_image: segment 1: paddr=000286dc vaddr=3fc99900 size=04294h ( 17044) load[0m
+[0;32mI (110) esp_image: segment 2: paddr=0002c978 vaddr=40374000 size=036a0h ( 13984) load[0m
+[0;32mI (113) esp_image: segment 3: paddr=00030020 vaddr=42000020 size=60994h (395668) map[0m
+[0;32mI (189) esp_image: segment 4: paddr=000909bc vaddr=403776a0 size=12244h ( 74308) load[0m
+[0;32mI (205) esp_image: segment 5: paddr=000a2c08 vaddr=50000000 size=00024h (    36) load[0m
+[0;32mI (214) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (215) boot: Disabling RNG early entropy source...[0m
+[0;32mI (225) cpu_start: Multicore app[0m
+[0;32mI (234) cpu_start: GPIO 44 and 43 are used as console UART I/O pins[0m
+[0;32mI (234) cpu_start: Pro cpu start user code[0m
+[0;32mI (235) cpu_start: cpu freq: 240000000 Hz[0m
+[0;32mI (236) app_init: Application information:[0m
+[0;32mI (240) app_init: Project name:     mota_can_reader[0m
+[0;32mI (244) app_init: App version:      1[0m
+[0;32mI (248) app_init: Compile time:     Sep 13 2026 13:34:48[0m
+[0;32mI (253) app_init: ELF file SHA256:  89bece389...[0m
+[0;32mI (257) app_init: ESP-IDF:          v6.0-beta1-624-g6534932340[0m
+[0;32mI (263) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (267) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (271) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (275) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (281) heap_init: At 3FCC5508 len 00024208 (144 KiB): RAM[0m
+[0;32mI (286) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (291) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (296) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM[0m
+[0;32mI (303) spi_flash: detected chip: mxic[0m
+[0;32mI (305) spi_flash: flash io: dio[0m
+[0;32mI (308) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (314) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (321) coexist: coex firmware version: 0cec0ed[0m
+[0;32mI (325) coexist: coexist rom version e7ae62f[0m
+[0;32mI (330) main_task: Started on CPU0[0m
+[0;32mI (360) main_task: Calling app_main()[0m
+[0;32mI (370) mota_can: TWAI active OBD mode started: 500000 bit/s, TX GPIO 17, RX GPIO 18[0m
+[0;32mI (370) BLE_INIT: BT controller compile version [0871069][0m
+[0;32mI (370) BLE_INIT: Using main XTAL as clock source[0m
+[0;32mI (380) BLE_INIT: Feature Config, ADV:1, BLE_50:1, DTM:1, SCAN:1, CCA:0, SMP:1, CONNECT:1[0m
+[0;32mI (390) BLE_INIT: Bluetooth MAC: 80:b5:4e:c6:e1:9a[0m
+[0;32mI (390) phy_init: phy_version 711,97bcf0a2,Aug 25 2025,19:04:10[0m
+[0;32mI (440) NimBLE: GAP procedure initiated: stop advertising.[0m
+
+[0;32mI (440) NimBLE: Failed to restore IRKs from store; status=8[0m
+
+[0;32mI (440) NimBLE: GAP procedure initiated: advertise; [0m
+[0;32mI (440) NimBLE: disc_mode=2[0m
+[0;32mI (440) NimBLE:  adv_channel_map=0 own_addr_type=0 adv_filter_policy=0 adv_itvl_min=0 adv_itvl_max=0[0m
+[0;32mI (450) NimBLE: [0m
+
+[0;32mI (450) mota_can: Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.[0m
+[0;32mI (460) main_task: Returned from app_main()[0m
+[0;32mI (1010) mota_can: ST7789 TFT started: 320x240 MOSI=11 SCK=12 CS=10 DC=38 RST=40[0m
+[0;32mI (1010) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;33mW (1510) mota_can: OBD RX timeout: no response for PID 010C[0m
+[0;32mI (1510) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;33mW (2010) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (2010) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;33mW (2510) mota_can: OBD RX timeout: no response for PID 010B[0m
+[0;32mI (2510) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;33mW (3010) mota_can: OBD RX timeout: no response for PID 0111[0m
+[0;32mI (3010) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;33mW (3510) mota_can: OBD RX timeout: no response for PID 0105[0m
+[0;32mI (3510) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;33mW (4010) mota_can: OBD RX timeout: no response for PID 010F[0m
+[0;32mI (4130) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (4620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 28 [0m
+[0;33mW (4630) mota_can: OBD RX timeout: no response for PID 010C[0m
+[0;32mI (4630) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (4640) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (4640) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (4650) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (4780) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (4780) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (4790) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (4800) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (4810) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (5120) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (5310) mota_can: OBD RX timeout: no response for PID 0105[0m
+[0;32mI (5310) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (5430) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (5440) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (5450) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (5450) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (5630) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (5960) mota_can: OBD RX timeout: no response for PID 0111[0m
+[0;32mI (5960) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (6090) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (6090) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (6100) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (6110) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (6120) mota_can: CAN CAN id=7E8 data=03 41 11 22 00 00 00 00 [0m
+[0;32mI (6120) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (6130) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (6250) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (6260) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (6270) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (6270) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (6280) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (6410) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (6410) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (6420) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (6430) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (6440) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (6560) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (6560) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (6620) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (7060) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (7060) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (7070) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (7080) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (7120) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;32mI (7200) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (7200) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (7210) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (7220) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (7220) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (7230) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (7360) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (7370) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (7370) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (7380) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (7390) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (7510) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (7510) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (7520) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (7530) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (7620) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (8030) mota_can: OBD RX timeout: no response for PID 0111[0m
+[0;32mI (8030) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (8120) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;32mI (8150) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (8150) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (8160) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (8170) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (8180) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (8180) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (8310) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (8320) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (8620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (8820) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (8820) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (8820) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (8830) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (8960) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (8960) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (8970) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (8980) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (8990) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9000) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (9120) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (9130) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (9140) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (9140) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (9150) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9280) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9280) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (9290) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (9300) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (9310) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9430) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9430) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (9440) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (9450) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (9450) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9580) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9590) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (9600) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (9600) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (9610) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9620) mota_can: CAN CAN id=7E8 data=03 41 05 55 00 00 00 00 [0m
+[0;32mI (9620) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (9740) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9740) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (9750) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (9760) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (9770) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (9890) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (9890) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (10120) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (10390) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (10390) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (10400) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (10410) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (10530) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (10540) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (10620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (11040) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (11040) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (11050) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (11050) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (11060) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (11120) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;32mI (11190) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (11190) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (11200) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (11210) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (11220) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (11620) mota_can: CAN CAN id=110 data=03 E5 00 00 7C 00 00 A8 [0m
+[0;33mW (11720) mota_can: OBD RX timeout: no response for PID 0105[0m
+[0;32mI (11830) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (11830) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (11840) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (11850) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (11860) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (11860) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (11990) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12000) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12000) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12010) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12020) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (12150) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12150) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12160) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12170) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12180) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12300) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12310) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12320) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12320) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12330) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12460) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12460) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12470) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12480) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12490) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12500) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (12620) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (12630) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12640) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12640) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12650) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12780) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12780) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12790) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12800) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12810) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (12930) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (12930) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (12940) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (12950) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (12960) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (13080) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (13090) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (13100) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (13100) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (13110) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (13120) mota_can: CAN CAN id=7E8 data=03 41 05 55 00 00 00 00 [0m
+[0;32mI (13120) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (13240) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (13240) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (13250) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (13260) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (13270) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (13390) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (13390) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (13400) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (13620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (13900) mota_can: OBD RX timeout: no response for PID 010B[0m
+[0;32mI (13900) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (13910) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (14030) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (14040) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (14050) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (14050) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (14060) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (14070) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (14120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (14200) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (14200) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (14210) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (14220) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (14230) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (14350) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (14360) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (14370) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (14620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (14870) mota_can: OBD RX timeout: no response for PID 010B[0m
+[0;32mI (14870) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (14870) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (15000) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (15010) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (15010) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (15020) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (15030) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (15040) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (15120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (15160) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (15160) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (15170) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (15180) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (15180) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (15310) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (15320) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (15330) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (15330) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (15620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (15830) mota_can: OBD RX timeout: no response for PID 0111[0m
+[0;32mI (15830) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (15960) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (15960) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (15970) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (15980) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (15990) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (16000) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (16120) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (16120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (16130) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (16140) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (16140) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (16150) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (16280) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (16280) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (16290) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (16300) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (16620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (16800) mota_can: OBD RX timeout: no response for PID 0111[0m
+[0;32mI (16800) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (16920) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (16920) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (16930) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (16940) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (16950) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (16950) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (17080) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (17090) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (17120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (17590) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (17590) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (17590) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (17600) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (17620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (17730) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (17730) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (17740) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (17750) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (17760) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (17770) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (17890) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (17900) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (17910) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (17910) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (17920) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (18050) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (18050) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (18120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;33mW (18550) mota_can: OBD RX timeout: no response for PID 010D[0m
+[0;32mI (18550) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (18560) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (18570) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (18620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (18690) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (18690) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (18700) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (18710) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (18720) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (18720) mota_can: OBD TX: id=7DF data=02 01 0F 55 55 55 55 55[0m
+[0;32mI (18850) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (18860) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (18860) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (18870) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (18880) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (19010) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (19010) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (19020) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (19030) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (19040) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (19120) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m
+[0;32mI (19160) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (19170) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (19180) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (19180) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (19190) mota_can: OBD TX: id=7DF data=02 01 05 55 55 55 55 55[0m
+[0;32mI (19320) mota_can: OBD TX: id=7DF data=02 01 0C 55 55 55 55 55[0m
+[0;32mI (19320) mota_can: OBD TX: id=7DF data=02 01 0D 55 55 55 55 55[0m
+[0;32mI (19330) mota_can: OBD TX: id=7DF data=02 01 0B 55 55 55 55 55[0m
+[0;32mI (19340) mota_can: OBD TX: id=7DF data=02 01 11 55 55 55 55 55[0m
+[0;32mI (19620) mota_can: CAN CAN id=110 data=03 E6 00 00 7C 00 00 A8 [0m

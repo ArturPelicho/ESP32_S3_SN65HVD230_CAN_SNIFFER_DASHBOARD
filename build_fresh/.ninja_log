@@ -1,0 +1,1479 @@
+# ninja log v6
+31500	32148	8110060659050984	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/sdm_periph.c.obj	7beae30db42de725
+1810	3155	8110060362148300	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_monitor.c.obj	9801eee770fce66d
+8467	9919	8110060428696500	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/uuid.c.obj	5ead12ccc6cb53e5
+39068	40174	8110060734716547	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_mxic_opi.c.obj	5fc51af8672f457a
+73825	75629	8110061082293529	esp-idf/esp_local_ctrl/CMakeFiles/__idf_esp_local_ctrl.dir/src/esp_local_ctrl.c.obj	90efa5eec8bf788
+101	930	8110060345919380	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/partition_table/partition-table.bin	3149727be5875f16
+27677	29092	8110060620807349	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/rtc_module.c.obj	a4aa745d6754d8e1
+111	154	8110060345538760	project_elf_src_esp32s3.c	4e1e64996f58ade6
+39134	40185	8110060735380648	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_th.c.obj	597dcf2b5d0fa1da
+276	1956	8110060346804934	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_auth.c.obj	b8ece62ab95859d0
+31489	32136	8110060658935838	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/rmt_periph.c.obj	688090162af37d4d
+111	154	8110060345538760	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/project_elf_src_esp32s3.c	4e1e64996f58ade6
+44	15457	8110173403370087	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/port/cmake_install.cmake	35ca80d3cab8cffd
+29926	30895	8110060643294665	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/chip_info.c.obj	f38fbc71273b0eff
+2983	3697	8110060373871309	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/port/xtensa/xt_debugexception.S.obj	13d3f681ea348f7e
+6693	8156	8110060410967320	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_common/eap_wsc_common.c.obj	48143a567cb535ec
+26555	27742	8110060609585334	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/esp_additions/idf_additions.c.obj	d11a1931b927a732
+11479	12391	8110060458834970	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/esp_netif_objects.c.obj	b05ae6b2ca83c4c0
+19010	20522	8110060534145393	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/apps/dhcpserver/dhcpserver.c.obj	6388fba5f5ca8e6e
+101	930	8110060345919380	partition_table/partition-table.bin	3149727be5875f16
+81	174	8110060345714880	esp-idf/esp_system/ld/memory.ld	80a9fce1685163f8
+74650	75839	8110061090541529	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/src/ffunicode.c.obj	73417f8aa1bcc4e2
+15029	16456	8110060494327710	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/ip4_napt.c.obj	f0f599c901955e81
+33333	34240	8110060677377370	esp-idf/hal/CMakeFiles/__idf_hal.dir/uart_hal.c.obj	efbdbff014c7d870
+58005	59341	8110060924082104	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/dis/src/ble_svc_dis.c.obj	3af97d056f2a739d
+92	184	8110060345818480	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/ld/sections.ld.in	c21e868d46942aac
+25594	26314	8110060599977152	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/reent_init.c.obj	75503932966f926f
+67832	68178	8110061022358281	esp-idf/protobuf-c/libprotobuf-c.a	49f9c54b1a936cc4
+26393	27079	8110060607970096	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/portable/xtensa/portasm.S.obj	97209ad08e652584
+81	174	8110060345714880	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/ld/memory.ld	80a9fce1685163f8
+55804	56958	8110060902083340	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/config.c.obj	3e690e422784dbc1
+62941	63560	8110060973444580	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_resolv.c.obj	f0ad01369dbfd9f0
+15509	17069	8110060499121153	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/ip6.c.obj	ab5b2b47cbf4eca8
+92	184	8110060345818480	esp-idf/esp_system/ld/sections.ld.in	c21e868d46942aac
+44	15457	8110173404257045	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/cmake_install.cmake	35ca80d3cab8cffd
+4299	5909	8110060387033533	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/port/os_xtensa.c.obj	9e499f53015b2ac4
+45600	46706	8110060800031348	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecp_curves.c.obj	403f42539e4a2123
+288	1150	8110060346909984	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_header.c.obj	b5a9f590adb60323
+25068	25655	8110060594723464	esp-idf/nvs_flash/libnvs_flash.a	ae5cf482ce831a73
+1956	3188	8110060363597412	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/gdma/adc_dma.c.obj	2f80a5d585bd663a
+300	1286	8110060347042172	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/lib/http_utils.c.obj	20fdb92e822ce37
+13724	15081	8110060481279658	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/memp.c.obj	fddd8c268188797b
+43969	44970	8110060783728241	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/aria.c.obj	636505f06c29ada
+252	1597	8110060346556360	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/util/ctrl_sock.c.obj	9e494fa0f5589649
+60947	62342	8110060953506981	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_cfg.c.obj	4d12a2553661a67d
+31841	32605	8110060662452421	esp-idf/esp_hw_support/libesp_hw_support.a	e3de334980588da3
+72184	72572	8110061065891090	esp-idf/esp_driver_sdspi/libesp_driver_sdspi.a	8559e2c777e6c81d
+194	1632	8110060345979465	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_main.c.obj	38abd0073f7a6779
+1598	2969	8110060360023189	esp-idf/esp_driver_i2s/CMakeFiles/__idf_esp_driver_i2s.dir/i2s_tdm.c.obj	d6d1c737b003d0b7
+357	2466	8110060347616068	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_ws.c.obj	b6df49acca2a9c7a
+22278	22700	8110060566821955	esp-idf/esp_phy/libesp_phy.a	f8981caf66781886
+33786	34779	8110060681901758	esp-idf/hal/CMakeFiles/__idf_hal.dir/uhci_hal.c.obj	eb9fd708edfc172b
+223	1645	8110060346260381	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_txrx.c.obj	fdcadd225ea2a2f0
+28581	29840	8110060629851645	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_modem.c.obj	b77f9ce2f11f77b8
+6512	7875	8110060409158589	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha384-tlsprf.c.obj	62e8ff402ed40067
+11404	12464	8110060458087489	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/esp_netif_handlers.c.obj	d697db651174528d
+214	1673	8110060346165217	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_sess.c.obj	b8ad2998eb83577
+28327	28930	8110060627313072	esp-idf/cxx/libcxx.a	fe63116c85605479
+1633	2781	8110060360365113	esp-idf/esp_driver_i2s/CMakeFiles/__idf_esp_driver_i2s.dir/i2s_platform.c.obj	568e31f3350cfbf7
+4030	5392	8110060384340789	esp-idf/esp_coex/CMakeFiles/__idf_esp_coex.dir/esp32s3/esp_coex_adapter.c.obj	64a09258e92ec950
+204	1685	8110060346085104	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_parse.c.obj	cd0fc80b2bb9f11a
+17994	19297	8110060523984445	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/hooks/lwip_default_hooks.c.obj	8e13465144d491d6
+29380	29957	8110060637836297	esp-idf/esp_libc/libesp_libc.a	1b9dfbb3e395728a
+27366	27772	8110060617701236	esp-idf/esp_ringbuf/libesp_ringbuf.a	f8d7d64efe97b059
+346	1785	8110060347485814	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_socks_proxy.c.obj	bc32e99234cc0321
+241	1810	8110060346438764	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_ws.c.obj	870ae419cd304962
+29116	30427	8110060635207036	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_event.c.obj	aedcee946bcfd3cd
+44	15457	8110173401713555	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_gpio/cmake_install.cmake	35ca80d3cab8cffd
+32979	33643	8110060673831624	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_level/log_level.c.obj	fc7446b4f0a8bd4
+25398	26496	8110060598019135	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/scandir.c.obj	6b17e3319ded9e11
+3289	4785	8110060376923922	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/wifi_init.c.obj	294d40c55d752e9e
+18702	19936	8110060531064415	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/polarssl/md4.c.obj	580b8565dc72e80b
+231	1798	8110060346340507	esp-idf/esp_http_server/CMakeFiles/__idf_esp_http_server.dir/src/httpd_uri.c.obj	ee5e0b666704459f
+27005	27904	8110060614089160	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/cpu_region_protect.c.obj	33a3ae8884f45eb8
+3132	4030	8110060375363220	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/lib_printf.c.obj	3513b307a2e30235
+185	1861	8110060345878588	esp-idf/esp_https_ota/CMakeFiles/__idf_esp_https_ota.dir/src/esp_https_ota.c.obj	f6aaae5d5ccb440c
+2564	3449	8110060369674660	esp-idf/esp-tls/CMakeFiles/__idf_esp-tls.dir/esp_tls_platform_port.c.obj	424fd2c128228858
+312	2057	8110060347157721	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport.c.obj	668dfec5d9e6e59a
+43632	44188	8110060780351272	esp-idf/bootloader_support/libbootloader_support.a	d8cab244e7683276
+65547	66473	8110060999500879	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_dstr.c.obj	b2f3d4c117b339ac
+33058	33827	8110060674614080	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_level/tag_log_level/cache/log_binary_heap.c.obj	eb555602df773332
+334	2236	8110060347380554	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_internal.c.obj	1d6a91661bf758aa
+19936	20654	8110060543411494	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/esp32s3/phy_init_data.c.obj	9327fedfba303e0c
+324	2339	8110060347280378	esp-idf/tcp_transport/CMakeFiles/__idf_tcp_transport.dir/transport_ssl.c.obj	90eaceb80ff24acf
+930	2512	8110060353343185	esp-idf/esp_driver_i2s/CMakeFiles/__idf_esp_driver_i2s.dir/i2s_common.c.obj	6a4710d67a722ed5
+2917	3982	8110060373199839	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/packet.c.obj	3af54bd19732aa93
+32435	33017	8110060668386632	esp-idf/log/CMakeFiles/__idf_log.dir/src/util.c.obj	d250032ee7d361a
+11548	12242	8110060459506812	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/esp_netif_defaults.c.obj	d9fca0ad3ff6b1d6
+36508	37678	8110060709127280	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/task_wdt/task_wdt_impl_timergroup.c.obj	18b856db82004fa3
+1686	2563	8110060360885380	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_cali.c.obj	733906d5ffe923fa
+13861	15112	8110060482657306	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/stats.c.obj	78b61d8e55322d03
+1151	2621	8110060355559155	esp-idf/esp_driver_i2s/CMakeFiles/__idf_esp_driver_i2s.dir/i2s_std.c.obj	94478226a0c9220a
+27471	29153	8110060618755049	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/periph_ctrl.c.obj	af95284af15f5346
+1786	2670	8110060361893385	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_cali_curve_fitting.c.obj	a4658dcf947e5ce7
+14293	15598	8110060486971871	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/autoip.c.obj	bc3c028be9239a1b
+35112	35578	8110060695151722	esp-idf/heap/libheap.a	198e0d6d7823288c
+58832	59279	8110060932366053	esp-idf/esp_driver_spi/libesp_driver_spi.a	fbb0d35821dbef29
+56398	57422	8110060908023796	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/list.c.obj	c03dd48cd11521f2
+2970	3591	8110060373733373	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/port/xtensa/gdbstub-entry.S.obj	bd0ced02fa83ddef
+63734	64988	8110060981381179	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/npl/freertos/src/nimble_port_freertos.c.obj	c64de92655fcd5d3
+26483	27471	8110060608872851	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/portable/xtensa/xtensa_overlay_os_hook.c.obj	8c67d954618497af
+263	2684	8110060346676566	esp-idf/esp_http_client/CMakeFiles/__idf_esp_http_client.dir/esp_http_client.c.obj	e07d302503784361
+1861	2721	8110060362643753	esp-idf/esp_https_ota/libesp_https_ota.a	21ffee7a3b56f68a
+8760	10132	8110060431638860	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/wpa_debug.c.obj	ae9be8384440cd3a
+6600	8054	8110060410038191	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/md4-internal.c.obj	f1b8dc66f5e51a2e
+3449	4828	8110060378537584	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/wifi_default.c.obj	5abe379687090d9a
+62851	64614	8110060972547775	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_hci.c.obj	9ff3e95eb3f24bca
+1646	2917	8110060360501992	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_oneshot.c.obj	dd5c97d09764ce6c
+31966	33116	8110060663711290	esp-idf/heap/CMakeFiles/__idf_heap.dir/heap_caps_init.c.obj	d2b9113d2b784642
+142	239	8110160239503501	esp-idf/main/libmain.a	4bfe9f944bdb9ab6
+3503	4449	8110060379073780	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/wifi_default_ap.c.obj	150cc8fedbda2b83
+12230	13533	8110060466347132	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/netif/esp_pbuf_ref.c.obj	220f7641616bee4d
+50519	51119	8110060849236289	esp-idf/mbedtls/mbedtls/3rdparty/everest/CMakeFiles/everest.dir/library/x25519.c.obj	d28fa2a460f2ae6f
+1286	2957	8110060356888410	esp-idf/esp_driver_i2s/CMakeFiles/__idf_esp_driver_i2s.dir/i2s_pdm.c.obj	2214ab9e93f8538e
+1673	2983	8110060360775144	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_common.c.obj	ad8bdb141eedbc5
+66402	67776	8110061008051686	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity/src/unity.c.obj	d5d31359a1622317
+2237	3132	8110060366403290	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/esp32s3/curve_fitting_coefficients.c.obj	fc048b7f26e6f024
+30587	31841	8110060649906190	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/lowpower/port/esp32s3/sleep_cpu.c.obj	2a44a18f8775d5dd
+44	15457	8110173404919994	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/app_trace/cmake_install.cmake	35ca80d3cab8cffd
+3967	4756	8110060383717199	esp-idf/esp_coex/CMakeFiles/__idf_esp_coex.dir/src/coexist.c.obj	5da96c665e0f1f02
+4096	4622	8110060384987873	esp-idf/esp_coex/CMakeFiles/__idf_esp_coex.dir/src/coexist_debug_diagram.c.obj	6e03fb47f043b5b7
+2721	3244	8110060371254725	esp-idf/esp_http_server/libesp_http_server.a	afa3dedbac5f9eaf
+36144	37371	8110060705476909	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/esp_system.c.obj	213afb9bb17bcb44
+52164	52599	8110060865674169	esp-idf/mbedtls/CMakeFiles/__idf_mbedtls.dir/__/__/x509_crt_bundle.S.obj	5a1d73cb3a8a0e73
+13827	15157	8110060482312793	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/raw.c.obj	592c73e97c6e2c0c
+35809	36639	8110060702129138	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/esp_err.c.obj	c8990decc16e65f1
+1798	3289	8110060362013628	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_continuous.c.obj	e9b671b4a84fac4e
+30718	32047	8110060651211454	esp-idf/esp_hal_usb/CMakeFiles/__idf_esp_hal_usb.dir/usb_dwc_hal.c.obj	5bd2f3c8f1744f37
+2057	3471	8110060364612408	esp-idf/esp_adc/CMakeFiles/__idf_esp_adc.dir/adc_filter.c.obj	e6837b0b6d1f3e69
+61496	63192	8110060958999713	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_startup.c.obj	b687322ed6c3744b
+69567	70495	8110061039705996	esp-idf/cmock/CMakeFiles/__idf_cmock.dir/CMock/src/cmock.c.obj	d3040cd189370f6e
+3983	4770	8110060383853735	esp-idf/esp_coex/CMakeFiles/__idf_esp_coex.dir/src/lib_printf.c.obj	8d8f63d67cf9c993
+25466	26483	8110060598698501	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/port/esp_time_impl.c.obj	914eec6af4ff4bad
+36342	37285	8110060707456002	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/ubsan.c.obj	a2b3f91ad2b8c386
+2466	3503	8110060368705606	esp-idf/esp-tls/CMakeFiles/__idf_esp-tls.dir/esp-tls-crypto/esp_tls_crypto.c.obj	156063b2fcad5249
+30788	31643	8110060651909768	esp-idf/esp_hal_usb/CMakeFiles/__idf_esp_hal_usb.dir/usb_wrap_hal.c.obj	f72c8c730fcd13c9
+44	15457	8110173407822316	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_rmt/cmake_install.cmake	35ca80d3cab8cffd
+16132	17512	8110060505362278	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/bridgeif_fdb.c.obj	e2f67b30bfc0becf
+3188	4678	8110060375925733	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/smartconfig.c.obj	dd327009506d488e
+12375	13758	8110060467780919	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/err.c.obj	f043d1da218ff559
+47771	48772	8110060821749023	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_hash.c.obj	3d93aae4fd7a388e
+2684	4096	8110060370877732	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/gdbstub.c.obj	bb6e23ef8d11fede
+47784	48817	8110060821886213	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_mac.c.obj	b91c393117c7a1df
+64780	65470	8110060991833676	esp-idf/console/CMakeFiles/__idf_console.dir/split_argv.c.obj	5dc08edf4efdbcb7
+74467	75618	8110061088708607	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/diskio/diskio_wl.c.obj	9eacfcfa1fcdb203
+2781	3846	8110060371851066	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/gdbstub_transport.c.obj	e7c81eba5a61ca97
+10393	12230	8110060447955944	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/crypto_mbedtls.c.obj	a9621653294fccea
+3244	3919	8110060376483858	esp-idf/esp_http_client/libesp_http_client.a	26b00d64641fa82a
+56958	58395	8110060913619761	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/ble_log/ble_log_spi_out.c.obj	42e53a85921a98bb
+27879	29116	8110060622818756	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/dma/esp_dma_utils.c.obj	8b8b714718b0f263
+52254	53175	8110060866583185	esp-idf/esp_security/CMakeFiles/__idf_esp_security.dir/src/init.c.obj	18a4ccdf30a04a9f
+62865	64469	8110060972691035	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_hci_util.c.obj	2bc8fe114a8f014b
+7889	9199	8110060422934840	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_fast_common.c.obj	a77397afb1af3858
+35542	36372	8110060699461663	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_serial_output.c.obj	b4ebf5345b5d0645
+2957	3967	8110060373615743	esp-idf/esp_gdbstub/CMakeFiles/__idf_esp_gdbstub.dir/src/port/xtensa/gdbstub_xtensa.c.obj	2c8a80860832df45
+2512	4183	8110060369155204	esp-idf/esp-tls/CMakeFiles/__idf_esp-tls.dir/esp_tls_error_capture.c.obj	d5336da75620a1a
+65582	66453	8110060999861445	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_end.c.obj	464a81f0111b4901
+10685	11615	8110060450881120	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/fastpsk.c.obj	cb768ceb01987dfe
+2670	4299	8110060370741834	esp-idf/http_parser/CMakeFiles/__idf_http_parser.dir/http_parser.c.obj	60aee868f78c7e28
+30998	31607	8110060654026395	esp-idf/soc/CMakeFiles/__idf_soc.dir/dport_access_common.c.obj	d9513a20e338bae6
+41033	42430	8110060754370109	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/bootloader_flash/src/flash_qio_mode.c.obj	fde1aa38bbb581f
+50651	50880	8110060852743865	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir	4f1aab009a977e71
+3155	4313	8110060375581436	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/mesh_event.c.obj	617c1a8bd7bca3a5
+3919	4463	8110060383237888	esp-idf/tcp_transport/libtcp_transport.a	342d7c3442742532
+40113	41579	8110060745157516	esp-idf/esp_mm/CMakeFiles/__idf_esp_mm.dir/esp_cache_msync.c.obj	8cdcf7b5ccc2b59a
+17700	18995	8110060521042306	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/pppol2tp.c.obj	7699d0462c37726f
+3471	4851	8110060378746662	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/wifi_netif.c.obj	7fe629128c530bd7
+13059	14204	8110060474620831	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/def.c.obj	d1d97c108280bc81
+3697	4865	8110060381013631	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/regulatory/esp_wifi_regulatory.c.obj	7984219d61430eed
+27855	29165	8110060622597163	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/esp_clk_tree.c.obj	617aa00823c5d77c
+2339	4979	8110060367435239	esp-idf/esp-tls/CMakeFiles/__idf_esp-tls.dir/esp_tls.c.obj	b2600c0d38fb2e87
+39663	41033	8110060740665678	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/esp_flash_api.c.obj	848a39e5a230bcef
+17840	19010	8110060522441533	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/utils.c.obj	8b251f2d72e3d9b9
+44	15457	8110173406834818	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cmock/cmake_install.cmake	35ca80d3cab8cffd
+4865	6889	8110060392684217	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/common/sae.c.obj	159a868950127a87
+2621	4993	8110060370253837	esp-idf/esp-tls/CMakeFiles/__idf_esp-tls.dir/esp_tls_mbedtls.c.obj	7cd7b6cbe18957c3
+45782	47196	8110060801860328	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/gcm.c.obj	9a94ffa91f8d9005
+44	15457	8110173401884997	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake	35ca80d3cab8cffd
+33070	33774	8110060674729329	esp-idf/hal/CMakeFiles/__idf_hal.dir/hal_utils.c.obj	357b0cd74b79998e
+18335	19686	8110060527390968	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/esp32xx/vfs_lwip.c.obj	4266a5ea7e5a2f0
+4463	5029	8110060388672463	esp-idf/esp_driver_i2s/libesp_driver_i2s.a	6ef5eb6b41ea8265
+67533	68871	8110061019362192	esp-idf/esp_driver_sdspi/CMakeFiles/__idf_esp_driver_sdspi.dir/src/sdspi_host.c.obj	c955fa884d4ea8b4
+44	15457	8110173401210416	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_blockdev/cmake_install.cmake	35ca80d3cab8cffd
+4183	5053	8110060385869980	esp-idf/esp_coex/CMakeFiles/__idf_esp_coex.dir/src/coexist_debug.c.obj	46ee78a93e5c87c5
+44	15457	8110173404079443	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_usb/cmake_install.cmake	35ca80d3cab8cffd
+25925	26993	8110060603295743	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/list.c.obj	43f43fa8400dfe68
+71205	72704	8110061056079777	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_encoder_bytes.c.obj	bc6613d9abb5dda
+28342	29926	8110060627463374	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/spi_share_hw_ctrl.c.obj	6e9988d835df6a3b
+3591	5228	8110060379953604	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/esp32s3/esp_adapter.c.obj	92e0c86ca068d3ec
+38036	39014	8110060724384167	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/apb_backup_dma.c.obj	f81b6f6fdf6aafa
+16930	18007	8110060513328979	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/ipcp.c.obj	c27954763b4a29ea
+5029	5468	8110060394327589	esp-idf/esp_adc/libesp_adc.a	cb3162858aa49a3
+7236	8759	8110060416405756	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_mschapv2.c.obj	5612097bf93e9b7b
+3846	5600	8110060382490329	esp-idf/esp_wifi/CMakeFiles/__idf_esp_wifi.dir/src/smartconfig_ack.c.obj	c2de9dcc6632d03b
+32703	33425	8110060671079135	esp-idf/log/CMakeFiles/__idf_log.dir/src/log.c.obj	5b0750d4817b256f
+4449	5782	8110060388534822	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/ap_config.c.obj	5c88d7828b94044b
+76661	77028	8110061110646549	esp-idf/esp_eth/libesp_eth.a	a8a03ead431134a4
+32373	33333	8110060667778641	esp-idf/log/CMakeFiles/__idf_log.dir/src/os/log_lock.c.obj	a5767f5de2822c22
+4313	5845	8110060387171288	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/port/eloop.c.obj	34fbbaf7a52d643c
+5468	6080	8110060398722322	esp-idf/esp-tls/libesp-tls.a	12d9594a8a792e3
+4622	6137	8110060390261407	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/ieee802_1x.c.obj	898234002584b646
+44	15457	8110173402914602	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_usb_cdc_rom_console/cmake_install.cmake	35ca80d3cab8cffd
+4852	6264	8110060392553932	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/comeback_token.c.obj	e8ebf68865e9b210
+67261	67697	8110061016638345	esp-idf/esp_driver_sd_intf/libesp_driver_sd_intf.a	c1ab976e6fdd334e
+41114	42353	8110060755167584	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/bootloader_flash/src/bootloader_flash_config_esp32s3.c.obj	1e270a941dcae425
+26302	27504	8110060607056352	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/timers.c.obj	2d2b1f60a8cc4afd
+53459	54475	8110060878615028	esp-idf/esp_hal_mspi/CMakeFiles/__idf_esp_hal_mspi.dir/spi_flash_hal_gpspi.c.obj	8c12418e7aeb0c98
+4828	6379	8110060392319941	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/ieee802_11.c.obj	8d0b395ed56ab4dc
+4979	6456	8110060393821886	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/common/dragonfly.c.obj	b952fd53ef3f6cdf
+9162	10610	8110060435659597	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_attr_parse.c.obj	7dab4ec002d44c7e
+35743	36286	8110060701460412	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_cache_writeback_esp32s3.S.obj	907f8307f7d639da
+5053	6512	8110060394573413	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/bitfield.c.obj	f126cbdfd4eb8aea
+4770	6526	8110060391738791	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/pmksa_cache_auth.c.obj	41ebf09d422904f2
+4757	6540	8110060391598511	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/wpa_auth_ie.c.obj	15b148f6b1669abe
+5228	6585	8110060396322862	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/aes-siv.c.obj	1a9c9839ebfab067
+4785	6600	8110060391880474	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/sta_info.c.obj	3fd5dadfc02f6403
+29957	31271	8110060643607580	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/sar_periph_ctrl.c.obj	f87490dd216cc0d4
+19492	20642	8110060538967213	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/src/phy_override.c.obj	5adf615cbc8d4083
+42444	43809	8110060768482458	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls12_client.c.obj	d54f815ad807dd1b
+4993	6638	8110060393957222	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/common/wpa_common.c.obj	e7e6c0fa7c1b1be3
+70206	72260	8110061046089939	esp-idf/esp_driver_ledc/CMakeFiles/__idf_esp_driver_ledc.dir/src/ledc.c.obj	25507f33d1f7109c
+13795	15310	8110060481984681	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/pbuf.c.obj	33a4a79e13d3679a
+6080	6679	8110060404831492	esp-idf/http_parser/libhttp_parser.a	4bbe3d6694195f72
+5393	6693	8110060397964362	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha256-kdf.c.obj	4a685b2ac6a8206e
+45401	46691	8110060798052767	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecdsa.c.obj	c35292b36a1a4bca
+10908	12325	8110060453121646	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/des-internal.c.obj	e2fe529522eed1fc
+13916	15094	8110060483194638	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/sys.c.obj	849cb117da4b7b4
+38179	39067	8110060725825093	esp-idf/esp_hal_lcd/CMakeFiles/__idf_esp_hal_lcd.dir/lcd_hal.c.obj	38e5338f5217ab26
+4679	6710	8110060390818996	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/ap/wpa_auth.c.obj	81bcac59c199caf4
+5600	7132	8110060400043233	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/ccmp.c.obj	2daac32a4d27140a
+6679	7146	8110060410816000	esp-idf/esp_gdbstub/libesp_gdbstub.a	d1fd6d8004b5d610
+17777	19130	8110060521815317	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/upap.c.obj	d31d2dc8fc3879ca
+5845	7185	8110060402483213	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/crypto_ops.c.obj	b1ded0f387854f80
+43809	44802	8110060782136687	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/aesni.c.obj	cdc48e8e1c1378af
+33425	34509	8110060678283140	esp-idf/hal/CMakeFiles/__idf_hal.dir/uart_hal_iram.c.obj	22d4502efa0f845
+64066	65856	8110060984704237	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/os_mbuf.c.obj	86854ec12b32d075
+44	15457	8110173409106367	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/protocomm/cmake_install.cmake	35ca80d3cab8cffd
+5909	7236	8110060403118990	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/dh_group5.c.obj	1ea66ea391632adf
+36223	37173	8110060706267253	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/startup.c.obj	164bb16eab6dc8a6
+5782	7324	8110060401862923	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/aes-gcm.c.obj	73d9843d12e398e9
+6137	7591	8110060405411597	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/dh_groups.c.obj	5fd47ad5097021d9
+6264	7685	8110060406682884	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/ms_funcs.c.obj	64a87f3eeb960ef9
+7146	7707	8110060415505745	esp-idf/esp_wifi/libesp_wifi.a	9aba29148d99374b
+42767	44176	8110060771720958	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/mbedtls_debug.c.obj	6e406d99b91af681
+23435	24657	8110060578382840	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/ets_timer_legacy.c.obj	8df0b5a153f84d4d
+56524	57991	8110060909277621	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/mutex.c.obj	f4de2607f3ea415d
+44	15457	8110173401360615	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_bootloader_format/cmake_install.cmake	35ca80d3cab8cffd
+6380	7726	8110060407841304	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha1-tlsprf.c.obj	6c584309077fb7b2
+46921	48298	8110060813252869	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pkparse.c.obj	41bcc70f4c819253
+15157	16505	8110060495617833	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/ethip6.c.obj	f07d804de52faaba
+67776	68652	8110061021799458	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/proto-c/sec0.pb-c.c.obj	baf2db31f7ddec4b
+28458	30079	8110060628624651	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/adc_share_hw_ctrl.c.obj	7ccd28acbdadf9f8
+6585	7861	8110060409893007	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha384-prf.c.obj	75fa695479b0fd87
+6540	7889	8110060409443670	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha1-prf.c.obj	4702a835d6d2d7da
+44738	45588	8110060791420601	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/chacha20.c.obj	e85c6dbded81db2a
+50651	50880	8110060852743865	bootloader-prefix/src/bootloader-stamp/bootloader-mkdir	4f1aab009a977e71
+6456	7904	8110060408600353	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha256-tlsprf.c.obj	5347b4aa78c3d4a
+59184	60674	8110060935879847	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_hci_cmd.c.obj	5aeb82c3db43c6a7
+11197	11729	8110060456004233	esp-idf/esp_coex/libesp_coex.a	bfa0a48f0f2987b2
+6639	7918	8110060410427990	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha1-tprf.c.obj	58337db50968a0e7
+61145	62850	8110060955493522	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_l2cap_coc.c.obj	7bde8aa45fda7ab5
+75629	76957	8110061100341225	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs_api.c.obj	7d0816e3334c84f5
+6710	8102	8110060411130682	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/common/ieee802_11_common.c.obj	5eaa26ca43a50eef
+51151	51570	8110060855561005	esp-idf/mbedtls/mbedtls/library/libmbedcrypto.a	d7b2a2a5975e49d1
+6526	8142	8110060409308395	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/sha256-prf.c.obj	dc6da9217e884352
+44	15457	8110173407743985	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ppa/cmake_install.cmake	35ca80d3cab8cffd
+75803	77211	8110061102070910	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/esp_spiffs.c.obj	7bb75cb7d38d19cd
+19400	20679	8110060538028137	esp-idf/esp_driver_usb_serial_jtag/CMakeFiles/__idf_esp_driver_usb_serial_jtag.dir/src/usb_serial_jtag.c.obj	6b106a2d8d66a65c
+42652	43444	8110060770565565	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls13_client.c.obj	d4d5816ef8ed852b
+40622	41745	8110060750264089	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_random.c.obj	2c15b40431f1cd1e
+6889	8169	8110060412928750	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/chap.c.obj	fe6f8e35d6dff984
+67723	69134	8110061021271399	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/common/protocomm.c.obj	f475d938f0fe0a7e
+19563	20560	8110060539673370	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/src/lib_printf.c.obj	8ffa87e842c2ef34
+7185	8467	8110060415892720	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_common.c.obj	b5980dfc4509781d
+7133	8673	8110060415359676	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap.c.obj	9ad9f119126f73b4
+35596	36432	8110060700002491	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_gpio.c.obj	33bb601e0036ec28
+44	15457	8110173404712611	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_timer/cmake_install.cmake	35ca80d3cab8cffd
+7324	8884	8110060417280136	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_peap.c.obj	4480a4077b220190
+7591	8937	8110060419955656	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_peap_common.c.obj	d1a8ee6f33989bbd
+44802	45624	8110060792067305	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/chachapoly.c.obj	86acc07f587d5a3c
+7685	9147	8110060420896198	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_tls.c.obj	52c37ee87dd075d4
+7707	9161	8110060421097811	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_tls_common.c.obj	68737bd53a3c85a9
+29909	31010	8110060643134304	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/rtc_time.c.obj	fafc9192d61315db
+28218	29484	8110060626224841	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp_clk_tree_common.c.obj	e077bfda36d09581
+26154	27677	8110060605562740	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/queue.c.obj	f9a77a0a5668e35
+29665	31126	8110060640693624	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/power_supply/brownout.c.obj	2caef067457487f5
+7861	9215	8110060422635273	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/mschapv2.c.obj	56e0c65a6fc8e608
+63790	64626	8110060981945635	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/endian.c.obj	6be7ef662ce343eb
+7919	9333	8110060423220768	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/rsn_supp/pmksa_cache.c.obj	bce8ef4e8b9c0618
+7904	9395	8110060423084975	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_fast_pac.c.obj	e3bf2ffbe6b3226d
+7726	9455	8110060421304698	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_ttls.c.obj	8f979d0ee058f64
+66627	67655	8110061010308910	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_utils_memory.c.obj	e59ee497545e54a9
+21682	22494	8110060560858076	esp-idf/esp_event/CMakeFiles/__idf_esp_event.dir/default_event_loop.c.obj	53eb0f0a41a020c7
+66759	68091	8110061011628760	esp-idf/esp_driver_i2c/CMakeFiles/__idf_esp_driver_i2c.dir/i2c_common.c.obj	4d0605a53fdeea1d
+8142	9507	8110060425459930	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/base64.c.obj	1b716665cad187b1
+8102	9538	8110060425062436	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/rsn_supp/wpa_ie.c.obj	91b60821f1818a19
+35499	36223	8110060699039102	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_crc.c.obj	c7b0742d2f84b900
+8170	9602	8110060425732925	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/ext_password.c.obj	b97c1463083c0b6c
+37590	38935	8110060719943166	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/debug_helpers.c.obj	28f237021867edfb
+7875	9640	8110060422792529	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/eap_peer/eap_fast.c.obj	76dd48d91197adcc
+54149	54767	8110060885528236	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xtensa_intr_asm.S.obj	89badabd132bfd9a
+70124	70549	8110061045270945	esp-idf/esp_driver_i2c/libesp_driver_i2c.a	c3ab91efcadf57a0
+8884	10393	8110060432874211	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/json.c.obj	7e0c9b0d96eed223
+8156	9836	8110060425595279	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/common.c.obj	d85c2747207874c
+40080	41347	8110060744833535	esp-idf/esp_mm/CMakeFiles/__idf_esp_mm.dir/esp_mmu_map.c.obj	39b08913d878bea7
+8054	10043	8110060424580320	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/rsn_supp/wpa.c.obj	aaff85d9e62f5fa1
+61161	62771	8110060955650878	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_mbuf.c.obj	69535840298d55c0
+68939	69814	8110061033422777	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/WL_Ext_Perf.cpp.obj	f839ecc32b4cdc8c
+36273	37297	8110060706767203	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/system_time.c.obj	420a2dffe5b523d0
+8673	10193	8110060430780796	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/utils/wpabuf.c.obj	65d2a0c6a27e8fd8
+48939	49876	8110060833437642	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/34542f8439ae8017550fa2b8ceba8c89/mbedtls/port/sha/core/esp_sha_gdma_impl.c.obj	a2b0299993d41650
+32505	33216	8110060669089304	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_format_text.c.obj	aaca9e3b74de0a7f
+42388	43855	8110060767919924	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_msg.c.obj	31ad9be2a286ab04
+9538	10318	8110060439423510	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_wpa2_api_port.c.obj	61ef4aba29af265
+30883	31868	8110060652859899	esp-idf/esp_hal_dma/CMakeFiles/__idf_esp_hal_dma.dir/gdma_hal_top.c.obj	28886fb9593b0ab0
+65043	66402	8110060994462758	esp-idf/console/CMakeFiles/__idf_console.dir/esp_console_repl_chip.c.obj	a0f7078fa12d158e
+43647	44503	8110060780500559	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509write_crt.c.obj	ff59138ed04152bc
+8937	10462	8110060433411187	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps.c.obj	6ee7bbf6d23fc920
+9199	10638	8110060436036781	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_attr_process.c.obj	8e0f90006c73b98d
+9147	10685	8110060435496750	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_attr_build.c.obj	56df7f08c7320157
+35578	36111	8110060699819732	esp-idf/log/liblog.a	bd3b9c8a9c8936b0
+9215	10728	8110060436192081	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_common.c.obj	5733fdfd5335f4a9
+29092	29909	8110060634948637	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_usb.c.obj	6d2e86b9dc7fb7b4
+10043	11404	8110060444478371	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_wpa3.c.obj	b42846a60a671dd
+9333	10908	8110060437369268	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_dev_attr.c.obj	28fe90f2109024d0
+66639	67606	8110061010423153	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_port_esp32.c.obj	56f6ad6b8e824060
+93802	93957	8110061282054046	CMakeFiles/mota_can_reader.elf.dir/project_elf_src_esp32s3.c.obj	29c1f9b22a215fe
+24212	25524	8110060586150929	esp-idf/pthread/CMakeFiles/__idf_pthread.dir/pthread_rwlock.c.obj	e93a862702aef008
+36111	37602	8110060705137460	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/panic.c.obj	b6259874e665a1f1
+42400	43797	8110060768023150	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_ticket.c.obj	e0ccc0a0b43b68a7
+58936	60644	8110060933401753	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_conn.c.obj	58fc757a4b3b35c6
+33082	33854	8110060674850000	esp-idf/hal/CMakeFiles/__idf_hal.dir/mpu_hal.c.obj	aad16cc8dff39217
+9395	11029	8110060437990598	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/wps/wps_enrollee.c.obj	24f019da5a2adb0c
+20642	24300	8110060550460397	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_handle_locked.cpp.obj	1f3d7bda14415c18
+66586	67587	8110061009903700	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_utils_cache.c.obj	895fe9033344a506
+9640	11057	8110060440446634	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_wpas_glue.c.obj	20079abb98817244
+9836	11150	8110060442398091	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_common.c.obj	b1118e77f9521bf4
+75791	77168	8110061101944269	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs/src/spiffs_nucleus.c.obj	8e2755d1dedc7964
+30079	30883	8110060644829417	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp_memprot_conv.c.obj	d9ac3fd92a027381
+12360	13966	8110060467634527	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/api_msg.c.obj	5f60085f8ce683d4
+68652	69927	8110061030552231	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/crypto/srp6a/esp_srp_mpi.c.obj	57b2a261eaed1be0
+9602	11164	8110060440060646	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_wpa_main.c.obj	9980961b67dcd8a8
+9455	11196	8110060438586014	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/common/sae_pk.c.obj	4011932e97ac7853
+52298	53223	8110060867029454	esp-idf/esp_security/CMakeFiles/__idf_esp_security.dir/src/esp_crypto_periph_clk.c.obj	e2db84920bb697b
+45020	45827	8110060794245718	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/constant_time.c.obj	79193a90cd8fa3a4
+10132	11479	8110060445364463	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_owe.c.obj	f091b8ec1df10522
+44	15457	8110173408580583	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/tcp_transport/cmake_install.cmake	35ca80d3cab8cffd
+25409	26373	8110060598121362	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/syscalls.c.obj	65a2f0fdcd3477fe
+70903	72894	8110061053071465	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_timer.c.obj	fee1d749049a7882
+34718	35861	8110060691215824	esp-idf/hal/CMakeFiles/__idf_hal.dir/spi_slave_hd_hal.c.obj	2699ab37c26cef0f
+51175	51267	8110060856660979	bootloader-prefix/src/bootloader-stamp/bootloader-patch	5dae3d3bad318809
+9919	11548	8110060443232456	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_wps.c.obj	b6dcb16d5e561690
+17488	18861	8110060518911268	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/ppp.c.obj	5437d701d2849798
+9507	11741	8110060439107526	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_eap_client.c.obj	4d429c9848664bd3
+10193	11758	8110060445959435	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/esp_hostap.c.obj	dae52ab44cfa402d
+67295	69006	8110061016983293	esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/src/sd_host_sdmmc.c.obj	e4b7602fa835b190
+52180	52809	8110060865849111	esp-idf/esp_pm/CMakeFiles/__idf_esp_pm.dir/pm_trace.c.obj	c7d6dfd98a2aea55
+10728	12194	8110060451330861	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/rc4.c.obj	79c60d4fec9168b3
+45612	46373	8110060800161248	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecp_curves_new.c.obj	b6504f291b8da1b8
+44	15457	8110173408928767	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_lcd/cmake_install.cmake	35ca80d3cab8cffd
+61519	63280	8110060959237587	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_l2cap_sig.c.obj	a1471701df20f2b4
+30674	31334	8110060650781123	esp-idf/freertos/libfreertos.a	b7d9301a1b502fec
+44970	46093	8110060793735750	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/cipher_wrap.c.obj	442fa718f171bada
+10462	12360	8110060448668520	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/crypto_mbedtls-bignum.c.obj	7f852d8654889303
+72822	73247	8110061072252981	esp-idf/esp_https_server/libesp_https_server.a	e5762330677d7144
+11057	12374	8110060454603582	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/aes-wrap.c.obj	55ebc9d551f6a682
+17513	18690	8110060519165299	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/pppcrypt.c.obj	da0f6a861ff67d49
+13759	15253	8110060481626840	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/netif.c.obj	9cb5b460dc43cae3
+44518	45416	8110060789212766	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/bignum_mod_raw.c.obj	5d2b68e775a81922
+15537	17056	8110060499414301	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/ip6_addr.c.obj	50afb7f9377e328c
+10318	12490	8110060447215749	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/tls_mbedtls.c.obj	fa97c5d8ceb629ba
+44	15457	8110173402798641	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_mm/cmake_install.cmake	35ca80d3cab8cffd
+296	339	8110173051954437	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+31271	31979	8110060656751039	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/spi_periph.c.obj	4ca3e7f1577fb92b
+48817	49514	8110060832204751	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/timing.c.obj	e0cf80526d79a6d7
+29828	30788	8110060642313652	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/rtc_clk_init.c.obj	3c30f8319679e1ba
+44	15457	8110173403112291	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_mcpwm/cmake_install.cmake	35ca80d3cab8cffd
+11150	12512	8110060455545643	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/aes-unwrap.c.obj	6ba717a4a2a050c2
+29153	30674	8110060635560939	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/dma/async_memcpy_gdma.c.obj	9e8b6b7cc9ab102a
+11164	12554	8110060455671850	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/src/crypto/aes-ccm.c.obj	1950fd7e6ff091c
+44	15457	8110173407228143	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_adc/cmake_install.cmake	35ca80d3cab8cffd
+11029	12637	8110060454325277	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/fastpbkdf2.c.obj	8c39c3f29d6d063e
+29885	30920	8110060642881414	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/rtc_sleep.c.obj	f3517268bb0d2668
+33643	34660	8110060680463942	esp-idf/hal/CMakeFiles/__idf_hal.dir/rtc_io_hal.c.obj	35e3429ddafd493b
+38144	39031	8110060725484656	esp-idf/esp_hal_mcpwm/CMakeFiles/__idf_esp_hal_mcpwm.dir/esp32s3/mcpwm_periph.c.obj	aa3fa980c29c179e
+10610	12726	8110060450138360	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/crypto_mbedtls-rsa.c.obj	ea97a9e0b9e96c3
+10638	12888	8110060450419118	esp-idf/wpa_supplicant/CMakeFiles/__idf_wpa_supplicant.dir/esp_supplicant/src/crypto/crypto_mbedtls-ec.c.obj	646f257a52b3af5d
+28963	29665	8110060633676972	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_mspi.c.obj	486d05cf608d9baa
+54805	56078	8110060892091088	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_io.c.obj	cba9d220e1c4e12f
+17138	18335	8110060515407651	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/mppe.c.obj	1f52e61df7718c7
+12888	13603	8110060472912710	esp-idf/wpa_supplicant/libwpa_supplicant.a	45fbdcde66e1cd21
+11741	12996	8110060461454339	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/esp_netif_lwip_defaults.c.obj	5dbf37e840de0f8
+32528	33163	8110060669320137	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_print.c.obj	eda472fa4b8ddf78
+11758	13059	8110060461609965	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/netif/wlanif.c.obj	642c5cd0934df6c7
+11729	13141	8110060461336710	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/esp_netif_sntp.c.obj	5c82b7f269bca4e7
+44	15457	8110173401965096	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/everest/cmake_install.cmake	35ca80d3cab8cffd
+12242	13655	8110060466462354	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/apps/sntp/sntp.c.obj	509f5f6d73172cda
+12512	13690	8110060469163532	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/netifapi.c.obj	611fbce46885219e
+15005	16542	8110060494076567	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/ip4.c.obj	aab7918bbb8cccd2
+12194	13723	8110060465982250	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/netif/ethernetif.c.obj	7ad186cc38bfa693
+44	15457	8110173401132930	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_stdio/cmake_install.cmake	35ca80d3cab8cffd
+32967	33631	8110060673711328	esp-idf/log/CMakeFiles/__idf_log.dir/src/os/log_write.c.obj	2ef3d13553bd236c
+12490	13795	8110060468934994	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/netdb.c.obj	3ae914d509fec349
+43274	44722	8110060776784107	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509.c.obj	6c7a85e8d8ac7bda
+12464	13827	8110060468684713	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/netbuf.c.obj	e6ff21287fb2fe8f
+17056	18244	8110060514593246	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/lcp.c.obj	ecddf4413818f90c
+12391	13861	8110060467939382	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/if_api.c.obj	2d504f6d98db197b
+42366	43398	8110060767694268	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_debug_helpers_generated.c.obj	c4fd975cbcc0ea07
+33774	34744	8110060681779789	esp-idf/hal/CMakeFiles/__idf_hal.dir/rmt_hal.c.obj	a674c726c3d255c6
+40044	41372	8110060744465964	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_os_func_noos.c.obj	3aec3282e1580f8a
+12637	13915	8110060470418402	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/tcpip.c.obj	39660b2db807aa31
+45588	47078	8110060799910512	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecp.c.obj	aa7a04ed91b24368
+29128	30907	8110060635314815	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/dma/gdma.c.obj	2e16f94123a71608
+42339	42944	8110060767421852	esp-idf/spi_flash/libspi_flash.a	a5548045add09146
+12325	13937	8110060467286376	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/api_lib.c.obj	ce0c9389cf05cf77
+29484	30717	8110060638878418	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/esp_clock_output.c.obj	f01179fab97c7a2b
+22017	22970	8110060564214624	esp-idf/esp_event/CMakeFiles/__idf_esp_event.dir/esp_event_private.c.obj	59596f97c4e0a9c1
+11615	14043	8110060460175586	esp-idf/esp_netif/CMakeFiles/__idf_esp_netif.dir/lwip/esp_netif_lwip.c.obj	75a1052f35ef11c9
+12996	14222	8110060474002907	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/apps/netbiosns/netbiosns.c.obj	bda3f57c4fd02ec9
+41504	42025	8110060759072248	esp-idf/esp_hal_wdt/CMakeFiles/__idf_esp_hal_wdt.dir/esp32s3/mwdt_periph.c.obj	21d733e4767b3e87
+12727	14293	8110060471303759	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/apps/sntp/sntp.c.obj	565fffd78b76e870
+44	15457	8110173407953871	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdio/cmake_install.cmake	35ca80d3cab8cffd
+12554	14430	8110060469576533	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/api/sockets.c.obj	57674b575d2b14bb
+72572	74063	8110061069750878	esp-idf/esp_eth/CMakeFiles/__idf_esp_eth.dir/src/phy/esp_eth_phy_802_3.c.obj	9389a7fa25c7d82c
+31126	31819	8110060655306651	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/uart_periph.c.obj	c9b3bc5f8e07c8fb
+37047	38059	8110060714493966	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/esp_ipc_isr_port.c.obj	feb4773d4482d9bd
+56150	56973	8110060905547118	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/hash_functions.c.obj	a6ea1678d27d0d63
+13142	14581	8110060475445042	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/dns.c.obj	106de75aabface3b
+13534	14867	8110060479378371	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/inet_chksum.c.obj	bc05e262f14774fa
+44	15457	8110173403685704	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/hal/cmake_install.cmake	35ca80d3cab8cffd
+13691	14958	8110060480949031	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/mem.c.obj	9f1cf507691082a4
+64081	65676	8110060984849429	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/os_msys_init.c.obj	5cdb77628244553d
+44	15457	8110173407646465	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_mcpwm/cmake_install.cmake	35ca80d3cab8cffd
+13603	15004	8110060480065223	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/init.c.obj	d47a38cf61457834
+41327	43048	8110060757320625	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_utility.c.obj	3dd64923eda12630
+34174	34917	8110060685779268	esp-idf/hal/CMakeFiles/__idf_hal.dir/sha_hal.c.obj	ece76d2a8f483a1a
+13655	15028	8110060480584245	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ip.c.obj	9d311edd632d2aaa
+48203	49289	8110060826056527	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_its_file.c.obj	cf6e7058d65e0ec9
+13937	15509	8110060483408967	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/tcp.c.obj	e9a3ea14eb67b3d9
+34526	35112	8110060689297616	esp-idf/soc/libsoc.a	1cd0c093334e44fc
+14204	15537	8110060486089984	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/timeouts.c.obj	840311ca95831bad
+68857	69855	8110061032604573	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/Partition.cpp.obj	5246b28da8afad87
+45289	46780	8110060796925030	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/dhm.c.obj	f9c7ad57ac272105
+37173	37911	8110060715764735	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/esp_ipc_isr_handler.S.obj	1ae2171280f389e6
+14044	15549	8110060484477528	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/tcp_out.c.obj	2c30cd164ad383d1
+13966	15610	8110060483694326	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/tcp_in.c.obj	d1267eb1a7f2ceb6
+14222	15686	8110060486256618	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/udp.c.obj	19ad0888a62f9787
+16530	17839	8110060509340500	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/chap_ms.c.obj	2b99a3bd80952957
+14581	15845	8110060489849787	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/etharp.c.obj	c38cc64f0747ffb2
+49876	50845	8110060842796858	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/sha/core/esp_sha1.c.obj	db37118b2cc36247
+17683	18702	8110060520861563	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/pppoe.c.obj	d7f1bdd5f1362601
+14430	16132	8110060488348237	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/dhcp.c.obj	aec25fd81e8f2845
+50167	50955	8110060845719291	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/sha/core/esp_sha512.c.obj	b027b8174b53aa01
+31819	32505	8110060662236677	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/power_supply_periph.c.obj	a0bead75515ee338
+49277	50519	8110060836811698	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/cda5217fad564d255bb39e9b4af07944/port/crypto_shared_gdma/esp_crypto_shared_gdma.c.obj	eb1c402e43394a7c
+14867	16244	8110060492702739	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/icmp.c.obj	9b034bef84af60e
+64988	66136	8110060993916482	esp-idf/console/CMakeFiles/__idf_console.dir/linenoise/linenoise.c.obj	e06a3887e1f3e428
+15094	16396	8110060494976311	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/ip4_frag.c.obj	f0be4ced97201b0c
+14958	16488	8110060493615795	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/igmp.c.obj	eb49da6e9337633d
+15112	16529	8110060495157369	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/dhcp6.c.obj	7aacbe9f61bd104e
+15311	16557	8110060497137477	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/inet6.c.obj	4138e8b2f8044093
+15845	17138	8110060502485593	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/bridgeif.c.obj	9a70d66151cd99b0
+15253	16570	8110060496571229	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/icmp6.c.obj	4966ba4a8e094bc4
+21237	22017	8110060556414693	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_bootloader_xts_aes.c.obj	e58d3ee69faea803
+41360	43061	8110060757639193	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/esp_image_format.c.obj	410e305adbc47c0c
+61116	62800	8110060955192214	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_att_clt.c.obj	9ded52021dd00d83
+25281	26555	8110060596846332	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/time.c.obj	f7cb82154ecd5345
+15082	16669	8110060494853627	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv4/ip4_addr.c.obj	68b422338983b530
+24164	25594	8110060585671637	esp-idf/pthread/CMakeFiles/__idf_pthread.dir/pthread.c.obj	a4142eb18f061da0
+15550	16914	8110060499534672	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/ip6_frag.c.obj	ba7a587ad0567401
+15687	16930	8110060500895140	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ethernet.c.obj	fb2ab2952ca283de
+36805	37331	8110060712084776	esp-idf/esp_rom/libesp_rom.a	a605a09d93f302e2
+15598	17043	8110060500009490	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/mld6.c.obj	f233a35f173deaf8
+32605	33136	8110060670097327	esp-idf/esp_hal_usb/libesp_hal_usb.a	3480274c8d3ed230
+16505	17730	8110060509088733	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/chap-new.c.obj	596692ed7a66013b
+15610	17476	8110060500142955	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/core/ipv6/nd6.c.obj	e558ea1e70e2daa4
+27717	29214	8110060621201061	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sar_tsens_ctrl.c.obj	4f1e7738974a8830
+33176	33872	8110060675797681	esp-idf/hal/CMakeFiles/__idf_hal.dir/mmu_hal.c.obj	c8aa2e3389d2ff27
+16396	17488	8110060507987457	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/auth.c.obj	6b4a74c677e5455a
+27115	28342	8110060615175836	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/clk_ctrl_os.c.obj	aa71924e4fd97c2d
+24188	25432	8110060585922924	esp-idf/pthread/CMakeFiles/__idf_pthread.dir/pthread_local_storage.c.obj	23317c7e04a613d9
+16244	17500	8110060506469970	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/slipif.c.obj	e7497a30da3e9100
+74351	75642	8110061087547891	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/diskio/diskio.c.obj	62e6467866e6bc95
+27742	29104	8110060621453388	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/io_mux.c.obj	71a986f7f15fae89
+16542	17683	8110060509466152	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/demand.c.obj	767c90c08e5ae9d8
+26652	27366	8110060610545334	esp-idf/esp_driver_uart/libesp_driver_uart.a	c2177c838a60eaf5
+16570	17700	8110060509735549	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/ecp.c.obj	8027dd3d0910529e
+31010	31698	8110060654136647	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/interrupts.c.obj	329073040a4d6e66
+16456	17777	8110060508600704	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/ccp.c.obj	6bf51efa4dd09c2f
+52287	52779	8110060866902780	esp-idf/esp_security/CMakeFiles/__idf_esp_security.dir/src/esp_crypto_lock.c.obj	587e7186ea44c10e
+63561	64081	8110060979642040	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_eatt.c.obj	7fc6b1fea4287b6e
+16669	17971	8110060510736865	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/eui64.c.obj	5f2b0cf0acb60678
+32409	33176	8110060668128767	esp-idf/log/CMakeFiles/__idf_log.dir/src/buffer/log_buffers.c.obj	3f327757a2a86d01
+34762	35622	8110060691657363	esp-idf/hal/CMakeFiles/__idf_hal.dir/cam_hal.c.obj	a070fed0840a0425
+22421	23651	8110060568248019	esp-idf/esp_driver_uart/CMakeFiles/__idf_esp_driver_uart.dir/src/uart_wakeup.c.obj	e22190c7d44fc7ff
+29141	30018	8110060635445083	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/dma/esp_async_memcpy.c.obj	b43cb04d82552fc5
+16557	17983	8110060509609614	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/eap.c.obj	5f8cc92b623901f5
+16488	17994	8110060508923342	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/chap-md5.c.obj	da1cabf3d7cc8181
+24300	25382	8110060587045583	esp-idf/pthread/CMakeFiles/__idf_pthread.dir/pthread_semaphore.c.obj	9e7bdaff7140d0d2
+16915	18040	8110060513191424	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/fsm.c.obj	a0f2c109c09cd44d
+40202	41619	8110060746069527	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_common_loader.c.obj	7e9afb5a4d606217
+30907	31966	8110060653106387	esp-idf/esp_hal_dma/CMakeFiles/__idf_esp_hal_dma.dir/gdma_hal_ahb_v1.c.obj	7b318d9447991c1b
+17069	18198	8110060514729331	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/magic.c.obj	f82e9155cf9a531e
+39630	40622	8110060740344811	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_wrap.c.obj	78db527b70bd4610
+20126	23842	8110060545298628	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_page.cpp.obj	d08fef215666ea88
+130	296	8110173050299348	bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+17043	18232	8110060514471836	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/ipv6cp.c.obj	29dad44c1037c3e4
+42640	43647	8110060770440404	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls13_server.c.obj	d8f82ee356d55622
+44	15457	8110173406204443	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_spi/cmake_install.cmake	35ca80d3cab8cffd
+52310	53163	8110060867129626	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/esp32s3/esp_efuse_table.c.obj	6e8b935d3d6bc88a
+17476	18633	8110060518798755	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/multilink.c.obj	ed8f051ee0fda7d6
+17500	18661	8110060519041533	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/pppapi.c.obj	82b46a4173ea32f3
+17971	19087	8110060523748317	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/vj.c.obj	6306e5da4f4c6955
+17730	19101	8110060521334923	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/pppos.c.obj	ebef595aea6bb257
+34874	35873	8110060692784124	esp-idf/hal/CMakeFiles/__idf_hal.dir/touch_sens_hal.c.obj	9f1d07ecc8b4e405
+69607	71559	8110061040110554	esp-idf/driver/CMakeFiles/__idf_driver.dir/i2c/i2c.c.obj	cd014075057a906
+18232	19377	8110060526354972	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/if_index.c.obj	4eb79bb0c5bbe32d
+23843	24932	8110060582462135	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/esp_timer_impl_systimer.c.obj	baea5ab5722c0a0d
+49427	50167	8110060838319230	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/aes/esp_aes_xts.c.obj	ab3a9006bd3d35aa
+18040	19400	8110060524445433	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/sockets_ext.c.obj	daae5fd7209c8315
+18007	19467	8110060524100742	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/debug/lwip_debug.c.obj	d3820e817012a187
+19101	20986	8110060535055688	esp-idf/vfs/CMakeFiles/__idf_vfs.dir/vfs.c.obj	ace4db258ce66333
+17983	19480	8110060523858538	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/hooks/tcp_isn_default.c.obj	647f535d949f26ef
+25135	26302	8110060595386641	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/stdatomic.c.obj	6975a2ccd8835820
+33229	33786	8110060676323052	esp-idf/hal/CMakeFiles/__idf_hal.dir/color_hal.c.obj	dc47d7f187876554
+73505	74453	8110061079098801	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/src/esp_lcd_panel_ops.c.obj	96402091e2620a88
+35622	36508	8110060700261631	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_systimer.c.obj	4ca53d735499a613
+18244	19492	8110060526481065	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/acd_dhcp_check.c.obj	3ffa5a5ec0f4df5c
+20667	22592	8110060550703046	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_partition_lookup.cpp.obj	3daf30aee189ed2d
+19087	19563	8110060534903003	esp-idf/esp_netif/libesp_netif.a	62811cac2e351f4c
+18198	19662	8110060526016105	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/port/freertos/sys_arch.c.obj	4ec13ffd909a4a56
+55153	56578	8110060895567998	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/hci_log/bt_hci_log.c.obj	a6f532c0d9b11713
+42353	43274	8110060767574029	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_cookie.c.obj	51b4c2ad3b5263cc
+18662	19981	8110060530645898	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/polarssl/arc4.c.obj	3b1c6e8cc6897edf
+18690	19996	8110060530939259	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/polarssl/des.c.obj	d52c3938e972d544
+44	15457	8110173404282074	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/port/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+34705	35542	8110060691080527	esp-idf/hal/CMakeFiles/__idf_hal.dir/spi_slave_hal_iram.c.obj	ed8fa416230c3d40
+62258	63734	8110060966627515	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_flow.c.obj	a79013679660e9a2
+44	15457	8110173408797843	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_https_ota/cmake_install.cmake	35ca80d3cab8cffd
+18995	20101	8110060533982461	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/polarssl/sha1.c.obj	3a771d8b09b6ebd4
+18861	20113	8110060532648104	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/lwip/src/netif/ppp/polarssl/md5.c.obj	11d021de75c4661
+35637	36548	8110060700407331	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_cache_esp32s2_esp32s3.c.obj	ed46c2d1414f10c8
+54345	55804	8110060887492469	esp-idf/esp_driver_spi/CMakeFiles/__idf_esp_driver_spi.dir/src/gpspi/spi_slave_hd.c.obj	3b9c0d4b7eaf5b79
+57056	58649	8110060914597400	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/util/src/addr.c.obj	d3bb902e34b1bbb2
+18634	20126	8110060530381492	esp-idf/lwip/CMakeFiles/__idf_lwip.dir/apps/ping/ping_sock.c.obj	d4317ca98a18bfd9
+53136	53681	8110060875410026	esp-idf/mbedtls/libmbedtls.a	8d32c8053e9186f0
+19467	20541	8110060538712757	esp-idf/esp_driver_usb_serial_jtag/CMakeFiles/__idf_esp_driver_usb_serial_jtag.dir/src/usb_serial_jtag_connection_monitor.c.obj	bd379d8f64f776b1
+19662	20622	8110060540667722	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/src/phy_common.c.obj	1d83c02104bade24
+16483	16569	8110160402908750	CMakeFiles/app_check_size	d2b58fd16d378bd3
+20561	24423	8110060549641617	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_storage.cpp.obj	4745bc4afca51f8b
+19130	20666	8110060535341135	esp-idf/vfs/CMakeFiles/__idf_vfs.dir/vfs_eventfd.c.obj	6384e20e30f1f8a1
+19377	20692	8110060537798746	esp-idf/vfs/CMakeFiles/__idf_vfs.dir/nullfs.c.obj	8108dba5343dd163
+58994	61160	8110060933987628	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_sm.c.obj	65260b65d8c2e689
+26361	27689	8110060607650742	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/stream_buffer.c.obj	dcdd55ae59ab111b
+19297	20758	8110060537005662	esp-idf/vfs/CMakeFiles/__idf_vfs.dir/vfs_semihost.c.obj	2153960b78cbd999
+50880	51026	8110060853961234	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-download	60df725c0755be21
+19480	20897	8110060538838903	esp-idf/esp_driver_usb_serial_jtag/CMakeFiles/__idf_esp_driver_usb_serial_jtag.dir/src/usb_serial_jtag_vfs.c.obj	c08bae7bd359cf14
+48298	49803	8110060827016992	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/rsa.c.obj	8b41d1b1a7ad16d0
+27402	28756	8110060618055767	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/intr_alloc.c.obj	e2a5526ef2b4a659
+19981	21072	8110060543848221	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/src/btbb_init.c.obj	83083be6b71aacc0
+19686	21237	8110060540908580	esp-idf/esp_phy/CMakeFiles/__idf_esp_phy.dir/src/phy_init.c.obj	275f692facbab827
+20522	21351	8110060549250998	esp-idf/lwip/liblwip.a	2432c8b823a8016c
+44	15457	8110173407508878	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_jpeg/cmake_install.cmake	35ca80d3cab8cffd
+20759	21531	8110060551625300	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_platform.cpp.obj	58484d6182729fed
+33289	34076	8110060676924050	esp-idf/hal/CMakeFiles/__idf_hal.dir/systimer_hal.c.obj	6b5743a6e6de2911
+67113	68398	8110061015173365	esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/legacy/src/sdmmc_host.c.obj	445d9d6bfab2d354
+20897	21682	8110060553011398	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_bootloader.c.obj	d070d0b8a8a30a5e
+21351	21788	8110060557551345	esp-idf/vfs/libvfs.a	a4d85b71287fc1e6
+51682	51790	8110060860855961	esp-idf/mbedtls/mbedtls/3rdparty/everest/libeverest.a	2392bcb364092060
+21072	21871	8110060554762897	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_bootloader_aes.c.obj	c321d05284da2fcd
+41454	41844	8110060758565372	esp-idf/esp_hal_lcd/libesp_hal_lcd.a	4f2819ff4df257e1
+74453	75606	8110061088578480	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/diskio/diskio_rawflash.c.obj	94c536b4f10f8889
+21788	22278	8110060561922211	esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a	deb17adc1d7b5446
+21532	22402	8110060559353885	esp-idf/nvs_sec_provider/CMakeFiles/__idf_nvs_sec_provider.dir/nvs_sec_provider.c.obj	cc432889a1ee96af
+72212	73598	8110061066163020	esp-idf/esp_driver_touch_sens/CMakeFiles/__idf_esp_driver_touch_sens.dir/hw_ver2/touch_version_specific.c.obj	c40d30baa539c390
+31719	34526	8110060661262238	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/touch_sensor_periph.c.obj	5751ed1b57c395d8
+20654	22420	8110060550582801	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_partition.cpp.obj	f48539eab897e3c1
+53025	54107	8110060874291942	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/src/esp_efuse_utility.c.obj	8ab7f548b7c0f7fd
+21871	23017	8110060562758942	esp-idf/esp_event/CMakeFiles/__idf_esp_event.dir/esp_event.c.obj	90ec4108279ff320
+20113	23434	8110060545168863	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_item_hash_list.cpp.obj	ba5e0e787d74725b
+49551	50808	8110060839557477	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/sha/core/sha.c.obj	21a80ecaf0eca5a8
+339	435	8110173053279295	CMakeFiles/bootloader-complete	12f2c106adc65a67
+20101	23577	8110060545048745	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_cxx_api.cpp.obj	a6cc3a01e42a8c1c
+20692	24087	8110060550956270	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_types.cpp.obj	f86cbd30647110e6
+130	296	8110173050299348	bootloader/bootloader.elf	be5e988e75b04439
+33854	34731	8110060682575210	esp-idf/hal/CMakeFiles/__idf_hal.dir/sdm_hal.c.obj	b319efec8a32caa
+63280	65109	8110060976843299	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gattc_cache.c.obj	2e4c4db0788305a8
+23017	24099	8110060574207698	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/esp_timer_init.c.obj	eb81aa8dba9885e9
+20541	24112	8110060549457204	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_pagemanager.cpp.obj	34b3e2be948a7a0
+61708	63984	8110060961126039	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gap.c.obj	61d69fbd9b6713b7
+38823	40079	8110060732270291	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_drivers.c.obj	e4a9b89c191696f8
+22701	24164	8110060571043692	esp-idf/esp_ringbuf/CMakeFiles/__idf_esp_ringbuf.dir/ringbuf.c.obj	b0d0dfc2eb7300ad
+22592	24176	8110060569969030	esp-idf/esp_driver_uart/CMakeFiles/__idf_esp_driver_uart.dir/src/uart_vfs.c.obj	49d11be608543390
+44723	45799	8110060791269874	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ccm.c.obj	f05c844f4a28fee5
+44	15457	8110173408496063	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hid/cmake_install.cmake	35ca80d3cab8cffd
+22494	24188	8110060568982376	esp-idf/esp_driver_uart/CMakeFiles/__idf_esp_driver_uart.dir/src/uhci.c.obj	d21c1eefa149a7ff
+19997	24211	8110060544011393	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_api.cpp.obj	94847fddba8aea04
+22971	24365	8110060573742237	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/esp_timer.c.obj	f5eedf1aebefa25
+48918	49657	8110060833225309	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/version_features.c.obj	8f81ee19620df0ff
+43049	43969	8110060774532115	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_platform_time.c.obj	651413cbc14b6493
+31607	32318	8110060660116803	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/temperature_sensor_periph.c.obj	fc18a60935275168
+20679	24411	8110060550819733	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_partition_manager.cpp.obj	ed398b031828defc
+22402	24509	8110060568055631	esp-idf/esp_driver_uart/CMakeFiles/__idf_esp_driver_uart.dir/src/uart.c.obj	31953a91313c7c91
+23577	24695	8110060579803946	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/system_time.c.obj	58c2f521eb12f5b8
+23651	24734	8110060580549521	esp-idf/esp_timer/CMakeFiles/__idf_esp_timer.dir/src/esp_timer_impl_common.c.obj	b2f9ce4f2940aa70
+44503	45350	8110060789070703	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/bignum_mod.c.obj	7a2557d733c39a9b
+55198	56524	8110060896023133	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/core/btc_manage.c.obj	18ade4e28d37d6ae
+20986	24915	8110060553907748	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_encrypted_partition.cpp.obj	207b84953e76b0ed
+20622	25068	8110060550249921	esp-idf/nvs_flash/CMakeFiles/__idf_nvs_flash.dir/src/nvs_handle_simple.cpp.obj	2d877eef3b25d08d
+36123	36805	8110060705255094	esp-idf/hal/libhal.a	1f51ec6064f80766
+24087	25090	8110060584916976	esp-idf/cxx/CMakeFiles/__idf_cxx.dir/cxx_exception_stubs.cpp.obj	625314577facea6c
+31699	32434	8110060661015328	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/sdmmc_periph.c.obj	a865639817cc200c
+24112	25135	8110060585151663	esp-idf/cxx/CMakeFiles/__idf_cxx.dir/cxx_init.cpp.obj	68e7138a7a0a05a5
+24411	25281	8110060588151721	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/abort.c.obj	3b4e32f83e01e777
+24365	25313	8110060587693878	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/init.c.obj	88bf936f8b9a4934
+24423	25398	8110060588274897	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/assert.c.obj	a7a5877abdd4de31
+24509	25409	8110060589132345	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/heap.c.obj	ca6c28300ebd9f36
+44646	45152	8110060790486464	esp-idf/esp_hal_timg/libesp_hal_timg.a	6a76cea43734ddc
+27079	28218	8110060614822583	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/esp_clk.c.obj	1edc4ba23e946e92
+38549	39675	8110060729530028	esp-idf/esp_hal_i2c/CMakeFiles/__idf_esp_hal_i2c.dir/i2c_hal_iram.c.obj	4d2bbfbcfd5fa93a
+24176	25466	8110060585807785	esp-idf/pthread/CMakeFiles/__idf_pthread.dir/pthread_cond_var.c.obj	95fd646c24f1cc91
+25090	25640	8110060594946430	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/termios.c.obj	81d4b5cc6f85a23b
+65095	66002	8110060994997053	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_cmd.c.obj	7e3958074224676c
+72165	72633	8110061065687565	esp-idf/esp_driver_sdmmc/libesp_driver_sdmmc.a	65f80ce0997dd5c4
+51790	51993	8110060863778587	esp-idf/mbedtls/x509_crt_bundle	6fd9355c89983479
+24695	25701	8110060590989471	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/poll.c.obj	7cfd0c67c7c5b892
+44	15457	8110173402716098	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bootloader_support/cmake_install.cmake	35ca80d3cab8cffd
+56715	58076	8110060911188752	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/osi.c.obj	6708b40ea891ba6e
+24932	25787	8110060593350330	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/getentropy.c.obj	570ba834c3a4e370
+44	15457	8110173405711329	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_netif/cmake_install.cmake	35ca80d3cab8cffd
+24915	25839	8110060593198439	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/random.c.obj	80970d3b9181e716
+24734	25909	8110060591372680	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/pthread.c.obj	5255d2853e02ee5a
+34509	35566	8110060689141088	esp-idf/hal/CMakeFiles/__idf_hal.dir/brownout_hal.c.obj	33676590a85630fd
+33842	34717	8110060682457597	esp-idf/hal/CMakeFiles/__idf_hal.dir/i2s_hal.c.obj	1814f92055e4f50c
+24657	25925	8110060590607382	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/locks.c.obj	2c8f504c32e1da94
+24100	26153	8110060585035162	esp-idf/cxx/CMakeFiles/__idf_cxx.dir/cxx_guards.cpp.obj	31c8eea1ba603bd9
+31784	32422	8110060661881194	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/twai_periph.c.obj	7b163338135d217c
+25655	26193	8110060600578458	esp-idf/nvs_sec_provider/libnvs_sec_provider.a	13e691e38bbeacbf
+26833	27891	8110060612372007	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/esp_cpu_intr.c.obj	6355f9b394ec8f5
+25701	26815	8110060601037980	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/heap_idf.c.obj	118920a8a79adabf
+49289	50206	8110060836924020	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_hardware.c.obj	fa3853614cb1e9d9
+25524	26280	8110060599284472	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/flockfile.c.obj	f7d7fb0cfa6e76dc
+56973	58475	8110060913769907	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/ble_log/ble_log_uhci_out.c.obj	e60e480e269c697c
+25313	26361	8110060597161549	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/sysconf.c.obj	6679a59d4d91f2a5
+66473	67295	8110061008773942	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_runner.c.obj	c6db77dba25a811c
+44	15457	8110173404282074	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/mspi_timing_tuning/port/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401230439	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/partition_table/cmake_install.cmake	35ca80d3cab8cffd
+25432	26393	8110060598348705	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/reent_syscalls.c.obj	33c2ece28f3cdcfd
+25382	26405	8110060597868562	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/realpath.c.obj	1cb4e5b83f2c99c3
+41931	42652	8110060763341969	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/mps_reader.c.obj	f8e85bea6547af6c
+67655	69188	8110061020592338	esp-idf/esp_driver_twai/CMakeFiles/__idf_esp_driver_twai.dir/esp_twai_onchip.c.obj	6caace8929a71e1a
+26193	26652	8110060605961680	esp-idf/esp_event/libesp_event.a	f2ff5abbeae190fd
+44	15457	8110173409681829	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/main/cmake_install.cmake	35ca80d3cab8cffd
+29717	30998	8110060641203174	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/rtc_clk.c.obj	8058d8eaf9ab88e4
+25640	26832	8110060600430676	esp-idf/esp_libc/CMakeFiles/__idf_esp_libc.dir/src/newlib_init.c.obj	7450e3757510dd1d
+25788	27005	8110060601907885	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/app_startup.c.obj	f84ef341bc048b8
+47196	48453	8110060816005956	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_cipher.c.obj	36f90cb58ed8945c
+44	15457	8110173408278154	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_tsens/cmake_install.cmake	35ca80d3cab8cffd
+28639	31033	8110060630435310	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_modes.c.obj	d10dca2fddd79152
+27772	28327	8110060621761210	esp-idf/esp_timer/libesp_timer.a	8ba00be1448f9d1c
+74668	75755	8110061090717620	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/port/freertos/ffsystem.c.obj	361c309dd70be55a
+25839	27115	8110060602436156	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/port_common.c.obj	d3593ee167535583
+57324	57631	8110060917283870	esp-idf/esp_app_format/libesp_app_format.a	f1710e9ed7c38a5b
+25909	27259	8110060603126905	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/port_systick.c.obj	9d6fff2652730713
+26405	27402	8110060608090209	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/portable/xtensa/xtensa_init.c.obj	36827fc351591475
+26496	27459	8110060608997988	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/esp_additions/idf_additions_event_groups.c.obj	e48d40aaeaa19046
+26314	27703	8110060607169323	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/event_groups.c.obj	66d277ae48e0918
+26373	27717	8110060607770979	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/portable/xtensa/port.c.obj	702ddce1990b2764
+26280	27855	8110060606840172	esp-idf/freertos/CMakeFiles/__idf_freertos.dir/FreeRTOS-Kernel/tasks.c.obj	5484db6fbe706b1c
+26816	27878	8110060612199150	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/cpu.c.obj	982a994baf70aafc
+66415	67356	8110061008181945	esp-idf/bt/libbt.a	19f511d0f7c57663
+68398	69788	8110061028018056	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/transports/protocomm_console.c.obj	80c34af8372dc369
+26993	27916	8110060613968938	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/esp_memory_utils.c.obj	80c8fa791dbb095d
+70495	72212	8110061048986554	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_fault.c.obj	14a7c46016be416a
+36978	38094	8110060713824016	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/esp_ipc_isr.c.obj	3b16178d70cb458e
+40302	41359	8110060747068027	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_clock_init.c.obj	628a07c584a31a5b
+27259	28182	8110060616630989	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/hw_random.c.obj	33d9fa188cf4f7d2
+37911	39577	8110060723150996	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/clk.c.obj	2e4b170beffbe139
+34779	35743	8110060691825796	esp-idf/hal/CMakeFiles/__idf_hal.dir/usb_serial_jtag_hal.c.obj	5c2e1c704700e0d4
+27504	28458	8110060620639656	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/revision.c.obj	a8c7ec6a6a539d12
+27704	28580	8110060621075430	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/esp_gpio_reserve.c.obj	f452934b0f124222
+27459	28639	8110060618632562	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/mac_addr.c.obj	60c32e535b63c8ab
+27689	28963	8110060620935305	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/regi2c_ctrl.c.obj	f931af69c77b82c1
+29394	30587	8110060637973976	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_wake_stub.c.obj	556e7d5e31a0240a
+54676	55083	8110060890801812	esp-idf/esp_security/libesp_security.a	6d6eccd09fd09a25
+27916	29128	8110060623197489	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/clk_utils.c.obj	b2dc9b5efedf3422
+27891	29141	8110060622938965	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/dma/gdma_link.c.obj	f1a4b4dbf0869852
+65839	66729	8110061002428739	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_lit.c.obj	21baed2d1e59928d
+77211	77356	8110061116147445	esp-idf/spiffs/libspiffs.a	ce04861325c154c5
+28930	29380	8110060633332127	esp-idf/pthread/libpthread.a	9e7b02e575007e74
+36261	37924	8110060706658534	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/startup_funcs.c.obj	a62476334c354e02
+27904	29394	8110060623076225	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/spi_bus_lock.c.obj	b6981930bf5c9e2d
+44176	45264	8110060785804508	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/base64.c.obj	71681723fb947e8e
+73247	74488	8110061076517072	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/src/esp_lcd_panel_io.c.obj	d80ad27e6034077e
+28756	29717	8110060631603122	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_console.c.obj	785f7d9721ee2ffb
+37827	38536	8110060722298867	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/highint_hdl.S.obj	26a94e5ec5abcd57
+45152	45782	8110060795551124	esp-idf/mbedtls/mbedtls/library/libmbedtls.a	d521610dcdfa9e6c
+38059	38729	8110060724633616	esp-idf/esp_hal_pcnt/CMakeFiles/__idf_esp_hal_pcnt.dir/esp32s3/pcnt_periph.c.obj	dbc62c6b00f8fac3
+30920	31514	8110060653242609	esp-idf/soc/CMakeFiles/__idf_soc.dir/lldesc.c.obj	fef1a5e25aaa9544
+29166	29828	8110060635687546	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/systimer.c.obj	2ea3d0e8ddc9c205
+38512	38990	8110060729165444	esp-idf/esp_common/libesp_common.a	5d7d9dd79b5e64dd
+28182	29885	8110060625852331	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/usb_phy/usb_phy.c.obj	15113c32e3615ae6
+29215	30258	8110060636189491	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/mspi_timing_tuning/mspi_timing_tuning.c.obj	fd129310dba1fce3
+46093	46993	8110060804967048	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/lmots.c.obj	eca5379a3fb6416f
+47736	49053	8110060821409242	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_ffdh.c.obj	5333290e2e167136
+35861	36978	8110060702651748	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/crosscore_int.c.obj	35ecf81c258ce93f
+29104	30846	8110060635076910	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/sleep_gpio.c.obj	95f9d28e0ebf8f1f
+29840	31137	8110060642433883	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/rtc_init.c.obj	c7af88f93f24218
+51993	52155	8110060865546573	x509_crt_bundle.S	ed7a6048cd5a4f64
+63383	65095	8110060977862866	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gattc_cache_conn.c.obj	c9d03a329aacdc79
+30258	31186	8110060646621766	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/mspi_timing_tuning/port/esp32s3/mspi_timing_config.c.obj	ee165ea0491ec81c
+30018	31489	8110060644226381	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/port/esp32s3/esp_memprot.c.obj	8a3bf6724dee8af1
+54264	55726	8110060886677883	esp-idf/esp_driver_spi/CMakeFiles/__idf_esp_driver_spi.dir/src/gpspi/spi_common.c.obj	bf4dfc3d0ed9450c
+41580	42387	8110060759833983	esp-idf/esp_hal_wdt/CMakeFiles/__idf_esp_hal_wdt.dir/xt_wdt_hal.c.obj	375a842685994d3f
+30846	31500	8110060652499758	esp-idf/esp_hal_usb/CMakeFiles/__idf_esp_hal_usb.dir/esp32s3/usb_dwc_periph.c.obj	a4b29a201072b270
+30427	31719	8110060648315628	esp-idf/esp_hw_support/CMakeFiles/__idf_esp_hw_support.dir/mspi_timing_tuning/port/esp32s3/mspi_timing_by_mspi_delay.c.obj	c1a291a4ee48a6d0
+31186	31784	8110060655900416	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/dedic_gpio_periph.c.obj	7f1d6324fc679795
+30895	31795	8110060652981098	esp-idf/esp_hal_dma/CMakeFiles/__idf_esp_hal_dma.dir/esp32s3/gdma_periph.c.obj	cf793ff02ab2ff1c
+34744	35555	8110060691480404	esp-idf/hal/CMakeFiles/__idf_hal.dir/ds_hal.c.obj	db38216cf5100547
+31034	31808	8110060654367201	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/gpio_periph.c.obj	f80888dbe90fcefb
+31138	31879	8110060655405071	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/adc_periph.c.obj	406c940f8495bb6f
+43421	45065	8110060778243466	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509_crl.c.obj	b4ec5e17e331bb4d
+31334	32124	8110060657386431	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/ledc_periph.c.obj	972f41b8b302cd76
+31514	32373	8110060659176604	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/i2s_periph.c.obj	23d17e7fb7c855d1
+31644	32409	8110060660469324	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/mpi_periph.c.obj	4fc8fddf72b8d821
+31808	32528	8110060662119046	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/cam_periph.c.obj	f2ac0265625ce031
+59260	60713	8110060936643953	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_id.c.obj	c17326c57cd86944
+31796	32703	8110060661998809	esp-idf/soc/CMakeFiles/__idf_soc.dir/esp32s3/rtc_io_periph.c.obj	360931328948d36a
+57991	59573	8110060923944446	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/bas/src/ble_svc_bas.c.obj	a959b093610fb273
+62240	63718	8110060966435781	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_pvcy.c.obj	ce8fb15c9819db00
+32124	32966	8110060665284288	esp-idf/heap/CMakeFiles/__idf_heap.dir/port/memory_layout_utils.c.obj	cf19e28c70025bd7
+32136	32979	8110060665396704	esp-idf/heap/CMakeFiles/__idf_heap.dir/port/esp32s3/memory_layout.c.obj	8211f3c58c9106f7
+31979	33041	8110060663831595	esp-idf/heap/CMakeFiles/__idf_heap.dir/multi_heap.c.obj	66bee80145c4efdb
+34791	35610	8110060691946761	esp-idf/hal/CMakeFiles/__idf_hal.dir/esp32s3/touch_sensor_hal.c.obj	ca357505971be128
+32318	33278	8110060667226117	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_timestamp_common.c.obj	21b6d6a8d70bf34c
+64175	65753	8110060985789839	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/npl/freertos/src/npl_os_freertos.c.obj	14e77c6d75d3e69f
+45350	46361	8110060797529106	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecdh.c.obj	62e466e3b7356378
+31880	33057	8110060662840509	esp-idf/heap/CMakeFiles/__idf_heap.dir/heap_caps.c.obj	45175edcb3788822
+33116	33971	8110060675200336	esp-idf/hal/CMakeFiles/__idf_hal.dir/efuse_hal.c.obj	cc338bf5d461a0b
+31868	33069	8110060662709762	esp-idf/heap/CMakeFiles/__idf_heap.dir/heap_caps_base.c.obj	bea12b82c8803e01
+32148	33081	8110060665514336	esp-idf/log/CMakeFiles/__idf_log.dir/src/os/log_timestamp.c.obj	b1744de4cf0440da
+37678	38549	8110060720827386	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/debug_stubs.c.obj	a4a25faa465dc585
+48842	49706	8110060832464194	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/version.c.obj	f56adc5631831ea3
+32422	33229	8110060668264052	esp-idf/log/CMakeFiles/__idf_log.dir/src/os/util.c.obj	b38af2e7c2c7f0e3
+47799	48918	8110060822032619	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_pake.c.obj	68b68d28c365f006
+69217	69607	8110061036214139	esp-idf/unity/libunity.a	c36afa8b199a7272
+32048	33289	8110060664514037	esp-idf/heap/CMakeFiles/__idf_heap.dir/tlsf/tlsf.c.obj	6b4b7b620ec89cf3
+33136	33654	8110060675396420	esp-idf/esp_hal_dma/libesp_hal_dma.a	bf7e80e4553cfcfa
+33017	33707	8110060674210168	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_level/tag_log_level/tag_log_level.c.obj	a8be61b397ee0c0c
+33041	33842	8110060674459249	esp-idf/log/CMakeFiles/__idf_log.dir/src/log_level/tag_log_level/linked_list/log_linked_list.c.obj	d5d18b5bf1e6143c
+44	15457	8110173409537098	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/rt/cmake_install.cmake	35ca80d3cab8cffd
+33163	33998	8110060675672430	esp-idf/hal/CMakeFiles/__idf_hal.dir/esp32s3/efuse_hal.c.obj	a9830b1c05066bf8
+45624	46666	8110060800288878	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/entropy.c.obj	657833b0f8e9bcf3
+33216	34137	8110060676205431	esp-idf/hal/CMakeFiles/__idf_hal.dir/cache_hal.c.obj	f8b65d496d93413b
+33278	34174	8110060676822870	esp-idf/hal/CMakeFiles/__idf_hal.dir/esp32s3/clk_tree_hal.c.obj	c88dd29f21620166
+68953	69971	8110061033568255	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/WL_Ext_Safe.cpp.obj	f4c42b7e1534201b
+33631	34602	8110060680343692	esp-idf/hal/CMakeFiles/__idf_hal.dir/gpio_hal.c.obj	4b23826aaaa3936
+33872	34673	8110060682766162	esp-idf/hal/CMakeFiles/__idf_hal.dir/sdmmc_hal.c.obj	dd7e2c4e0ebe490a
+53223	54831	8110060876273884	esp-idf/app_update/CMakeFiles/__idf_app_update.dir/esp_ota_ops.c.obj	e9da18001b74b108
+65471	66546	8110060998746415	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_dbl.c.obj	f14804500ce9c455
+33707	34705	8110060681119536	esp-idf/hal/CMakeFiles/__idf_hal.dir/ledc_hal_iram.c.obj	903c961160162caf
+33827	34762	8110060682318450	esp-idf/hal/CMakeFiles/__idf_hal.dir/twai_hal_v1.c.obj	772ac0fbd28a7828
+51570	51682	8110060859748782	esp-idf/mbedtls/mbedtls/3rdparty/p256-m/libp256m.a	697013e6a5da8e5f
+33654	34791	8110060680581562	esp-idf/hal/CMakeFiles/__idf_hal.dir/ledc_hal.c.obj	fc82a0173ac9de44
+33998	34843	8110060684019365	esp-idf/hal/CMakeFiles/__idf_hal.dir/adc_oneshot_hal.c.obj	86aed6ff12d6520e
+67587	68856	8110061019912338	esp-idf/esp_driver_sdspi/CMakeFiles/__idf_esp_driver_sdspi.dir/src/sdspi_transaction.c.obj	b6c3a9d24a58b2f7
+34137	34874	8110060685415794	esp-idf/hal/CMakeFiles/__idf_hal.dir/mpi_hal.c.obj	d338b4a0ad534959
+33971	35055	8110060683756480	esp-idf/hal/CMakeFiles/__idf_hal.dir/adc_hal_common.c.obj	426757f8e0f04bd
+52243	53287	8110060866461961	esp-idf/esp_driver_gpio/CMakeFiles/__idf_esp_driver_gpio.dir/src/gpio_pin_glitch_filter.c.obj	be80da252e1ef395
+34076	35070	8110060684807251	esp-idf/hal/CMakeFiles/__idf_hal.dir/adc_hal.c.obj	a9eca9ebe59bee93
+44	15457	8110173401411314	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/app_update/cmake_install.cmake	35ca80d3cab8cffd
+34240	35222	8110060686426593	esp-idf/hal/CMakeFiles/__idf_hal.dir/aes_hal.c.obj	3e79487b7b85abd4
+65784	66759	8110061001869167	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_int.c.obj	3451f22e9b86e151
+34602	35499	8110060690057300	esp-idf/hal/CMakeFiles/__idf_hal.dir/spi_hal.c.obj	9d0f09a5bcf5f1ac
+36935	38036	8110060713377904	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/image_process.c.obj	af3f4d531bda9b0
+34731	35596	8110060691356601	esp-idf/hal/CMakeFiles/__idf_hal.dir/hmac_hal.c.obj	6a5d978d8c4622ab
+70578	72199	8110061049820106	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_sync.c.obj	5c32036f6b52dde9
+34673	35637	8110060690758072	esp-idf/hal/CMakeFiles/__idf_hal.dir/spi_slave_hal.c.obj	2d4ebf8f5dcef3e1
+71423	72723	8110061058260742	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_encoder_copy.c.obj	e18fac531ba98364
+34843	35793	8110060692460524	esp-idf/hal/CMakeFiles/__idf_hal.dir/touch_sensor_hal.c.obj	5864c0aaeb7225e4
+34917	35808	8110060693218654	esp-idf/hal/CMakeFiles/__idf_hal.dir/temperature_sensor_hal.c.obj	5fc414f5b4a80079
+35070	35923	8110060694747291	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_sys.c.obj	e119b4a2492d491a
+34660	35940	8110060690627782	esp-idf/hal/CMakeFiles/__idf_hal.dir/spi_hal_iram.c.obj	ac89b93d18b286a3
+35940	37488	8110060703436315	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/int_wdt.c.obj	484b56cd9e286082
+35055	36123	8110060694589586	esp-idf/hal/CMakeFiles/__idf_hal.dir/esp32s3/rtc_cntl_hal.c.obj	7ef8f39cf6b75365
+54182	55198	8110060885852824	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xtensa_intr.c.obj	31b04e183a5de463
+35222	36144	8110060696247354	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_print.c.obj	575c46d45057cb32
+53341	54300	8110060877453922	esp-idf/esp_hal_mspi/CMakeFiles/__idf_esp_hal_mspi.dir/spi_flash_hal.c.obj	71752e94f39a33ae
+35566	36261	8110060699699508	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_efuse.c.obj	9d55d3dae62eb8fc
+35610	36273	8110060700143475	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_longjmp.S.obj	3276022f487f7618
+49917	50853	8110060843196467	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/sha/core/esp_sha256.c.obj	4a5d6c0a0d4f945c
+35555	36342	8110060699581903	esp-idf/esp_rom/CMakeFiles/__idf_esp_rom.dir/patches/esp_rom_spiflash.c.obj	4ec35ceabccc4fbc
+36923	38047	8110060713271348	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/esp_system_chip.c.obj	7c0f39499ffbf5f9
+54792	55572	8110060891966619	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sd_pwr_ctrl/sd_pwr_ctrl.c.obj	9a6dd0026ca7ed64
+44	15457	8110173407070529	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/http_parser/cmake_install.cmake	35ca80d3cab8cffd
+35873	36922	8110060702763262	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/esp_ipc.c.obj	f9262f11f298e228
+36639	37937	8110060710421101	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/panic_handler.c.obj	269b832d20aef88e
+36286	36935	8110060706900058	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/stack_check.c.obj	32ca110d8b7a5701
+35923	37046	8110060703262906	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/freertos_hooks.c.obj	7f2c28464cfbc251
+59342	60947	8110060937455878	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gatts_lcl.c.obj	e7ea0907f4d08afe
+44	15457	8110173407248170	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_bitscrambler/cmake_install.cmake	35ca80d3cab8cffd
+36372	37589	8110060707763040	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/xt_wdt.c.obj	e52098b2e941004e
+36432	37707	8110060708358538	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/task_wdt/task_wdt.c.obj	5a78ea512ba95a1
+66453	67369	8110061008573758	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_compat.c.obj	308ccac1943e2ee9
+37285	37827	8110060716878983	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/esp_ipc_isr_routines.S.obj	ead9b896285e4622
+48325	49171	8110060827283722	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/rsa_alt_helpers.c.obj	1bf78f1d9bacc583
+37331	38023	8110060717345660	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/panic_handler_asm.S.obj	44bc960ed533475d
+37488	38144	8110060718927769	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/expression_with_stack_asm.S.obj	44b2012a7aa39d14
+37602	38179	8110060720049873	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/debug_helpers_asm.S.obj	4a01d0f0facaf719
+36548	38226	8110060709514365	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/cpu_start.c.obj	cf999cf9b7cfd620
+44	15457	8110173404302099	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/lowpower/cmake_install.cmake	35ca80d3cab8cffd
+35793	38512	8110060701978800	esp-idf/esp_common/CMakeFiles/__idf_esp_common.dir/src/esp_err_to_name.c.obj	a4817f69db615273
+37707	38597	8110060721101376	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/trax.c.obj	d52cb09facc35d3
+45276	46237	8110060796804812	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/des.c.obj	c138911f8c6039aa
+37297	38609	8110060716999221	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/panic_arch.c.obj	6fb0a30cedbe342e
+37372	38745	8110060717755161	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/arch/xtensa/expression_with_stack.c.obj	f58b6417fbf307f1
+38048	38823	8110060724514459	esp-idf/esp_hal_pcnt/CMakeFiles/__idf_esp_hal_pcnt.dir/pcnt_hal.c.obj	2e47c9bb64700d09
+40897	41861	8110060753012204	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/secure_boot.c.obj	485494b8123d6ce6
+41745	42567	8110060761477817	esp-idf/esp_hal_timg/CMakeFiles/__idf_esp_hal_timg.dir/esp32s3/timer_periph.c.obj	f0108133afb5cba7
+37924	38978	8110060723288647	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/reset_reason.c.obj	3338d1c9af801408
+38094	39001	8110060724988833	esp-idf/esp_hal_mcpwm/CMakeFiles/__idf_esp_hal_mcpwm.dir/mcpwm_hal.c.obj	bf55618a0105ef9d
+38023	39134	8110060724276952	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/cache_err_int.c.obj	530535ed0ce1114e
+38745	39687	8110060731496995	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_hpm_enable.c.obj	3dddd799bf04d02e
+37937	39280	8110060723408712	esp-idf/esp_system/CMakeFiles/__idf_esp_system.dir/port/soc/esp32s3/system_internal.c.obj	7e0d7ea1f46e5afc
+38226	39292	8110060726306872	esp-idf/esp_hal_lcd/CMakeFiles/__idf_esp_hal_lcd.dir/esp32s3/lcd_periph.c.obj	990c3d6aef97f4e3
+61282	62940	8110060956851076	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_eddystone.c.obj	c85c31d52d762277
+53709	55153	8110060881125786	esp-idf/esp_stdio/CMakeFiles/__idf_esp_stdio.dir/stdio_vfs.c.obj	4ddcc64d8a1ebed2
+38536	39334	8110060729401471	esp-idf/esp_hal_i2c/CMakeFiles/__idf_esp_hal_i2c.dir/i2c_hal.c.obj	e9c7e33116b1db51
+44	15457	8110173403370087	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/port/soc/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+38609	39564	8110060730130784	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/flash_brownout_hook.c.obj	f01a7f44409902e2
+38597	39630	8110060730020324	esp-idf/esp_hal_i2c/CMakeFiles/__idf_esp_hal_i2c.dir/esp32s3/i2c_periph.c.obj	bdbc2c3c33ad9f02
+38729	39663	8110060731334582	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/esp32s3/spi_flash_oct_flash_init.c.obj	e007484902a423c7
+39031	40043	8110060734348596	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_boya.c.obj	482816ebf57bc35f
+38990	40091	8110060733944642	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_mxic.c.obj	275371564a2702be
+39014	40113	8110060734182535	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_winbond.c.obj	93345025251f200
+64614	65886	8110060990179058	esp-idf/console/CMakeFiles/__idf_console.dir/commands.c.obj	e23f9e1e1ead3157
+39002	40162	8110060734061470	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_gd.c.obj	c66d2361f33b48e2
+38978	40202	8110060733811675	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_issi.c.obj	b769404161179209
+44678	45600	8110060790826581	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/camellia.c.obj	1a62da1751b41979
+45065	46111	8110060794678749	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/cmac.c.obj	2eef770699847771
+38936	40302	8110060733384165	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_chip_generic.c.obj	9c80cc7cc8bb3fdc
+39577	40403	8110060739818840	esp-idf/esp_system/libesp_system.a	b85fff4b353d2d2
+39280	40454	8110060736840739	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/memspi_host_driver.c.obj	bed72f239c6eadb1
+39334	40752	8110060737372335	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/flash_mmap.c.obj	8fbe0512bbd8378d
+39564	40875	8110060739681193	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/flash_ops.c.obj	6413267f581ccd28
+39687	40897	8110060740910038	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/spi_flash_os_func_app.c.obj	5f3775a8dd0590a4
+47056	48229	8110060814587846	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/platform.c.obj	f0bc018a109a03a2
+39292	40938	8110060736966168	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/cache_utils.c.obj	7f209d6d3577bc24
+67059	68430	8110061014635868	esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/legacy/src/sdmmc_transaction.c.obj	273ffc48e94456a4
+44	15457	8110173407268205	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_isp/cmake_install.cmake	35ca80d3cab8cffd
+39675	40971	8110060740783909	esp-idf/spi_flash/CMakeFiles/__idf_spi_flash.dir/esp_flash_spi_init.c.obj	88fc1d1e20c9099
+40403	41046	8110060748068605	esp-idf/esp_hal_pcnt/libesp_hal_pcnt.a	7897bd9e4c190392
+40092	41113	8110060744959739	esp-idf/esp_mm/CMakeFiles/__idf_esp_mm.dir/port/esp32s3/ext_mem_layout.c.obj	ae584a08764ae222
+52172	53080	8110060865754317	esp-idf/esp_pm/CMakeFiles/__idf_esp_pm.dir/pm_locks.c.obj	2f6a9b541955721c
+50492	51208	8110060848954028	esp-idf/mbedtls/mbedtls/3rdparty/everest/CMakeFiles/everest.dir/library/everest.c.obj	7a12906166e67b4a
+40174	41327	8110060745780661	esp-idf/esp_mm/CMakeFiles/__idf_esp_mm.dir/heap_align_hw.c.obj	43499f923a7e8606
+40162	41442	8110060745654695	esp-idf/esp_mm/CMakeFiles/__idf_esp_mm.dir/esp_cache_utils.c.obj	31c43f2adec842a0
+72603	73825	8110061070064547	esp-idf/esp_eth/CMakeFiles/__idf_esp_eth.dir/src/esp_eth_netif_glue.c.obj	e86f45c12304b718
+54476	55630	8110060888798806	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_common.c.obj	5036f0428601f1f7
+41046	41454	8110060754508467	esp-idf/esp_hal_mcpwm/libesp_hal_mcpwm.a	eb13118bf9b986cc
+60659	63130	8110060950632950	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gattc.c.obj	30721a38fbc48393
+40454	41504	8110060748585546	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_mem.c.obj	b858193954542f70
+40972	42366	8110060753756242	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/bootloader_flash/src/bootloader_flash.c.obj	319ffb50975352b7
+60432	62125	8110060948350511	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_att.c.obj	112183de89b045de
+40185	41555	8110060745892226	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_common.c.obj	d9b3c45a079d2343
+40753	41931	8110060751562932	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_efuse.c.obj	34485e56227bf686
+40875	41980	8110060752781317	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/flash_encrypt.c.obj	737b1e9d78c4c37a
+41347	42105	8110060757500182	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/flash_partitions.c.obj	792326e93cc0f092
+60549	62258	8110060949538705	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_ead.c.obj	689cae3542430e72
+40938	42179	8110060753420995	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_random_esp32s3.c.obj	dfdb19a5f624458d
+57379	58935	8110060917827836	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/ias/src/ble_svc_ias.c.obj	9c75a389f9da5b6f
+58961	60549	8110060933658333	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_store_util.c.obj	eca2af150476f5ff
+41844	42339	8110060762474576	esp-idf/esp_hal_i2c/libesp_hal_i2c.a	ea46b0de314bced0
+50260	50994	8110060846643001	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/md/esp_md.c.obj	d4e7a56e92047562
+41555	42399	8110060759588803	esp-idf/esp_hal_wdt/CMakeFiles/__idf_esp_hal_wdt.dir/rom_patch.c.obj	4a2aef72e5094043
+41443	42444	8110060758455143	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/esp32s3/secure_boot_secure_features.c.obj	3890260cc72ae1cc
+52939	53930	8110060873434547	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/src/esp_efuse_fields.c.obj	bb6ba12449fc631a
+41620	42589	8110060760225288	esp-idf/esp_hal_timg/CMakeFiles/__idf_esp_hal_timg.dir/timer_hal.c.obj	8e66aef6234b58c9
+41372	42640	8110060757759305	esp-idf/bootloader_support/CMakeFiles/__idf_bootloader_support.dir/src/bootloader_sha.c.obj	438e807e4def7b07
+41980	42742	8110060763838812	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/mps_trace.c.obj	ff8660960cad2ccc
+41861	42767	8110060762645158	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/debug.c.obj	8ea4fa50721e4f24
+47079	48037	8110060814823655	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/platform_util.c.obj	67ae5f48b577dfc6
+42025	43164	8110060764279637	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_cache.c.obj	7dd7e2cd056049c
+42105	43421	8110060765089055	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_ciphersuites.c.obj	6d2bf7405a9d078c
+74744	76604	8110061091476774	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/vfs/vfs_fat.c.obj	5aee1ecb74d7d724
+42589	43556	8110060769927492	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls13_keys.c.obj	cf8c3ae0d26c9bd7
+42179	43586	8110060765824513	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_client.c.obj	21b74cb4721b2ecd
+46993	48203	8110060813966162	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pkwrite.c.obj	8d04928be7a5a9cf
+42944	43632	8110060773486937	esp-idf/esp_mm/libesp_mm.a	fafb5f5aa95f320e
+42742	43756	8110060771465667	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls13_generic.c.obj	fde058dc772016c5
+42567	44114	8110060769712416	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls12_server.c.obj	ffa04a58754eeae1
+43398	44164	8110060778019341	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509_create.c.obj	89cd6fb146778730
+43586	44404	8110060779886835	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509write.c.obj	21cc88aafe711d5
+66150	67261	8110061005538180	esp-idf/esp_driver_sd_intf/CMakeFiles/__idf_esp_driver_sd_intf.dir/sd_host.c.obj	56955994e0278dc5
+43165	44428	8110060775684574	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/pkcs7.c.obj	6c80e2df97a11c6e
+43756	44518	8110060781601422	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509write_csr.c.obj	763d8a05156dbc66
+50376	51205	8110060847801303	esp-idf/mbedtls/mbedtls/3rdparty/p256-m/CMakeFiles/p256m.dir/p256-m_driver_entrypoints.c.obj	4601e57a2a6a3e0d
+42430	44583	8110060768340381	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls.c.obj	f80986ed7543c12a
+49669	50855	8110060840733572	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_ds/esp_ds_common.c.obj	559d12f44be25e14
+44188	44646	8110060785924722	esp-idf/esp_hal_wdt/libesp_hal_wdt.a	7f0d4f813f981335
+43855	44678	8110060782592478	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/aesce.c.obj	1b0046890d1781f5
+43556	44738	8110060779598034	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509_csr.c.obj	c3341bb1fe5cef5e
+130	296	8110173050299348	bootloader/bootloader.bin	be5e988e75b04439
+43061	44949	8110060774657561	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedtls.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/net_sockets.c.obj	cdc8eb554bbc73a2
+43797	45020	8110060782000337	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/aes.c.obj	e004fee20fb8ed86
+44164	45276	8110060785678316	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/asn1write.c.obj	ccba8cb38278e61b
+67356	68952	8110061017603262	esp-idf/esp_driver_sdmmc/CMakeFiles/__idf_esp_driver_sdmmc.dir/src/sd_trans_sdmmc.c.obj	b2a1574fc1886959
+44114	45289	8110060785188352	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/asn1parse.c.obj	2869eed44ebdcc55
+44583	45401	8110060789870148	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/block_cipher.c.obj	8289e45f525ee070
+44428	45612	8110060788305300	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/bignum_core.c.obj	20c0627ef307ba51
+43444	45684	8110060778477141	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedx509.dir/x509_crt.c.obj	a797ae2309ec846
+70236	72224	8110061046396149	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_cap.c.obj	d01934d7a15fecde
+44404	45749	8110060788090949	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/bignum.c.obj	415b9977e22b14c7
+45749	47154	8110060801533218	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/error.c.obj	ff326316f94758f6
+44949	46201	8110060793530066	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/cipher.c.obj	a25443310e26f1fd
+45417	46269	8110060798200416	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ecjpake.c.obj	bce3ccf172073867
+54831	56093	8110060892359084	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/core/btc_alarm.c.obj	a3ad40270db916aa
+45264	46306	8110060796679014	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ctr_drbg.c.obj	4ad2601db9812227
+44	15457	8110173402022557	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/p256-m/cmake_install.cmake	35ca80d3cab8cffd
+45684	46545	8110060800867785	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/entropy_poll.c.obj	7d74ba4e8a4ecc51
+45800	46642	8110060802025741	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/hkdf.c.obj	78b66a64d9860743
+46111	46920	8110060805154398	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/lms.c.obj	d118946af5f1e105
+52212	52939	8110060866156295	esp-idf/esp_driver_gpio/CMakeFiles/__idf_esp_driver_gpio.dir/src/gpio_glitch_filter_ops.c.obj	d46bb1e87a101c61
+45827	47056	8110060802309441	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/hmac_drbg.c.obj	c0f50960ff2d4e90
+46270	47115	8110060806726661	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/memory_buffer_alloc.c.obj	73023fd5a548d5f7
+46306	47127	8110060807090849	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/nist_kw.c.obj	50ea213acef8b34d
+46374	47217	8110060807767803	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/padlock.c.obj	494ed7841540e446
+65110	66098	8110060995129334	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_date.c.obj	c1a37cd4acdf2bb5
+46237	47229	8110060806405011	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/md5.c.obj	767174dd4a38b40d
+53311	54286	8110060877147818	esp-idf/esp_app_format/CMakeFiles/__idf_esp_app_format.dir/esp_app_desc.c.obj	2bd4deaed8a8e467
+46201	47583	8110060806035988	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/md.c.obj	7b895867b6bd69ca
+51175	51267	8110060856660979	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-patch	5dae3d3bad318809
+46666	47736	8110060810690738	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pk_ecc.c.obj	c40552121fb7c39d
+46361	47771	8110060807647563	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/oid.c.obj	1f598fded0047ff2
+44	15457	8110173407338314	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_dac/cmake_install.cmake	35ca80d3cab8cffd
+46706	47784	8110060811084628	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pkcs12.c.obj	e2637f517b58e29d
+46545	47799	8110060809494888	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pem.c.obj	b1ac56c339712b79
+60674	62239	8110060950784982	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_store.c.obj	284d19b94011ea63
+46642	47847	8110060810463109	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pk.c.obj	84fe5838481407f4
+47115	47932	8110060815193832	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/poly1305.c.obj	48c17744afdfb5d6
+46692	47962	8110060810957267	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pk_wrap.c.obj	c88359280064daa6
+46781	48216	8110060811837600	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/pkcs5.c.obj	18fc79d850b17b63
+47217	48324	8110060816194862	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_client.c.obj	72d9e9f98fd6fbc7
+130	296	8110173050299348	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.elf	be5e988e75b04439
+47154	48428	8110060815587319	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_aead.c.obj	b2bb726811f2d621
+47229	48440	8110060816320619	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_driver_wrappers_no_static.c.obj	e5587e3286eb35f3
+47932	48676	8110060823363865	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_se.c.obj	3c2adfe2fbe53cf0
+47583	48842	8110060819864685	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_ecp.c.obj	6f569521ac34093d
+48229	48939	8110060826329133	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/ripemd160.c.obj	d4c5db17e8c3f744
+48216	49277	8110060826203270	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_util.c.obj	76f8d8e96ad6599c
+47847	49401	8110060822513432	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_rsa.c.obj	197fcf18d53b50b6
+47962	49413	8110060823660868	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_slot_management.c.obj	1cf72719c9f0d81e
+130	296	8110173050299348	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.bin	be5e988e75b04439
+48037	49427	8110060824405186	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto_storage.c.obj	b7a1b46879090db3
+76512	76927	8110061109155885	esp-idf/esp_driver_rmt/libesp_driver_rmt.a	ed02bd0e020a664a
+48453	49526	8110060828558465	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/sha512.c.obj	823b33629f42af1
+52155	53136	8110060865596619	esp-idf/mbedtls/CMakeFiles/__idf_mbedtls.dir/esp_crt_bundle/esp_crt_bundle.c.obj	d62d7ef530b2599f
+65676	66627	8110061000801294	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_file.c.obj	8cfa39799628dc5c
+48428	49539	8110060828314848	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/sha1.c.obj	5457a628ccb151cd
+54300	55905	8110060887040835	esp-idf/esp_driver_spi/CMakeFiles/__idf_esp_driver_spi.dir/src/gpspi/spi_slave.c.obj	3368d5f7fe1634d3
+48441	49551	8110060828446221	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/sha256.c.obj	6993ee403eaf50f1
+48772	49623	8110060831766049	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/threading.c.obj	f0e77b9ac2665f86
+44	15457	8110173402974697	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_i2c/cmake_install.cmake	35ca80d3cab8cffd
+47127	49669	8110060815320002	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/psa_crypto.c.obj	5cee805341a5b49e
+48676	49719	8110060830806589	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/sha3.c.obj	70605d8145fc3d5c
+49053	49916	8110060834564396	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/34542f8439ae8017550fa2b8ceba8c89/mbedtls/port/aes/dma/esp_aes_gdma_impl.c.obj	3ca940687ad0c72a
+56772	58005	8110060911749777	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/semaphore.c.obj	aa5680f047c0ad16
+49413	50260	8110060838172711	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_timing.c.obj	abc8e63328242a68
+49171	50362	8110060835751126	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/aes/dma/esp_aes_dma_core.c.obj	31037a84ff61bd33
+73429	74744	8110061078338215	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/src/esp_lcd_panel_st7789.c.obj	994dc9e33f80e014
+49401	50376	8110060838046470	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_mem.c.obj	28d527d8ae3233c9
+49514	50462	8110060839174874	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/aes/esp_aes_common.c.obj	9d11b6142636a9d
+49539	50492	8110060839425345	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/sha/esp_sha.c.obj	5054799552043f8
+49706	50531	8110060841107574	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_hmac_pbkdf2.c.obj	519ea5b591689876
+49527	50651	8110060839304969	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/aes/esp_aes.c.obj	c43f8562d317348
+49657	50744	8110060840608648	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_ds/esp_rsa_dec_alt.c.obj	c41b473b1e5f73af
+49803	50802	8110060842068798	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/bignum/bignum_alt.c.obj	972210bab1f6950e
+49719	50854	8110060841235410	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/bignum/esp_bignum.c.obj	4a3a19f9ce2aa93
+50362	50855	8110060847661030	esp-idf/mbedtls/mbedtls/library/libmbedx509.a	c256783d05612a30
+44	15457	8110173403052187	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_lcd/cmake_install.cmake	35ca80d3cab8cffd
+49623	50856	8110060840275117	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/esp_ds/esp_rsa_sign_alt.c.obj	438804a692753f38
+52265	53151	8110060866695468	esp-idf/esp_security/CMakeFiles/__idf_esp_security.dir/src/esp_hmac.c.obj	b5817d262c10047
+50880	51026	8110060853961234	bootloader-prefix/src/bootloader-stamp/bootloader-download	60df725c0755be21
+50531	51081	8110060849353515	esp-idf/mbedtls/mbedtls/3rdparty/everest/CMakeFiles/everest.dir/library/Hacl_Curve25519_joined.c.obj	695dc4d9adb93e9d
+50206	51151	8110060846092078	esp-idf/mbedtls/mbedtls/library/CMakeFiles/mbedcrypto.dir/C_/Users/artur/esp/v6.0/esp-idf/components/mbedtls/port/aes/esp_aes_gcm.c.obj	5302437e5e30a262
+50462	51166	8110060848661725	esp-idf/mbedtls/mbedtls/3rdparty/p256-m/CMakeFiles/p256m.dir/p256-m/p256-m.c.obj	3b427997f6967a80
+44	15457	8110173409621750	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/ulp/cmake_install.cmake	35ca80d3cab8cffd
+51026	51175	8110060855723934	bootloader-prefix/src/bootloader-stamp/bootloader-update	777676d2e452eb53
+51026	51175	8110060855723934	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-update	777676d2e452eb53
+51790	51993	8110060863778587	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/x509_crt_bundle	6fd9355c89983479
+51993	52155	8110060865546573	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/x509_crt_bundle.S	ed7a6048cd5a4f64
+44	15457	8110173401300545	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_app_format/cmake_install.cmake	35ca80d3cab8cffd
+71495	73429	8110061058995066	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_encoder_simple.c.obj	59596d46f5fe87c
+52321	53024	8110060867236000	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/esp32s3/esp_efuse_fields.c.obj	5f6cab24e5e5815d
+66729	67723	8110061011329676	esp-idf/unity/CMakeFiles/__idf_unity.dir/port/esp/unity_utils_memory_esp.c.obj	1e96afbae24459aa
+69094	70124	8110061034980688	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/wear_levelling.cpp.obj	817762d1928967c7
+52232	53311	8110060866361776	esp-idf/esp_driver_gpio/CMakeFiles/__idf_esp_driver_gpio.dir/src/dedic_gpio.c.obj	47b16b532cbd1e78
+52222	53341	8110060866255396	esp-idf/esp_driver_gpio/CMakeFiles/__idf_esp_driver_gpio.dir/src/rtc_io.c.obj	9f7e8a6837a2fda9
+54358	55557	8110060887612700	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_cmd.c.obj	3147a16ec734c655
+52276	53353	8110060866800680	esp-idf/esp_security/CMakeFiles/__idf_esp_security.dir/src/esp_ds.c.obj	8996f81855cc3412
+52599	53385	8110060870032323	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/esp32s3/esp_efuse_rtc_calib.c.obj	629a338a8af4bfa5
+52191	53458	8110060865949300	esp-idf/esp_pm/CMakeFiles/__idf_esp_pm.dir/pm_impl.c.obj	2e9d69400467ae0d
+44	15457	8110173410010336	build.ninja	35ca80d3cab8cffd
+239	14217	8110160379771835	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/ld/sections.ld	3360429a6eb520e2
+52779	53709	8110060871833642	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/esp32s3/esp_efuse_utility.c.obj	68cc874ac68c1712
+44	15457	8110173409601723	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/spiffs/cmake_install.cmake	35ca80d3cab8cffd
+52202	53807	8110060866056139	esp-idf/esp_driver_gpio/CMakeFiles/__idf_esp_driver_gpio.dir/src/gpio.c.obj	d2685d8bef295954
+53287	54015	8110060876909969	esp-idf/esp_bootloader_format/CMakeFiles/__idf_esp_bootloader_format.dir/esp_bootloader_desc.c.obj	b01f45789a9f7f52
+52809	54096	8110060872132242	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/src/esp_efuse_api.c.obj	a302966beb213c7d
+53385	54149	8110060877887168	esp-idf/esp_hal_mspi/CMakeFiles/__idf_esp_hal_mspi.dir/spi_flash_encrypt_hal_iram.c.obj	7cd39d403c671c7d
+53681	54165	8110060880848503	esp-idf/esp_pm/libesp_pm.a	9293857c81ddfbeb
+53175	54182	8110060875798413	esp-idf/esp_partition/CMakeFiles/__idf_esp_partition.dir/partition_target.c.obj	26556fd6d782df81
+53151	54205	8110060875540309	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/src/esp_efuse_startup.c.obj	ddfe232a8387e348
+55703	56385	8110060901062174	esp-idf/esp_partition/libesp_partition.a	6746710bb970119f
+53080	54264	8110060874847337	esp-idf/efuse/CMakeFiles/__idf_efuse.dir/src/efuse_controller/keys/with_key_purposes/esp_efuse_api_key.c.obj	d2971f50ad9736d3
+53163	54345	8110060875677778	esp-idf/esp_partition/CMakeFiles/__idf_esp_partition.dir/partition.c.obj	53fb3ff50e0ddfaf
+53807	54358	8110060882118113	esp-idf/esp_stdio/CMakeFiles/__idf_esp_stdio.dir/stdio_simple.c.obj	11c06b7cb03d20eb
+53354	54586	8110060877574253	esp-idf/esp_hal_mspi/CMakeFiles/__idf_esp_hal_mspi.dir/spi_flash_hal_iram.c.obj	7dea2f442e28eaaf
+54015	54597	8110060884194678	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/eri.c.obj	d32a97989eb33f4d
+58090	59488	8110060924940798	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/prox/src/ble_svc_prox.c.obj	9473fc2af86ece32
+54165	54676	8110060885685966	esp-idf/esp_driver_gpio/libesp_driver_gpio.a	f39bb33ff8a6d51c
+54096	54792	8110060884998393	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xt_trax.c.obj	4073a13d7f2d5074
+54107	54805	8110060885118502	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xtensa_context.S.obj	c46df868194770c6
+54205	54817	8110060886095137	esp-idf/xtensa/CMakeFiles/__idf_xtensa.dir/xtensa_vectors.S.obj	b9453e68c9b0a31c
+58342	58832	8110060927443035	esp-idf/xtensa/libxtensa.a	ce83830401b0aa5c
+55572	57056	8110060899758938	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/profile/esp/blufi/blufi_prf.c.obj	e0474057d7d4a7e6
+62444	63970	8110060968476925	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_misc.c.obj	33b28aa40fed8a02
+53930	54846	8110060883339766	esp-idf/esp_stdio/CMakeFiles/__idf_esp_stdio.dir/stdio_syscalls_simple.c.obj	bb08018308e1f6f1
+54586	55599	8110060889889190	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_init.c.obj	bf5680dff188c196
+54597	55645	8110060890001801	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_mmc.c.obj	920f5f67522ded9d
+55084	55703	8110060894881876	esp-idf/efuse/libefuse.a	a0685650c76baa19
+54767	56126	8110060891713708	esp-idf/sdmmc/CMakeFiles/__idf_sdmmc.dir/sdmmc_sd.c.obj	4012d7a55d464ab8
+54286	56150	8110060886903435	esp-idf/esp_driver_spi/CMakeFiles/__idf_esp_driver_spi.dir/src/gpspi/spi_master.c.obj	99f59d4d79097a13
+54846	56173	8110060892500182	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/api/esp_blufi_api.c.obj	77e270db09b65cc8
+54817	56398	8110060892201395	esp-idf/bt/CMakeFiles/__idf_bt.dir/controller/esp32c3/bt.c.obj	b361428e48d6b715
+55645	56715	8110060900480378	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/allocator.c.obj	92cd9d400ffb7935
+67697	69843	8110061021002488	esp-idf/esp_https_server/CMakeFiles/__idf_esp_https_server.dir/src/https_server.c.obj	516f229fcee88dff
+55726	56772	8110060901294400	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/buffer.c.obj	a45d42377d55f20c
+69006	70236	8110061034105012	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/WL_Flash.cpp.obj	73f883ad00f19066
+44	15457	8110173403861774	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/heap/cmake_install.cmake	35ca80d3cab8cffd
+59665	61267	8110060940684865	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs.c.obj	b617853c43cf702e
+56385	56862	8110060907886137	esp-idf/app_update/libapp_update.a	fdd9d1f8ad08650f
+55600	56880	8110060900034312	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/profile/esp/blufi/blufi_protocol.c.obj	75b1e7e376951217
+55558	57007	8110060899612838	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/core/btc_task.c.obj	c2a396700fca4d4a
+55630	57072	8110060900338956	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/alarm.c.obj	5714eacdc58ea07e
+56173	57276	8110060905764933	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/hash_map.c.obj	3294f9206b40228a
+56862	57324	8110060912660892	esp-idf/esp_bootloader_format/libesp_bootloader_format.a	4a5e84ce9bd6f23
+55905	57379	8110060903089821	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/fixed_queue.c.obj	26af0307c1f5242f
+76108	76459	8110061105113530	esp-idf/cmock/libcmock.a	7dd75efdc29334de
+59012	59606	8110060934159426	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_shutdown.c.obj	776099f877ccf8b4
+56078	57437	8110060904823260	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/pkt_queue.c.obj	fbeb9eaf42a9f3e4
+56126	57564	8110060905308536	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/future.c.obj	764a2c00f808634f
+56094	57614	8110060904969827	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/fixed_pkt_queue.c.obj	c56c02b323cedbef
+56880	57886	8110060912825172	esp-idf/bt/CMakeFiles/__idf_bt.dir/porting/mem/bt_osi_mem.c.obj	468121633d3ca213
+57631	57976	8110060920356536	esp-idf/esp_hal_mspi/libesp_hal_mspi.a	aa0eb4a6a5e38192
+56578	58090	8110060909821330	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/osi/thread.c.obj	aa496f273082e7f1
+44	15457	8110173407953871	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sd_intf/cmake_install.cmake	35ca80d3cab8cffd
+60644	62444	8110060950484031	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_aes_ccm.c.obj	62fc04540b288830
+57976	58341	8110060923802765	esp-idf/esp_stdio/libesp_stdio.a	3507b21d1e8f5afd
+57007	58380	8110060914102965	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/transport/src/transport.c.obj	6bae328423dc4ab3
+68872	69801	8110061032755173	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/SPI_Flash.cpp.obj	9288d7f4c05f1c33
+57276	58732	8110060916791579	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/tps/src/ble_svc_tps.c.obj	5fa216abbb045f91
+57072	58764	8110060914765207	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.obj	8849af39d68f0256
+57437	58961	8110060918403838	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/ans/src/ble_svc_ans.c.obj	928e54fe8dbe2ede
+57564	58994	8110060919674886	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/hr/src/ble_svc_hr.c.obj	286a630102f4f135
+57422	59012	8110060918254029	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/ipss/src/ble_svc_ipss.c.obj	a5748ff4e2eee851
+57614	59102	8110060920180241	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/htp/src/ble_svc_htp.c.obj	9bda17349404322d
+58395	59184	8110060927978822	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/hid/src/ble_svc_hid.c.obj	91f4617880d75eb
+66993	68478	8110061013967698	esp-idf/esp_driver_i2c/CMakeFiles/__idf_esp_driver_i2c.dir/i2c_slave.c.obj	dd213b480ad0af36
+57886	59260	8110060922905126	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/gap/src/ble_svc_gap.c.obj	c349f6dac382b8cd
+58764	59469	8110060931678283	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_cs.c.obj	b43d30398e1c9a5d
+58076	59664	8110060924804467	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/lls/src/ble_svc_lls.c.obj	a4ab968191964860
+58475	60010	8110060928792003	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/sps/src/ble_svc_sps.c.obj	97ea1e2dc8d74ef8
+58649	60112	8110060930517266	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/cte/src/ble_svc_cte.c.obj	db86443b72976331
+61177	63092	8110060955812649	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_att_cmd.c.obj	79ae2d1998f7b11
+339	435	8110173053279295	bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+58380	60303	8110060927836433	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/cts/src/ble_svc_cts.c.obj	103eae7e4f6e41be
+58733	60432	8110060931365831	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/services/ras/src/ble_svc_ras.c.obj	c3f69eb1d58909cc
+59102	60659	8110060935051541	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.obj	30c1ceae3613323d
+73611	75803	8110061080153471	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/rgb/esp_lcd_panel_rgb.c.obj	7334fe8c25b7173
+59469	61116	8110060938735114	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_ibeacon.c.obj	14a1d26f8ac755a
+59606	61145	8110060940105454	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_stop.c.obj	bdadb84b9a14d4c9
+59488	61177	8110060938917606	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_atomic.c.obj	8f02ea595325c9c8
+44	15457	8110173407666491	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_parlio/cmake_install.cmake	35ca80d3cab8cffd
+59279	61282	8110060936824686	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_att_svr.c.obj	fa17db3b0cd18b42
+59573	61495	8110060939774748	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_sm_alg.c.obj	370d15e1c9fc517f
+62342	64066	8110060967459795	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_l2cap.c.obj	844f527fe2a9d479
+60112	61519	8110060945161876	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_mqueue.c.obj	7d1121df7b200d8f
+60010	61708	8110060944140486	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_hci_evt.c.obj	392071da421d593e
+60303	61724	8110060947069669	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_periodic_sync.c.obj	56f6ce15e8db4ff4
+44	15457	8110173403548135	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_rom/cmake_install.cmake	35ca80d3cab8cffd
+60713	62428	8110060951173798	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_sm_lgcy.c.obj	f51b70d7aba179a
+61267	62865	8110060956710735	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_log.c.obj	284c5b8b89d47a84
+61724	63383	8110060961278573	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_sm_cmd.c.obj	6dcde194f3b81fac
+63192	63748	8110060975947299	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/store/config/src/ble_store_nvs.c.obj	45a510f6acbfaa3a
+62125	63790	8110060965288794	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_uuid.c.obj	7d31b87350ef0a30
+62428	64174	8110060968319308	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_sm_sc.c.obj	59df1a106928a052
+62801	64485	8110060972040280	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_hs_adv.c.obj	41344959812cbf6f
+63749	64565	8110060981528505	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/port/src/nvs_port.c.obj	1cd2ca0bffb1d7c5
+63092	64639	8110060974965441	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/store/ram/src/ble_store_ram.c.obj	bc317dd5672ba536
+62771	64779	8110060971744458	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/src/ble_gatts.c.obj	907a57b769bc7e72
+63130	65043	8110060975329660	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/host/store/config/src/ble_store_config.c.obj	d07659f5a20bbc10
+63718	65547	8110060981214275	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/nimble_port.c.obj	c25a558eaf9d8f3b
+63970	65582	8110060983741577	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/os_mempool.c.obj	dba30a3fbc3e8335
+76604	76965	8110061110066259	esp-idf/esp_driver_touch_sens/libesp_driver_touch_sens.a	f28853821c715231
+64639	65784	8110060990428343	esp-idf/console/CMakeFiles/__idf_console.dir/esp_console_repl_internal.c.obj	4403d0a8cf687111
+63984	65839	8110060983882795	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/porting/nimble/src/mem.c.obj	55052d9bc2328f78
+64627	65947	8110060990307224	esp-idf/console/CMakeFiles/__idf_console.dir/esp_console_common.c.obj	64be37ab7cc6fd70
+64485	66150	8110060988896720	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.obj	9bf1addc99ee8177
+64469	66279	8110060988721605	esp-idf/bt/CMakeFiles/__idf_bt.dir/host/nimble/esp-hci/src/esp_nimble_hci.c.obj	34d6326bada10c00
+64566	66415	8110060989692020	esp-idf/bt/CMakeFiles/__idf_bt.dir/common/btc/profile/esp/blufi/nimble_host/esp_blufi.c.obj	c5c1a9d9a092d2b
+65754	66586	8110061001568492	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_hashtable.c.obj	9ca3f1b5d44cf616
+66136	66639	8110061005398052	esp-idf/sdmmc/libsdmmc.a	363ce260b2aa88d9
+65856	66742	8110061002596494	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_rem.c.obj	ef00466ea8027528
+65947	66992	8110061003511104	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_str.c.obj	fcc7eb21591d7be9
+66002	67059	8110061004060498	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_utils.c.obj	fca21cb124337b94
+65886	67113	8110061002902809	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/arg_rex.c.obj	3e21e0682049e596
+66098	67197	8110061005010899	esp-idf/console/CMakeFiles/__idf_console.dir/argtable3/argtable3.c.obj	c5a08d3ca42029b4
+66546	67533	8110061009497118	esp-idf/unity/CMakeFiles/__idf_unity.dir/unity_utils_freertos.c.obj	e4a35496116dcfbf
+67197	67758	8110061016010734	esp-idf/console/libconsole.a	b2761ac121bac802
+44	15457	8110173407408747	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i2c/cmake_install.cmake	35ca80d3cab8cffd
+66279	67832	8110061006821491	esp-idf/protobuf-c/CMakeFiles/__idf_protobuf-c.dir/protobuf-c/protobuf-c/protobuf-c.c.obj	671d1b4dfc9c3f15
+69069	69566	8110061034722987	esp-idf/wear_levelling/CMakeFiles/__idf_wear_levelling.dir/crc32.cpp.obj	88e48d34623057be
+67369	67982	8110061017733535	esp-idf/esp_driver_sdspi/CMakeFiles/__idf_esp_driver_sdspi.dir/src/sdspi_crc.c.obj	d82cb607edcd418a
+67759	68619	8110061021622853	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/proto-c/constants.pb-c.c.obj	a02f96ba6420496d
+66742	68733	8110061011455828	esp-idf/esp_driver_i2c/CMakeFiles/__idf_esp_driver_i2c.dir/i2c_master.c.obj	d4250f9f68a023f0
+67982	68939	8110061023859130	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/proto-c/sec1.pb-c.c.obj	11e67f328d096aa
+68178	69068	8110061025818692	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/proto-c/session.pb-c.c.obj	aa6be1c164dd397
+67606	69093	8110061020092672	esp-idf/esp_driver_twai/CMakeFiles/__idf_esp_driver_twai.dir/esp_twai.c.obj	d7506db2ace8aa
+68091	69217	8110061024955069	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/proto-c/sec2.pb-c.c.obj	ed05e6100dd3cc1e
+68431	70206	8110061028348595	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/transports/protocomm_httpd.c.obj	2e157e68723337b3
+68619	70283	8110061030230343	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/crypto/srp6a/esp_srp.c.obj	e08ce85c46d742fe
+68478	70483	8110061028823947	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/security/security2.c.obj	b0918d8dc0c510ca
+69188	70507	8110061035920570	esp-idf/esp_driver_gptimer/CMakeFiles/__idf_esp_driver_gptimer.dir/src/gptimer_common.c.obj	1ef7121808a20e25
+69134	70577	8110061035369380	esp-idf/esp_driver_gptimer/CMakeFiles/__idf_esp_driver_gptimer.dir/src/gptimer.c.obj	c2e56038894921eb
+69843	70902	8110061042471897	esp-idf/esp_driver_cam/CMakeFiles/__idf_esp_driver_cam.dir/esp_cam_ctlr.c.obj	c5912f2e50a3291d
+69927	70918	8110061043315233	esp-idf/esp_driver_cam/CMakeFiles/__idf_esp_driver_cam.dir/dvp/src/esp_cam_ctlr_dvp_gdma.c.obj	417287a8da0e532b
+69856	70969	8110061042585831	esp-idf/esp_driver_cam/CMakeFiles/__idf_esp_driver_cam.dir/dvp_share_ctrl.c.obj	8963e8a4eb8c64de
+68733	71078	8110061031369068	esp-idf/protocomm/CMakeFiles/__idf_protocomm.dir/src/transports/protocomm_nimble.c.obj	7686ce38c47f7e75
+69788	71205	8110061041898932	esp-idf/driver/CMakeFiles/__idf_driver.dir/touch_sensor/touch_sensor_common.c.obj	68aae23ce68ba791
+69814	71423	8110061042176040	esp-idf/driver/CMakeFiles/__idf_driver.dir/twai/twai.c.obj	1e7b2587d4f03eb0
+69802	71495	8110061042062253	esp-idf/driver/CMakeFiles/__idf_driver.dir/touch_sensor/esp32s3/touch_sensor.c.obj	d463931b3d32e1f8
+70283	71605	8110061046875113	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_cmpr.c.obj	d62de525cad295f8
+44	15457	8110173404980086	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_event/cmake_install.cmake	35ca80d3cab8cffd
+75667	76834	8110061100695826	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs/src/spiffs_check.c.obj	19ec3f322ef6e879
+69972	71692	8110061043756868	esp-idf/esp_driver_cam/CMakeFiles/__idf_esp_driver_cam.dir/dvp/src/esp_cam_ctlr_dvp_cam.c.obj	4da1ac699686f247
+70484	72165	8110061048881643	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_com.c.obj	34bc753a79cb51d1
+44	15457	8110173408988846	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/protobuf-c/cmake_install.cmake	35ca80d3cab8cffd
+70549	72184	8110061049537849	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_oper.c.obj	ce06b4cf4ef505f4
+70507	72236	8110061049107294	esp-idf/esp_driver_mcpwm/CMakeFiles/__idf_esp_driver_mcpwm.dir/src/mcpwm_gen.c.obj	ead260f47bd19b9
+72236	72603	8110061066403142	esp-idf/esp_driver_twai/libesp_driver_twai.a	12fbf87582f9e64d
+70969	72737	8110061053738081	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_common.c.obj	11f4b40abda2778
+70918	72768	8110061053218272	esp-idf/esp_driver_pcnt/CMakeFiles/__idf_esp_driver_pcnt.dir/src/pulse_cnt.c.obj	bc591a7b9d5738ee
+71079	72821	8110061054828472	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_encoder.c.obj	52fbb8aebec5ac68
+71693	73395	8110061060966903	esp-idf/esp_driver_sdm/CMakeFiles/__idf_esp_driver_sdm.dir/src/sdm.c.obj	91b7004132d47c8d
+72224	73505	8110061066288171	esp-idf/esp_driver_tsens/CMakeFiles/__idf_esp_driver_tsens.dir/src/temperature_sensor.c.obj	33ce7ffa46ecd833
+71605	73536	8110061060096450	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_tx.c.obj	363a85b4c0ff48c2
+71559	73579	8110061059624905	esp-idf/esp_driver_rmt/CMakeFiles/__idf_esp_driver_rmt.dir/src/rmt_rx.c.obj	3b19888afda168fe
+72260	73611	8110061066641623	esp-idf/esp_eth/CMakeFiles/__idf_esp_eth.dir/src/esp_eth.c.obj	f9180cc5a5de2687
+72199	73728	8110061066032894	esp-idf/esp_driver_touch_sens/CMakeFiles/__idf_esp_driver_touch_sens.dir/common/touch_sens_common.c.obj	c2008e241f09adff
+72723	73840	8110061071273759	esp-idf/esp_hid/CMakeFiles/__idf_esp_hid.dir/src/esp_hid_common.c.obj	18c35e5a8b206dfa
+72633	73923	8110061070370051	esp-idf/esp_hid/CMakeFiles/__idf_esp_hid.dir/src/esp_hidd.c.obj	1a8c01003c16b451
+73728	74203	8110061081321867	esp-idf/protocomm/libprotocomm.a	52fcb2710bbc2706
+72894	74256	8110061072972226	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/src/esp_lcd_common.c.obj	1fe89021e542128c
+72704	74351	8110061071075991	esp-idf/esp_hid/CMakeFiles/__idf_esp_hid.dir/src/esp_hidh.c.obj	ff01558cfeb33df0
+72768	74467	8110061071724550	esp-idf/esp_hid/CMakeFiles/__idf_esp_hid.dir/src/nimble_hidh.c.obj	5c7fe185291c9c38
+72737	74650	8110061071406943	esp-idf/esp_hid/CMakeFiles/__idf_esp_hid.dir/src/nimble_hidd.c.obj	76c23785becb3714
+73395	74667	8110061077995705	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/src/esp_lcd_panel_ssd1306.c.obj	aba97a85892eb80c
+74256	74681	8110061086597102	esp-idf/wear_levelling/libwear_levelling.a	6b7b3ee350c5891f
+73536	74926	8110061079405539	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/i2c/esp_lcd_panel_io_i2c.c.obj	ef7e772a7855369d
+73923	74952	8110061083271469	esp-idf/esp_local_ctrl/CMakeFiles/__idf_esp_local_ctrl.dir/proto-c/esp_local_ctrl.pb-c.c.obj	4acfd496e2ac240
+73579	75172	8110061079824520	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/spi/esp_lcd_panel_io_spi.c.obj	e3007ab321142e4b
+73840	75339	8110061082444265	esp-idf/esp_local_ctrl/CMakeFiles/__idf_esp_local_ctrl.dir/src/esp_local_ctrl_handler.c.obj	b7375e05da4fb72f
+73599	75544	8110061080023342	esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/i80/esp_lcd_panel_io_i80.c.obj	1f12bf3c712214e1
+74064	75666	8110061084671495	esp-idf/esp_local_ctrl/CMakeFiles/__idf_esp_local_ctrl.dir/src/esp_local_ctrl_transport_ble.c.obj	6ebf588148fdf76f
+74203	75730	8110061086075907	esp-idf/esp_local_ctrl/CMakeFiles/__idf_esp_local_ctrl.dir/src/esp_local_ctrl_transport_httpd.c.obj	f5cc1f8f3cefa3cc
+76588	76985	8110061109910927	esp-idf/esp_driver_sdm/libesp_driver_sdm.a	432b19ef5a8ae740
+74681	75791	8110061090854145	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/diskio/diskio_sdmmc.c.obj	a4ed115080f47774
+75172	76059	8110061095766543	esp-idf/perfmon/CMakeFiles/__idf_perfmon.dir/xtensa_perfmon_access.c.obj	c9599f1b73eca14c
+75339	76107	8110061097436534	esp-idf/perfmon/CMakeFiles/__idf_perfmon.dir/xtensa_perfmon_apis.c.obj	89ecade6494b4987
+75544	76191	8110061099485956	esp-idf/perfmon/CMakeFiles/__idf_perfmon.dir/xtensa_perfmon_masks.c.obj	ef697df0caf9734
+74488	76222	8110061088914135	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/src/ff.c.obj	4ac6cd1b702eb85d
+74952	76339	8110061093563951	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/vfs/vfs_fat_spiflash.c.obj	acb91471151ddc8b
+76059	76494	8110061104633170	esp-idf/esp_driver_gptimer/libesp_driver_gptimer.a	b4d2221cb458a7e8
+74926	76511	8110061093290894	esp-idf/fatfs/CMakeFiles/__idf_fatfs.dir/vfs/vfs_fat_sdmmc.c.obj	8ff29a3d7b133d30
+75642	76588	8110061100461371	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs/src/spiffs_cache.c.obj	ed8bce67b19dbd2c
+76191	76647	8110061105953627	esp-idf/driver/libdriver.a	e705d16d400cbf30
+76222	76661	8110061106253220	esp-idf/esp_driver_cam/libesp_driver_cam.a	3aa2c94824b9c2db
+76763	77158	8110061111659797	esp-idf/esp_lcd/libesp_lcd.a	b1bc5a1e4d512ae6
+75606	76744	8110061100102876	esp-idf/rt/CMakeFiles/__idf_rt.dir/FreeRTOS_POSIX_mqueue.c.obj	f411c859818e7ef
+75618	76763	8110061100215959	esp-idf/rt/CMakeFiles/__idf_rt.dir/FreeRTOS_POSIX_utils.c.obj	3def6db2b69326da
+76339	76777	8110061107421041	esp-idf/esp_driver_ledc/libesp_driver_ledc.a	804ba18a24020c2e
+76494	76857	8110061108980110	esp-idf/esp_driver_pcnt/libesp_driver_pcnt.a	5596ae1668236f48
+75730	76871	8110061101342229	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs/src/spiffs_gc.c.obj	f88dc0ba4297236
+76459	76885	8110061108639960	esp-idf/esp_driver_mcpwm/libesp_driver_mcpwm.a	9923535c919d58a4
+75755	77024	8110061101585780	esp-idf/spiffs/CMakeFiles/__idf_spiffs.dir/spiffs/src/spiffs_hydrogen.c.obj	43d4dd7e7eb376bb
+76647	77025	8110061110503225	esp-idf/esp_driver_tsens/libesp_driver_tsens.a	7ea16f3d3f91570
+76745	77098	8110061111493864	esp-idf/esp_hid/libesp_hid.a	19e29f0df359f222
+76777	77099	8110061111805586	esp-idf/esp_local_ctrl/libesp_local_ctrl.a	31fd8ba1b1f4a119
+44	15457	8110173408080217	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdmmc/cmake_install.cmake	35ca80d3cab8cffd
+76871	77155	8110061112747563	esp-idf/rt/librt.a	3b62c4cde67fe3e8
+76857	77155	8110061112612571	esp-idf/perfmon/libperfmon.a	3e5a78f1d61f8972
+76834	77236	8110061112382249	esp-idf/fatfs/libfatfs.a	fe00389a170159b7
+44	15457	8110173408857916	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_https_server/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409399537	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/ieee802154/cmake_install.cmake	35ca80d3cab8cffd
+99	142	8110160239083272	esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj	f7f49455b4ef46e3
+51267	77883	8110061122818761	bootloader-prefix/src/bootloader-stamp/bootloader-configure	7a400d1896364318
+51267	77883	8110061122818761	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-configure	7a400d1896364318
+130	296	8110173050299348	bootloader/bootloader.map	be5e988e75b04439
+130	296	8110173050299348	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+130	296	8110173050299348	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.map	be5e988e75b04439
+296	339	8110173051954437	bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+339	435	8110173053279295	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader-complete	12f2c106adc65a67
+339	435	8110173053279295	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+239	14217	8110160379771835	esp-idf/esp_system/ld/sections.ld	3360429a6eb520e2
+14217	16222	8110160380268141	mota_can_reader.elf	2e8a3b56128e91a9
+16222	16483	8110160402867650	.bin_timestamp	6845c11893cb5bb9
+16222	16483	8110160402867650	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/.bin_timestamp	6845c11893cb5bb9
+16483	16569	8110160402908750	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/app_check_size	d2b58fd16d378bd3
+44	15457	8110173400975345	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173400975345	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401052829	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/xtensa/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401193005	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_mspi/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401210416	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bootloader/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401230439	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esptool_py/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401491415	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_partition/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401568893	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/efuse/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173403360060	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404899565	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_gptimer/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401648997	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_security/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401784297	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_pm/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401864975	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401864975	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173401884997	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173402469246	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173402479257	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/pkgconfig/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173402544340	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_timg/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173402615966	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_wdt/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173402893754	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/spi_flash/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173403172379	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_pcnt/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173403450618	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_common/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173403780848	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/log/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173403961904	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/soc/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404019363	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_dma/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404397447	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/freertos/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404494959	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_libc/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404514982	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_libc/src/port/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404575046	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/pthread/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404632518	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cxx/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404779431	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_ringbuf/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173404839501	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_uart/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405057579	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/nvs_sec_provider/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405177766	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/nvs_flash/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405255257	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_phy/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405320336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_usb_serial_jtag/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405375400	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/vfs/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405613811	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/lwip/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405633837	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_netif_stack/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173405989411	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/wpa_supplicant/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406066891	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_coex/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406146984	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_wifi/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406299554	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_gdbstub/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406675623	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bt/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406755741	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/unity/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173406932970	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/console/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407013071	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/driver/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407150636	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp-tls/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407248170	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ana_cmpr/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407338314	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_cam/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407488856	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i2s/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407488856	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i3c/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407508878	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_psram/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407566335	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ledc/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407723953	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_pcnt/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173407882388	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/sdmmc/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408023966	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdm/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408721059	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_http_server/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408160621	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdspi/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408220690	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_touch_sens/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408338223	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_twai/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408415965	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_eth/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173408640963	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_http_client/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409186463	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_local_ctrl/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409206485	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_trace/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409206485	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/espcoredump/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409278966	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/wear_levelling/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409379081	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/fatfs/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409379081	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/idf_test/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409399537	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/openthread/cmake_install.cmake	35ca80d3cab8cffd
+44	15457	8110173409459620	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/perfmon/cmake_install.cmake	35ca80d3cab8cffd
+16569	27907	8110160403782158	CMakeFiles/flash.util	40b387453f9d0fc6
+44	15837	8110173410010336	build.ninja	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/xtensa/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_stdio/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_mspi/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_blockdev/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bootloader/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esptool_py/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/partition_table/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_app_format/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_bootloader_format/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/app_update/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_partition/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/efuse/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_security/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_gpio/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_pm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/everest/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/3rdparty/p256-m/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/mbedtls/mbedtls/pkgconfig/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_timg/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_wdt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bootloader_support/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_mm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/spi_flash/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_usb_cdc_rom_console/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_i2c/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_lcd/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_mcpwm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_pcnt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/port/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/port/soc/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_common/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_rom/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/hal/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/log/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/heap/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/soc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_dma/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hal_usb/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/port/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/mspi_timing_tuning/port/esp32s3/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hw_support/lowpower/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/freertos/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_libc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_libc/src/port/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/pthread/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cxx/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_timer/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_ringbuf/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_uart/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_gptimer/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/app_trace/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_event/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/nvs_sec_provider/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/nvs_flash/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_phy/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_usb_serial_jtag/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/vfs/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/lwip/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_netif_stack/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_netif/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/wpa_supplicant/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_coex/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_wifi/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_spi/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_gdbstub/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/bt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/unity/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/cmock/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/console/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/driver/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/http_parser/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp-tls/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_adc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ana_cmpr/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_bitscrambler/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_isp/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_cam/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_dac/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i2c/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i2s/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_i3c/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_psram/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_jpeg/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ledc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_mcpwm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_parlio/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_pcnt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_ppa/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_rmt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/sdmmc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sd_intf/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdio/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdmmc/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_sdspi/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_touch_sens/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_tsens/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_driver_twai/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_eth/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_hid/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/tcp_transport/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_http_client/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_http_server/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_https_ota/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_https_server/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_lcd/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/protobuf-c/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/protocomm/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_local_ctrl/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_trace/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/espcoredump/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/wear_levelling/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/fatfs/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/idf_test/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/ieee802154/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/openthread/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/perfmon/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/rt/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/spiffs/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/ulp/cmake_install.cmake	35ca80d3cab8cffd
+44	15837	8110173410010336	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/main/cmake_install.cmake	35ca80d3cab8cffd
+131	296	8110173412508114	bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+131	296	8110173412508114	bootloader/bootloader.elf	be5e988e75b04439
+131	296	8110173412508114	bootloader/bootloader.bin	be5e988e75b04439
+131	296	8110173412508114	bootloader/bootloader.map	be5e988e75b04439
+131	296	8110173412508114	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+131	296	8110173412508114	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.elf	be5e988e75b04439
+131	296	8110173412508114	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.bin	be5e988e75b04439
+131	296	8110173412508114	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.map	be5e988e75b04439
+297	339	8110173414154264	bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+297	339	8110173414154264	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+339	427	8110173415395497	CMakeFiles/bootloader-complete	12f2c106adc65a67
+339	427	8110173415395497	bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+339	427	8110173415395497	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader-complete	12f2c106adc65a67
+339	427	8110173415395497	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+121	910	8110173412405741	esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj	fbc9b7ba209d0b3f
+910	1021	8110173420291538	esp-idf/main/libmain.a	4bfe9f944bdb9ab6
+1021	15027	8110173560999536	esp-idf/esp_system/ld/sections.ld	3360429a6eb520e2
+1021	15027	8110173560999536	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/esp-idf/esp_system/ld/sections.ld	3360429a6eb520e2
+15027	17645	8110173561455598	mota_can_reader.elf	33b63817b10016b4
+17645	17939	8110173590532468	.bin_timestamp	6845c11893cb5bb9
+17645	17939	8110173590532468	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/.bin_timestamp	6845c11893cb5bb9
+17939	18026	8110173590584027	CMakeFiles/app_check_size	d2b58fd16d378bd3
+17939	18026	8110173590584027	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/app_check_size	d2b58fd16d378bd3
+110	215	8110173738093633	CMakeFiles/app_check_size	d2b58fd16d378bd3
+110	215	8110173738093633	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/app_check_size	d2b58fd16d378bd3
+100	284	8110173737993512	bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+100	284	8110173737993512	bootloader/bootloader.elf	be5e988e75b04439
+100	284	8110173737993512	bootloader/bootloader.bin	be5e988e75b04439
+100	284	8110173737993512	bootloader/bootloader.map	be5e988e75b04439
+100	284	8110173737993512	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+100	284	8110173737993512	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.elf	be5e988e75b04439
+100	284	8110173737993512	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.bin	be5e988e75b04439
+100	284	8110173737993512	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.map	be5e988e75b04439
+284	326	8110173739822102	bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+284	326	8110173739822102	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+326	409	8110173741034494	CMakeFiles/bootloader-complete	12f2c106adc65a67
+326	409	8110173741034494	bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+326	409	8110173741034494	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader-complete	12f2c106adc65a67
+326	409	8110173741034494	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+111	198	8110176682254424	CMakeFiles/app_check_size	d2b58fd16d378bd3
+111	198	8110176682254424	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/app_check_size	d2b58fd16d378bd3
+102	265	8110176682156921	bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+102	265	8110176682156921	bootloader/bootloader.elf	be5e988e75b04439
+102	265	8110176682156921	bootloader/bootloader.bin	be5e988e75b04439
+102	265	8110176682156921	bootloader/bootloader.map	be5e988e75b04439
+102	265	8110176682156921	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-build	be5e988e75b04439
+102	265	8110176682156921	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.elf	be5e988e75b04439
+102	265	8110176682156921	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.bin	be5e988e75b04439
+102	265	8110176682156921	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader/bootloader.map	be5e988e75b04439
+265	309	8110176683801814	bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+265	309	8110176683801814	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-install	2344e7e9d32d9742
+309	394	8110176685041483	CMakeFiles/bootloader-complete	12f2c106adc65a67
+309	394	8110176685041483	bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+309	394	8110176685041483	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader-complete	12f2c106adc65a67
+309	394	8110176685041483	D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-done	12f2c106adc65a67
+394	12571	8110176685096546	CMakeFiles/flash.util	40b387453f9d0fc6

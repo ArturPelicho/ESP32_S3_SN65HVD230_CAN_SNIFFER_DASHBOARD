@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/CMakeFiles/bootloader-complete.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+D:/000_GD_LocMirror/004 - ARTUR PELICHO/004_PROGRAMING/003_ActiveProjects/MOTA_CAN_READER_1/build_fresh/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

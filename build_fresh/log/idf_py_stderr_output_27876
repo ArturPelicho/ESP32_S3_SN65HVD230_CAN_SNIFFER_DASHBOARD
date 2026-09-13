@@ -1,0 +1,9 @@
+Command: C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe C:\Users\artur\esp\v6.0\esp-idf\tools/idf_monitor.py -p COM8 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\mota_can_reader.elf D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\bootloader\bootloader.elf --force-color -m 'C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe' 'C:\Users\artur\esp\v6.0\esp-idf\tools\idf.py' '--build-dir' 'build_fresh' '-p' 'COM8'
+[0;33m--- Warning: GDB cannot open serial ports accessed as COMx[0m
+[0;33m--- Using \\.\COM8 instead...[0m
+[0;33m--- esp-idf-monitor 1.8.0 on \\.\COM8 115200[0m
+[0;33m--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H[0m
+[0;33m--- Connection to \\.\COM8 failed. Available ports:
+--- COM1
+--- COM8[0m
+[0m

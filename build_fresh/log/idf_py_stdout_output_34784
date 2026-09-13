@@ -1,0 +1,446 @@
+Command: C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe C:\Users\artur\esp\v6.0\esp-idf\tools/idf_monitor.py -p COM8 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\mota_can_reader.elf D:\000_GD_LocMirror\004 - ARTUR PELICHO\004_PROGRAMING\003_ActiveProjects\MOTA_CAN_READER_1\build_fresh\bootloader\bootloader.elf --force-color -m 'C:\Users\artur\.espressif\python_env\idf6.0_py3.11_env\Scripts\python.exe' 'C:\Users\artur\esp\v6.0\esp-idf\tools\idf.py' '--build-dir' 'build_fresh' '-p' 'COM8'
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x1588
+load:0x403c8700,len:0xda0
+load:0x403cb700,len:0x2fa0
+entry 0x403c8908
+[0;32mI (24) boot: ESP-IDF v6.0-beta1-624-g6534932340 2nd stage bootloader[0m
+[0;32mI (25) boot: compile time Sep 13 2026 13:35:14[0m
+[0;32mI (25) boot: Multicore bootloader[0m
+[0;32mI (27) boot: chip revision: v0.2[0m
+[0;32mI (29) boot: efuse block revision: v1.3[0m
+[0;32mI (33) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (37) boot.esp32s3: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32s3: SPI Flash Size : 16MB[0m
+[0;32mI (44) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (52) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (77) boot: End of partition table[0m
+[0;32mI (81) esp_image: segment 0: paddr=00010020 vaddr=3c060020 size=15a78h ( 88696) map[0m
+[0;32mI (104) esp_image: segment 1: paddr=00025aa0 vaddr=3fc97700 size=04170h ( 16752) load[0m
+[0;32mI (108) esp_image: segment 2: paddr=00029c18 vaddr=40374000 size=06400h ( 25600) load[0m
+[0;32mI (114) esp_image: segment 3: paddr=00030020 vaddr=42000020 size=57670h (358000) map[0m
+[0;32mI (180) esp_image: segment 4: paddr=00087698 vaddr=4037a400 size=0d2d8h ( 53976) load[0m
+[0;32mI (192) esp_image: segment 5: paddr=00094978 vaddr=50000000 size=00024h (    36) load[0m
+[0;32mI (200) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (201) boot: Disabling RNG early entropy source...[0m
+[0;32mI (211) cpu_start: Multicore app[0m
+[0;32mI (219) cpu_start: GPIO 44 and 43 are used as console UART I/O pins[0m
+[0;32mI (220) cpu_start: Pro cpu start user code[0m
+[0;32mI (220) cpu_start: cpu freq: 240000000 Hz[0m
+[0;32mI (221) app_init: Application information:[0m
+[0;32mI (225) app_init: Project name:     mota_can_reader[0m
+[0;32mI (230) app_init: App version:      1[0m
+[0;32mI (233) app_init: Compile time:     Sep 13 2026 13:34:48[0m
+[0;32mI (238) app_init: ELF file SHA256:  c29f9193f...[0m
+[0;32mI (243) app_init: ESP-IDF:          v6.0-beta1-624-g6534932340[0m
+[0;32mI (248) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (252) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (256) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (260) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (266) heap_init: At 3FC9D988 len 0004BD88 (303 KiB): RAM[0m
+[0;32mI (271) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (276) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (282) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM[0m
+[0;32mI (288) spi_flash: detected chip: mxic[0m
+[0;32mI (290) spi_flash: flash io: dio[0m
+[0;32mI (294) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (300) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (306) coexist: coex firmware version: 0cec0ed[0m
+[0;32mI (311) coexist: coexist rom version e7ae62f[0m
+[0;32mI (315) main_task: Started on CPU0[0m
+[0;32mI (345) main_task: Calling app_main()[0m
+[0;32mI (355) mota_can: TWAI active OBD mode started: 500000 bit/s, TX GPIO 17, RX GPIO 18[0m
+[0;32mI (355) BLE_INIT: BT controller compile version [0871069][0m
+[0;32mI (355) BLE_INIT: Using main XTAL as clock source[0m
+[0;32mI (365) BLE_INIT: Feature Config, ADV:1, BLE_50:1, DTM:1, SCAN:1, CCA:0, SMP:1, CONNECT:1[0m
+[0;32mI (375) BLE_INIT: Bluetooth MAC: 80:b5:4e:c6:e1:9a[0m
+[0;32mI (375) phy_init: phy_version 711,97bcf0a2,Aug 25 2025,19:04:10[0m
+[0;32mI (425) NimBLE: GAP procedure initiated: stop advertising.[0m
+
+[0;32mI (425) NimBLE: Failed to restore IRKs from store; status=8[0m
+
+[0;32mI (425) NimBLE: GAP procedure initiated: advertise; [0m
+[0;32mI (425) NimBLE: disc_mode=2[0m
+[0;32mI (425) NimBLE:  adv_channel_map=0 own_addr_type=0 adv_filter_policy=0 adv_itvl_min=0 adv_itvl_max=0[0m
+[0;32mI (435) NimBLE: [0m
+
+[0;32mI (435) mota_can: Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.[0m
+[0;32mI (445) main_task: Returned from app_main()[0m
+[0;32mI (94715) mota_can: BLE connected[0m
+[0;32mI (107495) mota_can: CAN CAN id=110 data=03 E6 00 00 73 00 00 28 [0m
+[0;32mI (107995) mota_can: CAN CAN id=110 data=03 E6 00 00 73 00 00 A8 [0m
+[0;32mI (108495) mota_can: CAN CAN id=110 data=03 E5 00 00 74 00 00 A8 [0m
+[0;32mI (108995) mota_can: CAN CAN id=110 data=03 E5 00 00 74 00 00 A8 [0m
+[0;32mI (109495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (109995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (110495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (110995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (111495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (111995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (112495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (112995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (113495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (113995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (114495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (114995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (115495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (115995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (116495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (116995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (117495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (117995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (118495) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (118995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (119495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (119995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (120495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (120995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (121495) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (121995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (122495) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (122995) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (123495) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (123995) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (124495) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (125005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (125505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (126005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (126505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (127005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (127505) mota_can: CAN CAN id=111 data=00 00 00 00 00 75 80 00 [0m
+[0;32mI (128005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (128505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (129005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (129505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (130005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (130505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (131005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (131505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (132005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (132505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (133005) mota_can: CAN CAN id=110 data=03 E6 06 C0 74 1F 40 A8 [0m
+[0;32mI (133505) mota_can: CAN CAN id=110 data=03 E6 1E 1E 74 65 90 A8 [0m
+[0;32mI (134005) mota_can: CAN CAN id=110 data=03 E6 23 20 74 7D 00 A8 [0m
+[0;32mI (134505) mota_can: CAN CAN id=110 data=03 E6 23 8A 74 75 30 A8 [0m
+[0;32mI (135005) mota_can: CAN CAN id=110 data=03 E6 25 50 74 7D 00 A8 [0m
+[0;32mI (135505) mota_can: CAN CAN id=110 data=03 E6 23 A0 74 75 30 A8 [0m
+[0;32mI (136005) mota_can: CAN CAN id=110 data=03 E6 22 D6 74 69 78 A8 [0m
+[0;32mI (136505) mota_can: CAN CAN id=110 data=03 E6 22 2A 74 61 A8 A8 [0m
+[0;32mI (137005) mota_can: CAN CAN id=110 data=03 E6 22 52 74 61 A8 A8 [0m
+[0;32mI (137305) mota_can: BLE command: 010C[0m
+[0;32mI (137315) mota_can: OBD response PID 010C: id=7E8 raw=[0m
+[0;32mI (137315) mota_can:   data[0]=04[0m
+[0;32mI (137315) mota_can:   data[1]=41[0m
+[0;32mI (137315) mota_can:   data[2]=0C[0m
+[0;32mI (137315) mota_can:   data[3]=21[0m
+[0;32mI (137315) mota_can:   data[4]=12[0m
+[0;32mI (137325) mota_can:   data[5]=00[0m
+[0;32mI (137325) mota_can:   data[6]=00[0m
+[0;32mI (137325) mota_can:   data[7]=00[0m
+[0;32mI (137505) mota_can: CAN CAN id=110 data=03 E6 22 20 74 61 A8 A8 [0m
+[0;32mI (138005) mota_can: CAN CAN id=110 data=03 E6 20 64 74 5D C0 A8 [0m
+[0;32mI (138505) mota_can: CAN CAN id=110 data=03 E6 20 6E 74 5D C0 A8 [0m
+[0;32mI (139005) mota_can: CAN CAN id=110 data=03 E6 1F 8A 74 55 F0 A8 [0m
+[0;32mI (139505) mota_can: CAN CAN id=110 data=03 E6 1F 82 74 52 08 A8 [0m
+[0;32mI (140005) mota_can: CAN CAN id=110 data=03 E6 1E 7C 74 4E 20 A8 [0m
+[0;32mI (140505) mota_can: CAN CAN id=110 data=03 E6 1F 50 74 52 08 A8 [0m
+[0;32mI (141005) mota_can: CAN CAN id=110 data=03 E6 1F 26 74 52 08 A8 [0m
+[0;32mI (141505) mota_can: CAN CAN id=110 data=03 E6 1E 44 74 4E 20 A8 [0m
+[0;32mI (142005) mota_can: CAN CAN id=110 data=03 E6 1C CA 74 46 50 A8 [0m
+[0;32mI (142505) mota_can: CAN CAN id=110 data=03 E6 1D 94 74 46 50 A8 [0m
+[0;32mI (143005) mota_can: CAN CAN id=110 data=03 E6 1D 44 74 4E 20 A8 [0m
+[0;32mI (143505) mota_can: CAN CAN id=110 data=03 E6 1D 18 74 46 50 A8 [0m
+[0;32mI (144005) mota_can: CAN CAN id=110 data=03 E6 1D D2 74 4E 20 A8 [0m
+[0;32mI (144505) mota_can: CAN CAN id=110 data=03 E6 0C CC 74 1B 58 28 [0m
+[0;32mI (145005) mota_can: CAN CAN id=110 data=03 E6 08 78 74 07 D0 28 [0m
+[0;32mI (145505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 28 [0m
+[0;32mI (146005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (146505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (147005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (147505) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (148015) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (148505) mota_can: CAN CAN id=110 data=03 E7 00 00 74 00 00 A8 [0m
+[0;32mI (149005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (149505) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (150005) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (150515) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (151015) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (151515) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (152015) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (152515) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (153015) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (153515) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (154015) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (154515) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (155015) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (155525) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (156025) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (156525) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (157025) mota_can: CAN CAN id=110 data=03 E6 00 00 74 00 00 A8 [0m
+[0;32mI (157525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (158025) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (158525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (159025) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (159525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (160025) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (160525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (161025) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (161525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (162025) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (162525) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (163035) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (163535) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (164035) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (164535) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (165035) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (165535) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (166035) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (166535) mota_can: CAN CAN id=110 data=03 E6 00 00 75 00 00 A8 [0m
+[0;32mI (167035) mota_can: CAN CAN id=110 data=03 EE 00 00 75 00 00 A8 [0m
+[0;32mI (167535) mota_can: CAN CAN id=110 data=03 E8 00 00 76 00 00 A8 [0m
+[0;32mI (168035) mota_can: CAN CAN id=111 data=00 00 00 00 00 74 82 00 [0m
+[0;32mI (168535) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (169035) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (169535) mota_can: CAN CAN id=110 data=03 EA 00 00 76 00 00 A8 [0m
+[0;32mI (170035) mota_can: CAN CAN id=110 data=03 E7 00 00 76 00 00 A8 [0m
+[0;32mI (170535) mota_can: CAN CAN id=111 data=00 00 00 00 00 74 82 00 [0m
+[0;32mI (171035) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (171535) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (172035) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (172535) mota_can: CAN CAN id=110 data=03 E6 00 00 76 00 00 A8 [0m
+[0;32mI (173035) mota_can: CAN CAN id=111 data=00 00 00 00 00 75 5E 00 [0m
+[0;32mI (173535) mota_can: CAN CAN id=110 data=03 E6 12 96 76 52 08 A8 [0m
+[0;32mI (174035) mota_can: CAN CAN id=110 data=03 E6 1F 94 76 61 A8 A8 [0m
+[0;32mI (174535) mota_can: CAN CAN id=110 data=03 E6 24 FC 76 7D 00 A8 [0m
+[0;32mI (175035) mota_can: CAN CAN id=110 data=03 E6 25 08 76 7D 00 A8 [0m
+[0;32mI (175535) mota_can: CAN CAN id=110 data=03 E6 24 F2 76 6D 60 A8 [0m
+[0;32mI (176035) mota_can: CAN CAN id=110 data=03 E6 25 44 76 6D 60 A8 [0m
+[0;32mI (176535) mota_can: CAN CAN id=110 data=03 E6 24 50 76 6D 60 A8 [0m
+[0;32mI (177035) mota_can: CAN CAN id=110 data=03 E6 23 54 76 69 78 A8 [0m
+[0;32mI (177535) mota_can: CAN CAN id=110 data=03 E6 22 16 76 61 A8 A8 [0m
+[0;32mI (178035) mota_can: CAN CAN id=111 data=00 00 00 00 00 74 8F 00 [0m
+[0;32mI (178355) mota_can: BLE command: 010C[0m
+[0;32mI (178365) mota_can: OBD response PID 010C: id=7E8 raw=[0m
+[0;32mI (178365) mota_can:   data[0]=04[0m
+[0;32mI (178365) mota_can:   data[1]=41[0m
+[0;32mI (178365) mota_can:   data[2]=0C[0m
+[0;32mI (178365) mota_can:   data[3]=1F[0m
+[0;32mI (178365) mota_can:   data[4]=68[0m
+[0;32mI (178375) mota_can:   data[5]=00[0m
+[0;32mI (178375) mota_can:   data[6]=00[0m
+[0;32mI (178375) mota_can:   data[7]=00[0m
+[0;32mI (178535) mota_can: CAN CAN id=110 data=03 E6 20 E4 76 5D C0 A8 [0m
+[0;32mI (179035) mota_can: CAN CAN id=110 data=03 E6 1F 50 76 52 08 A8 [0m
+[0;32mI (179535) mota_can: CAN CAN id=110 data=03 E6 1F F2 76 52 08 A8 [0m
+[0;32mI (180035) mota_can: CAN CAN id=110 data=03 E6 1F 82 76 4E 20 A8 [0m
+[0;32mI (180535) mota_can: CAN CAN id=110 data=03 E6 1E DC 76 52 08 A8 [0m
+[0;32mI (181035) mota_can: CAN CAN id=110 data=03 E6 1E 1E 76 4E 20 A8 [0m
+[0;32mI (181535) mota_can: CAN CAN id=110 data=03 E6 1D 0A 76 4E 20 A8 [0m
+[0;32mI (182035) mota_can: CAN CAN id=110 data=03 E6 1E 64 76 52 08 A8 [0m
+[0;32mI (182535) mota_can: CAN CAN id=110 data=03 E6 1C EC 76 4E 20 A8 [0m
+[0;32mI (183035) mota_can: CAN CAN id=110 data=03 E6 1D 8E 76 4E 20 A8 [0m
+[0;32mI (183535) mota_can: CAN CAN id=110 data=03 E6 1D 94 76 4E 20 A8 [0m
+[0;32mI (184035) mota_can: CAN CAN id=110 data=03 E6 1C A0 77 4E 20 A8 [0m
+[0;32mI (184535) mota_can: CAN CAN id=110 data=03 E6 1C B4 77 46 50 A8 [0m
+[0;32mI (185035) mota_can: CAN CAN id=110 data=03 E6 1C 5A 77 46 50 A8 [0m
+[0;32mI (185535) mota_can: CAN CAN id=110 data=03 E6 1C 1C 77 4E 20 A8 [0m
+[0;32mI (186035) mota_can: CAN CAN id=110 data=03 E6 1C E6 77 46 50 A8 [0m
+[0;32mI (186535) mota_can: CAN CAN id=110 data=03 E6 1D 26 77 46 50 A8 [0m
+[0;32mI (187035) mota_can: CAN CAN id=110 data=03 E6 1B 2C 77 46 50 A8 [0m
+[0;32mI (187535) mota_can: CAN CAN id=110 data=03 E6 1C EC 77 46 50 A8 [0m
+[0;32mI (188035) mota_can: CAN CAN id=110 data=03 E6 1C 3E 77 46 50 A8 [0m
+[0;32mI (188535) mota_can: CAN CAN id=110 data=03 E6 1C 24 77 46 50 A8 [0m
+[0;32mI (189035) mota_can: CAN CAN id=110 data=03 E6 1B 9E 77 3E 80 A8 [0m
+[0;32mI (189535) mota_can: CAN CAN id=110 data=03 E6 1C 6E 77 3E 80 A8 [0m
+[0;32mI (190035) mota_can: CAN CAN id=110 data=03 E6 1B 44 77 3A 98 A8 [0m
+[0;32mI (190535) mota_can: CAN CAN id=110 data=03 E6 1B 84 77 3A 98 A8 [0m
+[0;32mI (191035) mota_can: CAN CAN id=110 data=03 E6 1C 3E 77 3E 80 A8 [0m
+[0;32mI (191535) mota_can: CAN CAN id=110 data=03 E6 1A 62 77 3A 98 A8 [0m
+[0;32mI (192035) mota_can: CAN CAN id=110 data=03 E6 19 EC 77 3A 98 A8 [0m
+[0;32mI (192535) mota_can: CAN CAN id=110 data=03 E6 1A E0 77 3A 98 A8 [0m
+[0;32mI (193035) mota_can: CAN CAN id=110 data=03 E6 19 E2 77 32 C8 A8 [0m
+[0;32mI (193535) mota_can: CAN CAN id=110 data=03 E6 1A DA 77 32 C8 A8 [0m
+[0;32mI (194035) mota_can: CAN CAN id=110 data=03 E6 19 F2 77 32 C8 A8 [0m
+[0;32mI (194535) mota_can: CAN CAN id=110 data=03 E6 19 D6 77 32 C8 A8 [0m
+[0;32mI (195035) mota_can: CAN CAN id=110 data=03 E6 1A 6E 77 3A 98 A8 [0m
+[0;32mI (195535) mota_can: CAN CAN id=110 data=03 E6 1A 32 77 32 C8 A8 [0m
+[0;32mI (196035) mota_can: CAN CAN id=110 data=03 E6 19 00 77 2A F8 A8 [0m
+[0;32mI (196535) mota_can: CAN CAN id=110 data=03 E6 17 F6 77 2A F8 A8 [0m
+[0;32mI (197035) mota_can: CAN CAN id=110 data=03 E6 19 2A 78 27 10 A8 [0m
+[0;32mI (197535) mota_can: CAN CAN id=111 data=00 00 00 00 00 72 8D 00 [0m
+[0;32mI (198035) mota_can: CAN CAN id=110 data=03 E6 18 5E 78 27 10 A8 [0m
+[0;32mI (198535) mota_can: CAN CAN id=110 data=03 E6 19 1A 78 32 C8 A8 [0m
+[0;32mI (199035) mota_can: CAN CAN id=110 data=03 E6 19 AE 78 32 C8 A8 [0m
+[0;32mI (199535) mota_can: CAN CAN id=110 data=03 E6 19 A8 78 2A F8 A8 [0m
+[0;32mI (200035) mota_can: CAN CAN id=110 data=03 E6 17 FA 78 32 C8 A8 [0m
+[0;32mI (200535) mota_can: CAN CAN id=110 data=03 E6 19 AE 78 32 C8 A8 [0m
+[0;32mI (201035) mota_can: CAN CAN id=110 data=03 E6 17 60 78 2E E0 A8 [0m
+[0;32mI (201535) mota_can: CAN CAN id=110 data=03 E6 18 D0 78 32 C8 A8 [0m
+[0;32mI (202035) mota_can: CAN CAN id=110 data=03 E6 19 40 78 32 C8 A8 [0m
+[0;32mI (202535) mota_can: CAN CAN id=110 data=03 E6 1A 50 78 32 C8 A8 [0m
+[0;32mI (203035) mota_can: CAN CAN id=110 data=03 E6 17 B6 78 32 C8 A8 [0m
+[0;32mI (203535) mota_can: CAN CAN id=110 data=03 E6 18 5E 79 32 C8 A8 [0m
+[0;32mI (204035) mota_can: CAN CAN id=110 data=03 E6 19 CA 79 32 C8 A8 [0m
+[0;32mI (204535) mota_can: CAN CAN id=110 data=03 E6 17 FA 79 32 C8 A8 [0m
+[0;32mI (205035) mota_can: CAN CAN id=110 data=03 E6 19 3A 79 32 C8 A8 [0m
+[0;32mI (205535) mota_can: CAN CAN id=110 data=03 E6 18 E4 79 32 C8 A8 [0m
+[0;32mI (206035) mota_can: CAN CAN id=110 data=03 E6 18 4E 79 32 C8 A8 [0m
+[0;32mI (206535) mota_can: CAN CAN id=110 data=03 E6 18 CA 79 2E E0 A8 [0m
+[0;32mI (207035) mota_can: CAN CAN id=110 data=03 E6 19 66 79 32 C8 A8 [0m
+[0;32mI (207535) mota_can: CAN CAN id=110 data=03 E6 18 22 79 32 C8 A8 [0m
+[0;32mI (208035) mota_can: CAN CAN id=110 data=03 E6 18 B0 79 32 C8 A8 [0m
+[0;32mI (208535) mota_can: CAN CAN id=110 data=03 E6 18 54 79 27 10 A8 [0m
+[0;32mI (209035) mota_can: CAN CAN id=110 data=03 E6 17 54 7A 2A F8 A8 [0m
+[0;32mI (209535) mota_can: CAN CAN id=110 data=03 E6 19 56 7A 32 C8 A8 [0m
+[0;32mI (210035) mota_can: CAN CAN id=110 data=03 E6 19 5A 7A 32 C8 A8 [0m
+[0;32mI (210535) mota_can: CAN CAN id=110 data=03 E6 18 22 7A 32 C8 A8 [0m
+[0;32mI (211035) mota_can: CAN CAN id=110 data=03 E6 18 FA 7A 32 C8 A8 [0m
+[0;32mI (211535) mota_can: CAN CAN id=110 data=03 E6 19 7C 7A 3A 98 A8 [0m
+[0;32mI (212035) mota_can: CAN CAN id=111 data=00 00 00 00 00 72 8F 00 [0m
+[0;32mI (212535) mota_can: CAN CAN id=110 data=03 E6 19 E2 7A 32 C8 A8 [0m
+[0;32mI (213035) mota_can: CAN CAN id=110 data=03 E6 19 3A 7A 32 C8 A8 [0m
+[0;32mI (213535) mota_can: CAN CAN id=110 data=03 E6 19 F2 7A 2A F8 A8 [0m
+[0;32mI (214035) mota_can: CAN CAN id=110 data=03 E6 17 CA 7B 2A F8 A8 [0m
+[0;32mI (214535) mota_can: CAN CAN id=110 data=03 E6 17 B6 7B 27 10 A8 [0m
+[0;32mI (215035) mota_can: CAN CAN id=110 data=03 E6 18 82 7B 32 C8 A8 [0m
+[0;32mI (215535) mota_can: CAN CAN id=110 data=03 E6 19 4A 7B 2A F8 A8 [0m
+[0;32mI (216035) mota_can: CAN CAN id=110 data=03 E6 19 30 7B 32 C8 A8 [0m
+[0;32mI (216535) mota_can: CAN CAN id=110 data=03 E6 18 D4 7B 2A F8 A8 [0m
+[0;32mI (217035) mota_can: CAN CAN id=110 data=03 E6 18 A6 7B 32 C8 A8 [0m
+[0;32mI (217535) mota_can: CAN CAN id=110 data=03 E6 18 40 7B 2A F8 A8 [0m
+[0;32mI (218035) mota_can: CAN CAN id=110 data=03 E6 18 B0 7B 32 C8 A8 [0m
+[0;32mI (218235) mota_can: BLE command: 010C[0m
+[0;32mI (218235) mota_can: OBD response PID 010C: id=7E8 raw=[0m
+[0;32mI (218235) mota_can:   data[0]=04[0m
+[0;32mI (218235) mota_can:   data[1]=41[0m
+[0;32mI (218235) mota_can:   data[2]=0C[0m
+[0;32mI (218245) mota_can:   data[3]=19[0m
+[0;32mI (218245) mota_can:   data[4]=70[0m
+[0;32mI (218245) mota_can:   data[5]=00[0m
+[0;32mI (218245) mota_can:   data[6]=00[0m
+[0;32mI (218255) mota_can:   data[7]=00[0m
+[0;32mI (218535) mota_can: CAN CAN id=110 data=03 E6 19 B4 7B 32 C8 A8 [0m
+[0;32mI (219035) mota_can: CAN CAN id=110 data=03 E6 19 C4 7C 32 C8 A8 [0m
+[0;32mI (219535) mota_can: CAN CAN id=110 data=03 E6 17 B6 7C 32 C8 A8 [0m
+[0;32mI (220035) mota_can: CAN CAN id=110 data=03 E6 19 00 7C 32 C8 A8 [0m
+[0;32mI (220535) mota_can: CAN CAN id=110 data=03 E6 18 DA 7C 2A F8 A8 [0m
+[0;32mI (221035) mota_can: CAN CAN id=110 data=03 E6 17 FA 7C 2A F8 A8 [0m
+[0;32mI (221535) mota_can: CAN CAN id=110 data=03 E6 18 26 7C 2A F8 A8 [0m
+[0;32mI (222035) mota_can: CAN CAN id=110 data=03 E6 17 E2 7C 32 C8 A8 [0m
+[0;32mI (222535) mota_can: CAN CAN id=110 data=03 E6 19 A4 7C 32 C8 A8 [0m
+[0;32mI (223035) mota_can: CAN CAN id=110 data=03 E6 16 D0 7C 32 C8 A8 [0m
+[0;32mI (223535) mota_can: CAN CAN id=110 data=03 E6 18 CA 7C 3A 98 A8 [0m
+[0;32mI (224035) mota_can: CAN CAN id=110 data=03 E6 18 68 7D 32 C8 A8 [0m
+[0;32mI (224535) mota_can: CAN CAN id=110 data=03 E6 18 26 7D 32 C8 A8 [0m
+[0;32mI (225035) mota_can: CAN CAN id=110 data=03 E6 16 5E 7D 2E E0 A8 [0m
+[0;32mI (225535) mota_can: CAN CAN id=110 data=03 E6 18 82 7D 32 C8 A8 [0m
+[0;32mI (226035) mota_can: CAN CAN id=110 data=03 E6 19 9E 7D 32 C8 A8 [0m
+[0;32mI (226535) mota_can: CAN CAN id=110 data=03 E6 19 EC 7D 32 C8 A8 [0m
+[0;32mI (227035) mota_can: CAN CAN id=110 data=03 E6 17 D4 7D 32 C8 A8 [0m
+[0;32mI (227535) mota_can: CAN CAN id=110 data=03 E6 19 0A 7D 2E E0 A8 [0m
+[0;32mI (228035) mota_can: CAN CAN id=110 data=03 E6 17 CA 7D 32 C8 A8 [0m
+[0;32mI (228535) mota_can: CAN CAN id=110 data=03 E6 19 14 7D 2A F8 A8 [0m
+[0;32mI (229035) mota_can: CAN CAN id=110 data=03 E6 19 30 7E 32 C8 A8 [0m
+[0;32mI (229535) mota_can: CAN CAN id=110 data=03 E6 18 1C 7E 32 C8 A8 [0m
+[0;32mI (230035) mota_can: CAN CAN id=110 data=03 E6 19 04 7E 32 C8 A8 [0m
+[0;32mI (230535) mota_can: CAN CAN id=110 data=03 E6 17 40 7E 32 C8 A8 [0m
+[0;32mI (231035) mota_can: CAN CAN id=110 data=03 E6 17 CE 7E 32 C8 A8 [0m
+[0;32mI (231535) mota_can: CAN CAN id=110 data=03 E6 17 0A 7E 2A F8 A8 [0m
+[0;32mI (232035) mota_can: CAN CAN id=110 data=03 E6 17 D8 7E 2E E0 A8 [0m
+[0;32mI (232535) mota_can: CAN CAN id=110 data=03 E6 19 60 7E 32 C8 A8 [0m
+[0;32mI (233035) mota_can: CAN CAN id=110 data=03 E6 18 F4 7E 32 C8 A8 [0m
+[0;32mI (233535) mota_can: CAN CAN id=110 data=03 E6 19 14 7E 32 C8 A8 [0m
+[0;32mI (234035) mota_can: CAN CAN id=110 data=03 E6 17 C4 7F 2E E0 A8 [0m
+[0;32mI (234535) mota_can: CAN CAN id=110 data=03 E6 19 20 7F 32 C8 A8 [0m
+[0;32mI (235035) mota_can: CAN CAN id=110 data=03 E6 18 F4 7F 2A F8 A8 [0m
+[0;32mI (235535) mota_can: CAN CAN id=110 data=03 E6 18 7C 7F 32 C8 A8 [0m
+[0;32mI (236035) mota_can: CAN CAN id=110 data=03 E6 18 B6 7F 32 C8 A8 [0m
+[0;32mI (236535) mota_can: CAN CAN id=110 data=03 E6 17 C4 7F 32 C8 A8 [0m
+[0;32mI (237035) mota_can: CAN CAN id=110 data=03 E6 19 8C 7F 32 C8 A8 [0m
+[0;32mI (237535) mota_can: CAN CAN id=110 data=03 E6 19 CA 7F 32 C8 A8 [0m
+[0;32mI (238035) mota_can: CAN CAN id=110 data=03 E6 18 00 7F 32 C8 A8 [0m
+[0;32mI (238535) mota_can: CAN CAN id=110 data=03 E6 19 14 7F 32 C8 A8 [0m
+[0;32mI (239035) mota_can: CAN CAN id=110 data=03 E6 19 00 80 2A F8 A8 [0m
+[0;32mI (239535) mota_can: CAN CAN id=110 data=03 E6 18 18 80 32 C8 A8 [0m
+[0;32mI (240035) mota_can: CAN CAN id=110 data=03 E6 19 5A 80 32 C8 A8 [0m
+[0;32mI (240535) mota_can: CAN CAN id=110 data=03 E6 17 F0 80 32 C8 A8 [0m
+[0;32mI (241035) mota_can: CAN CAN id=110 data=03 E6 19 34 80 3A 98 A8 [0m
+[0;32mI (241535) mota_can: CAN CAN id=110 data=03 E6 19 82 80 32 C8 A8 [0m
+[0;32mI (242035) mota_can: CAN CAN id=110 data=03 E6 19 66 80 32 C8 A8 [0m
+[0;32mI (242535) mota_can: CAN CAN id=110 data=03 E6 17 AC 80 2A F8 A8 [0m
+[0;32mI (243035) mota_can: CAN CAN id=110 data=03 E6 18 E4 80 2A F8 A8 [0m
+[0;32mI (243535) mota_can: CAN CAN id=110 data=03 E6 19 14 80 32 C8 A8 [0m
+[0;32mI (244035) mota_can: CAN CAN id=110 data=03 E6 18 68 81 32 C8 A8 [0m
+[0;32mI (244535) mota_can: CAN CAN id=110 data=03 E6 18 62 81 32 C8 A8 [0m
+[0;32mI (245035) mota_can: CAN CAN id=110 data=03 E6 19 BA 81 32 C8 A8 [0m
+[0;32mI (245535) mota_can: CAN CAN id=110 data=03 E6 17 EC 81 2A F8 A8 [0m
+[0;32mI (246035) mota_can: CAN CAN id=110 data=03 E6 18 86 81 2E E0 A8 [0m
+[0;32mI (246535) mota_can: CAN CAN id=110 data=03 E6 18 F0 81 32 C8 A8 [0m
+[0;32mI (247045) mota_can: CAN CAN id=110 data=03 E6 18 F0 81 32 C8 A8 [0m
+[0;32mI (247545) mota_can: CAN CAN id=110 data=03 E6 19 10 81 2E E0 A8 [0m
+[0;32mI (248045) mota_can: CAN CAN id=110 data=03 E6 19 88 81 32 C8 A8 [0m
+[0;32mI (248545) mota_can: CAN CAN id=110 data=03 E6 18 7C 81 2A F8 A8 [0m
+[0;32mI (249045) mota_can: CAN CAN id=110 data=03 E6 18 30 82 2E E0 A8 [0m
+[0;32mI (249545) mota_can: CAN CAN id=110 data=03 E6 19 34 82 32 C8 A8 [0m
+[0;32mI (250045) mota_can: CAN CAN id=110 data=03 E6 17 E6 82 2A F8 A8 [0m
+[0;32mI (250545) mota_can: CAN CAN id=110 data=03 E6 18 68 82 32 C8 A8 [0m
+[0;32mI (251045) mota_can: CAN CAN id=110 data=03 E6 1A 10 82 32 C8 A8 [0m
+[0;32mI (251545) mota_can: CAN CAN id=110 data=03 E6 18 90 82 27 10 A8 [0m
+[0;32mI (252045) mota_can: CAN CAN id=110 data=03 E6 18 D0 82 2A F8 A8 [0m
+[0;32mI (252545) mota_can: CAN CAN id=110 data=03 E6 17 E2 82 2A F8 A8 [0m
+[0;32mI (253045) mota_can: CAN CAN id=110 data=03 E6 18 B6 82 2E E0 A8 [0m
+[0;32mI (253545) mota_can: CAN CAN id=110 data=03 E6 19 A8 82 32 C8 A8 [0m
+[0;32mI (254045) mota_can: CAN CAN id=110 data=03 E6 18 54 83 32 C8 A8 [0m
+[0;32mI (254545) mota_can: CAN CAN id=110 data=03 E6 19 2A 83 2A F8 A8 [0m
+[0;32mI (255045) mota_can: CAN CAN id=110 data=03 E6 19 A4 83 2A F8 A8 [0m
+[0;32mI (255545) mota_can: CAN CAN id=110 data=03 E6 19 00 83 2A F8 A8 [0m
+[0;32mI (256045) mota_can: CAN CAN id=110 data=03 E6 19 6C 83 2A F8 A8 [0m
+[0;32mI (256545) mota_can: CAN CAN id=110 data=03 E6 18 D4 83 2A F8 A8 [0m
+[0;32mI (257045) mota_can: CAN CAN id=110 data=03 E6 18 CA 83 2A F8 A8 [0m
+[0;32mI (257545) mota_can: CAN CAN id=110 data=03 E6 18 26 83 27 10 A8 [0m
+[0;32mI (257815) mota_can: BLE command: 010C[0m
+[0;32mI (257815) mota_can: OBD response PID 010C: id=7E8 raw=[0m
+[0;32mI (257825) mota_can:   data[0]=04[0m
+[0;32mI (257825) mota_can:   data[1]=41[0m
+[0;32mI (257825) mota_can:   data[2]=0C[0m
+[0;32mI (257825) mota_can:   data[3]=18[0m
+[0;32mI (257825) mota_can:   data[4]=CA[0m
+[0;32mI (257825) mota_can:   data[5]=00[0m
+[0;32mI (257835) mota_can:   data[6]=00[0m
+[0;32mI (257835) mota_can:   data[7]=00[0m
+[0;32mI (258045) mota_can: CAN CAN id=110 data=03 E6 19 5A 83 32 C8 A8 [0m
+[0;32mI (258545) mota_can: CAN CAN id=110 data=03 E6 17 E2 83 2A F8 A8 [0m
+[0;32mI (259045) mota_can: CAN CAN id=110 data=03 E6 19 82 83 32 C8 A8 [0m
+[0;32mI (259545) mota_can: CAN CAN id=110 data=03 E6 17 0A 84 27 10 A8 [0m
+[0;32mI (260045) mota_can: CAN CAN id=110 data=03 E6 18 C0 84 2A F8 A8 [0m
+[0;32mI (260545) mota_can: CAN CAN id=110 data=03 E6 19 70 84 2A F8 A8 [0m
+[0;32mI (261045) mota_can: CAN CAN id=111 data=00 00 00 00 00 72 8E 00 [0m
+[0;32mI (261545) mota_can: CAN CAN id=110 data=03 E6 19 6C 84 2A F8 A8 [0m
+[0;32mI (262045) mota_can: CAN CAN id=110 data=03 E6 19 04 84 2A F8 A8 [0m
+[0;32mI (262545) mota_can: CAN CAN id=110 data=03 E6 18 CA 84 2A F8 A8 [0m
+[0;32mI (263045) mota_can: CAN CAN id=110 data=03 E6 19 1A 84 2A F8 A8 [0m
+[0;32mI (263545) mota_can: CAN CAN id=110 data=03 E6 19 14 84 2A F8 A8 [0m
+[0;32mI (264045) mota_can: CAN CAN id=110 data=03 E6 18 C0 85 32 C8 A8 [0m
+[0;32mI (264545) mota_can: CAN CAN id=110 data=03 E6 18 DA 85 27 10 A8 [0m
+[0;32mI (265045) mota_can: CAN CAN id=110 data=03 E6 17 D4 85 32 C8 A8 [0m
+[0;32mI (265545) mota_can: CAN CAN id=110 data=03 E6 19 60 85 2A F8 A8 [0m
+[0;32mI (266045) mota_can: CAN CAN id=110 data=03 E6 18 96 85 2A F8 A8 [0m
+[0;32mI (266545) mota_can: CAN CAN id=110 data=03 E6 19 6C 85 2A F8 A8 [0m
+[0;32mI (267045) mota_can: CAN CAN id=110 data=03 E6 1A 16 85 2A F8 A8 [0m
+[0;32mI (267545) mota_can: CAN CAN id=110 data=03 E6 17 9E 85 2A F8 A8 [0m
+[0;32mI (268045) mota_can: CAN CAN id=110 data=03 E6 19 24 86 2A F8 A8 [0m
+[0;32mI (268545) mota_can: CAN CAN id=110 data=03 E6 19 5A 86 2A F8 A8 [0m
+[0;32mI (269045) mota_can: CAN CAN id=110 data=03 E6 17 90 86 2A F8 A8 [0m
+[0;32mI (269545) mota_can: CAN CAN id=110 data=03 E6 19 66 86 27 10 A8 [0m
+[0;32mI (270045) mota_can: CAN CAN id=110 data=03 E6 19 88 86 2A F8 A8 [0m
+[0;32mI (270545) mota_can: CAN CAN id=110 data=03 E6 18 A0 86 2A F8 A8 [0m
+[0;32mI (271045) mota_can: CAN CAN id=110 data=03 E6 18 72 86 32 C8 A8 [0m
+[
