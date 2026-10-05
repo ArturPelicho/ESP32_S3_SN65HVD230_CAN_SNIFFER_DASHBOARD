@@ -17,6 +17,7 @@
 #include "esp_lcd_panel_vendor.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
+#include "fuel_estimator_config.h"
 
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
@@ -25,8 +26,6 @@
 #include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-
-#include "fuel_estimator_config.h"
 
 static const char *TAG = "mota_can";
 
@@ -640,6 +639,24 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
     tft_text(avg_right - tft_text_width(unit, 1), y + h - 10, unit, COLOR_LABEL, 1);
 }
 
+/* Fuel estimate refresh, on the CAN/protocol core (0) beside the poller.
+ * Independent of how polling is scheduled; vTaskDelayUntil keeps a steady
+ * 100 ms step and never waits on the bus. */
+#define FUEL_UPDATE_PERIOD_MS 100
+
+static void fuel_task(void *arg)
+{
+    (void)arg;
+    TickType_t last = xTaskGetTickCount();
+    while (true) {
+        TickType_t before = last;
+        vTaskDelayUntil(&last, pdMS_TO_TICKS(FUEL_UPDATE_PERIOD_MS));
+        if (!s_self_test_active) {
+            fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
+        }
+    }
+}
+
 /* Layout, 320x240 landscape:
  *
  *   +---------------------------+-----------+
@@ -753,24 +770,6 @@ static void tft_render(void)
     tft_draw_field(168, 310, panel_y + 63, row_index_for_pid(0x33), ignition_on, NULL);
 
     tft_flush();
-}
-
-/* Fuel estimate refresh, on the CAN/protocol core (0) beside the poller.
- * Independent of how polling is scheduled; vTaskDelayUntil keeps a steady
- * 100 ms step and never waits on the bus. */
-#define FUEL_UPDATE_PERIOD_MS 100
-
-static void fuel_task(void *arg)
-{
-    (void)arg;
-    TickType_t last = xTaskGetTickCount();
-    while (true) {
-        TickType_t before = last;
-        vTaskDelayUntil(&last, pdMS_TO_TICKS(FUEL_UPDATE_PERIOD_MS));
-        if (!s_self_test_active) {
-            fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
-        }
-    }
 }
 
 /* Runs on the CAN/protocol core, separate from the display core, so a slow
