@@ -31,7 +31,9 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#include "bike_can.h"
 #include "obd_poller.h"
+#include "pid_scan_task.h"
 #include "boot_diag.h"
 
 static const char *TAG = "mota_can";
@@ -75,6 +77,17 @@ static const char *TAG = "mota_can";
 #define TFT_SLOW_PERIOD_MS 500
 #define OBD_RESPONSE_TIMEOUT_MS 150
 #define OBD_QUERY_TIMEOUT_MS 700
+/* Must match the poller config (OBD_POLLER_DEFAULT_CONFIG). */
+#define OBD_REQUEST_ID 0x7DF
+#define OBD_RESPONSE_ID_MIN 0x7E8
+#define OBD_RESPONSE_ID_MAX 0x7EF
+
+#ifndef CONFIG_PID_SCAN_GAP_MS
+#define CONFIG_PID_SCAN_GAP_MS 40
+#endif
+#ifndef CONFIG_PID_SCAN_REPORT_PERIOD_S
+#define CONFIG_PID_SCAN_REPORT_PERIOD_S 30
+#endif
 #define TFT_DATA_TIMEOUT_MS 1200
 
 static twai_node_handle_t s_twai;
@@ -152,6 +165,17 @@ static volatile bool s_self_test_active = true;
 static fuel_estimator_t s_fuel_estimator;
 static fuel_estimate_t s_fuel_estimate;
 static portMUX_TYPE s_fuel_lock = portMUX_INITIALIZER_UNLOCKED;
+
+/* The bike's own CAN broadcast (bike_can.h): RPM, the candidate injection
+ * value and battery voltage, about every 9 ms. Decoded by can_task on
+ * core 0, read by the display on core 1. RPM from here takes over from
+ * the polled PID 0C while it keeps arriving; the poll is the fallback. */
+#define BIKE_CAN_FRESH_MS 300
+static const bike_can_config_t s_bike_can_config = BIKE_CAN_ZS125_CONFIG();
+static bike_can_data_t s_bike;
+static TickType_t s_bike_engine_at;
+static TickType_t s_bike_power_at;
+static portMUX_TYPE s_bike_lock = portMUX_INITIALIZER_UNLOCKED;
 
 static int gap_event(struct ble_gap_event *event, void *arg);
 
@@ -758,6 +782,55 @@ static void tft_panel(int x, int y, int w, int h, const char *caption)
 
 /* One "LABEL value" line of a panel, from telemetry row i. Missing data
  * shows "--" in grey so the layout never jumps. */
+/* Copy of the latest broadcast data, with whether each group is recent. */
+static bike_can_data_t bike_snapshot(bool *engine_fresh, bool *power_fresh)
+{
+    bike_can_data_t data;
+    TickType_t engine_at, power_at;
+    portENTER_CRITICAL(&s_bike_lock);
+    data = s_bike;
+    engine_at = s_bike_engine_at;
+    power_at = s_bike_power_at;
+    portEXIT_CRITICAL(&s_bike_lock);
+    TickType_t now = xTaskGetTickCount();
+    *engine_fresh = data.engine_valid && now - engine_at <= pdMS_TO_TICKS(BIKE_CAN_FRESH_MS);
+    *power_fresh = data.battery_valid && now - power_at <= pdMS_TO_TICKS(BIKE_CAN_FRESH_MS);
+    return data;
+}
+
+/* Battery colours: red when flat or overcharging, orange when low or high. */
+static uint16_t battery_color(int millivolts)
+{
+    if (millivolts < 11800 || millivolts > 15200) return COLOR_RED;
+    if (millivolts < 12300 || millivolts > 14800) return COLOR_ORANGE;
+    return COLOR_GREEN;
+}
+
+/* Battery icon with a fill level (11.5 V empty, 14.5 V full) and the
+ * voltage under it, in the hero's otherwise empty left corner. The icon
+ * says what the number is, so it carries no unit. */
+static void tft_draw_battery(int x, int y, bool valid, int millivolts)
+{
+    const int body_w = 40;
+    const int body_h = 18;
+    uint16_t color = valid ? battery_color(millivolts) : COLOR_GREY;
+    uint16_t frame = valid ? COLOR_LABEL : COLOR_GREY;
+    tft_rect(x, y, body_w, body_h, frame, 2);
+    tft_fill_rect(x + body_w, y + 5, 3, body_h - 10, frame);
+    char text[16];
+    if (valid) {
+        int inner = body_w - 6;
+        int fill = (millivolts - 11500) * inner / 3000;
+        if (fill < 2) fill = 2;
+        if (fill > inner) fill = inner;
+        tft_fill_rect(x + 3, y + 3, fill, body_h - 6, color);
+        snprintf(text, sizeof(text), "%d.%d", millivolts / 1000, (millivolts / 100) % 10);
+    } else {
+        snprintf(text, sizeof(text), "--");
+    }
+    tft_text_bold(x, y + body_h + 6, text, color, 2);
+}
+
 static void tft_draw_field(int x, int right_x, int y, size_t i, bool ignition_on,
                            uint16_t (*color_fn)(int))
 {
@@ -814,9 +887,22 @@ static void format_tenths(float value, char *out, size_t out_size)
     snprintf(out, out_size, "%d.%d", tenths / 10, tenths % 10);
 }
 
+/* Litres with two decimals below 10 L ("0.42"), one above ("12.3"). */
+static void format_litres(float litres, char *out, size_t out_size)
+{
+    if (litres < 9.995f) {
+        int hundredths = (int)(litres * 100.0f + 0.5f);
+        if (hundredths < 0) hundredths = 0;
+        snprintf(out, out_size, "%d.%02d", hundredths / 100, hundredths % 100);
+    } else {
+        format_tenths(litres, out, out_size);
+    }
+}
+
 /* FUEL panel: amber badge marking the line as an estimate, the instant
- * reading (L/100km while moving, L/h when stopped or with no speed source)
- * and the average since start-up. */
+ * reading (L/100km while moving, L/h when stopped or with no speed source),
+ * then the average and the litres used since start-up stacked on the
+ * right. */
 static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
 {
     fuel_estimate_t est;
@@ -832,8 +918,9 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
     tft_text(x + 21, y + h / 2 + 6, "EST", 0x0000, 1);
 
     const int now_x = x + badge_w + 8;
-    const int divider_x = x + 206;
-    const int avg_right = x + w - 6;
+    const int divider_x = x + 172;
+    const int right_x = divider_x + 7;
+    const int right_end = x + w - 5;
     tft_fill_rect(divider_x, y + 5, 1, h - 10, SECTION_FRAME_COLOR);
 
     char text[16];
@@ -847,21 +934,36 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
     } else {
         bool per_km = est.instant_unit == FUEL_UNIT_L_PER_100KM;
         tft_text_bold(now_x, y + 5, per_km ? "L/100KM" : "L/H", COLOR_LABEL, 2);
+        if (est.speed_missing) {
+            /* Riding but no road speed: say why it isn't L/100km. */
+            tft_text(now_x + 44, y + 9, "NO SPEED", COLOR_ORANGE, 1);
+        }
         format_tenths(per_km ? est.l_per_100km : est.fuel_flow_l_per_h, text, sizeof(text));
         tft_text_bold(now_x, y + 24, text, COLOR_YELLOW, 4);
     }
 
-    /* Average since start-up. */
-    tft_text_bold(divider_x + 8, y + 5, "AVG", COLOR_LABEL, 2);
-    if (!ignition_on && est.total_fuel_l <= 0.0f) {
-        tft_text_right(avg_right, y + 19, "--", COLOR_GREY, 3);
+    /* Since start-up: average consumption, then litres used. Each row is
+     * "LABEL value unit" with the small unit right-aligned. */
+    const int avg_y = y + 8;
+    const int used_y = y + h - 22;
+    tft_text_bold(right_x, avg_y, "AVG", COLOR_LABEL, 2);
+    tft_text_bold(right_x, used_y, "USED", COLOR_LABEL, 2);
+    bool have_totals = ignition_on || est.total_fuel_l > 0.0f;
+    bool avg_per_km = est.avg_unit == FUEL_UNIT_L_PER_100KM;
+    const char *avg_unit = avg_per_km ? "L/100KM" : "L/H";
+    int avg_unit_x = right_end - tft_text_width(avg_unit, 1);
+    int used_unit_x = right_end - tft_text_width("L", 1);
+    tft_text(avg_unit_x, avg_y + 7, avg_unit, COLOR_LABEL, 1);
+    tft_text(used_unit_x, used_y + 7, "L", COLOR_LABEL, 1);
+    if (!have_totals) {
+        tft_text_right(avg_unit_x - 4, avg_y, "--", COLOR_GREY, 2);
+        tft_text_right(used_unit_x - 4, used_y, "--", COLOR_GREY, 2);
         return;
     }
-    bool avg_per_km = est.avg_unit == FUEL_UNIT_L_PER_100KM;
     format_tenths(avg_per_km ? est.avg_l_per_100km : est.avg_l_per_h, text, sizeof(text));
-    tft_text_right(avg_right, y + 19, text, COLOR_WHITE, 3);
-    const char *unit = avg_per_km ? "L/100KM" : "L/H";
-    tft_text(avg_right - tft_text_width(unit, 1), y + h - 10, unit, COLOR_LABEL, 1);
+    tft_text_right(avg_unit_x - 4, avg_y, text, COLOR_WHITE, 2);
+    format_litres(est.total_fuel_l, text, sizeof(text));
+    tft_text_right(used_unit_x - 4, used_y, text, COLOR_WHITE, 2);
 }
 
 /* Fuel estimate refresh, on the CAN/protocol core (0) beside the poller.
@@ -889,9 +991,9 @@ static void fuel_task(void *arg)
             est = s_fuel_estimate;
             portEXIT_CRITICAL(&s_fuel_lock);
             /* Integer tenths/hundredths so the log needs no float printf. */
-            ESP_LOGI(TAG, "FUEL valid=%d cut=%d lambda=%d.%02d flow=%d.%02dL/h "
+            ESP_LOGI(TAG, "FUEL valid=%d cut=%d spd=%d(valid=%d) lambda=%d.%02d flow=%d.%02dL/h "
                      "inst=%d.%dL/100km(%s) avg=%d.%d%s used=%d.%03dL dist=%d.%02dkm",
-                     est.valid, est.fuel_cut,
+                     est.valid, est.fuel_cut, (int)est.speed_kmh, est.speed_valid,
                      (int)(est.lambda * 100) / 100, (int)(est.lambda * 100) % 100,
                      (int)(est.fuel_flow_l_per_h * 100) / 100,
                      (int)(est.fuel_flow_l_per_h * 100) % 100,
@@ -905,6 +1007,14 @@ static void fuel_task(void *arg)
                      (int)(est.total_fuel_l * 1000) / 1000, (int)(est.total_fuel_l * 1000) % 1000,
                      (int)(est.total_distance_km * 100) / 100,
                      (int)(est.total_distance_km * 100) % 100);
+            /* The bike's own broadcast, logged beside the estimate so the
+             * injection-time candidate can be compared with fuel flow. */
+            bool engine_fresh, power_fresh;
+            bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+            ESP_LOGI(TAG, "BIKE engine=%d rpm=%u inj_raw=%u temp_raw=%u status=%02X "
+                     "power=%d batt=%u.%uV",
+                     engine_fresh, bike.rpm, bike.inj_raw, bike.temp_raw, bike.status,
+                     power_fresh, bike.battery_mv / 1000U, (bike.battery_mv / 100U) % 10U);
         }
     }
 }
@@ -960,6 +1070,8 @@ static void tft_render(void)
                        xTaskGetTickCount() - s_last_response <=
                        pdMS_TO_TICKS(TFT_DATA_TIMEOUT_MS);
     bool blink_on = ((xTaskGetTickCount() / pdMS_TO_TICKS(250)) % 2) == 0;
+    bool bike_engine_fresh, bike_power_fresh;
+    bike_can_data_t bike = bike_snapshot(&bike_engine_fresh, &bike_power_fresh);
     tft_clear(0x0000);
 
     /* Hero: cylinder head temperature. This PID has whole-degree
@@ -975,6 +1087,12 @@ static void tft_render(void)
         }
     }
     tft_text_bold(8, 5, "CYL HEAD TEMP", hero_critical ? COLOR_WHITE : COLOR_LABEL, 2);
+    if (pid_scan_running()) {
+        tft_text(174, 9, "SCAN", COLOR_CYAN, 1);
+    }
+    if (!hero_critical) {
+        tft_draw_battery(8, 26, bike_power_fresh, bike.battery_mv);
+    }
     char hero_text[8];
     uint16_t hero_color;
     if (!hero_valid) {
@@ -1054,7 +1172,16 @@ static void tft_render(void)
     tft_draw_field(168, 310, panel_y + 9, row_index_for_pid(0x0B), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 27, row_index_for_pid(0x0F), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 45, row_index_for_pid(0x0E), ignition_on, spark_color);
-    tft_draw_field(168, 310, panel_y + 63, row_index_for_pid(0x33), ignition_on, NULL);
+    /* Test field: the broadcast value that looks like injection time,
+     * shown as ms assuming 0.1 us per bit. Cyan marks it as unconfirmed. */
+    tft_text_bold(168, panel_y + 63, "INJ", COLOR_CYAN, 2);
+    if (ignition_on && bike_engine_fresh) {
+        snprintf(text, sizeof(text), "%u.%02u", bike.inj_raw / 10000U, (bike.inj_raw / 100U) % 100U);
+        tft_text(214, panel_y + 70, "ms", COLOR_LABEL, 1);
+        tft_text_right(310, panel_y + 63, text, COLOR_CYAN, 2);
+    } else {
+        tft_text_right(310, panel_y + 63, "--", COLOR_GREY, 2);
+    }
 
     tft_flush();
 }
@@ -1067,6 +1194,14 @@ static void telemetry_on_value(uint8_t pid, const uint8_t *data, uint8_t len, vo
     (void)ctx;
     if (s_self_test_active) {
         return; /* display_task owns the rows until its self-test ends */
+    }
+    if (pid == 0x0C) {
+        bool engine_fresh, power_fresh;
+        bike_snapshot(&engine_fresh, &power_fresh);
+        if (engine_fresh) {
+            s_last_response = xTaskGetTickCount();
+            return; /* the broadcast RPM is newer than any poll */
+        }
     }
     int value;
     if (!decode_pid_value(pid, data, len, &value)) {
@@ -1160,6 +1295,53 @@ static void display_task(void *arg)
         }
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
+}
+
+static void ble_send_text(const char *text);
+
+/* PID discovery test (pid_scan_task.h). Requests ride the poller's one-off
+ * query slot, so the dashboard keeps polling between them. */
+static bool s_scan_to_ble; /* the scan was asked for over BLE: echo the report there */
+
+static bool scan_query(uint8_t pid, uint32_t timeout_ms)
+{
+    uint8_t reply[8];
+    uint8_t reply_len = 0;
+    return obd_poller_query(pid, reply, &reply_len, timeout_ms);
+}
+
+static void scan_line_out(const char *line, void *ctx)
+{
+    (void)ctx;
+    ESP_LOGI("pid_scan", "%s", line);
+    if (s_scan_to_ble) {
+        ble_send_text(line);
+        ble_send_text("\r");
+    }
+}
+
+static void scan_init(void)
+{
+    pid_scan_task_config_t config = {
+        .ids = {
+            .request_id = OBD_REQUEST_ID,
+            .response_id_min = OBD_RESPONSE_ID_MIN,
+            .response_id_max = OBD_RESPONSE_ID_MAX,
+        },
+        .query = scan_query,
+        .query_timeout_ms = OBD_QUERY_TIMEOUT_MS,
+        .gap_ms = CONFIG_PID_SCAN_GAP_MS,
+        .report_period_ms = CONFIG_PID_SCAN_REPORT_PERIOD_S * 1000U,
+        .line_out = scan_line_out,
+        .core = 0,
+        .priority = 3,
+    };
+    pid_scan_task_init(&config);
+#if CONFIG_PID_SCAN_AT_BOOT
+    if (pid_scan_start() != ESP_OK) {
+        ESP_LOGW(TAG, "PID scan could not start; the dashboard runs without it");
+    }
+#endif
 }
 
 /* ELM327 passthrough: the poller sends it ahead of scheduled polling, so
@@ -1288,6 +1470,16 @@ static void process_elm_command(char *command)
     } else if (!strcmp(command, "ATMA")) {
         s_monitor_mode = true;
         ble_send_text("OK\r");
+    } else if (!strcmp(command, "SCAN") || !strcmp(command, "SCAN START")) {
+        s_scan_to_ble = true;
+        ble_send_text(pid_scan_start() == ESP_OK ? "OK\r\r>" : "ERROR\r\r>");
+    } else if (!strcmp(command, "SCAN STOP")) {
+        pid_scan_stop();
+        ble_send_text("OK\r\r>");
+    } else if (!strcmp(command, "SCAN REPORT")) {
+        s_scan_to_ble = true;
+        pid_scan_request_report();
+        ble_send_text("OK\r\r>");
     } else if (!strcmp(command, "ATST") || !strcmp(command, "ATIGN")) {
         ble_send_text("OK\r\r>");
     } else if (strlen(command) == 4 && command[0] == '0' &&
@@ -1579,7 +1771,9 @@ static bool twai_rx_callback(twai_node_handle_t handle,
         BaseType_t higher_priority_task_woken = pdFALSE;
         xQueueSendFromISR(s_can_queue, &packet, &higher_priority_task_woken);
         bool obd_woken = obd_poller_feed_frame_from_isr(packet.id, packet.data, packet.len);
-        return higher_priority_task_woken == pdTRUE || obd_woken;
+        bool scan_woken = pid_scan_feed_frame_from_isr(packet.id, packet.extended, packet.data,
+                                                       packet.len);
+        return higher_priority_task_woken == pdTRUE || obd_woken || scan_woken;
     }
     return false;
 }
@@ -1590,8 +1784,27 @@ static void can_task(void *arg)
     struct can_packet packet;
     char line[128];
     TickType_t last_log = 0;
+    const size_t rpm_row = row_index_for_pid(0x0C);
     while (xQueueReceive(s_can_queue, &packet, portMAX_DELAY) == pdTRUE) {
         TickType_t now = xTaskGetTickCount();
+        bike_can_data_t decoded;
+        portENTER_CRITICAL(&s_bike_lock);
+        decoded = s_bike;
+        portEXIT_CRITICAL(&s_bike_lock);
+        int group = bike_can_decode(&s_bike_can_config, packet.id, packet.extended, packet.data,
+                                    packet.len, &decoded);
+        if (group != BIKE_CAN_NONE) {
+            portENTER_CRITICAL(&s_bike_lock);
+            s_bike = decoded;
+            if (group & BIKE_CAN_ENGINE) s_bike_engine_at = now;
+            if (group & BIKE_CAN_POWER) s_bike_power_at = now;
+            portEXIT_CRITICAL(&s_bike_lock);
+            if ((group & BIKE_CAN_ENGINE) && !s_self_test_active) {
+                s_row_values[rpm_row] = decoded.rpm;
+                s_row_valid[rpm_row] = true;
+                s_last_response = now;
+            }
+        }
         if (s_monitor_mode || now - last_log >= pdMS_TO_TICKS(500)) {
             int used = snprintf(line, sizeof(line), "%sCAN id=%" PRIX32 " data=",
                                 packet.extended ? "CAN-EXT " : "CAN ", packet.id);
@@ -1713,6 +1926,8 @@ void app_main(void)
     fuel_estimator_init(&s_fuel_estimator, &fuel_config);
     xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
     boot_diag_mark(BOOT_DIAG_STAGE_TASKS_STARTED);
+
+    scan_init();
 
     ESP_LOGI(TAG, "Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.");
 }

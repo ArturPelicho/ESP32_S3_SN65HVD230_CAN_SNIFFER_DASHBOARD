@@ -107,6 +107,9 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
     /* Distance counts whenever speed is known, even if the fuel inputs
      * briefly drop out, so the average's denominator stays honest. */
     bool speed_ok = in->speed_valid && in->speed_kmh >= 0.0f;
+    out->speed_valid = in->speed_valid;
+    out->speed_kmh = in->speed_kmh;
+    out->speed_missing = false;
     if (speed_ok) {
         est->total_distance_km += (double)in->speed_kmh * integrate_ms / 3.6e6;
         est->speed_filtered_kmh = smooth(est->speed_filtered_kmh, in->speed_kmh, dt_ms,
@@ -164,6 +167,9 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
     bool per_distance = est->moving && speed_ok && in->speed_kmh >= cfg->min_speed_kmh &&
                         est->speed_filtered_kmh > 0.0f;
     out->instant_unit = per_distance ? FUEL_UNIT_L_PER_100KM : FUEL_UNIT_L_PER_H;
+    /* Riding (by RPM) yet no speed to divide by: tell the display why it
+     * is still showing L/h. */
+    out->speed_missing = est->moving && !per_distance;
     out->l_per_100km = per_distance ? est->flow_filtered_lph / est->speed_filtered_kmh * 100.0f
                                     : 0.0f;
 

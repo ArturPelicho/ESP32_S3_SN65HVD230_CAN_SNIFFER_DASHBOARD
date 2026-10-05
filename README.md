@@ -37,6 +37,19 @@ endpoint; measure the bike's own termination first.
 - CAN bus-off recovery (`main/can_bus_supervisor.c`,
   `main/can_bus_recovery_fsm.c`): a supervisor task detects bus-off and
   recovers with back-off instead of hanging the driver.
+- The bike's own CAN broadcast (`main/bike_can.c`): the ECU sends two frames
+  about every 9 ms. `0x110` carries RPM (bytes 2-3, RPM x 4), an engine
+  temperature, a 16-bit value that drops to 0 on fuel cut (possibly injection
+  time, 0.1 us per bit) and status bits; `0x111` carries battery voltage
+  (byte 6, 0.1 V per bit). RPM comes from the broadcast while it keeps
+  arriving and falls back to polling PID `0C`. A `BIKE` serial line every 2 s
+  logs the raw values beside the fuel estimate.
+- PID discovery test (`main/pid_scan.c`): send `SCAN` over BLE (or enable it
+  at boot in menuconfig) to ask every Mode 01 PID from `00` to `FF`, keep
+  watching the ones that answer and tally all other CAN traffic. A report is
+  printed every 30 s (`SCAN REPORT` for one now, `SCAN STOP` to end) while the
+  dashboard keeps running. Step-by-step procedure (in Portuguese):
+  [docs/pid-scan-protocol.md](docs/pid-scan-protocol.md).
 
 **Dashboard (ST7789)**
 - RPM bar from 0 to 10500 with a flashing shift warning at 10000 and above.
@@ -45,6 +58,10 @@ endpoint; measure the bike's own termination first.
   for a second and clears with hysteresis, so one bad sample cannot trigger it.
 - Telemetry rows for throttle, spark advance, fuel trims, O2, MAP, baro,
   intake and ambient temperature, battery voltage and more.
+- Battery voltage (from `0x111`) next to the cylinder head temperature, and
+  the injection-time candidate as a cyan `INJ` test field.
+- Boot diagnostics (`main/boot_diag.c`): boot progress is recorded in NVS and
+  shown on the splash, to track down a black screen at key-on.
 - All thresholds are set in `idf.py menuconfig` under **Dashboard thresholds**.
 
 **Fuel consumption estimate**
@@ -58,7 +75,8 @@ endpoint; measure the bike's own termination first.
   under **Fuel injection estimate**. Volumetric efficiency is the calibration
   factor: if the reading is 10 % high against a fill-to-fill check, lower it
   by 10 %.
-- Since the ECU has no usable speed PID, L/100km needs an external speed
+- Litres used since start-up. Since the ECU has no usable speed PID, the
+  panel shows a `NO SPEED` hint and L/100km waits for an external speed
   source (see future plans).
 
 **BLE ELM327 emulator**
@@ -66,17 +84,6 @@ endpoint; measure the bike's own termination first.
   notify `FFF1`, write `FFF2`) plus an HM-10 compatible profile (`FFE0` /
   `FFE1`), so apps such as DMD2 or a generic BLE UART terminal can connect.
 - Answers the common `AT` commands and forwards Mode 01 requests to the bike.
-
-### In open pull requests
-
-- **Native CAN broadcast** (PR #5): the ECU also broadcasts on its own.
-  `0x110` carries RPM (much faster than OBD polling), engine temperature and a
-  field that is probably injection time; `0x111` carries battery voltage.
-- **Litres used** since start-up and a `NO SPEED` hint on the fuel panel, plus
-  a PID discovery test that asks every Mode 01 PID and tallies all CAN traffic
-  (PR #5).
-- **Boot diagnostics** on the splash screen to track down a black screen at
-  key-on (PR #6).
 
 ## Build and flash
 
@@ -96,12 +103,14 @@ fails, flash directly with `esptool` (the full command is in
 
 ### Host tests
 
-The fuel model and the bus-off recovery state machine have host-side tests
-that need only a C compiler:
+The fuel model, the bus-off recovery state machine, the PID scan and the
+`0x110`/`0x111` decoder have host-side tests that need only a C compiler:
 
 ```
 gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test
 gcc -std=c11 -Wall -Wextra -I main test/host/test_can_bus_recovery_fsm.c main/can_bus_recovery_fsm.c -o fsm_test && ./fsm_test
+gcc -std=c11 -Wall -I main test/host/test_pid_scan.c main/pid_scan.c -o scan_test && ./scan_test
+gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_test && ./bike_test
 ```
 
 ## Project layout
@@ -113,6 +122,10 @@ gcc -std=c11 -Wall -Wextra -I main test/host/test_can_bus_recovery_fsm.c main/ca
 | `main/can_bus_twai.*` | TWAI (CAN) driver port |
 | `main/can_bus_supervisor.*`, `main/can_bus_recovery_fsm.*` | Bus-off detection and recovery |
 | `main/fuel_estimator*` | Speed-density fuel model |
+| `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
+| `main/pid_scan*` | PID discovery test |
+| `main/boot_diag.*` | Boot progress record shown on the splash |
+| `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
 | `test/host/` | Host unit tests |
 
