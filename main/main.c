@@ -406,7 +406,33 @@ static void format_row_value(uint8_t pid, int value, char *out, size_t out_size)
     }
 }
 
-#define TEMP_CRITICAL_C 170
+/* Thresholds come from menuconfig ("Dashboard thresholds"); the
+ * fallbacks keep the file building before sdkconfig has the new keys. */
+#ifndef CONFIG_DASH_CHT_BLUE_BELOW_C
+#define CONFIG_DASH_CHT_BLUE_BELOW_C 80
+#endif
+#ifndef CONFIG_DASH_CHT_GREEN_BELOW_C
+#define CONFIG_DASH_CHT_GREEN_BELOW_C 135
+#endif
+#ifndef CONFIG_DASH_CHT_ORANGE_BELOW_C
+#define CONFIG_DASH_CHT_ORANGE_BELOW_C 150
+#endif
+#ifndef CONFIG_DASH_CHT_CRITICAL_C
+#define CONFIG_DASH_CHT_CRITICAL_C 165
+#endif
+#ifndef CONFIG_DASH_CHT_CRITICAL_HYSTERESIS_C
+#define CONFIG_DASH_CHT_CRITICAL_HYSTERESIS_C 5
+#endif
+#ifndef CONFIG_DASH_CHT_CRITICAL_CONFIRM_MS
+#define CONFIG_DASH_CHT_CRITICAL_CONFIRM_MS 1000
+#endif
+#ifndef CONFIG_DASH_RPM_GAUGE_MAX
+#define CONFIG_DASH_RPM_GAUGE_MAX 10500
+#endif
+#ifndef CONFIG_DASH_RPM_SHIFT
+#define CONFIG_DASH_RPM_SHIFT 10000
+#endif
+#define TEMP_CRITICAL_C CONFIG_DASH_CHT_CRITICAL_C
 #define COLOR_BLUE   0x05FF /* vivid sky blue; pure blue (0x001F) read as dark/navy and was hard to see */
 #define COLOR_GREEN  0x07E0
 #define COLOR_ORANGE 0xFD20
@@ -417,9 +443,9 @@ static void format_row_value(uint8_t pid, int value, char *out, size_t out_size)
  * TEMP_CRITICAL_C handled by the caller. */
 static uint16_t temp_color(int celsius)
 {
-    if (celsius < 80) return COLOR_BLUE;
-    if (celsius < 130) return COLOR_GREEN;
-    if (celsius < 150) return COLOR_ORANGE;
+    if (celsius < CONFIG_DASH_CHT_BLUE_BELOW_C) return COLOR_BLUE;
+    if (celsius < CONFIG_DASH_CHT_GREEN_BELOW_C) return COLOR_GREEN;
+    if (celsius < CONFIG_DASH_CHT_ORANGE_BELOW_C) return COLOR_ORANGE;
     return COLOR_RED;
 }
 
@@ -480,8 +506,7 @@ static size_t row_index_for_pid(uint8_t pid)
 /* Gauge ranges: where the segmented bars start and end. */
 #define TEMP_GAUGE_MIN_C 40
 #define TEMP_GAUGE_MAX_C 180
-#define RPM_GAUGE_MIN 2000 /* below this rpm_color() is all red (lugging/idle) */
-#define RPM_GAUGE_MAX 10000
+#define RPM_GAUGE_MAX CONFIG_DASH_RPM_GAUGE_MAX
 
 /* Narrowband O2 colour: orange rich, blue lean, green around
  * stoichiometric (0.45 V). Millivolts. */
@@ -684,6 +709,33 @@ static void fuel_task(void *arg)
     }
 }
 
+/* Stop-now alert state. Enters only after the reading has held at or above
+ * TEMP_CRITICAL_C for CONFIG_DASH_CHT_CRITICAL_CONFIRM_MS (one bad sample
+ * can't trigger it) and clears only below the hysteresis band, so it
+ * doesn't flicker at the threshold. Display task only. */
+static bool cht_critical_update(bool valid, int temp_c)
+{
+    static bool critical;
+    static bool above;
+    static TickType_t above_since;
+    TickType_t now = xTaskGetTickCount();
+    if (valid && temp_c >= TEMP_CRITICAL_C) {
+        if (!above) {
+            above = true;
+            above_since = now;
+        }
+        if (now - above_since >= pdMS_TO_TICKS(CONFIG_DASH_CHT_CRITICAL_CONFIRM_MS)) {
+            critical = true;
+        }
+    } else {
+        above = false;
+        if (!valid || temp_c < TEMP_CRITICAL_C - CONFIG_DASH_CHT_CRITICAL_HYSTERESIS_C) {
+            critical = false;
+        }
+    }
+    return critical;
+}
+
 /* Layout, 320x240 landscape:
  *
  *   +---------------------------+-----------+
@@ -715,7 +767,7 @@ static void tft_render(void)
     const int hero_w = 202;
     bool hero_valid = ignition_on && s_row_valid[0];
     int temp_c = hero_valid ? s_row_values[0] : 0;
-    bool hero_critical = hero_valid && temp_c >= TEMP_CRITICAL_C;
+    bool hero_critical = cht_critical_update(hero_valid, temp_c);
     if (hero_critical) {
         tft_fill_rect(0, 0, hero_w, 84, COLOR_RED);
         if (blink_on) {
@@ -739,7 +791,7 @@ static void tft_render(void)
     }
     if (hero_critical) {
         if (blink_on) {
-            tft_text_bold(8, 66, "OVERHEAT", COLOR_WHITE, 2);
+            tft_text_bold(8, 66, "STOP ENGINE", COLOR_WHITE, 2);
         }
     } else {
         tft_gauge(8, 70, hero_w - 14, 9, temp_c, hero_valid,
@@ -752,16 +804,24 @@ static void tft_render(void)
     tft_fill_rect(hero_w + 2, 4, 1, 76, SECTION_FRAME_COLOR);
     size_t rpm_i = row_index_for_pid(0x0C);
     bool rpm_valid = ignition_on && s_row_valid[rpm_i];
-    tft_text_bold(side_x, 8, "RPM", COLOR_LABEL, 2);
+    /* At or above the shift point the whole RPM block flashes red with
+     * white text: change up or roll off now. */
+    bool shift = rpm_valid && s_row_values[rpm_i] >= CONFIG_DASH_RPM_SHIFT;
+    bool shift_flash = shift && blink_on;
+    if (shift_flash) {
+        tft_fill_rect(hero_w + 4, 2, 320 - hero_w - 4, 40, COLOR_RED);
+    }
+    tft_text_bold(side_x, 8, "RPM", shift_flash ? COLOR_WHITE : COLOR_LABEL, 2);
     char text[16];
     if (rpm_valid) {
         snprintf(text, sizeof(text), "%d", s_row_values[rpm_i]);
-        tft_text_right(side_right, 8, text, rpm_color(s_row_values[rpm_i]), 2);
+        tft_text_right(side_right, 8, text,
+                       shift_flash ? COLOR_WHITE : rpm_color(s_row_values[rpm_i]), 2);
     } else {
         tft_text_right(side_right, 8, "--", COLOR_GREY, 2);
     }
     tft_gauge(side_x, 27, side_right - side_x, 8, rpm_valid ? s_row_values[rpm_i] : 0,
-              rpm_valid, RPM_GAUGE_MIN, RPM_GAUGE_MAX, rpm_color);
+              rpm_valid, 0, RPM_GAUGE_MAX, rpm_color);
 
     size_t thr_i = row_index_for_pid(0x11);
     bool thr_valid = ignition_on && s_row_valid[thr_i];

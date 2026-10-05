@@ -120,3 +120,61 @@ menu "Fuel injection estimate"
         default 150
 
 endmenu
+
+menu "Dashboard thresholds"
+
+    comment "Cylinder head temperature colours (C)"
+
+    config DASH_CHT_BLUE_BELOW_C
+        int "Blue (cold) below"
+        range 0 200
+        default 80
+
+    config DASH_CHT_GREEN_BELOW_C
+        int "Green (normal) below"
+        range 0 250
+        default 135
+
+    config DASH_CHT_ORANGE_BELOW_C
+        int "Orange (warm) below; red from here"
+        range 0 250
+        default 150
+        help
+            Red means "too hot, no damage yet, stop when you can".
+
+    config DASH_CHT_CRITICAL_C
+        int "Stop-now alert (black on flashing red) at"
+        range 0 300
+        default 165
+        help
+            The emergency level: stop the engine now. Set it above the
+            hottest reading seen in hard but healthy riding (hot day, long
+            climb, traffic) and below where damage starts. The default
+            assumes a head-casting sensor on the intake side, which reads
+            cooler than the exhaust side and the spark plug seat.
+
+    config DASH_CHT_CRITICAL_HYSTERESIS_C
+        int "Stop-now alert clears this many degrees below"
+        range 0 30
+        default 5
+
+    config DASH_CHT_CRITICAL_CONFIRM_MS
+        int "Stop-now alert needs the reading to hold this long (ms)"
+        range 0 10000
+        default 1000
+        help
+            Filters a single bad sample so it can't trigger the alert.
+
+    comment "RPM"
+
+    config DASH_RPM_GAUGE_MAX
+        int "RPM gauge full scale"
+        range 1000 20000
+        default 10500
+
+    config DASH_RPM_SHIFT
+        int "Shift warning (flashing) at or above"
+        range 1000 20000
+        default 10000
+
+endmenu
