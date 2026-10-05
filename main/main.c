@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +24,7 @@
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "fuel_estimator_config.h"
+#include "steady_cal.h"
 
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
@@ -1070,6 +1072,186 @@ static void trip_service(void)
     saved_at = xTaskGetTickCount();
 }
 
+/* Injector calibration from steady riding (steady_cal.h). Owned by
+ * fuel_task: fed every step, saved to NVS every CAL_SAVE_PERIOD_MS while
+ * it grows and as soon as the engine stops, reported over serial at
+ * start-up, after each save and on the BLE "CAL" command. */
+#define CAL_NVS_KEY "steady1"
+#define CAL_SAVE_PERIOD_MS (5U * 60U * 1000U)
+#define CAL_MIN_DEAD_BASIS 2.0f
+static steady_cal_t s_cal;
+static volatile bool s_cal_report_requested;
+static volatile bool s_cal_report_to_ble;
+static volatile bool s_cal_reset_requested;
+
+static void ble_send_text(const char *text);
+
+static void cal_load(void)
+{
+    steady_cal_config_t config = STEADY_CAL_DEFAULT_CONFIG();
+    steady_cal_init(&s_cal, &config);
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) return;
+    size_t len = sizeof(s_cal.totals);
+    esp_err_t err = nvs_get_blob(nvs, CAL_NVS_KEY, &s_cal.totals, &len);
+    nvs_close(nvs);
+    if (err != ESP_OK || len != sizeof(s_cal.totals) ||
+        s_cal.totals.version != STEADY_CAL_VERSION) {
+        steady_cal_reset(&s_cal);
+    }
+}
+
+static void cal_save(void)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) return;
+    if (nvs_set_blob(nvs, CAL_NVS_KEY, &s_cal.totals, sizeof(s_cal.totals)) != ESP_OK ||
+        nvs_commit(nvs) != ESP_OK) {
+        ESP_LOGW(TAG, "calibration not saved");
+    }
+    nvs_close(nvs);
+}
+
+static steady_cal_sample_t cal_sample(void)
+{
+    bool engine_fresh, power_fresh;
+    bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+    size_t map = row_index_for_pid(0x0B);
+    size_t iat = row_index_for_pid(0x0F);
+    size_t thr = row_index_for_pid(0x11);
+    size_t o2 = row_index_for_pid(0x14);
+    size_t stft = row_index_for_pid(0x06);
+    size_t ltft = row_index_for_pid(0x07);
+    size_t temp = row_index_for_pid(0x05);
+    steady_cal_sample_t sample = {
+        .rpm = bike.rpm,
+        .pulse_ms = bike.inj_raw / 10000.0f,
+        .map_kpa = (float)s_row_values[map],
+        .intake_temp_c = (float)s_row_values[iat],
+        .throttle_pct = s_row_values[thr] / 10.0f,  /* rows store tenths */
+        .o2_volts = s_row_values[o2] / 1000.0f,     /* row stores millivolts */
+        .stft_pct = s_row_values[stft] / 10.0f,
+        .ltft_pct = s_row_values[ltft] / 10.0f,
+        .engine_temp_c = (float)s_row_values[temp],
+        .battery_v = bike.battery_mv / 1000.0f,
+        .rpm_valid = engine_fresh,
+        .map_valid = s_row_valid[map],
+        .intake_temp_valid = s_row_valid[iat],
+        .throttle_valid = s_row_valid[thr],
+        .o2_valid = s_row_valid[o2] && s_row_values[o2] != O2_INACTIVE_MV,
+        .trims_valid = s_row_valid[stft] && s_row_valid[ltft],
+        .engine_temp_valid = s_row_valid[temp],
+        .battery_valid = power_fresh,
+    };
+    return sample;
+}
+
+/* "+4.0" / "-1.2" without float printf. */
+static void format_signed_tenths(float value, char *out, size_t out_size)
+{
+    int tenths = (int)lroundf(value * 10.0f);
+    snprintf(out, out_size, "%c%d.%d", tenths < 0 ? '-' : '+', abs(tenths) / 10, abs(tenths) % 10);
+}
+
+static void cal_line(const char *line, bool to_ble)
+{
+    ESP_LOGI(TAG, "%s", line);
+    if (to_ble) {
+        ble_send_text(line);
+        ble_send_text("\r");
+    }
+}
+
+/* One line per RPM band with data, then the dead time and the overall
+ * flow implied at the configured VE. */
+static void cal_report(bool to_ble)
+{
+    const fuel_estimator_config_t *fc = &s_fuel_estimator.config;
+    steady_cal_engine_t engine = {
+        .displacement_cc = s_fuel_estimator.displacement_m3 * 1e6f,
+        .volumetric_efficiency = fc->volumetric_efficiency,
+        .stoich_afr = fc->stoich_afr,
+        .fuel_density_g_per_ml = fc->fuel_density_g_per_ml,
+        .dead_time_ms = s_inj_config.dead_time_ms,
+    };
+    int ve = (int)lroundf(fc->volumetric_efficiency * 100.0f);
+    char line[192];
+    double flow_sum = 0.0, flow_seconds = 0.0;
+    uint32_t windows = 0;
+    for (int i = 0; i < STEADY_CAL_BINS; ++i) {
+        steady_cal_band_t band;
+        if (!steady_cal_band(&s_cal.totals, i, &band)) continue;
+        windows += band.windows;
+        float flow = 0.0f;
+        bool flow_ok = steady_cal_band_flow(&band, &engine, &flow);
+        if (flow_ok) {
+            flow_sum += (double)flow * band.seconds;
+            flow_seconds += band.seconds;
+        }
+        char stft[12], ltft[12];
+        format_signed_tenths(band.stft_pct, stft, sizeof(stft));
+        format_signed_tenths(band.ltft_pct, ltft, sizeof(ltft));
+        int pw = (int)lroundf(band.pulse_ms * 100.0f);
+        int o2 = (int)lroundf(band.o2_volts * 100.0f);
+        int thr = (int)lroundf(band.throttle_pct * 10.0f);
+        snprintf(line, sizeof(line),
+                 "CAL %d-%drpm %lus n=%lu rpm=%d thr=%d.%d%% map=%dkPa iat=%dC "
+                 "pw=%d.%02dms stft=%s%% ltft=%s%% o2=%d.%02dV -> %dcc/min@VE%d",
+                 i * STEADY_CAL_BIN_RPM, i * STEADY_CAL_BIN_RPM + STEADY_CAL_BIN_RPM - 1,
+                 (unsigned long)band.seconds, (unsigned long)band.windows,
+                 (int)lroundf(band.rpm), thr / 10, thr % 10, (int)lroundf(band.map_kpa),
+                 (int)lroundf(band.intake_temp_c), pw / 100, pw % 100, stft, ltft,
+                 o2 / 100, o2 % 100, flow_ok ? (int)lroundf(flow) : 0, ve);
+        cal_line(line, to_ble);
+    }
+
+    char dead_text[32] = "n/a";
+    float dead = 0.0f, basis = 0.0f;
+    if (steady_cal_dead_time(&s_cal.totals, &dead, &basis) && basis >= CAL_MIN_DEAD_BASIS) {
+        int dead_us = (int)lroundf(dead * 1000.0f);
+        snprintf(dead_text, sizeof(dead_text), "%dus", dead_us);
+    }
+    int basis_tenths = (int)lroundf(basis * 10.0f);
+    snprintf(line, sizeof(line),
+             "CAL summary windows=%lu dead=%s (basis %d.%d, needs %d) flow=%dcc/min@VE%d "
+             "(using dead %dus)",
+             (unsigned long)windows, dead_text, basis_tenths / 10, basis_tenths % 10,
+             (int)CAL_MIN_DEAD_BASIS,
+             flow_seconds > 0.0 ? (int)lround(flow_sum / flow_seconds) : 0, ve,
+             CONFIG_FUEL_INJ_DEAD_TIME_US);
+    cal_line(line, to_ble);
+    if (to_ble) ble_send_text("\r>");
+}
+
+static void cal_service(float dt_s)
+{
+    static bool dirty;
+    static TickType_t saved_at;
+    if (s_cal_reset_requested) {
+        s_cal_reset_requested = false;
+        steady_cal_reset(&s_cal);
+        dirty = true;
+        ESP_LOGI(TAG, "calibration reset");
+    }
+    steady_cal_sample_t sample = cal_sample();
+    if (steady_cal_add(&s_cal, &sample, dt_s) >= 0) dirty = true;
+
+    bool stopped = !sample.rpm_valid || sample.rpm < 200.0f;
+    TickType_t now = xTaskGetTickCount();
+    if (dirty && (stopped || now - saved_at >= pdMS_TO_TICKS(CAL_SAVE_PERIOD_MS))) {
+        cal_save();
+        dirty = false;
+        saved_at = now;
+        s_cal_report_requested = true;
+    }
+    if (s_cal_report_requested) {
+        bool to_ble = s_cal_report_to_ble;
+        s_cal_report_requested = false;
+        s_cal_report_to_ble = false;
+        cal_report(to_ble);
+    }
+}
+
 static void fuel_task(void *arg)
 {
     (void)arg;
@@ -1083,6 +1265,7 @@ static void fuel_task(void *arg)
         }
         fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
         trip_service();
+        cal_service(pdTICKS_TO_MS(last - before) / 1000.0f);
         if (++log_count >= FUEL_LOG_EVERY) {
             log_count = 0;
             fuel_estimate_t est;
@@ -1594,6 +1777,12 @@ static void process_elm_command(char *command)
         trip_format(&trip, trip_line, sizeof(trip_line));
         ble_send_text(trip_line);
         ble_send_text("\r\r>");
+    } else if (!strcmp(command, "CAL")) {
+        s_cal_report_to_ble = true;
+        s_cal_report_requested = true;
+    } else if (!strcmp(command, "CAL RESET")) {
+        s_cal_reset_requested = true;
+        ble_send_text("OK\r\r>");
     } else if (!strcmp(command, "TRIP RESET")) {
         s_trip_reset_requested = true;
         ble_send_text("OK\r\r>");
@@ -2037,6 +2226,8 @@ void app_main(void)
 
     s_inj_config = inj_meter_config_from_kconfig();
     trip_load();
+    cal_load();
+    s_cal_report_requested = true; /* print what was learnt so far at start-up */
 
     /* Display first: it has the longest start-up (panel settle delay), and
      * if anything below fails the screen is already coming up. */
@@ -2052,7 +2243,7 @@ void app_main(void)
      * its published result, which reads as "no data" until the first step. */
     fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
     fuel_estimator_init(&s_fuel_estimator, &fuel_config);
-    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
+    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 4096, NULL, 4, NULL, 0);
     boot_diag_mark(BOOT_DIAG_STAGE_TASKS_STARTED);
 
     scan_init();

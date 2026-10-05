@@ -75,6 +75,17 @@ endpoint; measure the bike's own termination first.
   every 2 s. Send `TRIP` over BLE to read it and `TRIP RESET` to zero it. As
   the sums are raw, a corrected flow or dead time applies to past trips too:
   litres = flow x (open time - injections x dead time).
+- Calibration from steady riding (`main/steady_cal.c`): stretches of at
+  least 10 s with RPM within 5 %, throttle within 2 points and MAP within
+  3 kPa, engine warm, battery charging, no fuel cut and the O2 sensor
+  switching (closed loop) are summed per 1000 rpm band. Each band gives the
+  pulse really needed there, trims and the injector flow implied at the
+  configured VE; the dead time comes from where pulse vs MAP/intake
+  temperature crosses zero (it needs some load variation, such as hills).
+  Kept in NVS, printed as `CAL` lines at start-up and every 5 minutes of
+  new data; `CAL` / `CAL RESET` over BLE. Nothing on the bike measures fuel
+  or air directly, so the absolute flow still rests on VE or on a known
+  fuel figure.
 - Falls back to a speed-density model from MAP, intake air temperature and
   RPM, corrected by the averaged narrowband O2 voltage
   (`main/fuel_estimator.c`), when the broadcast is missing or when chosen in
@@ -125,6 +136,7 @@ gcc -std=c11 -Wall -Wextra -I main test/host/test_can_bus_recovery_fsm.c main/ca
 gcc -std=c11 -Wall -I main test/host/test_pid_scan.c main/pid_scan.c -o scan_test && ./scan_test
 gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_test && ./bike_test
 gcc -std=c11 -Wall -I main test/host/test_inj_meter.c main/inj_meter.c -lm -o inj_test && ./inj_test
+gcc -std=c11 -Wall -I main test/host/test_steady_cal.c main/steady_cal.c -lm -o cal_test && ./cal_test
 ```
 
 ## Project layout
@@ -137,6 +149,7 @@ gcc -std=c11 -Wall -I main test/host/test_inj_meter.c main/inj_meter.c -lm -o in
 | `main/can_bus_supervisor.*`, `main/can_bus_recovery_fsm.*` | Bus-off detection and recovery |
 | `main/fuel_estimator*` | Fuel consumption, units and averages; speed-density fallback |
 | `main/inj_meter.*` | Fuel from injector pulse width, trip sums |
+| `main/steady_cal.*` | Injector calibration from steady riding |
 | `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
 | `main/pid_scan*` | PID discovery test |
 | `main/boot_diag.*` | Boot progress record shown on the splash |
