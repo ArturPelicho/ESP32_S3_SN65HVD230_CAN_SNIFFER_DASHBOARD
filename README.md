@@ -80,7 +80,7 @@ endpoint; measure the bike's own termination first.
 
 ## Build and flash
 
-Requires ESP-IDF 5.x with the ESP32-S3 target. Open the ESP-IDF PowerShell (or
+Built with ESP-IDF 6.0 for the ESP32-S3 target. Open the ESP-IDF PowerShell (or
 the VS Code ESP-IDF extension) in the project folder:
 
 ```
