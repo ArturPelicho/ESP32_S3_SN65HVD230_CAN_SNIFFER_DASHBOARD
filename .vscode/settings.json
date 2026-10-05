@@ -2,5 +2,5 @@
     "idf.currentSetup": "C:\\Users\\artur\\esp\\v6.0\\esp-idf",
     "idf.port": "COM8",
     "idf.flashType": "UART",
-    "idf.portWin": "COM8"
+    "idf.monitorPort": "COM9"
 }
