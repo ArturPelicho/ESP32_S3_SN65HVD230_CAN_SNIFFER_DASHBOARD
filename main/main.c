@@ -14,6 +14,7 @@
 #include "freertos/semphr.h"
 #include "esp_twai.h"
 #include "esp_twai_onchip.h"
+#include "can_bus_twai.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_commands.h"
@@ -72,6 +73,7 @@ static const char *TAG = "mota_can";
 #define TFT_DATA_TIMEOUT_MS 1200
 
 static twai_node_handle_t s_twai;
+static can_bus_supervisor_handle_t s_can_bus;
 static QueueHandle_t s_can_queue;
 static QueueHandle_t s_obd_queue;
 static SemaphoreHandle_t s_can_mutex;
@@ -1270,17 +1272,6 @@ static bool twai_rx_callback(twai_node_handle_t handle,
     return false;
 }
 
-static bool twai_state_callback(twai_node_handle_t handle,
-                                const twai_state_change_event_data_t *event_data,
-                                void *user_ctx)
-{
-    (void)handle;
-    (void)event_data;
-    (void)user_ctx;
-    /* TWAI callbacks execute in ISR context; defer diagnostics to a task. */
-    return false;
-}
-
 static void can_task(void *arg)
 {
     (void)arg;
@@ -1339,11 +1330,17 @@ static void twai_start(void)
     };
     ESP_ERROR_CHECK(twai_new_node_onchip(&config, &s_twai));
 
+    /* Bus-off recovery runs in its own task, driven by state-change events,
+     * so the node rejoins the bus without a reboot or any polling. */
+    can_bus_port_t port = can_bus_twai_port(s_twai, "twai0");
+    can_bus_supervisor_config_t supervisor_config = CAN_BUS_SUPERVISOR_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(can_bus_supervisor_create(&port, &supervisor_config, &s_can_bus));
+
     twai_event_callbacks_t callbacks = {
         .on_rx_done = twai_rx_callback,
-        .on_state_change = twai_state_callback,
+        .on_state_change = can_bus_twai_on_state_change,
     };
-    ESP_ERROR_CHECK(twai_node_register_event_callbacks(s_twai, &callbacks, NULL));
+    ESP_ERROR_CHECK(twai_node_register_event_callbacks(s_twai, &callbacks, s_can_bus));
 
     twai_mask_filter_config_t filter = {
         .id = 0,
