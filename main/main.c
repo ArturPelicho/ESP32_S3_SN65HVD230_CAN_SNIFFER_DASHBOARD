@@ -26,13 +26,15 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#include "obd_poller.h"
+
 static const char *TAG = "mota_can";
 
 #define CAN_TX_GPIO 17
 #define CAN_RX_GPIO 18
 #define CAN_BITRATE 500000
 #define CAN_QUEUE_LENGTH 32
-#define OBD_QUEUE_LENGTH 16
+#define CAN_TX_QUEUE_DEPTH 8
 #define BLE_COMMAND_QUEUE_LENGTH 8
 #define BLE_COMMAND_LENGTH 96
 
@@ -51,12 +53,11 @@ static const char *TAG = "mota_can";
 #define TFT_FAST_PERIOD_MS 100
 #define TFT_SLOW_PERIOD_MS 500
 #define OBD_RESPONSE_TIMEOUT_MS 150
+#define OBD_QUERY_TIMEOUT_MS 700
 #define TFT_DATA_TIMEOUT_MS 1200
 
 static twai_node_handle_t s_twai;
 static QueueHandle_t s_can_queue;
-static QueueHandle_t s_obd_queue;
-static SemaphoreHandle_t s_can_mutex;
 static uint16_t s_ble_conn = BLE_HS_CONN_HANDLE_NONE;
 static uint16_t s_ble_notify_handle;
 static uint16_t s_ble_hm10_handle;
@@ -78,7 +79,7 @@ struct telemetry_row {
     const char *label;
     uint32_t period_ms;
     uint16_t color;
-    bool hidden; /* documents rows tft_render() currently has no place for; still polled either way */
+    bool hidden; /* rows tft_render() currently has no place for; polling is unaffected */
 };
 
 /* Index 0 is the engine coolant temperature, rendered as a standalone hero
@@ -89,8 +90,10 @@ struct telemetry_row {
  *
  * SPD, FRT, VLT, OIL, FUL and AMB are hidden because this ECU never
  * returns data for them. LOD is hidden because the current screen layout
- * has no place for it. All are still polled every cycle and left in this
- * table (not deleted) so they're one flag away from coming back. */
+ * has no place for it. All stay in this table so another ECU (or bike) that
+ * does answer them works unchanged: obd_poller asks the ECU which PIDs it
+ * supports and skips the rest, and backs off any PID that keeps going
+ * unanswered, so unsupported rows cost no bus time. */
 static const struct telemetry_row s_rows[TFT_TELEMETRY_ROWS] = {
     { 0x05, "TEMP", 100,  0xFFFF, false },
     { 0x0C, "RPM",  100,  0x07E0, false },
@@ -115,14 +118,13 @@ static const struct telemetry_row s_rows[TFT_TELEMETRY_ROWS] = {
 static int s_row_values[TFT_TELEMETRY_ROWS];
 static bool s_row_valid[TFT_TELEMETRY_ROWS];
 static TickType_t s_last_response;
-/* Blocks telemetry_task until display_task's boot self-test (which forces
+/* Keeps telemetry_on_value() off the rows until display_task's boot self-test (which forces
  * a fake critical reading to visually confirm the alert flash) is done
  * writing to s_row_values/s_row_valid, so real CAN data doesn't race with
  * and immediately overwrite the self-test values. */
 static volatile bool s_self_test_active = true;
 
 static int gap_event(struct ble_gap_event *event, void *arg);
-static bool obd_query_pid(uint8_t pid, char *response, size_t response_size);
 
 struct can_packet {
     uint32_t id;
@@ -337,12 +339,13 @@ static void tft_start(void)
              TFT_DC_GPIO, TFT_RST_GPIO);
 }
 
-static bool read_pid_value(uint8_t pid, int *value)
+/* Decodes the data bytes (A, B, ...) of a Mode 01 reply into the integer
+ * encoding format_row_value() expects for that PID. */
+static bool decode_pid_value(uint8_t pid, const uint8_t *data, uint8_t len, int *value)
 {
-    char response[64];
-    unsigned int first = 0, second = 0;
-    if (!obd_query_pid(pid, response, sizeof(response))) return false;
-    if (sscanf(response, "%*x %*x %x %x", &first, &second) < 1) return false;
+    if (len < 1) return false;
+    unsigned int first = data[0];
+    unsigned int second = len > 1 ? data[1] : 0;
     switch (pid) {
     case 0x05: *value = (int)first - 40; return true;
     case 0x0F: *value = (int)first - 40; return true;
@@ -364,7 +367,7 @@ static bool read_pid_value(uint8_t pid, int *value)
     }
 }
 
-/* Render a decoded PID value using the encoding read_pid_value() produced
+/* Render a decoded PID value using the encoding decode_pid_value() produced
  * for that specific PID (plain int, tenths, or millivolts). Units are
  * implied by the row label to keep the compact grid columns short. */
 static void format_row_value(uint8_t pid, int value, char *out, size_t out_size)
@@ -565,33 +568,64 @@ static void tft_render(void)
     tft_flush();
 }
 
-/* Runs on the CAN/protocol core, separate from the display core, so a slow
- * or unanswered OBD query never stalls screen redraws. Every row whose
- * period has elapsed gets queried on this pass (not just the first one
- * found), so each row actually refreshes at its own configured rate instead
- * of being serialized behind the others. */
-static void telemetry_task(void *arg)
+/* obd_poller callback, runs on the CAN/protocol core (0). The poller sends
+ * the next request as soon as a reply arrives and sleeps until something is
+ * due, so the display core never waits on the bus. */
+static void telemetry_on_value(uint8_t pid, const uint8_t *data, uint8_t len, void *ctx)
 {
-    (void)arg;
-    while (s_self_test_active) {
-        vTaskDelay(pdMS_TO_TICKS(50));
+    (void)ctx;
+    if (s_self_test_active) {
+        return; /* display_task owns the rows until its self-test ends */
     }
-    TickType_t next_due[TFT_TELEMETRY_ROWS] = {0};
-    while (true) {
-        TickType_t now = xTaskGetTickCount();
-        for (size_t i = 0; i < TFT_TELEMETRY_ROWS; ++i) {
-            if (now >= next_due[i]) {
-                int value;
-                if (read_pid_value(s_rows[i].pid, &value)) {
-                    s_row_values[i] = value;
-                    s_row_valid[i] = true;
-                    s_last_response = xTaskGetTickCount();
-                }
-                next_due[i] = xTaskGetTickCount() + pdMS_TO_TICKS(s_rows[i].period_ms);
-            }
+    int value;
+    if (!decode_pid_value(pid, data, len, &value)) {
+        return;
+    }
+    for (size_t i = 0; i < TFT_TELEMETRY_ROWS; ++i) {
+        if (s_rows[i].pid == pid) {
+            s_row_values[i] = value;
+            s_row_valid[i] = true;
         }
-        vTaskDelay(pdMS_TO_TICKS(20));
     }
+    s_last_response = xTaskGetTickCount();
+}
+
+/* Non-blocking: queues the frame in the TWAI driver and returns. The driver
+ * keeps a pointer to the frame until it is on the wire, so frames live in a
+ * ring with more slots than the driver can hold (queue + one in hardware). */
+static bool obd_can_send(uint32_t id, bool extended, const uint8_t data[8], void *ctx)
+{
+    (void)ctx;
+    static uint8_t buffers[CAN_TX_QUEUE_DEPTH + 2][8];
+    static twai_frame_t frames[CAN_TX_QUEUE_DEPTH + 2];
+    static size_t next;
+    memcpy(buffers[next], data, 8);
+    frames[next] = (twai_frame_t) {
+        .header = { .id = id, .ide = extended, .dlc = 8 },
+        .buffer = buffers[next],
+        .buffer_len = 8,
+    };
+    if (twai_node_transmit(s_twai, &frames[next], 0) != ESP_OK) {
+        return false;
+    }
+    next = (next + 1) % (CAN_TX_QUEUE_DEPTH + 2);
+    return true;
+}
+
+static void telemetry_start(void)
+{
+    static obd_poll_entry_t entries[TFT_TELEMETRY_ROWS];
+    for (size_t i = 0; i < TFT_TELEMETRY_ROWS; ++i) {
+        entries[i] = (obd_poll_entry_t) { s_rows[i].pid, s_rows[i].period_ms };
+    }
+    obd_poller_config_t config = OBD_POLLER_DEFAULT_CONFIG();
+    config.response_timeout_ms = OBD_RESPONSE_TIMEOUT_MS;
+    config.entries = entries;
+    config.entry_count = TFT_TELEMETRY_ROWS;
+    config.send = obd_can_send;
+    config.on_value = telemetry_on_value;
+    config.core = 0;
+    ESP_ERROR_CHECK(obd_poller_start(&config));
 }
 
 static void display_task(void *arg)
@@ -627,72 +661,23 @@ static void display_task(void *arg)
     }
 }
 
+/* ELM327 passthrough: the poller sends it ahead of scheduled polling, so
+ * only the BLE task waits and the dashboard keeps updating. */
 static bool obd_query_pid(uint8_t pid, char *response, size_t response_size)
 {
-    if (s_can_mutex == NULL || xSemaphoreTake(s_can_mutex, pdMS_TO_TICKS(700)) != pdTRUE) {
+    uint8_t reply[8];
+    uint8_t reply_len = 0;
+    if (!obd_poller_query(pid, reply, &reply_len, OBD_QUERY_TIMEOUT_MS)) {
         snprintf(response, response_size, "NO DATA");
         return false;
     }
-    struct can_packet stale;
-    while (xQueueReceive(s_obd_queue, &stale, 0) == pdTRUE) {
-        /* Discard frames left from a previous request. */
+    int used = 0;
+    response[0] = '\0';
+    for (uint8_t i = 0; i < reply_len && used < (int)response_size - 4; ++i) {
+        used += snprintf(response + used, response_size - (size_t)used,
+                         "%02X%s", reply[i], i + 1 < reply_len ? " " : "");
     }
-
-    uint8_t tx_data[8] = { 0x02, 0x01, pid, 0x55, 0x55, 0x55, 0x55, 0x55 };
-    twai_frame_t tx_frame = {
-        .header = { .id = 0x7DF, .dlc = 8 },
-        .buffer = tx_data,
-        .buffer_len = sizeof(tx_data),
-    };
-
-    ESP_LOGI(TAG, "OBD TX: id=7DF data=02 01 %02X 55 55 55 55 55", pid);
-    esp_err_t tx_result = twai_node_transmit(s_twai, &tx_frame, 100);
-    esp_err_t done_result = tx_result == ESP_OK
-                                ? twai_node_transmit_wait_all_done(s_twai, 100)
-                                : tx_result;
-    if (tx_result != ESP_OK || done_result != ESP_OK) {
-        ESP_LOGW(TAG, "OBD TX failed: transmit=%s done=%s",
-                 esp_err_to_name(tx_result), esp_err_to_name(done_result));
-        snprintf(response, response_size, "NO DATA");
-        xSemaphoreGive(s_can_mutex);
-        return false;
-    }
-
-    struct can_packet packet;
-    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(OBD_RESPONSE_TIMEOUT_MS);
-    while (xTaskGetTickCount() < deadline) {
-        if (xQueueReceive(s_obd_queue, &packet, pdMS_TO_TICKS(20)) != pdTRUE) {
-            continue;
-        }
-        if (packet.id < 0x7E8 || packet.id > 0x7EF || packet.len < 4 ||
-            packet.data[1] != 0x41 || packet.data[2] != pid) {
-            continue;
-        }
-
-        ESP_LOGD(TAG, "OBD response PID 01%02X: id=%03" PRIX32 " raw=", pid, packet.id);
-        for (uint8_t i = 0; i < packet.len; ++i) {
-            ESP_LOGD(TAG, "  data[%u]=%02X", i, packet.data[i]);
-        }
-
-        /* Classic ISO-TP single frame: byte 0 is the payload length.
-         * Do not expose CAN padding bytes as ELM data. */
-        uint8_t payload_len = packet.data[0] & 0x0F;
-        if (payload_len == 0 || payload_len > packet.len - 1) {
-            payload_len = packet.len - 1;
-        }
-        int used = 0;
-        for (uint8_t i = 1; i <= payload_len && used < (int)response_size - 4; ++i) {
-            used += snprintf(response + used, response_size - (size_t)used,
-                             "%02X%s", packet.data[i],
-                             i < payload_len ? " " : "");
-        }
-                    xSemaphoreGive(s_can_mutex);
-        return true;
-    }
-    ESP_LOGW(TAG, "OBD RX timeout: no response for PID 01%02X", pid);
-    snprintf(response, response_size, "NO DATA");
-    xSemaphoreGive(s_can_mutex);
-    return false;
+    return true;
 }
 
 static const ble_uuid16_t s_obd_service_uuid = BLE_UUID16_INIT(0xFFF0);
@@ -1092,8 +1077,8 @@ static bool twai_rx_callback(twai_node_handle_t handle,
         memcpy(packet.data, buffer, packet.len);
         BaseType_t higher_priority_task_woken = pdFALSE;
         xQueueSendFromISR(s_can_queue, &packet, &higher_priority_task_woken);
-        xQueueSendFromISR(s_obd_queue, &packet, &higher_priority_task_woken);
-        return higher_priority_task_woken == pdTRUE;
+        bool obd_woken = obd_poller_feed_frame_from_isr(packet.id, packet.data, packet.len);
+        return higher_priority_task_woken == pdTRUE || obd_woken;
     }
     return false;
 }
@@ -1148,8 +1133,6 @@ static void twai_start(void)
 {
     s_can_queue = xQueueCreate(CAN_QUEUE_LENGTH, sizeof(struct can_packet));
     ESP_ERROR_CHECK(s_can_queue == NULL ? ESP_ERR_NO_MEM : ESP_OK);
-    s_obd_queue = xQueueCreate(OBD_QUEUE_LENGTH, sizeof(struct can_packet));
-    ESP_ERROR_CHECK(s_obd_queue == NULL ? ESP_ERR_NO_MEM : ESP_OK);
 
     twai_onchip_node_config_t config = {
         .io_cfg = {
@@ -1160,7 +1143,7 @@ static void twai_start(void)
             .bitrate = CAN_BITRATE,
             .sp_permill = 750,
         },
-        .tx_queue_depth = 8,
+        .tx_queue_depth = CAN_TX_QUEUE_DEPTH,
         .flags = {
             .no_receive_rtr = 1,
         },
@@ -1217,13 +1200,11 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(nvs_result);
 
-    s_can_mutex = xSemaphoreCreateMutex();
-    ESP_ERROR_CHECK(s_can_mutex == NULL ? ESP_ERR_NO_MEM : ESP_OK);
     twai_start();
     xTaskCreate(can_task, "can_task", 4096, NULL, 5, NULL);
     /* CAN/OBD polling stays on core 0 with the CAN and BLE stacks; the
      * display gets its own core (1) so rendering never waits on the bus. */
-    xTaskCreatePinnedToCore(telemetry_task, "telemetry_task", 4096, NULL, 5, NULL, 0);
+    telemetry_start();
     xTaskCreatePinnedToCore(display_task, "display_task", 8192, NULL, 4, NULL, 1);
     ble_start();
 
