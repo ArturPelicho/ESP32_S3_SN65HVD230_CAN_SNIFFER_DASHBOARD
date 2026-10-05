@@ -5,6 +5,8 @@
 
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_attr.h"
+#include "esp_heap_caps.h"
 #include "nvs_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -47,6 +49,15 @@ static const char *TAG = "mota_can";
 #define TFT_HEIGHT 240
 #define TFT_PIXEL_CLOCK_HZ (20 * 1000 * 1000)
 #define TFT_REFRESH_PERIOD_MS 100
+/* Framebuffers to rotate through. 1 = single buffer: a frame is only drawn
+ * once the previous one has finished going out over SPI. 2 = double
+ * buffer: the next frame is drawn while the previous one is still being
+ * sent. A full 320x240 RGB565 frame is 150 KB, so extra buffers come from
+ * the heap and are only taken if TFT_FB_HEAP_RESERVE bytes of DMA-capable
+ * RAM stay free for BLE/CAN afterwards; otherwise the display runs with
+ * fewer buffers (logged at boot). */
+#define TFT_FB_COUNT 2
+#define TFT_FB_HEAP_RESERVE (64 * 1024)
 #define TFT_TEMP_PERIOD_MS 100
 #define TFT_FAST_PERIOD_MS 100
 #define TFT_SLOW_PERIOD_MS 500
@@ -132,7 +143,22 @@ struct can_packet {
     uint8_t data[8];
 };
 
-static uint16_t s_tft_pixels[TFT_WIDTH * TFT_HEIGHT];
+#define TFT_FB_PIXELS (TFT_WIDTH * TFT_HEIGHT)
+#define TFT_FB_BYTES (TFT_FB_PIXELS * sizeof(uint16_t))
+
+/* Frame buffer handoff between display_task (draws) and the SPI DMA (sends).
+ * esp_lcd_panel_draw_bitmap() only queues the transfer and returns, so the
+ * buffer it was given stays in use for ~61 ms afterwards. s_tft_idle is
+ * given back by the transfer-done ISR; display_task only polls it (zero
+ * timeout), so the render loop on core 1 never blocks on the bus. Drawing
+ * primitives write through s_tft_pixels, which always points at a buffer
+ * that is not being sent. */
+static uint16_t s_tft_fb0[TFT_FB_PIXELS];
+static uint16_t *s_tft_fb[TFT_FB_COUNT];
+static size_t s_tft_fb_count = 1;
+static size_t s_tft_draw_idx;
+static uint16_t *s_tft_pixels = s_tft_fb0;
+static SemaphoreHandle_t s_tft_idle;
 
 static const uint8_t *glyph_for(char c)
 {
@@ -168,7 +194,7 @@ static const uint8_t *glyph_for(char c)
 
 static void tft_clear(uint16_t color)
 {
-    for (size_t i = 0; i < sizeof(s_tft_pixels) / sizeof(s_tft_pixels[0]); ++i) {
+    for (size_t i = 0; i < TFT_FB_PIXELS; ++i) {
         s_tft_pixels[i] = color;
     }
 }
@@ -195,23 +221,90 @@ static void tft_text(int x, int y, const char *text, uint16_t color, int scale)
     }
 }
 
+static IRAM_ATTR bool tft_on_color_trans_done(esp_lcd_panel_io_handle_t io,
+                                               esp_lcd_panel_io_event_data_t *edata,
+                                               void *user_ctx)
+{
+    (void)io;
+    (void)edata;
+    (void)user_ctx;
+    BaseType_t woken = pdFALSE;
+    xSemaphoreGiveFromISR(s_tft_idle, &woken);
+    return woken == pdTRUE;
+}
+
+static bool tft_transfer_idle(void)
+{
+    return uxSemaphoreGetCount(s_tft_idle) > 0;
+}
+
+/* Called before drawing a frame. Returns false when there is no buffer
+ * free to draw into yet (single-buffer mode with the last frame still in
+ * flight); the caller just skips this refresh tick instead of waiting. */
+static bool tft_begin_frame(void)
+{
+    if (!s_tft_ready) return false;
+    /* With two or more buffers the draw buffer is never the one in flight. */
+    return s_tft_fb_count > 1 || tft_transfer_idle();
+}
+
+/* Queues the drawn frame for DMA and moves drawing to the next buffer.
+ * Never waits: if the previous transfer is still running (only possible
+ * with double buffering), this frame is dropped and the next tick draws a
+ * fresher one. */
 static void tft_flush(void)
 {
-    if (s_tft_ready) {
-        /* The panel expects each RGB565 pixel big-endian (high byte first)
-         * over SPI; our framebuffer is native little-endian, which was
-         * silently reinterpreting color channels (blue rendering as green,
-         * yellow as lilac). Byte-swap the whole frame just before sending;
-         * it is safe to leave it swapped since tft_clear() overwrites the
-         * entire buffer at the start of the next frame. */
-        size_t pixel_count = sizeof(s_tft_pixels) / sizeof(s_tft_pixels[0]);
-        for (size_t i = 0; i < pixel_count; ++i) {
-            uint16_t v = s_tft_pixels[i];
-            s_tft_pixels[i] = (uint16_t)((v << 8) | (v >> 8));
-        }
-        esp_lcd_panel_draw_bitmap(s_tft_panel, 0, 0, TFT_WIDTH, TFT_HEIGHT,
-                                  s_tft_pixels);
+    if (!s_tft_ready) return;
+    if (xSemaphoreTake(s_tft_idle, 0) != pdTRUE) return;
+    /* The panel expects each RGB565 pixel big-endian (high byte first)
+     * over SPI; our framebuffer is native little-endian, which was
+     * silently reinterpreting color channels (blue rendering as green,
+     * yellow as lilac). Byte-swap the whole frame just before sending;
+     * it is safe to leave it swapped since tft_clear() overwrites the
+     * entire buffer before this buffer is drawn into again. */
+    for (size_t i = 0; i < TFT_FB_PIXELS; ++i) {
+        uint16_t v = s_tft_pixels[i];
+        s_tft_pixels[i] = (uint16_t)((v << 8) | (v >> 8));
     }
+    if (esp_lcd_panel_draw_bitmap(s_tft_panel, 0, 0, TFT_WIDTH, TFT_HEIGHT,
+                                  s_tft_pixels) != ESP_OK) {
+        /* Nothing was queued, so no ISR will release the transfer slot. */
+        xSemaphoreGive(s_tft_idle);
+        return;
+    }
+    s_tft_draw_idx = (s_tft_draw_idx + 1) % s_tft_fb_count;
+    s_tft_pixels = s_tft_fb[s_tft_draw_idx];
+}
+
+/* Bounded wait for the in-flight frame to finish. Only for rare one-off
+ * operations that must not overlap a pixel transfer (the panel re-init);
+ * the render loop never calls this. */
+static bool tft_wait_idle(TickType_t timeout)
+{
+    if (xSemaphoreTake(s_tft_idle, timeout) != pdTRUE) return false;
+    xSemaphoreGive(s_tft_idle);
+    return true;
+}
+
+static void tft_alloc_framebuffers(void)
+{
+    s_tft_fb[0] = s_tft_fb0;
+    s_tft_fb_count = 1;
+    for (size_t i = 1; i < TFT_FB_COUNT; ++i) {
+        uint16_t *fb = NULL;
+        if (heap_caps_get_free_size(MALLOC_CAP_DMA) >= TFT_FB_BYTES + TFT_FB_HEAP_RESERVE) {
+            fb = heap_caps_malloc(TFT_FB_BYTES, MALLOC_CAP_DMA);
+        }
+        if (fb == NULL) {
+            ESP_LOGW(TAG, "TFT: no RAM for framebuffer %u, using %u",
+                     (unsigned)(i + 1), (unsigned)s_tft_fb_count);
+            break;
+        }
+        s_tft_fb[i] = fb;
+        s_tft_fb_count = i + 1;
+    }
+    s_tft_draw_idx = 0;
+    s_tft_pixels = s_tft_fb[0];
 }
 
 /* Draws each glyph twice, offset by one pixel, to approximate a bold weight
@@ -297,13 +390,17 @@ static void tft_start(void)
      * display_task also re-runs tft_panel_init_sequence() once more after
      * boot as a second line of defence (see there). */
     vTaskDelay(pdMS_TO_TICKS(2000));
+    s_tft_idle = xSemaphoreCreateBinary();
+    ESP_ERROR_CHECK(s_tft_idle == NULL ? ESP_ERR_NO_MEM : ESP_OK);
+    xSemaphoreGive(s_tft_idle);
+    tft_alloc_framebuffers();
     spi_bus_config_t bus_config = {
         .sclk_io_num = TFT_SCLK_GPIO,
         .mosi_io_num = TFT_MOSI_GPIO,
         .miso_io_num = -1,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = sizeof(s_tft_pixels),
+        .max_transfer_sz = TFT_FB_BYTES,
     };
     ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO));
 
@@ -315,7 +412,7 @@ static void tft_start(void)
         .lcd_param_bits = 8,
         .spi_mode = 0,
         .trans_queue_depth = 4,
-        .on_color_trans_done = NULL,
+        .on_color_trans_done = tft_on_color_trans_done,
         .user_ctx = NULL,
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SPI2_HOST,
@@ -332,8 +429,8 @@ static void tft_start(void)
     tft_clear(0x0000);
     tft_text(12, 12, "MOTA CAN", 0xFFFF, 3);
     tft_flush();
-    ESP_LOGI(TAG, "ST7789 TFT started: %dx%d MOSI=%d SCK=%d CS=%d DC=%d RST=%d",
-             TFT_WIDTH, TFT_HEIGHT, TFT_MOSI_GPIO, TFT_SCLK_GPIO, TFT_CS_GPIO,
+    ESP_LOGI(TAG, "ST7789 TFT started: %dx%d, %u framebuffer(s) MOSI=%d SCK=%d CS=%d DC=%d RST=%d",
+             TFT_WIDTH, TFT_HEIGHT, (unsigned)s_tft_fb_count, TFT_MOSI_GPIO, TFT_SCLK_GPIO, TFT_CS_GPIO,
              TFT_DC_GPIO, TFT_RST_GPIO);
 }
 
@@ -609,7 +706,7 @@ static void display_task(void *arg)
     s_row_valid[0] = true;
     s_last_response = xTaskGetTickCount();
     while (xTaskGetTickCount() < self_test_until) {
-        tft_render();
+        if (tft_begin_frame()) tft_render();
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
     s_row_valid[0] = false;
@@ -619,10 +716,14 @@ static void display_task(void *arg)
      * self-test), well past any engine-cranking voltage sag. Re-run the
      * panel init as a second line of defence against the panel having come
      * up wrong the first time - see tft_panel_init_sequence(). */
+    /* The reset pulse is a GPIO toggle that does not wait for the SPI queue,
+     * so let the last self-test frame finish first. One-off at boot; a
+     * frame takes ~61 ms, so the 200 ms bound is never normally reached. */
+    tft_wait_idle(pdMS_TO_TICKS(200));
     tft_panel_init_sequence();
 
     while (true) {
-        tft_render();
+        if (tft_begin_frame()) tft_render();
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
 }
