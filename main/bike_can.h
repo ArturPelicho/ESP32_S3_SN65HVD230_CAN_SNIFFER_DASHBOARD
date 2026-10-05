@@ -8,7 +8,8 @@
  *                       B5-B6  16-bit value, 0 on fuel cut and engine off;
  *                              maybe injection time (scale not yet known)
  *                       B7     status bits
- *   0x111, every ~9 ms  B6     battery voltage, 0.1 V per bit
+ *   0x111, every ~9 ms  B6     battery voltage, 0.1 V per bit (decays to
+ *                              0 for a few seconds after engine stop)
  *
  * These arrive ten times faster than a polled PID and cost no bus time.
  * Pure C with no ESP-IDF dependencies; IDs and byte positions are in the
@@ -47,6 +48,9 @@ typedef struct {
     bool battery_valid;
     uint16_t battery_mv;
 } bike_can_data_t;
+
+/* Battery readings below this are the ECU powering down, not a battery. */
+#define BIKE_CAN_BATTERY_MIN_MV 5000
 
 enum {
     BIKE_CAN_NONE = 0,

@@ -35,6 +35,13 @@ int main(void)
     assert(d.battery_mv == 14300);
     assert(d.rpm == 4717); /* power frames leave engine data alone */
 
+    /* After the engine stops the frame keeps coming, decaying to 0 V. */
+    const uint8_t dying[8] = { 0, 0, 0, 0, 0, 0x79, 0x05, 0 };
+    assert(bike_can_decode(&cfg, 0x111, false, dying, 8, &d) == BIKE_CAN_POWER);
+    assert(!d.battery_valid);
+    bike_can_decode(&cfg, 0x111, false, charging, 8, &d);
+    assert(d.battery_valid && d.battery_mv == 14300);
+
     /* Other IDs, extended IDs and short frames are ignored. */
     assert(bike_can_decode(&cfg, 0x7E8, false, idle, 8, &d) == BIKE_CAN_NONE);
     assert(bike_can_decode(&cfg, 0x110, true, idle, 8, &d) == BIKE_CAN_NONE);

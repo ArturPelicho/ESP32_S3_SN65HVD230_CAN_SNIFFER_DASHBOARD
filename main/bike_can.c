@@ -27,7 +27,10 @@ int bike_can_decode(const bike_can_config_t *cfg, uint32_t id, bool extended,
     if (id == cfg->power_id) {
         if (len < cfg->battery_byte + 1) return BIKE_CAN_NONE;
         out->battery_mv = (uint16_t)(data[cfg->battery_byte] * 100);
-        out->battery_valid = true;
+        /* For a few seconds after the engine stops the ECU keeps sending
+         * this frame with a value decaying towards 0 V; nothing below a
+         * few volts is a real battery reading. */
+        out->battery_valid = out->battery_mv >= BIKE_CAN_BATTERY_MIN_MV;
         return BIKE_CAN_POWER;
     }
 
