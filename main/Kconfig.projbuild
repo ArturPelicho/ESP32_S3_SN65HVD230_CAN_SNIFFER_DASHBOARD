@@ -178,3 +178,30 @@ menu "Dashboard thresholds"
         default 10000
 
 endmenu
+
+menu "PID scan (discovery test)"
+
+    config PID_SCAN_AT_BOOT
+        bool "Start the PID scan at boot"
+        default n
+        help
+            Asks every Mode 01 PID (0x00-0xFF) regardless of the ECU's
+            supported-PID bitmaps, then keeps watching the ones that answer
+            and tallies all other CAN traffic. Reports go to the serial log
+            every report period. Without this the scan is started over BLE
+            with the command SCAN (also SCAN REPORT and SCAN STOP).
+
+    config PID_SCAN_GAP_MS
+        int "Pause between scan requests (ms)"
+        range 0 1000
+        default 40
+        help
+            Leaves the bus to the dashboard's own polling between scan
+            requests, so the display keeps updating during the test.
+
+    config PID_SCAN_REPORT_PERIOD_S
+        int "Report period (s)"
+        range 5 600
+        default 30
+
+endmenu

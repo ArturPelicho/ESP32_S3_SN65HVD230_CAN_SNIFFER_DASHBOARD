@@ -32,6 +32,7 @@
 #include "services/gatt/ble_svc_gatt.h"
 
 #include "obd_poller.h"
+#include "pid_scan_task.h"
 
 static const char *TAG = "mota_can";
 
@@ -74,6 +75,17 @@ static const char *TAG = "mota_can";
 #define TFT_SLOW_PERIOD_MS 500
 #define OBD_RESPONSE_TIMEOUT_MS 150
 #define OBD_QUERY_TIMEOUT_MS 700
+/* Must match the poller config (OBD_POLLER_DEFAULT_CONFIG). */
+#define OBD_REQUEST_ID 0x7DF
+#define OBD_RESPONSE_ID_MIN 0x7E8
+#define OBD_RESPONSE_ID_MAX 0x7EF
+
+#ifndef CONFIG_PID_SCAN_GAP_MS
+#define CONFIG_PID_SCAN_GAP_MS 40
+#endif
+#ifndef CONFIG_PID_SCAN_REPORT_PERIOD_S
+#define CONFIG_PID_SCAN_REPORT_PERIOD_S 30
+#endif
 #define TFT_DATA_TIMEOUT_MS 1200
 
 static twai_node_handle_t s_twai;
@@ -977,6 +989,9 @@ static void tft_render(void)
         }
     }
     tft_text_bold(8, 5, "CYL HEAD TEMP", hero_critical ? COLOR_WHITE : COLOR_LABEL, 2);
+    if (pid_scan_running()) {
+        tft_text(174, 9, "SCAN", COLOR_CYAN, 1);
+    }
     char hero_text[8];
     uint16_t hero_color;
     if (!hero_valid) {
@@ -1158,6 +1173,53 @@ static void display_task(void *arg)
     }
 }
 
+static void ble_send_text(const char *text);
+
+/* PID discovery test (pid_scan_task.h). Requests ride the poller's one-off
+ * query slot, so the dashboard keeps polling between them. */
+static bool s_scan_to_ble; /* the scan was asked for over BLE: echo the report there */
+
+static bool scan_query(uint8_t pid, uint32_t timeout_ms)
+{
+    uint8_t reply[8];
+    uint8_t reply_len = 0;
+    return obd_poller_query(pid, reply, &reply_len, timeout_ms);
+}
+
+static void scan_line_out(const char *line, void *ctx)
+{
+    (void)ctx;
+    ESP_LOGI("pid_scan", "%s", line);
+    if (s_scan_to_ble) {
+        ble_send_text(line);
+        ble_send_text("\r");
+    }
+}
+
+static void scan_init(void)
+{
+    pid_scan_task_config_t config = {
+        .ids = {
+            .request_id = OBD_REQUEST_ID,
+            .response_id_min = OBD_RESPONSE_ID_MIN,
+            .response_id_max = OBD_RESPONSE_ID_MAX,
+        },
+        .query = scan_query,
+        .query_timeout_ms = OBD_QUERY_TIMEOUT_MS,
+        .gap_ms = CONFIG_PID_SCAN_GAP_MS,
+        .report_period_ms = CONFIG_PID_SCAN_REPORT_PERIOD_S * 1000U,
+        .line_out = scan_line_out,
+        .core = 0,
+        .priority = 3,
+    };
+    pid_scan_task_init(&config);
+#if CONFIG_PID_SCAN_AT_BOOT
+    if (pid_scan_start() != ESP_OK) {
+        ESP_LOGW(TAG, "PID scan could not start; the dashboard runs without it");
+    }
+#endif
+}
+
 /* ELM327 passthrough: the poller sends it ahead of scheduled polling, so
  * only the BLE task waits and the dashboard keeps updating. */
 static bool obd_query_pid(uint8_t pid, char *response, size_t response_size)
@@ -1284,6 +1346,16 @@ static void process_elm_command(char *command)
     } else if (!strcmp(command, "ATMA")) {
         s_monitor_mode = true;
         ble_send_text("OK\r");
+    } else if (!strcmp(command, "SCAN") || !strcmp(command, "SCAN START")) {
+        s_scan_to_ble = true;
+        ble_send_text(pid_scan_start() == ESP_OK ? "OK\r\r>" : "ERROR\r\r>");
+    } else if (!strcmp(command, "SCAN STOP")) {
+        pid_scan_stop();
+        ble_send_text("OK\r\r>");
+    } else if (!strcmp(command, "SCAN REPORT")) {
+        s_scan_to_ble = true;
+        pid_scan_request_report();
+        ble_send_text("OK\r\r>");
     } else if (!strcmp(command, "ATST") || !strcmp(command, "ATIGN")) {
         ble_send_text("OK\r\r>");
     } else if (strlen(command) == 4 && command[0] == '0' &&
@@ -1575,7 +1647,9 @@ static bool twai_rx_callback(twai_node_handle_t handle,
         BaseType_t higher_priority_task_woken = pdFALSE;
         xQueueSendFromISR(s_can_queue, &packet, &higher_priority_task_woken);
         bool obd_woken = obd_poller_feed_frame_from_isr(packet.id, packet.data, packet.len);
-        return higher_priority_task_woken == pdTRUE || obd_woken;
+        bool scan_woken = pid_scan_feed_frame_from_isr(packet.id, packet.extended, packet.data,
+                                                       packet.len);
+        return higher_priority_task_woken == pdTRUE || obd_woken || scan_woken;
     }
     return false;
 }
@@ -1705,6 +1779,8 @@ void app_main(void)
     fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
     fuel_estimator_init(&s_fuel_estimator, &fuel_config);
     xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
+
+    scan_init();
 
     ESP_LOGI(TAG, "Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.");
 }

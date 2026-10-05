@@ -51,3 +51,16 @@ Engine geometry (default ZongShen Carrera 125, 57.3 x 48.4 mm single cylinder), 
 The maths has a host-side test that needs no ESP-IDF:
 
 `gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test`
+
+## PID discovery test
+
+To find out which Mode 01 PIDs the ECU really answers, regardless of the
+supported-PID bitmaps it advertises, send `SCAN` over BLE (or enable
+*PID scan (discovery test) → Start the PID scan at boot* in menuconfig). The
+firmware asks every PID from 0x00 to 0xFF, then keeps watching the ones that
+answer, tallies all other CAN traffic on the bus, and prints a report every
+30 s (`SCAN REPORT` for one now, `SCAN STOP` to end). The dashboard keeps
+running throughout. The step-by-step test procedure (in Portuguese) is in
+[docs/pid-scan-protocol.md](docs/pid-scan-protocol.md). Code:
+`main/pid_scan.{h,c}` (pure C, host test in `test/host/test_pid_scan.c`) and
+`main/pid_scan_task.{h,c}`.
