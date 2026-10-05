@@ -32,6 +32,7 @@
 #include "services/gatt/ble_svc_gatt.h"
 
 #include "obd_poller.h"
+#include "boot_diag.h"
 
 static const char *TAG = "mota_can";
 
@@ -465,6 +466,30 @@ static bool tft_health_tick(void)
     return render;
 }
 
+/* Boot record on the splash screen. Only held on screen when the previous
+ * start failed or this one was not a clean power-on, so a normal key-on is
+ * not slowed down. Read it after an ignition off/on that fixed a black
+ * screen: see boot_diag.h for how to interpret the numbers. */
+#define TFT_BOOT_DIAG_HOLD_MS 4000
+
+static void tft_draw_boot_diag(void)
+{
+    const boot_diag_info_t *d = boot_diag_info();
+    char line[40];
+    uint16_t color = boot_diag_noteworthy() ? 0xFFE0 : 0x8410;
+    /* 2x font: 26 characters per line at most. */
+    snprintf(line, sizeof(line), "BOOT %lu  FAILED %lu",
+             (unsigned long)d->boot_count, (unsigned long)d->failed_boots);
+    tft_text(12, 136, line, color, 2);
+    snprintf(line, sizeof(line), "RESET %s", boot_diag_reason_name(d->reason));
+    tft_text(12, 158, line, color, 2);
+    snprintf(line, sizeof(line), "LAST RESET %s", boot_diag_reason_name(d->prev_reason));
+    tft_text(12, 180, line, color, 2);
+    snprintf(line, sizeof(line), "LAST STAGE %u OF %u", d->prev_stage,
+             (unsigned)BOOT_DIAG_STAGE_RUNNING);
+    tft_text(12, 202, line, color, 2);
+}
+
 static void tft_start(void)
 {
     /* On a cold start (bike ignition just turned on), the panel's supply
@@ -513,7 +538,9 @@ static void tft_start(void)
     s_tft_ready = true;
     tft_clear(0x0000);
     tft_text(12, 12, "MOTA CAN", 0xFFFF, 3);
+    tft_draw_boot_diag();
     tft_flush();
+    boot_diag_mark(BOOT_DIAG_STAGE_PANEL_INIT);
     ESP_LOGI(TAG, "ST7789 TFT started: %dx%d, %u framebuffer(s) MOSI=%d SCK=%d CS=%d DC=%d RST=%d",
              TFT_WIDTH, TFT_HEIGHT, (unsigned)s_tft_fb_count, TFT_MOSI_GPIO, TFT_SCLK_GPIO, TFT_CS_GPIO,
              TFT_DC_GPIO, TFT_RST_GPIO);
@@ -1096,6 +1123,7 @@ static void display_task(void *arg)
 {
     (void)arg;
     tft_start();
+    if (boot_diag_noteworthy()) vTaskDelay(pdMS_TO_TICKS(TFT_BOOT_DIAG_HOLD_MS));
 
     /* Self-test: briefly force a simulated over-temperature reading so the
      * hero row's flashing red alert box can be visually confirmed on every
@@ -1112,6 +1140,7 @@ static void display_task(void *arg)
     }
     s_row_valid[0] = false;
     s_self_test_active = false;
+    boot_diag_mark(BOOT_DIAG_STAGE_SELF_TEST_DONE);
 
     /* By now it's ~6s since boot (tft_start()'s startup delay plus this
      * self-test), well past any engine-cranking voltage sag. Re-run the
@@ -1123,8 +1152,12 @@ static void display_task(void *arg)
     tft_wait_idle(pdMS_TO_TICKS(200));
     tft_panel_init_sequence();
 
+    TickType_t running_at = xTaskGetTickCount() + pdMS_TO_TICKS(10000);
     while (true) {
         if (tft_health_tick() && tft_begin_frame()) tft_render();
+        if ((int32_t)(xTaskGetTickCount() - running_at) >= 0) {
+            boot_diag_mark(BOOT_DIAG_STAGE_RUNNING);
+        }
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
 }
@@ -1662,13 +1695,16 @@ void app_main(void)
         nvs_result = nvs_flash_init();
     }
     ESP_ERROR_CHECK(nvs_result);
+    boot_diag_init();
 
+    /* Display first: it has the longest start-up (panel settle delay), and
+     * if anything below fails the screen is already coming up. */
+    xTaskCreatePinnedToCore(display_task, "display_task", 8192, NULL, 4, NULL, 1);
     twai_start();
     xTaskCreate(can_task, "can_task", 4096, NULL, 5, NULL);
     /* CAN/OBD polling stays on core 0 with the CAN and BLE stacks; the
      * display gets its own core (1) so rendering never waits on the bus. */
     telemetry_start();
-    xTaskCreatePinnedToCore(display_task, "display_task", 8192, NULL, 4, NULL, 1);
     ble_start();
 
     /* Fuel estimate on core 0 beside the polling; the display only reads
@@ -1676,6 +1712,7 @@ void app_main(void)
     fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
     fuel_estimator_init(&s_fuel_estimator, &fuel_config);
     xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
+    boot_diag_mark(BOOT_DIAG_STAGE_TASKS_STARTED);
 
     ESP_LOGI(TAG, "Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.");
 }
