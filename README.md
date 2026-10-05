@@ -38,11 +38,15 @@ The device advertises as `MOTA-CAN-ELM`. Its custom UART service uses the Nordic
 
 Implemented initial commands: `ATZ`, `ATI`, `ATE0/ATE1`, `ATL0/ATL1`, `ATS0/ATS1`, `ATSP0`, `ATMA`, and `0100`/`010C`/`010D` placeholders. The OBD responses are deliberately conservative until the motorcycle's actual CAN IDs and PID encoding are captured.
 
-## Fuel injection estimate
+## Fuel consumption estimate
 
-The bottom strip of the dashboard (amber `FUEL EST` badge) shows an estimated fuel volume per injection (microlitres, `UL`) and the resulting flow (`L/H`). It is a speed-density estimate from MAP, intake air temperature and RPM, corrected by the averaged narrowband O2 voltage; see `main/fuel_estimator.h` for the model and its assumptions.
+The FUEL panel (amber `FUEL EST` badge) shows instant consumption and the average since start-up. The instant reading is L/100km when moving (RPM at or above 2500 and a road speed is available) and L/h when stopped or idling. It shows `FUEL CUT` during engine braking (closed throttle, RPM above idle, O2 fully lean). The average stays in L/h until 500 m have been covered.
 
-The engine geometry (default ZongShen Carrera 125, 57.3 x 48.4 mm single), volumetric efficiency, stoichiometric AFR, fuel density, O2 handling and smoothing are set in `idf.py menuconfig` under **Fuel injection estimate**. Calibrate the volumetric efficiency against a fill-to-fill consumption check.
+L/100km needs road speed. This ECU does not answer OBD PID 0x0D, so until a speed source is added (CAN broadcast, GPS or wheel sensor), both readings stay in L/h.
+
+The estimate uses the speed-density method: MAP, intake air temperature and RPM, corrected by the averaged narrowband O2 voltage. See `main/fuel_estimator.h` for the model and its assumptions.
+
+Engine geometry (default ZongShen Carrera 125, 57.3 x 48.4 mm single cylinder), volumetric efficiency, stoichiometric AFR, fuel density, the unit-switch RPM and the fuel-cut thresholds are set in `idf.py menuconfig` under **Fuel injection estimate**. Volumetric efficiency is also the calibration factor: if the reading is 10 % high against a fill-to-fill check, lower it by 10 %.
 
 The maths has a host-side test that needs no ESP-IDF:
 

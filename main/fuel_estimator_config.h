@@ -35,6 +35,27 @@
 #ifndef CONFIG_FUEL_LAMBDA_TAU_MS
 #define CONFIG_FUEL_LAMBDA_TAU_MS 3000
 #endif
+#ifndef CONFIG_FUEL_MOVING_RPM
+#define CONFIG_FUEL_MOVING_RPM 2500
+#endif
+#ifndef CONFIG_FUEL_MOVING_HYSTERESIS_RPM
+#define CONFIG_FUEL_MOVING_HYSTERESIS_RPM 150
+#endif
+#ifndef CONFIG_FUEL_MIN_SPEED_KMH
+#define CONFIG_FUEL_MIN_SPEED_KMH 5
+#endif
+#ifndef CONFIG_FUEL_AVG_MIN_DISTANCE_M
+#define CONFIG_FUEL_AVG_MIN_DISTANCE_M 500
+#endif
+#ifndef CONFIG_FUEL_CUT_MIN_RPM
+#define CONFIG_FUEL_CUT_MIN_RPM 1800
+#endif
+#ifndef CONFIG_FUEL_CUT_MAX_THROTTLE_PCT
+#define CONFIG_FUEL_CUT_MAX_THROTTLE_PCT 2
+#endif
+#ifndef CONFIG_FUEL_CUT_MAX_O2_MV
+#define CONFIG_FUEL_CUT_MAX_O2_MV 150
+#endif
 #if !defined(CONFIG_FUEL_LAMBDA_NARROWBAND) && !defined(CONFIG_FUEL_LAMBDA_ASSUME_STOICH)
 #define CONFIG_FUEL_LAMBDA_NARROWBAND 1
 #endif
@@ -56,6 +77,13 @@ static inline fuel_estimator_config_t fuel_estimator_config_from_kconfig(void)
 #endif
         .output_tau_ms = CONFIG_FUEL_OUTPUT_TAU_MS,
         .lambda_tau_ms = CONFIG_FUEL_LAMBDA_TAU_MS,
+        .moving_rpm = CONFIG_FUEL_MOVING_RPM,
+        .moving_hysteresis_rpm = CONFIG_FUEL_MOVING_HYSTERESIS_RPM,
+        .min_speed_kmh = CONFIG_FUEL_MIN_SPEED_KMH,
+        .cut_min_rpm = CONFIG_FUEL_CUT_MIN_RPM,
+        .cut_max_throttle = CONFIG_FUEL_CUT_MAX_THROTTLE_PCT,
+        .cut_max_o2_volts = CONFIG_FUEL_CUT_MAX_O2_MV / 1000.0f,
+        .avg_min_distance_km = CONFIG_FUEL_AVG_MIN_DISTANCE_M / 1000.0f,
     };
     return cfg;
 }

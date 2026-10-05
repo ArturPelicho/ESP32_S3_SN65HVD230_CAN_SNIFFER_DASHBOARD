@@ -6,6 +6,7 @@
 #define FUEL_R_AIR 287.05f         /* J/(kg*K), dry air */
 #define FUEL_KELVIN_OFFSET 273.15f
 #define FUEL_MIN_RPM 200.0f        /* below this the engine is not running */
+#define FUEL_MAX_DT_MS 1000        /* longer gaps are not integrated */
 
 void fuel_estimator_init(fuel_estimator_t *est, const fuel_estimator_config_t *config)
 {
@@ -15,8 +16,14 @@ void fuel_estimator_init(fuel_estimator_t *est, const fuel_estimator_config_t *c
     est->displacement_m3 = FUEL_PI / 4.0f * bore_m * bore_m * stroke_m;
     est->lambda_filtered = 1.0f;
     est->fuel_mg_filtered = 0.0f;
+    est->flow_filtered_lph = 0.0f;
+    est->speed_filtered_kmh = 0.0f;
     est->lambda_primed = false;
     est->output_primed = false;
+    est->moving = false;
+    est->total_fuel_l = 0.0;
+    est->total_distance_km = 0.0;
+    est->running_hours = 0.0;
 }
 
 /* Narrowband sensors sit near 0.45 V at stoichiometry and swing to about
@@ -40,15 +47,43 @@ static float smooth(float previous, float sample, uint32_t dt_ms, uint32_t tau_m
     return previous + alpha * (sample - previous);
 }
 
+static bool detect_fuel_cut(const fuel_estimator_config_t *cfg, const fuel_estimator_inputs_t *in)
+{
+    return in->rpm_valid && in->throttle_valid && in->o2_valid &&
+           in->rpm >= cfg->cut_min_rpm &&
+           in->throttle_pct <= cfg->cut_max_throttle &&
+           in->o2_volts <= cfg->cut_max_o2_volts;
+}
+
+static void fill_averages(const fuel_estimator_t *est, fuel_estimate_t *out)
+{
+    out->total_fuel_l = (float)est->total_fuel_l;
+    out->total_distance_km = (float)est->total_distance_km;
+    out->avg_l_per_h = est->running_hours > 0.0
+                           ? (float)(est->total_fuel_l / est->running_hours) : 0.0f;
+    if (est->total_distance_km >= est->config.avg_min_distance_km &&
+        est->total_distance_km > 0.0) {
+        out->avg_unit = FUEL_UNIT_L_PER_100KM;
+        out->avg_l_per_100km = (float)(est->total_fuel_l / est->total_distance_km * 100.0);
+    } else {
+        out->avg_unit = FUEL_UNIT_L_PER_H;
+        out->avg_l_per_100km = 0.0f;
+    }
+}
+
 bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t *in,
                            uint32_t dt_ms, fuel_estimate_t *out)
 {
     const fuel_estimator_config_t *cfg = &est->config;
+    uint32_t integrate_ms = dt_ms > FUEL_MAX_DT_MS ? 0 : dt_ms;
 
     out->displacement_cc = est->displacement_m3 * 1e6f;
+    out->fuel_cut = detect_fuel_cut(cfg, in);
 
     /* Lambda keeps filtering even when the other inputs are missing, so it
-     * is already settled when they come back. */
+     * is already settled when they come back. During a fuel cut the sensor
+     * reads "no fuel at all", which says nothing about the mixture, so the
+     * average is frozen instead of being dragged lean. */
     float lambda_sample = 1.0f;
     bool lambda_measured = false;
     if (cfg->lambda_source == FUEL_LAMBDA_NARROWBAND && in->o2_valid) {
@@ -62,17 +97,27 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
     if (!est->lambda_primed) {
         est->lambda_filtered = lambda_sample;
         est->lambda_primed = true;
-    } else {
+    } else if (!out->fuel_cut) {
         est->lambda_filtered = smooth(est->lambda_filtered, lambda_sample, dt_ms,
                                       cfg->lambda_tau_ms);
     }
     out->lambda = est->lambda_filtered;
     out->lambda_measured = lambda_measured;
 
+    /* Distance counts whenever speed is known, even if the fuel inputs
+     * briefly drop out, so the average's denominator stays honest. */
+    bool speed_ok = in->speed_valid && in->speed_kmh >= 0.0f;
+    if (speed_ok) {
+        est->total_distance_km += (double)in->speed_kmh * integrate_ms / 3.6e6;
+        est->speed_filtered_kmh = smooth(est->speed_filtered_kmh, in->speed_kmh, dt_ms,
+                                         cfg->output_tau_ms);
+    }
+
     if (!in->map_valid || !in->intake_temp_valid || !in->rpm_valid ||
         in->map_kpa <= 0.0f) {
         out->valid = false;
         est->output_primed = false;
+        fill_averages(est, out);
         return false;
     }
 
@@ -84,24 +129,45 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
     out->air_mg_per_intake = air_mg;
 
     bool running = in->rpm >= FUEL_MIN_RPM;
-    float fuel_mg = running ? air_mg / (cfg->stoich_afr * est->lambda_filtered) : 0.0f;
-    if (!est->output_primed) {
-        est->fuel_mg_filtered = fuel_mg;
-        est->output_primed = true;
-    } else {
-        est->fuel_mg_filtered = smooth(est->fuel_mg_filtered, fuel_mg, dt_ms,
-                                       cfg->output_tau_ms);
-    }
-
-    /* g/ml == mg/ul, so mg / (g/ml) gives microlitres directly. */
-    out->fuel_mg_per_injection = est->fuel_mg_filtered;
-    out->fuel_ul_per_injection = est->fuel_mg_filtered / cfg->fuel_density_g_per_ml;
-
+    float fuel_mg = (running && !out->fuel_cut)
+                        ? air_mg / (cfg->stoich_afr * est->lambda_filtered) : 0.0f;
     float cycles_per_s = running ? in->rpm / 60.0f / ((float)cfg->strokes_per_cycle / 2.0f)
                                  : 0.0f;
     float injections_per_s = cycles_per_s * (float)cfg->cylinders;
-    out->fuel_flow_l_per_h = out->fuel_ul_per_injection * injections_per_s * 3600.0f * 1e-6f;
+    /* g/ml == mg/ul, so mg / (g/ml) gives microlitres directly. */
+    float flow_lph = fuel_mg / cfg->fuel_density_g_per_ml * injections_per_s * 3600.0f * 1e-6f;
 
+    /* Totals use the unsmoothed flow so the average is exact. */
+    est->total_fuel_l += (double)flow_lph * integrate_ms / 3.6e6;
+    if (running) est->running_hours += (double)integrate_ms / 3.6e6;
+
+    /* A fuel cut drops the reading at once rather than easing down. */
+    if (!est->output_primed || out->fuel_cut) {
+        est->fuel_mg_filtered = fuel_mg;
+        est->flow_filtered_lph = flow_lph;
+        est->output_primed = true;
+    } else {
+        est->fuel_mg_filtered = smooth(est->fuel_mg_filtered, fuel_mg, dt_ms, cfg->output_tau_ms);
+        est->flow_filtered_lph = smooth(est->flow_filtered_lph, flow_lph, dt_ms, cfg->output_tau_ms);
+    }
+    out->fuel_mg_per_injection = est->fuel_mg_filtered;
+    out->fuel_ul_per_injection = est->fuel_mg_filtered / cfg->fuel_density_g_per_ml;
+    out->fuel_flow_l_per_h = est->flow_filtered_lph;
+
+    /* Unit switching with a small hysteresis band so cruising right at the
+     * threshold doesn't make the unit flicker. */
+    if (in->rpm >= cfg->moving_rpm) {
+        est->moving = true;
+    } else if (in->rpm < cfg->moving_rpm - cfg->moving_hysteresis_rpm) {
+        est->moving = false;
+    }
+    bool per_distance = est->moving && speed_ok && in->speed_kmh >= cfg->min_speed_kmh &&
+                        est->speed_filtered_kmh > 0.0f;
+    out->instant_unit = per_distance ? FUEL_UNIT_L_PER_100KM : FUEL_UNIT_L_PER_H;
+    out->l_per_100km = per_distance ? est->flow_filtered_lph / est->speed_filtered_kmh * 100.0f
+                                    : 0.0f;
+
+    fill_averages(est, out);
     out->valid = true;
     return true;
 }

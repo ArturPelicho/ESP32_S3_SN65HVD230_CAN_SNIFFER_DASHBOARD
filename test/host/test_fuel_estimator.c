@@ -21,6 +21,9 @@ static fuel_estimator_config_t carrera_125(void)
         .bore_mm = 57.3f, .stroke_mm = 48.4f, .cylinders = 1, .strokes_per_cycle = 4,
         .volumetric_efficiency = 0.80f, .stoich_afr = 14.7f, .fuel_density_g_per_ml = 0.745f,
         .lambda_source = FUEL_LAMBDA_NARROWBAND, .output_tau_ms = 0, .lambda_tau_ms = 0,
+        .moving_rpm = 2500, .moving_hysteresis_rpm = 150, .min_speed_kmh = 5,
+        .cut_min_rpm = 1800, .cut_max_throttle = 2, .cut_max_o2_volts = 0.15f,
+        .avg_min_distance_km = 0.5f,
     };
     return cfg;
 }
@@ -35,7 +38,9 @@ int main(void)
     /* Wide open throttle, 100 kPa, 25 C, 8000 rpm, O2 at 0.45 V (stoich). */
     fuel_estimator_inputs_t wot = {
         .map_kpa = 100, .intake_temp_c = 25, .rpm = 8000, .o2_volts = 0.45f,
+        .throttle_pct = 100,
         .map_valid = true, .intake_temp_valid = true, .rpm_valid = true, .o2_valid = true,
+        .throttle_valid = true,
     };
     fuel_estimator_update(&est, &wot, 20, &out);
     expect_near("displacement cc", out.displacement_cc, 124.81f, 0.05f);
@@ -78,6 +83,57 @@ int main(void)
     fuel_estimator_update(&est, &wot, 300, &out);
     expect_near("smoothed step halfway", out.fuel_mg_per_injection,
                 idle_mg + (7.938f - idle_mg) / 2.0f, 0.02f);
+
+    /* Units: no speed source means L/h even at high RPM. */
+    cfg = carrera_125();
+    fuel_estimator_init(&est, &cfg);
+    fuel_estimator_update(&est, &wot, 100, &out);
+    expect_near("no speed -> L/h", out.instant_unit, FUEL_UNIT_L_PER_H, 0);
+
+    /* With speed: 2.557 L/h at 100 km/h is 2.557 L/100km. */
+    fuel_estimator_inputs_t cruise = wot;
+    cruise.speed_kmh = 100; cruise.speed_valid = true;
+    fuel_estimator_update(&est, &cruise, 100, &out);
+    expect_near("moving -> L/100km", out.instant_unit, FUEL_UNIT_L_PER_100KM, 0);
+    expect_near("instant L/100km", out.l_per_100km, 2.557f, 0.01f);
+
+    /* Hysteresis: 2400 rpm stays L/100km, 2300 switches to L/h. */
+    cruise.rpm = 2400;
+    fuel_estimator_update(&est, &cruise, 100, &out);
+    expect_near("2400 rpm keeps L/100km", out.instant_unit, FUEL_UNIT_L_PER_100KM, 0);
+    cruise.rpm = 2300;
+    fuel_estimator_update(&est, &cruise, 100, &out);
+    expect_near("2300 rpm -> L/h", out.instant_unit, FUEL_UNIT_L_PER_H, 0);
+    cruise.rpm = 2500;
+    fuel_estimator_update(&est, &cruise, 100, &out);
+    expect_near("2500 rpm -> L/100km", out.instant_unit, FUEL_UNIT_L_PER_100KM, 0);
+
+    /* Fuel cut: closed throttle, 4000 rpm, O2 at 0.05 V. */
+    fuel_estimator_inputs_t brake = cruise;
+    brake.rpm = 4000; brake.throttle_pct = 0; brake.o2_volts = 0.05f; brake.map_kpa = 25;
+    fuel_estimator_update(&est, &brake, 100, &out);
+    expect_near("fuel cut detected", out.fuel_cut, 1, 0);
+    expect_near("fuel cut flow", out.fuel_flow_l_per_h, 0.0f, 0.0001f);
+    expect_near("lambda frozen in cut", out.lambda, 1.0f, 0.001f);
+    brake.throttle_pct = 5;
+    fuel_estimator_update(&est, &brake, 100, &out);
+    expect_near("throttle open -> no cut", out.fuel_cut, 0, 0);
+    brake.throttle_pct = 0; brake.rpm = 1500;
+    fuel_estimator_update(&est, &brake, 100, &out);
+    expect_near("idle rpm -> no cut", out.fuel_cut, 0, 0);
+
+    /* Averages: 1 h steady at 2.557 L/h and 50 km/h. */
+    fuel_estimator_init(&est, &cfg);
+    fuel_estimator_inputs_t steady = wot;
+    steady.speed_kmh = 50; steady.speed_valid = true;
+    fuel_estimator_update(&est, &steady, 100, &out);
+    expect_near("avg L/h before 500 m", out.avg_unit, FUEL_UNIT_L_PER_H, 0);
+    for (int i = 0; i < 36000; ++i) fuel_estimator_update(&est, &steady, 100, &out);
+    expect_near("total km after 1 h", out.total_distance_km, 50.0f, 0.05f);
+    expect_near("total fuel after 1 h", out.total_fuel_l, 2.557f, 0.01f);
+    expect_near("avg unit L/100km", out.avg_unit, FUEL_UNIT_L_PER_100KM, 0);
+    expect_near("avg L/100km", out.avg_l_per_100km, 5.113f, 0.02f);
+    expect_near("avg L/h", out.avg_l_per_h, 2.557f, 0.01f);
 
     printf(failures ? "\n%d FAILED\n" : "\nall passed\n", failures);
     return failures ? 1 : 0;

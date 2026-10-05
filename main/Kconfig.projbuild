@@ -31,8 +31,10 @@ menu "Fuel injection estimate"
         help
             Fraction of the swept volume actually filled with air at
             manifold conditions. A small two-valve 125 cc engine is roughly
-            70-85 %. This single constant is the largest error source; tune
-            it against real fuel consumption (fill-to-fill) to calibrate.
+            70-85 %. This single constant is the largest error source and
+            doubles as the calibration factor: fuel scales 1:1 with it, so if
+            the dashboard reads 10 % high against a fill-to-fill check,
+            lower it by 10 %.
 
     config FUEL_STOICH_AFR_X100
         int "Stoichiometric air/fuel ratio x100"
@@ -69,5 +71,52 @@ menu "Fuel injection estimate"
         int "O2 averaging time constant (ms)"
         range 0 20000
         default 3000
+
+    comment "Display units and averages"
+
+    config FUEL_MOVING_RPM
+        int "RPM at which the instant reading switches to L/100km"
+        range 500 15000
+        default 2500
+        help
+            Below this the bike is taken to be stopped or idling and the
+            instant reading shows L/h. L/100km also needs a valid road speed.
+
+    config FUEL_MOVING_HYSTERESIS_RPM
+        int "Unit switch hysteresis (RPM)"
+        range 0 2000
+        default 150
+        help
+            Switches back to L/h only below (switch RPM - this), so cruising
+            right at the threshold does not make the unit flicker.
+
+    config FUEL_MIN_SPEED_KMH
+        int "Minimum road speed for L/100km (km/h)"
+        range 1 50
+        default 5
+
+    config FUEL_AVG_MIN_DISTANCE_M
+        int "Distance before the average shows L/100km (metres)"
+        range 0 10000
+        default 500
+        help
+            Until then the since-start average is shown in L/h.
+
+    comment "Deceleration fuel cut detection"
+
+    config FUEL_CUT_MIN_RPM
+        int "Minimum RPM"
+        range 500 15000
+        default 1800
+
+    config FUEL_CUT_MAX_THROTTLE_PCT
+        int "Maximum throttle (%)"
+        range 0 20
+        default 2
+
+    config FUEL_CUT_MAX_O2_MV
+        int "Maximum O2 sensor voltage (mV)"
+        range 0 450
+        default 150
 
 endmenu
