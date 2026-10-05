@@ -40,8 +40,11 @@ endpoint; measure the bike's own termination first.
 - The bike's own CAN broadcast (`main/bike_can.c`): the ECU sends two frames
   about every 9 ms. `0x110` carries RPM (bytes 2-3, RPM x 4), an engine
   temperature, the injection pulse width (bytes 5-6, 0.1 us per bit, confirmed
-  on the bike: 1.2-1.3 ms at idle, ~6.3 ms at 8000 rpm, 0 on fuel cut) and
-  status bits; `0x111` carries battery voltage
+  on the bike: 1.2-1.3 ms at idle, 0 on fuel cut) and status bits. The pulse
+  is sent truncated to 16 bits, so it wraps every 6.55 ms; since the ECU
+  works in 0.1 ms steps, the last digits of the received value tell how many
+  times it wrapped and the true value is rebuilt frame by frame (up to
+  26.2 ms). `INJ wrap` serial lines and per-wrap frame counts check this; `0x111` carries battery voltage
   (byte 6, 0.1 V per bit). RPM comes from the broadcast while it keeps
   arriving and falls back to polling PID `0C`. A `BIKE` serial line every 2 s
   logs the raw values beside the fuel estimate.
