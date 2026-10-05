@@ -31,6 +31,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#include "bike_can.h"
 #include "obd_poller.h"
 #include "pid_scan_task.h"
 
@@ -163,6 +164,17 @@ static volatile bool s_self_test_active = true;
 static fuel_estimator_t s_fuel_estimator;
 static fuel_estimate_t s_fuel_estimate;
 static portMUX_TYPE s_fuel_lock = portMUX_INITIALIZER_UNLOCKED;
+
+/* The bike's own CAN broadcast (bike_can.h): RPM, the candidate injection
+ * value and battery voltage, about every 9 ms. Decoded by can_task on
+ * core 0, read by the display on core 1. RPM from here takes over from
+ * the polled PID 0C while it keeps arriving; the poll is the fallback. */
+#define BIKE_CAN_FRESH_MS 300
+static const bike_can_config_t s_bike_can_config = BIKE_CAN_ZS125_CONFIG();
+static bike_can_data_t s_bike;
+static TickType_t s_bike_engine_at;
+static TickType_t s_bike_power_at;
+static portMUX_TYPE s_bike_lock = portMUX_INITIALIZER_UNLOCKED;
 
 static int gap_event(struct ble_gap_event *event, void *arg);
 
@@ -743,6 +755,55 @@ static void tft_panel(int x, int y, int w, int h, const char *caption)
 
 /* One "LABEL value" line of a panel, from telemetry row i. Missing data
  * shows "--" in grey so the layout never jumps. */
+/* Copy of the latest broadcast data, with whether each group is recent. */
+static bike_can_data_t bike_snapshot(bool *engine_fresh, bool *power_fresh)
+{
+    bike_can_data_t data;
+    TickType_t engine_at, power_at;
+    portENTER_CRITICAL(&s_bike_lock);
+    data = s_bike;
+    engine_at = s_bike_engine_at;
+    power_at = s_bike_power_at;
+    portEXIT_CRITICAL(&s_bike_lock);
+    TickType_t now = xTaskGetTickCount();
+    *engine_fresh = data.engine_valid && now - engine_at <= pdMS_TO_TICKS(BIKE_CAN_FRESH_MS);
+    *power_fresh = data.battery_valid && now - power_at <= pdMS_TO_TICKS(BIKE_CAN_FRESH_MS);
+    return data;
+}
+
+/* Battery colours: red when flat or overcharging, orange when low or high. */
+static uint16_t battery_color(int millivolts)
+{
+    if (millivolts < 11800 || millivolts > 15200) return COLOR_RED;
+    if (millivolts < 12300 || millivolts > 14800) return COLOR_ORANGE;
+    return COLOR_GREEN;
+}
+
+/* Battery icon with a fill level (11.5 V empty, 14.5 V full) and the
+ * voltage under it, in the hero's otherwise empty left corner. The icon
+ * says what the number is, so it carries no unit. */
+static void tft_draw_battery(int x, int y, bool valid, int millivolts)
+{
+    const int body_w = 40;
+    const int body_h = 18;
+    uint16_t color = valid ? battery_color(millivolts) : COLOR_GREY;
+    uint16_t frame = valid ? COLOR_LABEL : COLOR_GREY;
+    tft_rect(x, y, body_w, body_h, frame, 2);
+    tft_fill_rect(x + body_w, y + 5, 3, body_h - 10, frame);
+    char text[16];
+    if (valid) {
+        int inner = body_w - 6;
+        int fill = (millivolts - 11500) * inner / 3000;
+        if (fill < 2) fill = 2;
+        if (fill > inner) fill = inner;
+        tft_fill_rect(x + 3, y + 3, fill, body_h - 6, color);
+        snprintf(text, sizeof(text), "%d.%d", millivolts / 1000, (millivolts / 100) % 10);
+    } else {
+        snprintf(text, sizeof(text), "--");
+    }
+    tft_text_bold(x, y + body_h + 6, text, color, 2);
+}
+
 static void tft_draw_field(int x, int right_x, int y, size_t i, bool ignition_on,
                            uint16_t (*color_fn)(int))
 {
@@ -919,6 +980,14 @@ static void fuel_task(void *arg)
                      (int)(est.total_fuel_l * 1000) / 1000, (int)(est.total_fuel_l * 1000) % 1000,
                      (int)(est.total_distance_km * 100) / 100,
                      (int)(est.total_distance_km * 100) % 100);
+            /* The bike's own broadcast, logged beside the estimate so the
+             * injection-time candidate can be compared with fuel flow. */
+            bool engine_fresh, power_fresh;
+            bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+            ESP_LOGI(TAG, "BIKE engine=%d rpm=%u inj_raw=%u temp_raw=%u status=%02X "
+                     "power=%d batt=%u.%uV",
+                     engine_fresh, bike.rpm, bike.inj_raw, bike.temp_raw, bike.status,
+                     power_fresh, bike.battery_mv / 1000U, (bike.battery_mv / 100U) % 10U);
         }
     }
 }
@@ -974,6 +1043,8 @@ static void tft_render(void)
                        xTaskGetTickCount() - s_last_response <=
                        pdMS_TO_TICKS(TFT_DATA_TIMEOUT_MS);
     bool blink_on = ((xTaskGetTickCount() / pdMS_TO_TICKS(250)) % 2) == 0;
+    bool bike_engine_fresh, bike_power_fresh;
+    bike_can_data_t bike = bike_snapshot(&bike_engine_fresh, &bike_power_fresh);
     tft_clear(0x0000);
 
     /* Hero: cylinder head temperature. This PID has whole-degree
@@ -991,6 +1062,9 @@ static void tft_render(void)
     tft_text_bold(8, 5, "CYL HEAD TEMP", hero_critical ? COLOR_WHITE : COLOR_LABEL, 2);
     if (pid_scan_running()) {
         tft_text(174, 9, "SCAN", COLOR_CYAN, 1);
+    }
+    if (!hero_critical) {
+        tft_draw_battery(8, 26, bike_power_fresh, bike.battery_mv);
     }
     char hero_text[8];
     uint16_t hero_color;
@@ -1071,7 +1145,16 @@ static void tft_render(void)
     tft_draw_field(168, 310, panel_y + 9, row_index_for_pid(0x0B), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 27, row_index_for_pid(0x0F), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 45, row_index_for_pid(0x0E), ignition_on, spark_color);
-    tft_draw_field(168, 310, panel_y + 63, row_index_for_pid(0x33), ignition_on, NULL);
+    /* Test field: the broadcast value that looks like injection time,
+     * shown as ms assuming 0.1 us per bit. Cyan marks it as unconfirmed. */
+    tft_text_bold(168, panel_y + 63, "INJ", COLOR_CYAN, 2);
+    if (ignition_on && bike_engine_fresh) {
+        snprintf(text, sizeof(text), "%u.%02u", bike.inj_raw / 10000U, (bike.inj_raw / 100U) % 100U);
+        tft_text(214, panel_y + 70, "ms", COLOR_LABEL, 1);
+        tft_text_right(310, panel_y + 63, text, COLOR_CYAN, 2);
+    } else {
+        tft_text_right(310, panel_y + 63, "--", COLOR_GREY, 2);
+    }
 
     tft_flush();
 }
@@ -1084,6 +1167,14 @@ static void telemetry_on_value(uint8_t pid, const uint8_t *data, uint8_t len, vo
     (void)ctx;
     if (s_self_test_active) {
         return; /* display_task owns the rows until its self-test ends */
+    }
+    if (pid == 0x0C) {
+        bool engine_fresh, power_fresh;
+        bike_snapshot(&engine_fresh, &power_fresh);
+        if (engine_fresh) {
+            s_last_response = xTaskGetTickCount();
+            return; /* the broadcast RPM is newer than any poll */
+        }
     }
     int value;
     if (!decode_pid_value(pid, data, len, &value)) {
@@ -1660,8 +1751,27 @@ static void can_task(void *arg)
     struct can_packet packet;
     char line[128];
     TickType_t last_log = 0;
+    const size_t rpm_row = row_index_for_pid(0x0C);
     while (xQueueReceive(s_can_queue, &packet, portMAX_DELAY) == pdTRUE) {
         TickType_t now = xTaskGetTickCount();
+        bike_can_data_t decoded;
+        portENTER_CRITICAL(&s_bike_lock);
+        decoded = s_bike;
+        portEXIT_CRITICAL(&s_bike_lock);
+        int group = bike_can_decode(&s_bike_can_config, packet.id, packet.extended, packet.data,
+                                    packet.len, &decoded);
+        if (group != BIKE_CAN_NONE) {
+            portENTER_CRITICAL(&s_bike_lock);
+            s_bike = decoded;
+            if (group & BIKE_CAN_ENGINE) s_bike_engine_at = now;
+            if (group & BIKE_CAN_POWER) s_bike_power_at = now;
+            portEXIT_CRITICAL(&s_bike_lock);
+            if ((group & BIKE_CAN_ENGINE) && !s_self_test_active) {
+                s_row_values[rpm_row] = decoded.rpm;
+                s_row_valid[rpm_row] = true;
+                s_last_response = now;
+            }
+        }
         if (s_monitor_mode || now - last_log >= pdMS_TO_TICKS(500)) {
             int used = snprintf(line, sizeof(line), "%sCAN id=%" PRIX32 " data=",
                                 packet.extended ? "CAN-EXT " : "CAN ", packet.id);

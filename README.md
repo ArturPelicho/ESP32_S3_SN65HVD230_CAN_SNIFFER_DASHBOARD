@@ -64,3 +64,16 @@ running throughout. The step-by-step test procedure (in Portuguese) is in
 [docs/pid-scan-protocol.md](docs/pid-scan-protocol.md). Code:
 `main/pid_scan.{h,c}` (pure C, host test in `test/host/test_pid_scan.c`) and
 `main/pid_scan_task.{h,c}`.
+
+## The bike's own CAN broadcast
+
+Besides answering OBD requests, the ECU on the ZS125GY-13-E55 broadcasts two
+frames about every 9 ms (found with the PID scan): `0x110` carries RPM
+(bytes 2-3, RPM x 4), an engine temperature, a 16-bit value that drops to 0
+on fuel cut (possibly injection time, 0.1 us per bit) and status bits;
+`0x111` carries battery voltage (byte 6, 0.1 V per bit). `main/bike_can.{h,c}`
+decodes them (host test: `test/host/test_bike_can.c`). The dashboard takes
+RPM from the broadcast while it keeps arriving and falls back to polling
+PID 0C, shows the battery voltage next to the cylinder head temperature, and
+shows the injection candidate as a cyan `INJ` test field. A `BIKE` serial line
+every 2 s logs the raw values beside the fuel estimate.
