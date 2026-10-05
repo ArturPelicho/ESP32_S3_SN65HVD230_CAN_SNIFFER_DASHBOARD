@@ -8,6 +8,7 @@ idf_component_register(
          "pid_scan.c"
          "bike_can.c"
          "pid_scan_task.c"
+         "boot_diag.c"
     INCLUDE_DIRS "."
     REQUIRES bt nvs_flash esp_driver_twai esp_lcd esp_driver_spi esp_driver_gpio esp_timer
 )
