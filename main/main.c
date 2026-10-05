@@ -787,9 +787,22 @@ static void format_tenths(float value, char *out, size_t out_size)
     snprintf(out, out_size, "%d.%d", tenths / 10, tenths % 10);
 }
 
+/* Litres with two decimals below 10 L ("0.42"), one above ("12.3"). */
+static void format_litres(float litres, char *out, size_t out_size)
+{
+    if (litres < 9.995f) {
+        int hundredths = (int)(litres * 100.0f + 0.5f);
+        if (hundredths < 0) hundredths = 0;
+        snprintf(out, out_size, "%d.%02d", hundredths / 100, hundredths % 100);
+    } else {
+        format_tenths(litres, out, out_size);
+    }
+}
+
 /* FUEL panel: amber badge marking the line as an estimate, the instant
- * reading (L/100km while moving, L/h when stopped or with no speed source)
- * and the average since start-up. */
+ * reading (L/100km while moving, L/h when stopped or with no speed source),
+ * then the average and the litres used since start-up stacked on the
+ * right. */
 static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
 {
     fuel_estimate_t est;
@@ -805,8 +818,9 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
     tft_text(x + 21, y + h / 2 + 6, "EST", 0x0000, 1);
 
     const int now_x = x + badge_w + 8;
-    const int divider_x = x + 206;
-    const int avg_right = x + w - 6;
+    const int divider_x = x + 172;
+    const int right_x = divider_x + 7;
+    const int right_end = x + w - 5;
     tft_fill_rect(divider_x, y + 5, 1, h - 10, SECTION_FRAME_COLOR);
 
     char text[16];
@@ -820,21 +834,36 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
     } else {
         bool per_km = est.instant_unit == FUEL_UNIT_L_PER_100KM;
         tft_text_bold(now_x, y + 5, per_km ? "L/100KM" : "L/H", COLOR_LABEL, 2);
+        if (est.speed_missing) {
+            /* Riding but no road speed: say why it isn't L/100km. */
+            tft_text(now_x + 44, y + 9, "NO SPEED", COLOR_ORANGE, 1);
+        }
         format_tenths(per_km ? est.l_per_100km : est.fuel_flow_l_per_h, text, sizeof(text));
         tft_text_bold(now_x, y + 24, text, COLOR_YELLOW, 4);
     }
 
-    /* Average since start-up. */
-    tft_text_bold(divider_x + 8, y + 5, "AVG", COLOR_LABEL, 2);
-    if (!ignition_on && est.total_fuel_l <= 0.0f) {
-        tft_text_right(avg_right, y + 19, "--", COLOR_GREY, 3);
+    /* Since start-up: average consumption, then litres used. Each row is
+     * "LABEL value unit" with the small unit right-aligned. */
+    const int avg_y = y + 8;
+    const int used_y = y + h - 22;
+    tft_text_bold(right_x, avg_y, "AVG", COLOR_LABEL, 2);
+    tft_text_bold(right_x, used_y, "USED", COLOR_LABEL, 2);
+    bool have_totals = ignition_on || est.total_fuel_l > 0.0f;
+    bool avg_per_km = est.avg_unit == FUEL_UNIT_L_PER_100KM;
+    const char *avg_unit = avg_per_km ? "L/100KM" : "L/H";
+    int avg_unit_x = right_end - tft_text_width(avg_unit, 1);
+    int used_unit_x = right_end - tft_text_width("L", 1);
+    tft_text(avg_unit_x, avg_y + 7, avg_unit, COLOR_LABEL, 1);
+    tft_text(used_unit_x, used_y + 7, "L", COLOR_LABEL, 1);
+    if (!have_totals) {
+        tft_text_right(avg_unit_x - 4, avg_y, "--", COLOR_GREY, 2);
+        tft_text_right(used_unit_x - 4, used_y, "--", COLOR_GREY, 2);
         return;
     }
-    bool avg_per_km = est.avg_unit == FUEL_UNIT_L_PER_100KM;
     format_tenths(avg_per_km ? est.avg_l_per_100km : est.avg_l_per_h, text, sizeof(text));
-    tft_text_right(avg_right, y + 19, text, COLOR_WHITE, 3);
-    const char *unit = avg_per_km ? "L/100KM" : "L/H";
-    tft_text(avg_right - tft_text_width(unit, 1), y + h - 10, unit, COLOR_LABEL, 1);
+    tft_text_right(avg_unit_x - 4, avg_y, text, COLOR_WHITE, 2);
+    format_litres(est.total_fuel_l, text, sizeof(text));
+    tft_text_right(used_unit_x - 4, used_y, text, COLOR_WHITE, 2);
 }
 
 /* Fuel estimate refresh, on the CAN/protocol core (0) beside the poller.
@@ -862,9 +891,9 @@ static void fuel_task(void *arg)
             est = s_fuel_estimate;
             portEXIT_CRITICAL(&s_fuel_lock);
             /* Integer tenths/hundredths so the log needs no float printf. */
-            ESP_LOGI(TAG, "FUEL valid=%d cut=%d lambda=%d.%02d flow=%d.%02dL/h "
+            ESP_LOGI(TAG, "FUEL valid=%d cut=%d spd=%d(valid=%d) lambda=%d.%02d flow=%d.%02dL/h "
                      "inst=%d.%dL/100km(%s) avg=%d.%d%s used=%d.%03dL dist=%d.%02dkm",
-                     est.valid, est.fuel_cut,
+                     est.valid, est.fuel_cut, (int)est.speed_kmh, est.speed_valid,
                      (int)(est.lambda * 100) / 100, (int)(est.lambda * 100) % 100,
                      (int)(est.fuel_flow_l_per_h * 100) / 100,
                      (int)(est.fuel_flow_l_per_h * 100) % 100,

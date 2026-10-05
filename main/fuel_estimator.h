@@ -111,6 +111,9 @@ typedef struct {
 
     /* Instant consumption, smoothed. instant_unit says which to show. */
     fuel_unit_t instant_unit;
+    bool speed_missing;          /* moving by RPM, but no usable road speed */
+    bool speed_valid;            /* last speed input, echoed for logging */
+    float speed_kmh;
     float fuel_flow_l_per_h;     /* whole engine */
     float l_per_100km;           /* only meaningful when unit is L/100km */
 

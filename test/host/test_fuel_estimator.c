@@ -89,12 +89,19 @@ int main(void)
     fuel_estimator_init(&est, &cfg);
     fuel_estimator_update(&est, &wot, 100, &out);
     expect_near("no speed -> L/h", out.instant_unit, FUEL_UNIT_L_PER_H, 0);
+    expect_near("no speed while riding -> flagged", out.speed_missing, 1, 0);
+    fuel_estimator_inputs_t zero_speed = wot;
+    zero_speed.speed_kmh = 0; zero_speed.speed_valid = true; /* ECU answers 0 km/h */
+    fuel_estimator_update(&est, &zero_speed, 100, &out);
+    expect_near("speed 0 while riding -> L/h", out.instant_unit, FUEL_UNIT_L_PER_H, 0);
+    expect_near("speed 0 while riding -> flagged", out.speed_missing, 1, 0);
 
     /* With speed: 2.557 L/h at 100 km/h is 2.557 L/100km. */
     fuel_estimator_inputs_t cruise = wot;
     cruise.speed_kmh = 100; cruise.speed_valid = true;
     fuel_estimator_update(&est, &cruise, 100, &out);
     expect_near("moving -> L/100km", out.instant_unit, FUEL_UNIT_L_PER_100KM, 0);
+    expect_near("speed ok -> not flagged", out.speed_missing, 0, 0);
     expect_near("instant L/100km", out.l_per_100km, 2.557f, 0.01f);
 
     /* Hysteresis: 2400 rpm stays L/100km, 2300 switches to L/h. */
@@ -104,6 +111,7 @@ int main(void)
     cruise.rpm = 2300;
     fuel_estimator_update(&est, &cruise, 100, &out);
     expect_near("2300 rpm -> L/h", out.instant_unit, FUEL_UNIT_L_PER_H, 0);
+    expect_near("idling is not 'no speed'", out.speed_missing, 0, 0);
     cruise.rpm = 2500;
     fuel_estimator_update(&est, &cruise, 100, &out);
     expect_near("2500 rpm -> L/100km", out.instant_unit, FUEL_UNIT_L_PER_100KM, 0);
