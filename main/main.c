@@ -62,6 +62,7 @@ static const char *TAG = "mota_can";
 /* How often the panel's configuration is re-sent while running; this is
  * also the longest the screen can stay black after a supply dip. */
 #define TFT_HEALTH_PERIOD_MS 1000
+#define TFT_RESET_SETTLE_MS 120
 #define TFT_TEMP_PERIOD_MS 100
 #define TFT_FAST_PERIOD_MS 100
 #define TFT_SLOW_PERIOD_MS 500
@@ -392,6 +393,13 @@ static esp_err_t tft_panel_apply_config(void)
 static void tft_panel_init_sequence(void)
 {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_tft_panel));
+    /* esp_lcd releases RST only 10 ms before esp_lcd_panel_init() sends
+     * SLPOUT, but the ST7789 datasheet allows up to 120 ms for the reset
+     * to complete when the panel was already awake (the re-init in
+     * display_task). A SLPOUT landing inside that window is ignored, which
+     * leaves the panel asleep: black with the backlight on. One-off, at
+     * boot only. */
+    vTaskDelay(pdMS_TO_TICKS(TFT_RESET_SETTLE_MS));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_tft_panel));
     ESP_ERROR_CHECK(tft_panel_apply_config());
 }
