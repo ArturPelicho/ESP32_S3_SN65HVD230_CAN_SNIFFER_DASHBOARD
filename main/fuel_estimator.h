@@ -30,7 +30,11 @@
  *     no valid O2 reading lambda is assumed to be 1.0.
  *   - Deceleration fuel cut is inferred: closed throttle, RPM above the
  *     cut threshold and an O2 sensor reading fully lean together mean the
- *     ECU has shut the injector, so fuel is taken as zero. */
+ *     ECU has shut the injector, so fuel is taken as zero.
+ *
+ * When a measured flow is supplied (measured_flow_valid) it is used
+ * instead of the model, and only the smoothing, unit switching and totals
+ * here apply. */
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -96,12 +100,18 @@ typedef struct {
     bool o2_valid;
     bool throttle_valid;
     bool speed_valid;
+    /* Fuel flow measured some other way (e.g. injector pulse width, see
+     * inj_meter.h). When valid it replaces the speed-density flow, and a
+     * measured 0 with the engine turning is the fuel cut. */
+    float measured_flow_lph;
+    bool measured_flow_valid;
 } fuel_estimator_inputs_t;
 
 typedef struct {
     bool valid;            /* false until MAP, IAT and RPM are all valid */
     bool lambda_measured;  /* false when lambda is the assumed 1.0 */
     bool fuel_cut;         /* ECU judged to be cutting fuel (engine braking) */
+    bool flow_measured;    /* flow came from measured_flow_lph, not the model */
     float displacement_cc; /* per cylinder */
     float air_density_kg_m3;
     float air_mg_per_intake;

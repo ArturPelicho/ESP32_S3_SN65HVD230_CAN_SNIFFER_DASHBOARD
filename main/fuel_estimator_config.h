@@ -7,6 +7,7 @@
 
 #include "sdkconfig.h"
 #include "fuel_estimator.h"
+#include "inj_meter.h"
 
 #ifndef CONFIG_FUEL_BORE_UM
 #define CONFIG_FUEL_BORE_UM 57300
@@ -56,6 +57,15 @@
 #ifndef CONFIG_FUEL_CUT_MAX_O2_MV
 #define CONFIG_FUEL_CUT_MAX_O2_MV 150
 #endif
+#ifndef CONFIG_FUEL_INJ_FLOW_CC_MIN_X10
+#define CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 900
+#endif
+#ifndef CONFIG_FUEL_INJ_DEAD_TIME_US
+#define CONFIG_FUEL_INJ_DEAD_TIME_US 600
+#endif
+#if !defined(CONFIG_FUEL_SOURCE_INJECTOR) && !defined(CONFIG_FUEL_SOURCE_SPEED_DENSITY)
+#define CONFIG_FUEL_SOURCE_INJECTOR 1
+#endif
 #if !defined(CONFIG_FUEL_LAMBDA_NARROWBAND) && !defined(CONFIG_FUEL_LAMBDA_ASSUME_STOICH)
 #define CONFIG_FUEL_LAMBDA_NARROWBAND 1
 #endif
@@ -84,6 +94,17 @@ static inline fuel_estimator_config_t fuel_estimator_config_from_kconfig(void)
         .cut_max_throttle = CONFIG_FUEL_CUT_MAX_THROTTLE_PCT,
         .cut_max_o2_volts = CONFIG_FUEL_CUT_MAX_O2_MV / 1000.0f,
         .avg_min_distance_km = CONFIG_FUEL_AVG_MIN_DISTANCE_M / 1000.0f,
+    };
+    return cfg;
+}
+
+static inline inj_meter_config_t inj_meter_config_from_kconfig(void)
+{
+    inj_meter_config_t cfg = {
+        .flow_cc_per_min = CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 / 10.0f,
+        .dead_time_ms = CONFIG_FUEL_INJ_DEAD_TIME_US / 1000.0f,
+        .cylinders = CONFIG_FUEL_CYLINDERS,
+        .strokes_per_cycle = CONFIG_FUEL_STROKES_PER_CYCLE,
     };
     return cfg;
 }

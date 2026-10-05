@@ -35,6 +35,28 @@ int main(void)
     assert(d.battery_mv == 14300);
     assert(d.rpm == 4717); /* power frames leave engine data alone */
 
+    /* After the engine stops the frame keeps coming, decaying to 0 V. */
+    const uint8_t dying[8] = { 0, 0, 0, 0, 0, 0x79, 0x05, 0 };
+    assert(bike_can_decode(&cfg, 0x111, false, dying, 8, &d) == BIKE_CAN_POWER);
+    assert(!d.battery_valid);
+    bike_can_decode(&cfg, 0x111, false, charging, 8, &d);
+    assert(d.battery_valid && d.battery_mv == 14300);
+
+    /* Pulses past 16 bits: 7.0 ms arrives as 70000 - 65536 = 4464,
+     * 13.2 ms as 132000 - 131072 = 928, 20.0 ms as 200000 - 196608 = 3392. */
+    uint8_t wraps;
+    assert(bike_can_unwrap_inj(13000, &wraps) == 13000 && wraps == 0);
+    assert(bike_can_unwrap_inj(0, &wraps) == 0 && wraps == 0);
+    assert(bike_can_unwrap_inj(65000, &wraps) == 65000 && wraps == 0);
+    assert(bike_can_unwrap_inj(4464, &wraps) == 70000 && wraps == 1);
+    assert(bike_can_unwrap_inj(464, &wraps) == 66000 && wraps == 1);
+    assert(bike_can_unwrap_inj(928, &wraps) == 132000 && wraps == 2);
+    assert(bike_can_unwrap_inj(3392, &wraps) == 200000 && wraps == 3);
+    assert(bike_can_unwrap_inj(1234, &wraps) == 1234 && wraps == BIKE_CAN_INJ_UNKNOWN);
+    const uint8_t wrapped[8] = { 0x03, 0xE5, 0x49, 0xB4, 0xA2, 0x11, 0x70, 0xA8 }; /* 0x1170 = 4464 */
+    bike_can_decode(&cfg, 0x110, false, wrapped, 8, &d);
+    assert(d.inj_raw == 4464 && d.inj_tenth_us == 70000 && d.inj_wraps == 1);
+
     /* Other IDs, extended IDs and short frames are ignored. */
     assert(bike_can_decode(&cfg, 0x7E8, false, idle, 8, &d) == BIKE_CAN_NONE);
     assert(bike_can_decode(&cfg, 0x110, true, idle, 8, &d) == BIKE_CAN_NONE);
