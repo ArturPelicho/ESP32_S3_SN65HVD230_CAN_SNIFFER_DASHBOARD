@@ -643,16 +643,43 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
  * Independent of how polling is scheduled; vTaskDelayUntil keeps a steady
  * 100 ms step and never waits on the bus. */
 #define FUEL_UPDATE_PERIOD_MS 100
+#define FUEL_LOG_EVERY 20 /* one serial line every 2 s for bench checks */
 
 static void fuel_task(void *arg)
 {
     (void)arg;
     TickType_t last = xTaskGetTickCount();
+    unsigned log_count = 0;
     while (true) {
         TickType_t before = last;
         vTaskDelayUntil(&last, pdMS_TO_TICKS(FUEL_UPDATE_PERIOD_MS));
-        if (!s_self_test_active) {
-            fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
+        if (s_self_test_active) {
+            continue;
+        }
+        fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
+        if (++log_count >= FUEL_LOG_EVERY) {
+            log_count = 0;
+            fuel_estimate_t est;
+            portENTER_CRITICAL(&s_fuel_lock);
+            est = s_fuel_estimate;
+            portEXIT_CRITICAL(&s_fuel_lock);
+            /* Integer tenths/hundredths so the log needs no float printf. */
+            ESP_LOGI(TAG, "FUEL valid=%d cut=%d lambda=%d.%02d flow=%d.%02dL/h "
+                     "inst=%d.%dL/100km(%s) avg=%d.%d%s used=%d.%03dL dist=%d.%02dkm",
+                     est.valid, est.fuel_cut,
+                     (int)(est.lambda * 100) / 100, (int)(est.lambda * 100) % 100,
+                     (int)(est.fuel_flow_l_per_h * 100) / 100,
+                     (int)(est.fuel_flow_l_per_h * 100) % 100,
+                     (int)(est.l_per_100km * 10) / 10, (int)(est.l_per_100km * 10) % 10,
+                     est.instant_unit == FUEL_UNIT_L_PER_100KM ? "shown" : "L/h shown",
+                     (int)((est.avg_unit == FUEL_UNIT_L_PER_100KM ? est.avg_l_per_100km
+                                                                   : est.avg_l_per_h) * 10) / 10,
+                     (int)((est.avg_unit == FUEL_UNIT_L_PER_100KM ? est.avg_l_per_100km
+                                                                   : est.avg_l_per_h) * 10) % 10,
+                     est.avg_unit == FUEL_UNIT_L_PER_100KM ? "L/100km" : "L/h",
+                     (int)(est.total_fuel_l * 1000) / 1000, (int)(est.total_fuel_l * 1000) % 1000,
+                     (int)(est.total_distance_km * 100) / 100,
+                     (int)(est.total_distance_km * 100) % 100);
         }
     }
 }
