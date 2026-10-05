@@ -5,8 +5,8 @@
  *
  *   0x110, every ~9 ms  B2-B3  engine speed, RPM x 4 (same raw as PID 0C)
  *                       B4     an engine temperature (scale not yet known)
- *                       B5-B6  16-bit value, 0 on fuel cut and engine off;
- *                              maybe injection time (scale not yet known)
+ *                       B5-B6  injection pulse width, 0.1 us per bit;
+ *                              0 on fuel cut and engine off
  *                       B7     status bits
  *   0x111, every ~9 ms  B6     battery voltage, 0.1 V per bit (decays to
  *                              0 for a few seconds after engine stop)
@@ -43,7 +43,7 @@ typedef struct {
     bool engine_valid;      /* an engine frame has been decoded */
     uint16_t rpm;
     uint8_t temp_raw;
-    uint16_t inj_raw;       /* candidate injection time, unknown units */
+    uint16_t inj_raw;       /* injection pulse width, 0.1 us per bit */
     uint8_t status;
     bool battery_valid;
     uint16_t battery_mv;

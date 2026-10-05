@@ -39,8 +39,9 @@ endpoint; measure the bike's own termination first.
   recovers with back-off instead of hanging the driver.
 - The bike's own CAN broadcast (`main/bike_can.c`): the ECU sends two frames
   about every 9 ms. `0x110` carries RPM (bytes 2-3, RPM x 4), an engine
-  temperature, a 16-bit value that drops to 0 on fuel cut (possibly injection
-  time, 0.1 us per bit) and status bits; `0x111` carries battery voltage
+  temperature, the injection pulse width (bytes 5-6, 0.1 us per bit, confirmed
+  on the bike: 1.2-1.3 ms at idle, ~6.3 ms at 8000 rpm, 0 on fuel cut) and
+  status bits; `0x111` carries battery voltage
   (byte 6, 0.1 V per bit). RPM comes from the broadcast while it keeps
   arriving and falls back to polling PID `0C`. A `BIKE` serial line every 2 s
   logs the raw values beside the fuel estimate.
@@ -59,14 +60,26 @@ endpoint; measure the bike's own termination first.
 - Telemetry rows for throttle, spark advance, fuel trims, O2, MAP, baro,
   intake and ambient temperature, battery voltage and more.
 - Battery voltage (from `0x111`) next to the cylinder head temperature, and
-  the injection-time candidate as a cyan `INJ` test field.
+  the injection pulse width in ms as a cyan `INJ` field.
 - Boot diagnostics (`main/boot_diag.c`): boot progress is recorded in NVS and
   shown on the splash, to track down a black screen at key-on.
 - All thresholds are set in `idf.py menuconfig` under **Dashboard thresholds**.
 
-**Fuel consumption estimate**
-- Speed-density model from MAP, intake air temperature and RPM, corrected by
-  the averaged narrowband O2 voltage (`main/fuel_estimator.c`).
+**Fuel consumption**
+- Measured from the injector by default (`main/inj_meter.c`): the ECU's pulse
+  width minus the injector dead time, times the injector flow, at one
+  injection per engine cycle. Flow (90 cc/min) and dead time (600 us) are in
+  menuconfig; both are first guesses to be fitted from fill-ups.
+- A trip counter of the raw sums (injections, summed pulse time, running
+  time) is kept in NVS, survives key-off and is logged as a `TRIP` serial line
+  every 2 s. Send `TRIP` over BLE to read it and `TRIP RESET` to zero it. As
+  the sums are raw, a corrected flow or dead time applies to past trips too:
+  litres = flow x (open time - injections x dead time).
+- Falls back to a speed-density model from MAP, intake air temperature and
+  RPM, corrected by the averaged narrowband O2 voltage
+  (`main/fuel_estimator.c`), when the broadcast is missing or when chosen in
+  menuconfig. O2 readings of exactly 1010 mV are ignored: the ECU sends that
+  while the sensor is cold.
 - Shows L/h when stopped or idling, L/100km when a road speed is available,
   and `FUEL CUT` during engine braking. The average stays in L/h until 500 m
   have been covered.
@@ -103,14 +116,15 @@ fails, flash directly with `esptool` (the full command is in
 
 ### Host tests
 
-The fuel model, the bus-off recovery state machine, the PID scan and the
-`0x110`/`0x111` decoder have host-side tests that need only a C compiler:
+The fuel model, the injector meter, the bus-off recovery state machine, the
+PID scan and the `0x110`/`0x111` decoder have host-side tests that need only a C compiler:
 
 ```
 gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test
 gcc -std=c11 -Wall -Wextra -I main test/host/test_can_bus_recovery_fsm.c main/can_bus_recovery_fsm.c -o fsm_test && ./fsm_test
 gcc -std=c11 -Wall -I main test/host/test_pid_scan.c main/pid_scan.c -o scan_test && ./scan_test
 gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_test && ./bike_test
+gcc -std=c11 -Wall -I main test/host/test_inj_meter.c main/inj_meter.c -lm -o inj_test && ./inj_test
 ```
 
 ## Project layout
@@ -121,7 +135,8 @@ gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_tes
 | `main/obd_poller.*` | Non-blocking OBD-II PID poller |
 | `main/can_bus_twai.*` | TWAI (CAN) driver port |
 | `main/can_bus_supervisor.*`, `main/can_bus_recovery_fsm.*` | Bus-off detection and recovery |
-| `main/fuel_estimator*` | Speed-density fuel model |
+| `main/fuel_estimator*` | Fuel consumption, units and averages; speed-density fallback |
+| `main/inj_meter.*` | Fuel from injector pulse width, trip sums |
 | `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
 | `main/pid_scan*` | PID discovery test |
 | `main/boot_diag.*` | Boot progress record shown on the splash |

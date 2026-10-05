@@ -8,6 +8,7 @@
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
 #include "nvs_flash.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -176,6 +177,18 @@ static bike_can_data_t s_bike;
 static TickType_t s_bike_engine_at;
 static TickType_t s_bike_power_at;
 static portMUX_TYPE s_bike_lock = portMUX_INITIALIZER_UNLOCKED;
+
+/* Fuel measured from the injector pulse (inj_meter.h). can_task adds every
+ * engine frame to the trip totals under s_bike_lock; fuel_task saves them
+ * to NVS. The trip survives key-off and runs until "TRIP RESET" over BLE,
+ * so a fill-to-fill comparison can span several stops. */
+#define TRIP_NVS_NAMESPACE "trip"
+#define TRIP_NVS_KEY "totals1"
+#define TRIP_SAVE_PERIOD_MS 15000
+static inj_meter_config_t s_inj_config;
+static inj_meter_totals_t s_trip;
+static int64_t s_trip_frame_us;
+static volatile bool s_trip_reset_requested;
 
 static int gap_event(struct ble_gap_event *event, void *arg);
 
@@ -845,6 +858,8 @@ static void tft_draw_field(int x, int right_x, int y, size_t i, bool ignition_on
     tft_text_right(right_x, y, value_str, color, 2);
 }
 
+#define O2_INACTIVE_MV 1010
+
 /* Fuel estimate inputs are read straight from the telemetry rows; road
  * speed comes from OBD PID 0x0D when the ECU answers it, otherwise the
  * estimator falls back to L/h. A GPS or wheel-speed source would feed the
@@ -857,6 +872,9 @@ static void fuel_estimate_update(uint32_t dt_ms)
     size_t o2 = row_index_for_pid(0x14);
     size_t thr = row_index_for_pid(0x11);
     size_t spd = row_index_for_pid(0x0D);
+    /* The ECU reports 0xCA (1010 mV) while the O2 sensor is cold or
+     * inactive, e.g. with the engine off: a placeholder, not "rich". */
+    bool o2_valid = s_row_valid[o2] && s_row_values[o2] != O2_INACTIVE_MV;
     fuel_estimator_inputs_t in = {
         .map_kpa = (float)s_row_values[map],
         .intake_temp_c = (float)s_row_values[iat],
@@ -867,10 +885,20 @@ static void fuel_estimate_update(uint32_t dt_ms)
         .map_valid = s_row_valid[map],
         .intake_temp_valid = s_row_valid[iat],
         .rpm_valid = s_row_valid[rpm],
-        .o2_valid = s_row_valid[o2],
+        .o2_valid = o2_valid,
         .throttle_valid = s_row_valid[thr],
         .speed_valid = s_row_valid[spd],
     };
+#if CONFIG_FUEL_SOURCE_INJECTOR
+    bool engine_fresh, power_fresh;
+    bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+    if (engine_fresh) {
+        in.measured_flow_lph = inj_meter_flow_lph(&s_inj_config, bike.rpm, bike.inj_raw / 10000.0f);
+        in.measured_flow_valid = true;
+        in.rpm = bike.rpm;
+        in.rpm_valid = true;
+    }
+#endif
     fuel_estimate_t out;
     fuel_estimator_update(&s_fuel_estimator, &in, dt_ms, &out);
     portENTER_CRITICAL(&s_fuel_lock);
@@ -972,6 +1000,76 @@ static void tft_draw_fuel_panel(int x, int y, int w, int h, bool ignition_on)
 #define FUEL_UPDATE_PERIOD_MS 100
 #define FUEL_LOG_EVERY 20 /* one serial line every 2 s for bench checks */
 
+static void trip_load(void)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) return;
+    inj_meter_totals_t totals;
+    size_t len = sizeof(totals);
+    if (nvs_get_blob(nvs, TRIP_NVS_KEY, &totals, &len) == ESP_OK && len == sizeof(totals)) {
+        s_trip = totals;
+    }
+    nvs_close(nvs);
+}
+
+static void trip_save(const inj_meter_totals_t *totals)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) return;
+    if (nvs_set_blob(nvs, TRIP_NVS_KEY, totals, sizeof(*totals)) != ESP_OK ||
+        nvs_commit(nvs) != ESP_OK) {
+        ESP_LOGW(TAG, "trip not saved");
+    }
+    nvs_close(nvs);
+}
+
+static inj_meter_totals_t trip_snapshot(void)
+{
+    inj_meter_totals_t totals;
+    portENTER_CRITICAL(&s_bike_lock);
+    totals = s_trip;
+    portEXIT_CRITICAL(&s_bike_lock);
+    return totals;
+}
+
+/* One line with the raw sums, so flow and dead time can be refitted from
+ * fill-ups later: litres = flow * (open - injections * dead). */
+static void trip_format(const inj_meter_totals_t *t, char *out, size_t out_size)
+{
+    int millilitres = (int)(inj_meter_litres(&s_inj_config, t) * 1000.0 + 0.5);
+    snprintf(out, out_size, "TRIP fuel=%d.%03dL injections=%llu open=%llums run=%lus "
+             "flow=%d.%dcc/min dead=%dus",
+             millilitres / 1000, millilitres % 1000, (unsigned long long)t->injections,
+             (unsigned long long)t->open_ms, (unsigned long)t->running_s,
+             CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 / 10, CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 % 10,
+             CONFIG_FUEL_INJ_DEAD_TIME_US);
+}
+
+/* Saves the trip every TRIP_SAVE_PERIOD_MS while it grows, and at once
+ * when it stops growing (engine stopped), so a key-off loses at most one
+ * period of riding. */
+static void trip_service(void)
+{
+    static inj_meter_totals_t saved;
+    static TickType_t saved_at;
+    if (s_trip_reset_requested) {
+        s_trip_reset_requested = false;
+        portENTER_CRITICAL(&s_bike_lock);
+        memset(&s_trip, 0, sizeof(s_trip));
+        portEXIT_CRITICAL(&s_bike_lock);
+        ESP_LOGI(TAG, "trip reset");
+    }
+    inj_meter_totals_t now = trip_snapshot();
+    if (!memcmp(&now, &saved, sizeof(now))) return;
+    static inj_meter_totals_t previous;
+    bool growing = memcmp(&now, &previous, sizeof(now)) != 0;
+    previous = now;
+    if (growing && xTaskGetTickCount() - saved_at < pdMS_TO_TICKS(TRIP_SAVE_PERIOD_MS)) return;
+    trip_save(&now);
+    saved = now;
+    saved_at = xTaskGetTickCount();
+}
+
 static void fuel_task(void *arg)
 {
     (void)arg;
@@ -984,6 +1082,7 @@ static void fuel_task(void *arg)
             continue;
         }
         fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
+        trip_service();
         if (++log_count >= FUEL_LOG_EVERY) {
             log_count = 0;
             fuel_estimate_t est;
@@ -1015,6 +1114,10 @@ static void fuel_task(void *arg)
                      "power=%d batt=%u.%uV",
                      engine_fresh, bike.rpm, bike.inj_raw, bike.temp_raw, bike.status,
                      power_fresh, bike.battery_mv / 1000U, (bike.battery_mv / 100U) % 10U);
+            inj_meter_totals_t trip = trip_snapshot();
+            char trip_line[160];
+            trip_format(&trip, trip_line, sizeof(trip_line));
+            ESP_LOGI(TAG, "%s", trip_line);
         }
     }
 }
@@ -1480,6 +1583,15 @@ static void process_elm_command(char *command)
         s_scan_to_ble = true;
         pid_scan_request_report();
         ble_send_text("OK\r\r>");
+    } else if (!strcmp(command, "TRIP")) {
+        inj_meter_totals_t trip = trip_snapshot();
+        char trip_line[160];
+        trip_format(&trip, trip_line, sizeof(trip_line));
+        ble_send_text(trip_line);
+        ble_send_text("\r\r>");
+    } else if (!strcmp(command, "TRIP RESET")) {
+        s_trip_reset_requested = true;
+        ble_send_text("OK\r\r>");
     } else if (!strcmp(command, "ATST") || !strcmp(command, "ATIGN")) {
         ble_send_text("OK\r\r>");
     } else if (strlen(command) == 4 && command[0] == '0' &&
@@ -1796,7 +1908,15 @@ static void can_task(void *arg)
         if (group != BIKE_CAN_NONE) {
             portENTER_CRITICAL(&s_bike_lock);
             s_bike = decoded;
-            if (group & BIKE_CAN_ENGINE) s_bike_engine_at = now;
+            if (group & BIKE_CAN_ENGINE) {
+                s_bike_engine_at = now;
+                int64_t now_us = esp_timer_get_time();
+                if (s_trip_frame_us != 0) {
+                    inj_meter_add(&s_inj_config, &s_trip, decoded.rpm, decoded.inj_raw / 10000.0f,
+                                  (float)(now_us - s_trip_frame_us) / 1000.0f);
+                }
+                s_trip_frame_us = now_us;
+            }
             if (group & BIKE_CAN_POWER) s_bike_power_at = now;
             portEXIT_CRITICAL(&s_bike_lock);
             if ((group & BIKE_CAN_ENGINE) && !s_self_test_active) {
@@ -1909,6 +2029,9 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(nvs_result);
     boot_diag_init();
+
+    s_inj_config = inj_meter_config_from_kconfig();
+    trip_load();
 
     /* Display first: it has the longest start-up (panel settle delay), and
      * if anything below fails the screen is already coming up. */

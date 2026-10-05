@@ -7,6 +7,7 @@ idf_component_register(
          "fuel_estimator.c"
          "pid_scan.c"
          "bike_can.c"
+         "inj_meter.c"
          "pid_scan_task.c"
          "boot_diag.c"
     INCLUDE_DIRS "."

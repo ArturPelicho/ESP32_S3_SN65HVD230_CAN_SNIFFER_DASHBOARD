@@ -22,6 +22,47 @@ menu "Fuel injection estimate"
         range 2 4
         default 4
 
+    comment "Fuel source"
+
+    choice FUEL_SOURCE
+        prompt "Where fuel flow comes from"
+        default FUEL_SOURCE_INJECTOR
+        help
+            Injector pulse: the ECU's own injection time (CAN 0x110 B5-B6)
+            times the injector flow below. This measures what the ECU really
+            injects, so it follows enrichment, trims and fuel cut. Falls back
+            to the speed-density model whenever the broadcast is missing.
+            Speed-density: estimate from MAP, intake temperature, RPM, O2 and
+            the volumetric efficiency below.
+
+        config FUEL_SOURCE_INJECTOR
+            bool "Injector pulse width x injector flow"
+        config FUEL_SOURCE_SPEED_DENSITY
+            bool "Speed-density model only"
+    endchoice
+
+    config FUEL_INJ_FLOW_CC_MIN_X10
+        int "Injector static flow (cc/min x10)"
+        range 100 10000
+        default 900
+        help
+            Flow of the injector at the bike's rail pressure (3.8 bar), in
+            tenths of cc/min. The stock injector (marked Delphi 28239162) has
+            no published data. 90 cc/min matches the usual 2.3-2.7 L per
+            100 km at 85 km/h, ~8200 rpm and a 6.3 ms pulse. Fuel scales 1:1
+            with it: if a fill-up shows the trip reading 10 % high, lower it
+            by 10 %. The serial "TRIP" line logs the raw sums needed to fit
+            it exactly.
+
+    config FUEL_INJ_DEAD_TIME_US
+        int "Injector dead time (microseconds)"
+        range 0 3000
+        default 600
+        help
+            Part of each pulse spent opening the injector, delivering almost
+            no fuel; subtracted before applying the flow. Typical small port
+            injectors at 13-14 V: 500-800 us.
+
     comment "Model constants"
 
     config FUEL_VE_PERCENT

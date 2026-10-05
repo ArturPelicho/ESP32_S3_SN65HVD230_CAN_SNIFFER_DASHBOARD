@@ -78,7 +78,11 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
     uint32_t integrate_ms = dt_ms > FUEL_MAX_DT_MS ? 0 : dt_ms;
 
     out->displacement_cc = est->displacement_m3 * 1e6f;
-    out->fuel_cut = detect_fuel_cut(cfg, in);
+    bool measured = in->measured_flow_valid && in->measured_flow_lph >= 0.0f;
+    out->flow_measured = measured;
+    out->fuel_cut = measured ? (in->rpm_valid && in->rpm >= FUEL_MIN_RPM &&
+                                in->measured_flow_lph <= 0.0f)
+                             : detect_fuel_cut(cfg, in);
 
     /* Lambda keeps filtering even when the other inputs are missing, so it
      * is already settled when they come back. During a fuel cut the sensor
@@ -116,29 +120,43 @@ bool fuel_estimator_update(fuel_estimator_t *est, const fuel_estimator_inputs_t 
                                          cfg->output_tau_ms);
     }
 
-    if (!in->map_valid || !in->intake_temp_valid || !in->rpm_valid ||
-        in->map_kpa <= 0.0f) {
+    bool model_ok = in->map_valid && in->intake_temp_valid && in->map_kpa > 0.0f;
+    if (!in->rpm_valid || (!measured && !model_ok)) {
         out->valid = false;
         est->output_primed = false;
         fill_averages(est, out);
         return false;
     }
 
-    float temp_k = in->intake_temp_c + FUEL_KELVIN_OFFSET;
-    if (temp_k < 200.0f) temp_k = 200.0f;
-    float density = (in->map_kpa * 1000.0f) / (FUEL_R_AIR * temp_k);
-    float air_mg = density * est->displacement_m3 * cfg->volumetric_efficiency * 1e6f;
+    float air_mg = 0.0f;
+    float density = 0.0f;
+    if (model_ok) {
+        float temp_k = in->intake_temp_c + FUEL_KELVIN_OFFSET;
+        if (temp_k < 200.0f) temp_k = 200.0f;
+        density = (in->map_kpa * 1000.0f) / (FUEL_R_AIR * temp_k);
+        air_mg = density * est->displacement_m3 * cfg->volumetric_efficiency * 1e6f;
+    }
     out->air_density_kg_m3 = density;
     out->air_mg_per_intake = air_mg;
 
     bool running = in->rpm >= FUEL_MIN_RPM;
-    float fuel_mg = (running && !out->fuel_cut)
-                        ? air_mg / (cfg->stoich_afr * est->lambda_filtered) : 0.0f;
     float cycles_per_s = running ? in->rpm / 60.0f / ((float)cfg->strokes_per_cycle / 2.0f)
                                  : 0.0f;
     float injections_per_s = cycles_per_s * (float)cfg->cylinders;
-    /* g/ml == mg/ul, so mg / (g/ml) gives microlitres directly. */
-    float flow_lph = fuel_mg / cfg->fuel_density_g_per_ml * injections_per_s * 3600.0f * 1e-6f;
+    float fuel_mg;
+    float flow_lph;
+    if (measured) {
+        flow_lph = running ? in->measured_flow_lph : 0.0f;
+        /* Back out the per-injection amount for display and logging. */
+        fuel_mg = injections_per_s > 0.0f
+                      ? flow_lph / 3600.0f / injections_per_s * 1e6f * cfg->fuel_density_g_per_ml
+                      : 0.0f;
+    } else {
+        fuel_mg = (running && !out->fuel_cut)
+                      ? air_mg / (cfg->stoich_afr * est->lambda_filtered) : 0.0f;
+        /* g/ml == mg/ul, so mg / (g/ml) gives microlitres directly. */
+        flow_lph = fuel_mg / cfg->fuel_density_g_per_ml * injections_per_s * 3600.0f * 1e-6f;
+    }
 
     /* Totals use the unsmoothed flow so the average is exact. */
     est->total_fuel_l += (double)flow_lph * integrate_ms / 3.6e6;
