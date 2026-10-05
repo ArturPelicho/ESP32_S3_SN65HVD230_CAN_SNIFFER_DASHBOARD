@@ -26,6 +26,8 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#include "fuel_estimator_config.h"
+
 static const char *TAG = "mota_can";
 
 #define CAN_TX_GPIO 17
@@ -121,6 +123,13 @@ static TickType_t s_last_response;
  * and immediately overwrite the self-test values. */
 static volatile bool s_self_test_active = true;
 
+/* Fuel injection estimate: computed on core 0 by telemetry_task from the
+ * MAP/IAT/RPM/O2 rows, read on core 1 by tft_render(). The spinlock only
+ * guards a struct copy, so neither side ever waits more than a few cycles. */
+static fuel_estimator_t s_fuel_estimator;
+static fuel_estimate_t s_fuel_estimate;
+static portMUX_TYPE s_fuel_lock = portMUX_INITIALIZER_UNLOCKED;
+
 static int gap_event(struct ble_gap_event *event, void *arg);
 static bool obd_query_pid(uint8_t pid, char *response, size_t response_size);
 
@@ -163,6 +172,7 @@ static const uint8_t *glyph_for(char c)
     if (c >= 'A' && c <= 'Z') return letters[c - 'A'];
     if (c == '-') { static const uint8_t minus[5] = {0x08,0x08,0x08,0x08,0x08}; return minus; }
     if (c == '.') { static const uint8_t period[5] = {0x00,0x00,0x60,0x60,0x00}; return period; }
+    if (c == '/') { static const uint8_t slash[5] = {0x20,0x10,0x08,0x04,0x02}; return slash; }
     return blank;
 }
 
@@ -493,6 +503,64 @@ static void tft_draw_field(int x, int y, size_t i, bool ignition_on, int scale)
     tft_text_bold(x, y, text, color, scale);
 }
 
+/* Rebuilds the fuel estimate from the latest polled rows. Called from
+ * telemetry_task (core 0) once per polling pass; dt drives the smoothing. */
+static void fuel_estimate_update(uint32_t dt_ms)
+{
+    size_t map = row_index_for_pid(0x0B);
+    size_t iat = row_index_for_pid(0x0F);
+    size_t rpm = row_index_for_pid(0x0C);
+    size_t o2 = row_index_for_pid(0x14);
+    fuel_estimator_inputs_t in = {
+        .map_kpa = (float)s_row_values[map],
+        .intake_temp_c = (float)s_row_values[iat],
+        .rpm = (float)s_row_values[rpm],
+        .o2_volts = s_row_values[o2] / 1000.0f, /* row stores millivolts */
+        .map_valid = s_row_valid[map],
+        .intake_temp_valid = s_row_valid[iat],
+        .rpm_valid = s_row_valid[rpm],
+        .o2_valid = s_row_valid[o2],
+    };
+    fuel_estimate_t out;
+    fuel_estimator_update(&s_fuel_estimator, &in, dt_ms, &out);
+    portENTER_CRITICAL(&s_fuel_lock);
+    s_fuel_estimate = out;
+    portEXIT_CRITICAL(&s_fuel_lock);
+}
+
+/* FUEL strip: an amber "FUEL / EST" badge on the left marks the line as an
+ * estimate, then injected volume per shot (microlitres, "UL") and the
+ * resulting flow right-aligned (litres per hour). */
+static void tft_draw_fuel_strip(int x, int y, int w, int h, bool ignition_on)
+{
+    fuel_estimate_t est;
+    portENTER_CRITICAL(&s_fuel_lock);
+    est = s_fuel_estimate;
+    portEXIT_CRITICAL(&s_fuel_lock);
+    bool valid = ignition_on && est.valid;
+
+    const int badge_w = 60;
+    tft_rect(x, y, w, h, SECTION_FRAME_COLOR, 1);
+    tft_fill_rect(x, y, badge_w, h, valid ? COLOR_ORANGE : SECTION_FRAME_COLOR);
+    tft_text_bold(x + 7, y + 3, "FUEL", 0x0000, 2);
+    tft_text(x + 21, y + h - 10, "EST", 0x0000, 1);
+
+    int text_y = y + (h - 14) / 2;
+    if (!valid) {
+        tft_text_bold(x + badge_w + 10, text_y, "INJ N/A", SECTION_FRAME_COLOR, 2);
+        return;
+    }
+    char inj[24];
+    char flow[24];
+    int ul_tenths = (int)(est.fuel_ul_per_injection * 10.0f + 0.5f);
+    int lph_hundredths = (int)(est.fuel_flow_l_per_h * 100.0f + 0.5f);
+    snprintf(inj, sizeof(inj), "INJ %d.%dUL", ul_tenths / 10, ul_tenths % 10);
+    snprintf(flow, sizeof(flow), "%d.%02dL/H", lph_hundredths / 100, lph_hundredths % 100);
+    tft_text_bold(x + badge_w + 10, text_y, inj, 0xFFFF, 2);
+    int flow_x = x + w - 6 - (int)strlen(flow) * 12;
+    tft_text_bold(flow_x, text_y, flow, 0xFFE0, 2);
+}
+
 static void tft_render(void)
 {
     bool ignition_on = s_last_response != 0 &&
@@ -543,24 +611,26 @@ static void tft_render(void)
 
     /* TRIMS and LAMBDAS: two small framed sections side by side, each
      * holding a related pair of readings. */
-    tft_section_box(4, 54, 150, 74, "TRIMS");
-    tft_draw_field(10, 82, row_index_for_pid(0x06), ignition_on, 2);
-    tft_draw_field(10, 100, row_index_for_pid(0x07), ignition_on, 2);
+    tft_section_box(4, 52, 150, 68, "TRIMS");
+    tft_draw_field(10, 76, row_index_for_pid(0x06), ignition_on, 2);
+    tft_draw_field(10, 94, row_index_for_pid(0x07), ignition_on, 2);
 
-    tft_section_box(160, 54, 150, 74, "LAMBDAS");
-    tft_draw_field(166, 82, row_index_for_pid(0x14), ignition_on, 2);
-    tft_draw_field(166, 100, row_index_for_pid(0x15), ignition_on, 2);
+    tft_section_box(160, 52, 150, 68, "LAMBDAS");
+    tft_draw_field(166, 76, row_index_for_pid(0x14), ignition_on, 2);
+    tft_draw_field(166, 94, row_index_for_pid(0x15), ignition_on, 2);
 
     /* ADMISSION: wider section spanning both columns, with its own grid
      * (throttle/RPM, then MAP/spark advance, then intake air temp). */
-    tft_section_box(4, 136, 308, 88, "ADMISSION");
+    tft_section_box(4, 124, 308, 80, "ADMISSION");
     const int admission_col_a = 10;
     const int admission_col_b = 4 + 308 / 2 + 4;
-    tft_draw_field(admission_col_a, 164, row_index_for_pid(0x11), ignition_on, 2);
-    tft_draw_field(admission_col_b, 164, row_index_for_pid(0x0C), ignition_on, 2);
-    tft_draw_field(admission_col_a, 182, row_index_for_pid(0x0B), ignition_on, 2);
-    tft_draw_field(admission_col_b, 182, row_index_for_pid(0x0E), ignition_on, 2);
-    tft_draw_field(admission_col_a, 200, row_index_for_pid(0x0F), ignition_on, 2);
+    tft_draw_field(admission_col_a, 148, row_index_for_pid(0x11), ignition_on, 2);
+    tft_draw_field(admission_col_b, 148, row_index_for_pid(0x0C), ignition_on, 2);
+    tft_draw_field(admission_col_a, 166, row_index_for_pid(0x0B), ignition_on, 2);
+    tft_draw_field(admission_col_b, 166, row_index_for_pid(0x0E), ignition_on, 2);
+    tft_draw_field(admission_col_a, 184, row_index_for_pid(0x0F), ignition_on, 2);
+
+    tft_draw_fuel_strip(4, 208, 308, 30, ignition_on);
 
     tft_flush();
 }
@@ -577,6 +647,7 @@ static void telemetry_task(void *arg)
         vTaskDelay(pdMS_TO_TICKS(50));
     }
     TickType_t next_due[TFT_TELEMETRY_ROWS] = {0};
+    TickType_t last_fuel_update = xTaskGetTickCount();
     while (true) {
         TickType_t now = xTaskGetTickCount();
         for (size_t i = 0; i < TFT_TELEMETRY_ROWS; ++i) {
@@ -590,6 +661,9 @@ static void telemetry_task(void *arg)
                 next_due[i] = xTaskGetTickCount() + pdMS_TO_TICKS(s_rows[i].period_ms);
             }
         }
+        TickType_t fuel_now = xTaskGetTickCount();
+        fuel_estimate_update((uint32_t)pdTICKS_TO_MS(fuel_now - last_fuel_update));
+        last_fuel_update = fuel_now;
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
@@ -1223,6 +1297,8 @@ void app_main(void)
     xTaskCreate(can_task, "can_task", 4096, NULL, 5, NULL);
     /* CAN/OBD polling stays on core 0 with the CAN and BLE stacks; the
      * display gets its own core (1) so rendering never waits on the bus. */
+    fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
+    fuel_estimator_init(&s_fuel_estimator, &fuel_config);
     xTaskCreatePinnedToCore(telemetry_task, "telemetry_task", 4096, NULL, 5, NULL, 0);
     xTaskCreatePinnedToCore(display_task, "display_task", 8192, NULL, 4, NULL, 1);
     ble_start();

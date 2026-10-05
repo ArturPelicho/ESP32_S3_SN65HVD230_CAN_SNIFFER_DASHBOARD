@@ -37,3 +37,13 @@ The serial monitor is 115200 baud. The log prints every received frame as `CAN i
 The device advertises as `MOTA-CAN-ELM`. Its custom UART service uses the Nordic UART Service UUIDs so it can be tested with a generic BLE UART app. The RX characteristic accepts ELM327-like text commands and the TX characteristic sends responses/notifications.
 
 Implemented initial commands: `ATZ`, `ATI`, `ATE0/ATE1`, `ATL0/ATL1`, `ATS0/ATS1`, `ATSP0`, `ATMA`, and `0100`/`010C`/`010D` placeholders. The OBD responses are deliberately conservative until the motorcycle's actual CAN IDs and PID encoding are captured.
+
+## Fuel injection estimate
+
+The bottom strip of the dashboard (amber `FUEL EST` badge) shows an estimated fuel volume per injection (microlitres, `UL`) and the resulting flow (`L/H`). It is a speed-density estimate from MAP, intake air temperature and RPM, corrected by the averaged narrowband O2 voltage; see `main/fuel_estimator.h` for the model and its assumptions.
+
+The engine geometry (default ZongShen Carrera 125, 57.3 x 48.4 mm single), volumetric efficiency, stoichiometric AFR, fuel density, O2 handling and smoothing are set in `idf.py menuconfig` under **Fuel injection estimate**. Calibrate the volumetric efficiency against a fill-to-fill consumption check.
+
+The maths has a host-side test that needs no ESP-IDF:
+
+`gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test`
