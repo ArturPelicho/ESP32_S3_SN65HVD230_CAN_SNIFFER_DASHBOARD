@@ -775,7 +775,7 @@ static void display_task(void *arg)
     s_row_valid[0] = true;
     s_last_response = xTaskGetTickCount();
     while (xTaskGetTickCount() < self_test_until) {
-        if (tft_begin_frame()) tft_render();
+        if (tft_health_tick() && tft_begin_frame()) tft_render();
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
     s_row_valid[0] = false;
