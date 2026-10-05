@@ -1430,12 +1430,15 @@ void app_main(void)
     xTaskCreate(can_task, "can_task", 4096, NULL, 5, NULL);
     /* CAN/OBD polling stays on core 0 with the CAN and BLE stacks; the
      * display gets its own core (1) so rendering never waits on the bus. */
-    fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
-    fuel_estimator_init(&s_fuel_estimator, &fuel_config);
     xTaskCreatePinnedToCore(telemetry_task, "telemetry_task", 4096, NULL, 5, NULL, 0);
-    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
     xTaskCreatePinnedToCore(display_task, "display_task", 8192, NULL, 4, NULL, 1);
     ble_start();
+
+    /* Fuel estimate on core 0 beside the polling; the display only reads
+     * its published result, which reads as "no data" until the first step. */
+    fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
+    fuel_estimator_init(&s_fuel_estimator, &fuel_config);
+    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 3072, NULL, 4, NULL, 0);
 
     ESP_LOGI(TAG, "Ready. Connect a BLE UART app and use ATMA for raw CAN streaming.");
 }
