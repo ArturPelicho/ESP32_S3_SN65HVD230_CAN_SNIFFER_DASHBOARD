@@ -51,12 +51,14 @@ static const char *TAG = "mota_can";
 #define TFT_PIXEL_CLOCK_HZ (20 * 1000 * 1000)
 #define TFT_REFRESH_PERIOD_MS 100
 /* Framebuffers to rotate through. 1 = single buffer: a frame is only drawn
- * once the previous one has finished going out over SPI. 2 = double
- * buffer: the next frame is drawn while the previous one is still being
- * sent. A full 320x240 RGB565 frame is 150 KB, so extra buffers come from
- * the heap and are only taken if TFT_FB_HEAP_RESERVE bytes of DMA-capable
- * RAM stay free for BLE/CAN afterwards; otherwise the display runs with
- * fewer buffers (logged at boot). */
+ * once the previous one has finished going out over SPI (~61 ms at 20 MHz,
+ * well inside TFT_REFRESH_PERIOD_MS, so no frames are skipped at 10 fps).
+ * 2 = double buffer: the next frame is drawn while the previous one is
+ * still being sent, which only matters for faster refresh rates. A full
+ * 320x240 RGB565 frame is 150 KB, so extra buffers come from DMA-capable
+ * internal heap and are only taken if TFT_FB_HEAP_RESERVE bytes stay free
+ * for BLE/CAN afterwards. With NimBLE running that is not the case today,
+ * so the display normally runs single-buffered (logged at boot). */
 #define TFT_FB_COUNT 2
 #define TFT_FB_HEAP_RESERVE (64 * 1024)
 /* How often the panel's configuration is re-sent while running; this is
@@ -301,7 +303,7 @@ static void tft_alloc_framebuffers(void)
             fb = heap_caps_malloc(TFT_FB_BYTES, MALLOC_CAP_DMA);
         }
         if (fb == NULL) {
-            ESP_LOGW(TAG, "TFT: no RAM for framebuffer %u, using %u",
+            ESP_LOGI(TAG, "TFT: not enough free RAM for framebuffer %u, running with %u",
                      (unsigned)(i + 1), (unsigned)s_tft_fb_count);
             break;
         }
