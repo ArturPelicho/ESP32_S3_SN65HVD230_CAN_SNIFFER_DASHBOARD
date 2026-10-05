@@ -1,0 +1,180 @@
+menu "Fuel injection estimate"
+
+    comment "Engine geometry (defaults: ZongShen Carrera 125, 57.3 x 48.4 mm single)"
+
+    config FUEL_BORE_UM
+        int "Bore (micrometres)"
+        range 10000 200000
+        default 57300
+
+    config FUEL_STROKE_UM
+        int "Stroke (micrometres)"
+        range 10000 200000
+        default 48400
+
+    config FUEL_CYLINDERS
+        int "Number of cylinders"
+        range 1 12
+        default 1
+
+    config FUEL_STROKES_PER_CYCLE
+        int "Strokes per cycle (4 = four-stroke, 2 = two-stroke)"
+        range 2 4
+        default 4
+
+    comment "Model constants"
+
+    config FUEL_VE_PERCENT
+        int "Volumetric efficiency (%)"
+        range 30 120
+        default 80
+        help
+            Fraction of the swept volume actually filled with air at
+            manifold conditions. A small two-valve 125 cc engine is roughly
+            70-85 %. This single constant is the largest error source and
+            doubles as the calibration factor: fuel scales 1:1 with it, so if
+            the dashboard reads 10 % high against a fill-to-fill check,
+            lower it by 10 %.
+
+    config FUEL_STOICH_AFR_X100
+        int "Stoichiometric air/fuel ratio x100"
+        range 500 2000
+        default 1470
+        help
+            1470 for pure petrol, about 1410 for E10.
+
+    config FUEL_DENSITY_G_PER_L
+        int "Fuel density (g/L)"
+        range 600 1000
+        default 745
+
+    choice FUEL_LAMBDA_SOURCE
+        prompt "Lambda source"
+        default FUEL_LAMBDA_NARROWBAND
+        help
+            Narrowband uses the time-averaged O2 sensor 1 voltage (OBD PID
+            0x14) as a coarse lambda correction (about 0.9-1.1). Choose
+            "assume stoichiometric" to ignore the O2 sensor entirely.
+
+        config FUEL_LAMBDA_NARROWBAND
+            bool "Narrowband O2 sensor 1 (PID 0x14)"
+        config FUEL_LAMBDA_ASSUME_STOICH
+            bool "Assume stoichiometric (lambda = 1.0)"
+    endchoice
+
+    config FUEL_OUTPUT_TAU_MS
+        int "Output smoothing time constant (ms)"
+        range 0 5000
+        default 300
+
+    config FUEL_LAMBDA_TAU_MS
+        int "O2 averaging time constant (ms)"
+        range 0 20000
+        default 3000
+
+    comment "Display units and averages"
+
+    config FUEL_MOVING_RPM
+        int "RPM at which the instant reading switches to L/100km"
+        range 500 15000
+        default 2500
+        help
+            Below this the bike is taken to be stopped or idling and the
+            instant reading shows L/h. L/100km also needs a valid road speed.
+
+    config FUEL_MOVING_HYSTERESIS_RPM
+        int "Unit switch hysteresis (RPM)"
+        range 0 2000
+        default 150
+        help
+            Switches back to L/h only below (switch RPM - this), so cruising
+            right at the threshold does not make the unit flicker.
+
+    config FUEL_MIN_SPEED_KMH
+        int "Minimum road speed for L/100km (km/h)"
+        range 1 50
+        default 5
+
+    config FUEL_AVG_MIN_DISTANCE_M
+        int "Distance before the average shows L/100km (metres)"
+        range 0 10000
+        default 500
+        help
+            Until then the since-start average is shown in L/h.
+
+    comment "Deceleration fuel cut detection"
+
+    config FUEL_CUT_MIN_RPM
+        int "Minimum RPM"
+        range 500 15000
+        default 1800
+
+    config FUEL_CUT_MAX_THROTTLE_PCT
+        int "Maximum throttle (%)"
+        range 0 20
+        default 2
+
+    config FUEL_CUT_MAX_O2_MV
+        int "Maximum O2 sensor voltage (mV)"
+        range 0 450
+        default 150
+
+endmenu
+
+menu "Dashboard thresholds"
+
+    comment "Cylinder head temperature colours (C)"
+
+    config DASH_CHT_BLUE_BELOW_C
+        int "Blue (cold) below"
+        range 0 200
+        default 80
+
+    config DASH_CHT_GREEN_BELOW_C
+        int "Green (normal) below"
+        range 0 250
+        default 135
+
+    config DASH_CHT_ORANGE_BELOW_C
+        int "Orange (warm) below; red from here"
+        range 0 250
+        default 150
+        help
+            Red means "too hot, no damage yet, stop when you can".
+
+    config DASH_CHT_CRITICAL_C
+        int "Stop-now alert (black on flashing red) at"
+        range 0 300
+        default 165
+        help
+            The emergency level: stop the engine now. Set it above the
+            hottest reading seen in hard but healthy riding (hot day, long
+            climb, traffic) and below where damage starts. The default
+            assumes a head-casting sensor on the intake side, which reads
+            cooler than the exhaust side and the spark plug seat.
+
+    config DASH_CHT_CRITICAL_HYSTERESIS_C
+        int "Stop-now alert clears this many degrees below"
+        range 0 30
+        default 5
+
+    config DASH_CHT_CRITICAL_CONFIRM_MS
+        int "Stop-now alert needs the reading to hold this long (ms)"
+        range 0 10000
+        default 1000
+        help
+            Filters a single bad sample so it can't trigger the alert.
+
+    comment "RPM"
+
+    config DASH_RPM_GAUGE_MAX
+        int "RPM gauge full scale"
+        range 1000 20000
+        default 10500
+
+    config DASH_RPM_SHIFT
+        int "Shift warning (flashing) at or above"
+        range 1000 20000
+        default 10000
+
+endmenu

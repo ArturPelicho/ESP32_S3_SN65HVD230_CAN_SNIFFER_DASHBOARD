@@ -37,3 +37,17 @@ The serial monitor is 115200 baud. The log prints every received frame as `CAN i
 The device advertises as `MOTA-CAN-ELM`. Its custom UART service uses the Nordic UART Service UUIDs so it can be tested with a generic BLE UART app. The RX characteristic accepts ELM327-like text commands and the TX characteristic sends responses/notifications.
 
 Implemented initial commands: `ATZ`, `ATI`, `ATE0/ATE1`, `ATL0/ATL1`, `ATS0/ATS1`, `ATSP0`, `ATMA`, and `0100`/`010C`/`010D` placeholders. The OBD responses are deliberately conservative until the motorcycle's actual CAN IDs and PID encoding are captured.
+
+## Fuel consumption estimate
+
+The FUEL panel (amber `FUEL EST` badge) shows instant consumption and the average since start-up. The instant reading is L/100km when moving (RPM at or above 2500 and a road speed is available) and L/h when stopped or idling. It shows `FUEL CUT` during engine braking (closed throttle, RPM above idle, O2 fully lean). The average stays in L/h until 500 m have been covered.
+
+L/100km needs road speed. This ECU does not answer OBD PID 0x0D, so until a speed source is added (CAN broadcast, GPS or wheel sensor), both readings stay in L/h.
+
+The estimate uses the speed-density method: MAP, intake air temperature and RPM, corrected by the averaged narrowband O2 voltage. See `main/fuel_estimator.h` for the model and its assumptions.
+
+Engine geometry (default ZongShen Carrera 125, 57.3 x 48.4 mm single cylinder), volumetric efficiency, stoichiometric AFR, fuel density, the unit-switch RPM and the fuel-cut thresholds are set in `idf.py menuconfig` under **Fuel injection estimate**. Volumetric efficiency is also the calibration factor: if the reading is 10 % high against a fill-to-fill check, lower it by 10 %.
+
+The maths has a host-side test that needs no ESP-IDF:
+
+`gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test`
