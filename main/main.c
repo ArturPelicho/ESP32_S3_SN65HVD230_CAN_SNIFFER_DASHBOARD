@@ -16,6 +16,7 @@
 #include "esp_twai_onchip.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
+#include "esp_lcd_panel_commands.h"
 #include "esp_lcd_panel_vendor.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -58,6 +59,9 @@ static const char *TAG = "mota_can";
  * fewer buffers (logged at boot). */
 #define TFT_FB_COUNT 2
 #define TFT_FB_HEAP_RESERVE (64 * 1024)
+/* How often the panel's configuration is re-sent while running; this is
+ * also the longest the screen can stay black after a supply dip. */
+#define TFT_HEALTH_PERIOD_MS 1000
 #define TFT_TEMP_PERIOD_MS 100
 #define TFT_FAST_PERIOD_MS 100
 #define TFT_SLOW_PERIOD_MS 500
@@ -350,6 +354,33 @@ static void tft_rect(int x, int y, int w, int h, uint16_t color, int thickness)
     }
 }
 
+/* Takes the panel out of sleep's aftermath into our operating mode:
+ * pixel format, inversion, orientation and display on. Every command here
+ * is idempotent and leaves GRAM alone, so tft_health_tick() can re-send it
+ * while the panel is running without any visible effect. Returns the first
+ * error instead of aborting, so a misbehaving panel cannot reboot the bike's
+ * dashboard from the runtime path. */
+static esp_err_t tft_panel_apply_config(void)
+{
+    /* Some ST7789 modules default to 18-bit/pixel and bleed channels into
+     * each other (pure red rendering as yellow/white, pure blue as violet)
+     * unless COLMOD is forced back to 16-bit RGB565. */
+    uint8_t colmod_param = 0x55;
+    esp_err_t err = esp_lcd_panel_io_tx_param(s_tft_io, LCD_CMD_COLMOD, &colmod_param, 1);
+    /* BGR order and color inversion were tried and ruled out; the actual
+     * cause was a pixel byte-order mismatch, now fixed in tft_flush(). */
+    if (err == ESP_OK) err = esp_lcd_panel_invert_color(s_tft_panel, true);
+    /* The new case mounts the panel rotated 90 degrees clockwise compared
+     * to the old one, so the image is rotated 90 degrees counter-clockwise
+     * here to compensate and land upright again (320x240 landscape). If it
+     * comes up mirrored/sideways on this specific unit, try swapping the
+     * mirror_y argument below to true<->false first. */
+    if (err == ESP_OK) err = esp_lcd_panel_swap_xy(s_tft_panel, true);
+    if (err == ESP_OK) err = esp_lcd_panel_mirror(s_tft_panel, false, true);
+    if (err == ESP_OK) err = esp_lcd_panel_disp_on_off(s_tft_panel, true);
+    return err;
+}
+
 /* Issues the ST7789's reset/init/orientation command sequence on the
  * already-created s_tft_panel/s_tft_io handles. Split out from tft_start()
  * so it can be re-run later (see the re-init call in display_task): if the
@@ -362,22 +393,52 @@ static void tft_panel_init_sequence(void)
 {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_tft_panel));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_tft_panel));
-    /* Some ST7789 modules default to 18-bit/pixel and bleed channels into
-     * each other (pure red rendering as yellow/white, pure blue as violet)
-     * unless COLMOD is forced back to 16-bit RGB565. */
-    uint8_t colmod_param = 0x55;
-    esp_lcd_panel_io_tx_param(s_tft_io, 0x3A, &colmod_param, 1);
-    /* BGR order and color inversion were tried and ruled out; the actual
-     * cause was a pixel byte-order mismatch, now fixed in tft_flush(). */
-    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(s_tft_panel, true));
-    /* The new case mounts the panel rotated 90 degrees clockwise compared
-     * to the old one, so the image is rotated 90 degrees counter-clockwise
-     * here to compensate and land upright again (320x240 landscape). If it
-     * comes up mirrored/sideways on this specific unit, try swapping the
-     * mirror_y argument below to true<->false first. */
-    ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(s_tft_panel, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_mirror(s_tft_panel, false, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(s_tft_panel, true));
+    ESP_ERROR_CHECK(tft_panel_apply_config());
+}
+
+/* Panel health check, run from display_task's main loop.
+ *
+ * Key-on and cranking can dip the supply far enough that the ST7789 resets
+ * on its own while the ESP32 keeps running. A reset panel wakes up in
+ * sleep-in, display-off, 18-bit, unrotated, and stays black (backlight on)
+ * however many frames we send, until the next power cycle. The panel's SDO
+ * line is not wired (miso_io_num = -1), so its status (RDDPM 0x0A) cannot be
+ * read back to detect this. Instead the wake-up and configuration commands
+ * are simply re-sent every TFT_HEALTH_PERIOD_MS; on a healthy panel they
+ * change nothing.
+ *
+ * Never blocks: it only runs when no frame is in flight (otherwise it
+ * retries on the next tick), and the 5 ms the datasheet asks for after
+ * SLPOUT is covered by splitting the work over two refresh ticks. Returns
+ * false on the SLPOUT tick so that tick's frame is skipped. */
+static bool tft_health_tick(void)
+{
+    static bool s_slpout_sent;
+    static TickType_t s_next_check;
+
+    if (!s_tft_ready) return true;
+    TickType_t now = xTaskGetTickCount();
+    if (!s_slpout_sent && (int32_t)(now - s_next_check) < 0) return true;
+    if (xSemaphoreTake(s_tft_idle, 0) != pdTRUE) return true;
+
+    bool render = true;
+    if (!s_slpout_sent) {
+        if (esp_lcd_panel_io_tx_param(s_tft_io, LCD_CMD_SLPOUT, NULL, 0) == ESP_OK) {
+            s_slpout_sent = true;
+            render = false;
+        } else {
+            s_next_check = now + pdMS_TO_TICKS(TFT_HEALTH_PERIOD_MS);
+        }
+    } else {
+        esp_err_t err = tft_panel_apply_config();
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "TFT: panel re-config failed: %s", esp_err_to_name(err));
+        }
+        s_slpout_sent = false;
+        s_next_check = now + pdMS_TO_TICKS(TFT_HEALTH_PERIOD_MS);
+    }
+    xSemaphoreGive(s_tft_idle);
+    return render;
 }
 
 static void tft_start(void)
@@ -723,7 +784,7 @@ static void display_task(void *arg)
     tft_panel_init_sequence();
 
     while (true) {
-        if (tft_begin_frame()) tft_render();
+        if (tft_health_tick() && tft_begin_frame()) tft_render();
         vTaskDelay(pdMS_TO_TICKS(TFT_REFRESH_PERIOD_MS));
     }
 }
