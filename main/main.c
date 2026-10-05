@@ -490,11 +490,11 @@ static bool tft_health_tick(void)
     return render;
 }
 
-/* Boot record on the splash screen. Only held on screen when the previous
- * start failed or this one was not a clean power-on, so a normal key-on is
- * not slowed down. Read it after an ignition off/on that fixed a black
- * screen: see boot_diag.h for how to interpret the numbers. */
-#define TFT_BOOT_DIAG_HOLD_MS 4000
+/* Boot record on the splash screen, held for CONFIG_BOOT_DIAG_HOLD_MS on
+ * every start (CONFIG_BOOT_DIAG_ALWAYS_SHOW) or only when the previous
+ * start failed or this one was not a clean power-on. See boot_diag.h for
+ * how to interpret the numbers. */
+#define TFT_BOOT_DIAG_HOLD_MS CONFIG_BOOT_DIAG_HOLD_MS
 
 static void tft_draw_boot_diag(void)
 {
@@ -1258,7 +1258,12 @@ static void display_task(void *arg)
 {
     (void)arg;
     tft_start();
-    if (boot_diag_noteworthy()) vTaskDelay(pdMS_TO_TICKS(TFT_BOOT_DIAG_HOLD_MS));
+#if CONFIG_BOOT_DIAG_ALWAYS_SHOW
+    bool hold_boot_diag = true;
+#else
+    bool hold_boot_diag = boot_diag_noteworthy();
+#endif
+    if (hold_boot_diag) vTaskDelay(pdMS_TO_TICKS(TFT_BOOT_DIAG_HOLD_MS));
 
     /* Self-test: briefly force a simulated over-temperature reading so the
      * hero row's flashing red alert box can be visually confirmed on every
