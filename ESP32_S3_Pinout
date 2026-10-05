@@ -1,0 +1,175 @@
+🟢 TOTALLY SAFE (General I/O, I2C, SPI, PWM, UART)
+   GPIO 4, 5, 6, 7, 8, 9, 15, 16, 17, 18, 38, 39*, 40, 41, 42
+   (*GPIO 39 pulses HIGH briefly at reset)
+
+🟡 CAUTION: STRAPPING / BOOT PINS (Must have correct logic levels at power-on)
+   GPIO 0  : Pull-Up (Default boot). Held LOW triggers bootloader download mode.
+   GPIO 3  : Floating. Controls JTAG signal source.
+   GPIO 45 : Pull-DOWN (0 = 3.3V flash, 1 = 1.8V flash). NEVER pull HIGH on 3.3V modules!
+   GPIO 46 : Pull-DOWN. Invalid boot state if GPIO46=1 and GPIO0=0.
+
+🟡 CAUTION: BOARD-LEVEL ASSIGNMENTS
+   GPIO 19, 20 : Hardware USB D- / D+ (Reserved if using native USB-CDC/JTAG).
+   GPIO 43, 44 : Hardware UART0 TX / RX (Boot log console and USB-UART CP2102/CH340 chip).
+
+🟠 CAUTION: PSRAM RESTRICTION (Octal / OPI PSRAM)
+   GPIO 33, 34, 35, 36, 37 : RESERVED internally if your module has 8MB/16MB Octal PSRAM 
+                            (e.g., N8R8, N16R8, WROOM-2). Do NOT use!
+
+🔴 FORBIDDEN (Connected to internal SPI Flash)
+   GPIO 26, 27, 28, 29, 30, 31, 32 : Never connect. Touching these will crash the SoC.
+   # ESP32-S3 MASTER HARDWARE & PINOUT MAP
+========================================================================================================================
+Target: Espressif ESP32-S3 (WROOM-1, WROOM-2, Mini, DevKitC-1)
+Rule #1: GPIO 22, 23, 24, and 25 DO NOT EXIST in the silicon die.
+Rule #2: ESP32-S3 has NO DAC (0 channels).
+Rule #3: ESP32-S3 has NO INPUT-ONLY pins (All 45 GPIOs are bidirectional with pull-up/pull-down).
+========================================================================================================================
+
+------------------------------------------------------------------------------------------------------------------------
+[SECTION 1] HARDWARE SUBSYSTEM CAPABILITIES & CONFLICT RULES
+------------------------------------------------------------------------------------------------------------------------
+PERIPHERAL      | CAPACITY            | KEY CONFLICTS & HARDWARE RULES
+----------------+---------------------+---------------------------------------------------------------------------------
+DAC             | 0 Channels (NONE)   | No DAC hardware. Use LEDC (PWM) + RC Filter, or external I2S DAC (MAX98357A).
+ADC1            | 10 Channels (12-bit)| GPIO 1 to 10 (ADC1_CH0 - CH9). Completely safe to use with Wi-Fi / Bluetooth.
+ADC2            | 10 Channels (12-bit)| GPIO 11 to 20 (ADC2_CH0 - CH9). CONFLICTS WITH WI-FI! Avoid if Wi-Fi is active.
+Touch Sensor    | 14 Channels         | GPIO 1 to 14 map 1:1 to TOUCH 1 to 14.
+RTC GPIO        | 22 Channels         | GPIO 0 to 21 map 1:1 to RTC_GPIO 0 to 21. Wakeup from Deep Sleep & ULP monitor.
+Interrupts      | All 45 GPIOs        | All usable GPIOs support Edge/Level external interrupts.
+PWM (LEDC)      | 8 Channels (1-14b)  | Can be routed to ANY valid output GPIO via GPIO Matrix.
+PWM (MCPWM)     | 2 Groups (6 outputs)| Motor control PWM; can be routed to ANY valid output GPIO via GPIO Matrix.
+I2C (0 & 1)     | 2 Controllers       | Route to ANY GPIO via Matrix. Typical: SDA=GPIO 8, SCL=GPIO 9.
+SPI (SPI2/FSPI) | 1 User Controller   | Native pins (<=80MHz): CS=10, MOSI=11, SCK=12, MISO=13. Any pin via Matrix (<=40MHz).
+Native USB      | USB OTG / Serial    | GPIO 19 (D-) and GPIO 20 (D+). Reserved if using native USB-CDC/JTAG port.
+UART0 (Console) | Boot / Flash port   | GPIO 43 (TX) and GPIO 44 (RX). Routed to onboard CP2102/CH340 chip on devkits.
+UART1           | Secondary UART      | Native IO_MUX: TX=GPIO 17, RX=GPIO 18. (Can also be routed to any GPIO).
+UART2           | Tertiary UART       | No direct IO_MUX pins. Routable to ANY GPIO via GPIO Matrix.
+
+------------------------------------------------------------------------------------------------------------------------
+[SECTION 2] MASTER GPIO PIN-BY-PIN MATRIX
+------------------------------------------------------------------------------------------------------------------------
+GPIO    | RTC    | ADC CH   | TOUCH    | DIRECT IO_MUX | STRAP / RESET BEHAVIOR | USAGE RECOMMENDATION & NOTES
+--------+--------+----------+----------+---------------+------------------------+---------------------------------------
+GPIO 0  | RTC_0  | ---      | ---      | ---           | STRAP: Pull-UP         | Boot Mode: Hold LOW for flash download.
+GPIO 1  | RTC_1  | ADC1_CH0 | TOUCH 1  | ---           | Normal                 | Safe: Ideal ADC1 (Wi-Fi safe) / General I/O.
+GPIO 2  | RTC_2  | ADC1_CH1 | TOUCH 2  | ---           | Normal                 | Safe: Ideal ADC1 (Wi-Fi safe) / General I/O.
+GPIO 3  | RTC_3  | ADC1_CH2 | TOUCH 3  | ---           | STRAP: Floating        | Caution: JTAG source strap. Keep floating.
+GPIO 4  | RTC_4  | ADC1_CH3 | TOUCH 4  | ---           | Normal                 | Safe: General I/O / ADC1 / PWM.
+GPIO 5  | RTC_5  | ADC1_CH4 | TOUCH 5  | ---           | Normal                 | Safe: General I/O / ADC1 / PWM.
+GPIO 6  | RTC_6  | ADC1_CH5 | TOUCH 6  | ---           | Normal                 | Safe: General I/O / ADC1 / PWM.
+GPIO 7  | RTC_7  | ADC1_CH6 | TOUCH 7  | ---           | Normal                 | Safe: General I/O / ADC1 / User Button.
+GPIO 8  | RTC_8  | ADC1_CH7 | TOUCH 8  | ---           | Normal                 | Safe: Recommended I2C SDA / ADC1.
+GPIO 9  | RTC_9  | ADC1_CH8 | TOUCH 9  | FSPI HD       | Normal                 | Safe: Recommended I2C SCL / ADC1.
+GPIO 10 | RTC_10 | ADC1_CH9 | TOUCH 10 | FSPI CS0      | Normal                 | Safe: Native FSPI CS / ADC1.
+GPIO 11 | RTC_11 | ADC2_CH0 | TOUCH 11 | FSPI MOSI (D) | ADC conflicts w/ Wi-Fi | Safe: Native FSPI MOSI. (Avoid ADC if Wi-Fi).
+GPIO 12 | RTC_12 | ADC2_CH1 | TOUCH 12 | FSPI SCK      | ADC conflicts w/ Wi-Fi | Safe: Native FSPI SCK.  (Avoid ADC if Wi-Fi).
+GPIO 13 | RTC_13 | ADC2_CH2 | TOUCH 13 | FSPI MISO (Q) | ADC conflicts w/ Wi-Fi | Safe: Native FSPI MISO. (Avoid ADC if Wi-Fi).
+GPIO 14 | RTC_14 | ADC2_CH3 | TOUCH 14 | FSPI WP       | ADC conflicts w/ Wi-Fi | Safe: Native FSPI WP / General I/O.
+GPIO 15 | RTC_15 | ADC2_CH4 | ---      | U0RTS/XTAL_32K| ADC conflicts w/ Wi-Fi | Safe: General I/O / 32.768kHz Crystal input.
+GPIO 16 | RTC_16 | ADC2_CH5 | ---      | U0CTS/XTAL_32K| ADC conflicts w/ Wi-Fi | Safe: General I/O / 32.768kHz Crystal input.
+GPIO 17 | RTC_17 | ADC2_CH6 | ---      | U1TXD         | ADC conflicts w/ Wi-Fi | Safe: Native UART1 TX / General I/O.
+GPIO 18 | RTC_18 | ADC2_CH7 | ---      | U1RXD         | ADC conflicts w/ Wi-Fi | Safe: Native UART1 RX / General I/O.
+GPIO 19 | RTC_19 | ADC2_CH8 | ---      | USB_D-        | USB Pull-Up active     | Caution: Native USB D- (Free if USB unused).
+GPIO 20 | RTC_20 | ADC2_CH9 | ---      | USB_D+        | USB Pull-Up active     | Caution: Native USB D+ (Free if USB unused).
+GPIO 21 | RTC_21 | ---      | ---      | ---           | Pulls low slowly       | Safe: General I/O / Common onboard WS2812.
+--------+--------+----------+----------+---------------+------------------------+---------------------------------------
+GPIO 22 | ---    | ---      | ---      | NOT ON DIE    | DOES NOT EXIST         | DO NOT USE (Pin does not physically exist).
+GPIO 23 | ---    | ---      | ---      | NOT ON DIE    | DOES NOT EXIST         | DO NOT USE (Pin does not physically exist).
+GPIO 24 | ---    | ---      | ---      | NOT ON DIE    | DOES NOT EXIST         | DO NOT USE (Pin does not physically exist).
+GPIO 25 | ---    | ---      | ---      | NOT ON DIE    | DOES NOT EXIST         | DO NOT USE (Pin does not physically exist).
+--------+--------+----------+----------+---------------+------------------------+---------------------------------------
+GPIO 26 | ---    | ---      | ---      | SPI0/1 SPICS1 | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 27 | ---    | ---      | ---      | SPI0/1 SPIHD  | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 28 | ---    | ---      | ---      | SPI0/1 SPIWP  | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 29 | ---    | ---      | ---      | SPI0/1 SPICS0 | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 30 | ---    | ---      | ---      | SPI0/1 SPICLK | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 31 | ---    | ---      | ---      | SPI0/1 SPIQ   | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+GPIO 32 | ---    | ---      | ---      | SPI0/1 SPID   | Internal SPI Flash     | FORBIDDEN: Hardwired to internal Flash.
+--------+--------+----------+----------+---------------+------------------------+---------------------------------------
+GPIO 33 | ---    | ---      | ---      | SPIIO4        | Octal PSRAM / Flash    | DANGER: Reserved if module has Octal PSRAM.
+GPIO 34 | ---    | ---      | ---      | SPIIO5        | Octal PSRAM / Flash    | DANGER: Reserved if module has Octal PSRAM.
+GPIO 35 | ---    | ---      | ---      | SPIIO6        | Octal PSRAM / Flash    | DANGER: Reserved if module has Octal PSRAM.
+GPIO 36 | ---    | ---      | ---      | SPIIO7        | Octal PSRAM / Flash    | DANGER: Reserved if module has Octal PSRAM.
+GPIO 37 | ---    | ---      | ---      | SPIDQS        | Octal PSRAM / Flash    | DANGER: Reserved if module has Octal PSRAM.
+--------+--------+----------+----------+---------------+------------------------+---------------------------------------
+GPIO 38 | ---    | ---      | ---      | ---           | Normal                 | Safe: General I/O / User Peripheral.
+GPIO 39 | ---    | ---      | ---      | MTCK / JTAG   | GLITCHES HIGH AT BOOT  | Safe OUT/IN. Avoid for active-HIGH relays.
+GPIO 40 | ---    | ---      | ---      | MTDO / JTAG   | Normal                 | Safe: General I/O / User Peripheral.
+GPIO 41 | ---    | ---      | ---      | MTDI / JTAG   | Normal                 | Safe: General I/O / User Peripheral.
+GPIO 42 | ---    | ---      | ---      | MTMS / JTAG   | Pulls low slowly       | Safe: General I/O / User Peripheral.
+GPIO 43 | ---    | ---      | ---      | U0TXD         | Boot console TX        | Caution: UART0 TX (Devkit USB-UART chip).
+GPIO 44 | ---    | ---      | ---      | U0RXD         | Boot console RX        | Caution: UART0 RX (Devkit USB-UART chip).
+GPIO 45 | ---    | ---      | ---      | ---           | STRAP: Pull-DOWN       | CRITICAL: Keep LOW at boot. HIGH sets 1.8V VDD!
+GPIO 46 | ---    | ---      | ---      | ---           | STRAP: Pull-DOWN       | Caution: Keep LOW at boot (GPIO0=0+46=1 breaks boot).
+GPIO 47 | ---    | ---      | ---      | SPICLK_P      | 1.8V on R16V modules   | Safe: General I/O (3.3V on standard modules).
+GPIO 48 | ---    | ---      | ---      | SPICLK_N      | 1.8V on R16V modules   | Safe: General I/O / Onboard RGB on some boards.
+
+------------------------------------------------------------------------------------------------------------------------
+[SECTION 3] BOOT STRAPPING PINS (RESET CRITICAL RULES)
+------------------------------------------------------------------------------------------------------------------------
+PIN      | DEFAULT STATE     | FUNCTIONALITY & RISK
+---------+-------------------+------------------------------------------------------------------------------------------
+GPIO 0   | Pull-UP (1)       | Boot Mode: 1 = SPI Boot (Normal Run), 0 = Download Mode (Flashing).
+         |                   | External button to GND is fine. Do not pull LOW permanently!
+---------+-------------------+------------------------------------------------------------------------------------------
+GPIO 45  | Pull-DOWN (0)     | SPI Flash Voltage (VDD_SPI): 0 = 3.3V rail, 1 = 1.8V rail.
+         |                   | EXTREME DANGER: Never pull HIGH externally on standard 3.3V flash modules!
+---------+-------------------+------------------------------------------------------------------------------------------
+GPIO 46  | Pull-DOWN (0)     | Boot Diagnostic Print: 0 = Print ROM logs, 1 = Clean boot / muted logs.
+         |                   | DANGER: If GPIO 0 is LOW and GPIO 46 is HIGH, SoC enters an INVALID boot state.
+---------+-------------------+------------------------------------------------------------------------------------------
+GPIO 3   | Floating          | JTAG Signal Selection: Controls whether JTAG routes to USB-JTAG or GPIOs 39-42.
+         |                   | Keep floating or use a weak pull-down. Do not tie hard to 3.3V.
+
+------------------------------------------------------------------------------------------------------------------------
+[SECTION 4] OCTAL PSRAM RESTRICTION LIST (R8 / R16 MODULES)
+------------------------------------------------------------------------------------------------------------------------
+Module Identifier Examples:
+- ESP32-S3-WROOM-1-N8R8   (8MB Flash, 8MB Octal PSRAM)
+- ESP32-S3-WROOM-1-N16R8  (16MB Flash, 8MB Octal PSRAM)
+- ESP32-S3-WROOM-2 Series (All contain Octal Flash / Octal PSRAM)
+
+RESERVED PINS (DO NOT WIRE ON BOARD):
+- GPIO 33, 34 : Connected to internal OPI PSRAM (Not even exposed on WROOM-1 module pins).
+- GPIO 35, 36, 37 : Exposed on some DevKit headers, but internally connected to OPI PSRAM clock/data!
+                    If your project enables Octal PSRAM in sdkconfig/Arduino, using GPIO 35-37 will CRASH the system.
+
+------------------------------------------------------------------------------------------------------------------------
+[SECTION 5] EXAMPLE OF READY-TO-USE C/C++ HEADER TEMPLATE (Not obligatory)
+------------------------------------------------------------------------------------------------------------------------
+*/
+
+#ifndef PIN_CONFIG_H
+#define PIN_CONFIG_H
+
+// --- I2C BUS (Arbitrary GPIO Matrix - Safe Pins) ---
+#define PIN_I2C_SDA             8
+#define PIN_I2C_SCL             9
+
+// --- SPI BUS (FSPI / SPI2 Direct Native IO_MUX - Max 80 MHz) ---
+#define PIN_SPI_CS              10
+#define PIN_SPI_MOSI            11
+#define PIN_SPI_SCK             12
+#define PIN_SPI_MISO            13
+
+// --- UART1 (Direct IO_MUX Pins) ---
+#define PIN_UART1_TX            17
+#define PIN_UART1_RX            18
+
+// --- ANALOG SENSORS (ADC1 ONLY - 100% Safe with Wi-Fi Active) ---
+#define PIN_ADC1_SENSOR_A       1    // ADC1_CH0
+#define PIN_ADC1_SENSOR_B       2    // ADC1_CH1
+#define PIN_ADC1_BATTERY_SENSE  4    // ADC1_CH3
+
+// --- OUTPUTS & ACTUATORS (Glitch-free at boot) ---
+#define PIN_STATUS_LED          21   // Often WS2812 RGB data pin
+#define PIN_RELAY_ENABLE        5    // Clean at boot (GPIO 39 avoided)
+#define PIN_BUZZER_PWM          6
+
+// --- INPUTS & WAKEUP (RTC Domain - Can wake from Deep Sleep) ---
+#define PIN_USER_BUTTON         7    // RTC_GPIO7
+#define PIN_ROTARY_ENC_A        15   // RTC_GPIO15
+#define PIN_ROTARY_ENC_B        16   // RTC_GPIO16
+
+#endif // PIN_CONFIG_H
