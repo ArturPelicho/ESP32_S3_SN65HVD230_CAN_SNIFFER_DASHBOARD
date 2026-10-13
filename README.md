@@ -42,9 +42,10 @@ endpoint; measure the bike's own termination first.
   temperature, an injection value (bytes 5-6) and status bits. The
   injection value is a multiple of 1000 sent truncated to 16 bits, so it
   wraps every 65536; the last digits of the received value tell how many
-  times it wrapped and the true value is rebuilt frame by frame (a week of
-  riding: 99.98 % of 1.28 million frames fit; `INJ wrap` serial lines and
-  per-wrap frame counts check this). Shown as raw / 10000 it reads 1.2 at
+  times it wrapped and the true value is rebuilt frame by frame, up to 5
+  wraps (39 shown, ~7 L/h, margin for full throttle at the 10500 rpm cut).
+  A week of riding: 99.98 % of 1.28 million frames fit, reaching 3 wraps;
+  `INJ wrap` serial lines and per-wrap frame counts check this. Shown as raw / 10000 it reads 1.2 at
   idle, 13 at 8400 rpm and 0 on fuel cut, and behaves as a fuel rate, not a
   pulse time (see Fuel consumption). `0x111` carries battery voltage
   (byte 6, 0.1 V per bit). RPM comes from the broadcast while it keeps

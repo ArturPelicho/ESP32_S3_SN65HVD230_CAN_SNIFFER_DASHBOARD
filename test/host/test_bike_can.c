@@ -52,6 +52,10 @@ int main(void)
     assert(bike_can_unwrap_inj(464, &wraps) == 66000 && wraps == 1);
     assert(bike_can_unwrap_inj(928, &wraps) == 132000 && wraps == 2);
     assert(bike_can_unwrap_inj(3392, &wraps) == 200000 && wraps == 3);
+    /* Full throttle near the cut: past 26.2 shown. */
+    assert(bike_can_unwrap_inj(3856, &wraps) == 266000 && wraps == 4);
+    assert(bike_can_unwrap_inj(2320, &wraps) == 330000 && wraps == 5);
+    assert(bike_can_unwrap_inj(65320, &wraps) == 393000 && wraps == 5);
     assert(bike_can_unwrap_inj(1234, &wraps) == 1234 && wraps == BIKE_CAN_INJ_UNKNOWN);
     const uint8_t wrapped[8] = { 0x03, 0xE5, 0x49, 0xB4, 0xA2, 0x11, 0x70, 0xA8 }; /* 0x1170 = 4464 */
     bike_can_decode(&cfg, 0x110, false, wrapped, 8, &d);

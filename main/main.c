@@ -193,9 +193,9 @@ static inj_meter_config_t s_inj_config;
 static inj_meter_totals_t s_trip;
 static int64_t s_trip_frame_us;
 static volatile bool s_trip_reset_requested;
-/* How many engine frames (with a non-zero pulse) wrapped 0..3 times, and
- * how many fit no pattern: a check on the wrap explanation, kept in NVS
- * beside the trip. */
+/* How many engine frames (with a non-zero pulse) wrapped 0..MAX_WRAPS
+ * times, and how many fit no pattern (last entry): a check on the wrap
+ * explanation, kept in NVS beside the trip. */
 #define INJ_CLASSES (BIKE_CAN_INJ_MAX_WRAPS + 2)
 static uint32_t s_inj_class[INJ_CLASSES];
 
@@ -1078,9 +1078,17 @@ static void trip_load(void)
     if (nvs_get_blob(nvs, TRIP_NVS_KEY, &totals, &len) == ESP_OK && len == sizeof(totals)) {
         s_trip = totals;
     }
-    uint32_t classes[INJ_CLASSES];
+    uint32_t classes[INJ_CLASSES] = { 0 };
     len = sizeof(classes);
-    if (nvs_get_blob(nvs, TRIP_NVS_CLASS_KEY, classes, &len) == ESP_OK && len == sizeof(classes)) {
+    if (nvs_get_blob(nvs, TRIP_NVS_CLASS_KEY, classes, &len) == ESP_OK &&
+        len % sizeof(classes[0]) == 0 && len >= 2 * sizeof(classes[0])) {
+        /* A shorter blob is from a build with fewer wraps: its last entry
+         * is the odd count, which moves to the new last entry. */
+        size_t stored = len / sizeof(classes[0]);
+        if (stored < INJ_CLASSES) {
+            classes[INJ_CLASSES - 1] = classes[stored - 1];
+            classes[stored - 1] = 0;
+        }
         memcpy(s_inj_class, classes, sizeof(classes));
     }
     nvs_close(nvs);
@@ -1357,12 +1365,15 @@ static void fuel_task(void *arg)
             bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
             uint32_t classes[INJ_CLASSES];
             trip_snapshot(classes);
-            ESP_LOGI(TAG, "BIKE inj=%lu.%04lu wraps=%u frames_by_wraps=%lu/%lu/%lu/%lu odd=%lu",
+            _Static_assert(INJ_CLASSES == 7, "frames_by_wraps format below");
+            ESP_LOGI(TAG, "BIKE inj=%lu.%04lu wraps=%u frames_by_wraps=%lu/%lu/%lu/%lu/%lu/%lu "
+                     "odd=%lu",
                      (unsigned long)(bike.inj_rebuilt / 10000U),
                      (unsigned long)(bike.inj_rebuilt % 10000U), bike.inj_wraps,
                      (unsigned long)classes[0], (unsigned long)classes[1],
                      (unsigned long)classes[2], (unsigned long)classes[3],
-                     (unsigned long)classes[4]);
+                     (unsigned long)classes[4], (unsigned long)classes[5],
+                     (unsigned long)classes[6]);
             ESP_LOGI(TAG, "BIKE engine=%d rpm=%u inj_raw=%u temp_raw=%u status=%02X "
                      "power=%d batt=%u.%uV",
                      engine_fresh, bike.rpm, bike.inj_raw, bike.temp_raw, bike.status,

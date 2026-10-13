@@ -61,9 +61,12 @@ typedef struct {
  * rule below in 99.98 % of 1.28 million frames).
  * True values are multiples of 1000; 65536 is not, so the last three
  * digits of what arrives tell how many times it wrapped:
- *   ...000 -> 0, ...464 -> 1, ...928 -> 2, ...392 -> 3 (up to 262143). */
+ *   ...000 -> 0, ...464 -> 1, ...928 -> 2, ...392 -> 3, ...856 -> 4,
+ *   ...320 -> 5 (up to 393215).
+ * The road week reached 3 (~26 shown, ~4.7 L/h); full throttle near the
+ * 10500 rpm cut can need more, so 5 leaves margin (~39, ~7 L/h). */
 #define BIKE_CAN_INJ_STEP 1000U
-#define BIKE_CAN_INJ_MAX_WRAPS 3
+#define BIKE_CAN_INJ_MAX_WRAPS 5
 #define BIKE_CAN_INJ_UNKNOWN 0xFF
 uint32_t bike_can_unwrap_inj(uint16_t raw, uint8_t *wraps);
 
