@@ -39,8 +39,15 @@ endpoint; measure the bike's own termination first.
   recovers with back-off instead of hanging the driver.
 - The bike's own CAN broadcast (`main/bike_can.c`): the ECU sends two frames
   about every 9 ms. `0x110` carries RPM (bytes 2-3, RPM x 4), an engine
-  temperature, a 16-bit value that drops to 0 on fuel cut (possibly injection
-  time, 0.1 us per bit) and status bits; `0x111` carries battery voltage
+  temperature, an injection value (bytes 5-6) and status bits. The
+  injection value is a multiple of 1000 sent truncated to 16 bits, so it
+  wraps every 65536; the last digits of the received value tell how many
+  times it wrapped and the true value is rebuilt frame by frame, up to 5
+  wraps (39 shown, ~7 L/h, margin for full throttle at the 10500 rpm cut).
+  A week of riding: 99.98 % of 1.28 million frames fit, reaching 3 wraps;
+  `INJ wrap` serial lines and per-wrap frame counts check this. Shown as raw / 10000 it reads 1.2 at
+  idle, 13 at 8400 rpm and 0 on fuel cut, and behaves as a fuel rate, not a
+  pulse time (see Fuel consumption). `0x111` carries battery voltage
   (byte 6, 0.1 V per bit). RPM comes from the broadcast while it keeps
   arriving and falls back to polling PID `0C`. A `BIKE` serial line every 2 s
   logs the raw values beside the fuel estimate.
@@ -59,14 +66,40 @@ endpoint; measure the bike's own termination first.
 - Telemetry rows for throttle, spark advance, fuel trims, O2, MAP, baro,
   intake and ambient temperature, battery voltage and more.
 - Battery voltage (from `0x111`) next to the cylinder head temperature, and
-  the injection-time candidate as a cyan `INJ` test field.
+  the ECU's injection value as a cyan `INJ` field.
+- Boot screen: pixel-art bike, firmware version and authors (Artur, Claude),
+  held for `DASH_SPLASH_HOLD_MS` (menuconfig, **Boot screen**).
 - Boot diagnostics (`main/boot_diag.c`): boot progress is recorded in NVS and
-  shown on the splash, to track down a black screen at key-on.
+  logged on the serial port at every start, to track down a black screen at
+  key-on.
 - All thresholds are set in `idf.py menuconfig` under **Dashboard thresholds**.
 
-**Fuel consumption estimate**
-- Speed-density model from MAP, intake air temperature and RPM, corrected by
-  the averaged narrowband O2 voltage (`main/fuel_estimator.c`).
+**Fuel consumption**
+- Measured from the ECU's injection value by default (`main/inj_meter.c`):
+  fuel flow in L/h = constant x value. The value is not a pulse time on this
+  ECU: read as ms it would rise 15x from idle to 8400 rpm while air per
+  cycle only doubles, and hold the injector open 92 % of the cycle at half
+  throttle. As a fuel rate it implies a smooth VE curve. The constant
+  (0.180 L/h per unit, from a week of riding against Artur's usual
+  consumption) is in menuconfig and is to be refined from fill-ups.
+- A trip counter (integral of the value over time, running time, injections)
+  is kept in NVS, survives key-off and is logged as a `TRIP` serial line
+  every 2 s. Send `TRIP` over BLE to read it and `TRIP RESET` to zero it. A
+  fill-up gives the exact constant, which applies to past trips too:
+  constant = litres x 3600 / value_s.
+- Calibration from steady riding (`main/steady_cal.c`): stretches of at
+  least 10 s with RPM within 5 %, throttle within 2 points and MAP within
+  3 kPa, engine warm, battery charging, no fuel cut and the O2 sensor
+  switching (closed loop) are summed per 1000 rpm band. Each band gives the
+  injection value there, trims, the fuel it stands for and the VE that fuel
+  implies at lambda 1: a smooth curve with a plausible top checks the fuel
+  model and its constant. Kept in NVS, printed as `CAL` lines at start-up
+  and every 5 minutes of new data; `CAL` / `CAL RESET` over BLE.
+- Falls back to a speed-density model from MAP, intake air temperature and
+  RPM, corrected by the averaged narrowband O2 voltage
+  (`main/fuel_estimator.c`), when the broadcast is missing or when chosen in
+  menuconfig. O2 readings of exactly 1010 mV are ignored: the ECU sends that
+  while the sensor is cold.
 - Shows L/h when stopped or idling, L/100km when a road speed is available,
   and `FUEL CUT` during engine braking. The average stays in L/h until 500 m
   have been covered.
@@ -103,14 +136,16 @@ fails, flash directly with `esptool` (the full command is in
 
 ### Host tests
 
-The fuel model, the bus-off recovery state machine, the PID scan and the
-`0x110`/`0x111` decoder have host-side tests that need only a C compiler:
+The fuel model, the injector meter, the bus-off recovery state machine, the
+PID scan and the `0x110`/`0x111` decoder have host-side tests that need only a C compiler:
 
 ```
 gcc -std=c11 -Wall -I main test/host/test_fuel_estimator.c main/fuel_estimator.c -lm -o fuel_test && ./fuel_test
 gcc -std=c11 -Wall -Wextra -I main test/host/test_can_bus_recovery_fsm.c main/can_bus_recovery_fsm.c -o fsm_test && ./fsm_test
 gcc -std=c11 -Wall -I main test/host/test_pid_scan.c main/pid_scan.c -o scan_test && ./scan_test
 gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_test && ./bike_test
+gcc -std=c11 -Wall -I main test/host/test_inj_meter.c main/inj_meter.c -lm -o inj_test && ./inj_test
+gcc -std=c11 -Wall -I main test/host/test_steady_cal.c main/steady_cal.c -lm -o cal_test && ./cal_test
 ```
 
 ## Project layout
@@ -121,10 +156,12 @@ gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_tes
 | `main/obd_poller.*` | Non-blocking OBD-II PID poller |
 | `main/can_bus_twai.*` | TWAI (CAN) driver port |
 | `main/can_bus_supervisor.*`, `main/can_bus_recovery_fsm.*` | Bus-off detection and recovery |
-| `main/fuel_estimator*` | Speed-density fuel model |
+| `main/fuel_estimator*` | Fuel consumption, units and averages; speed-density fallback |
+| `main/inj_meter.*` | Fuel from the ECU's injection value, trip sums |
+| `main/steady_cal.*` | Fuel model check from steady riding |
 | `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
 | `main/pid_scan*` | PID discovery test |
-| `main/boot_diag.*` | Boot progress record shown on the splash |
+| `main/boot_diag.*` | Boot progress record (NVS + serial log) |
 | `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
 | `test/host/` | Host unit tests |

@@ -143,6 +143,23 @@ int main(void)
     expect_near("avg L/100km", out.avg_l_per_100km, 5.113f, 0.02f);
     expect_near("avg L/h", out.avg_l_per_h, 2.557f, 0.01f);
 
+    /* Measured flow (injector pulse) replaces the model, even without
+     * MAP/IAT, and a measured 0 while turning is the fuel cut. */
+    fuel_estimator_init(&est, &cfg);
+    fuel_estimator_inputs_t inj = { .rpm = 8200, .rpm_valid = true,
+                                    .measured_flow_lph = 2.1f, .measured_flow_valid = true };
+    fuel_estimator_update(&est, &inj, 100, &out);
+    expect_near("measured valid without MAP", out.valid, 1, 0);
+    expect_near("measured flag", out.flow_measured, 1, 0);
+    expect_near("measured flow", out.fuel_flow_l_per_h, 2.1f, 0.001f);
+    expect_near("measured ul/injection", out.fuel_ul_per_injection, 8.54f, 0.05f);
+    for (int i = 0; i < 36000; ++i) fuel_estimator_update(&est, &inj, 100, &out);
+    expect_near("measured total after 1 h", out.total_fuel_l, 2.1f, 0.01f);
+    inj.measured_flow_lph = 0.0f; inj.rpm = 4700;
+    fuel_estimator_update(&est, &inj, 100, &out);
+    expect_near("measured cut", out.fuel_cut, 1, 0);
+    expect_near("measured cut flow", out.fuel_flow_l_per_h, 0.0f, 0.0001f);
+
     printf(failures ? "\n%d FAILED\n" : "\nall passed\n", failures);
     return failures ? 1 : 0;
 }

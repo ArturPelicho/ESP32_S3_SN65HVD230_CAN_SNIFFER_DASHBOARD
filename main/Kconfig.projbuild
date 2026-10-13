@@ -22,6 +22,39 @@ menu "Fuel injection estimate"
         range 2 4
         default 4
 
+    comment "Fuel source"
+
+    choice FUEL_SOURCE
+        prompt "Where fuel flow comes from"
+        default FUEL_SOURCE_INJECTOR
+        help
+            Injection value: the ECU's own injection value (CAN 0x110 B5-B6)
+            times the constant below. This follows what the ECU really
+            injects, including enrichment, trims and fuel cut. Falls back to
+            the speed-density model whenever the broadcast is missing.
+            Speed-density: estimate from MAP, intake temperature, RPM, O2 and
+            the volumetric efficiency below.
+
+        config FUEL_SOURCE_INJECTOR
+            bool "ECU injection value x constant"
+        config FUEL_SOURCE_SPEED_DENSITY
+            bool "Speed-density model only"
+    endchoice
+
+    config FUEL_INJ_LPH_PER_UNIT_X1000
+        int "Fuel per unit of the ECU's injection value (L/h x1000)"
+        range 10 2000
+        default 180
+        help
+            The ECU's injection value (CAN 0x110 B5-B6, shown as INJ) behaves
+            as a fuel rate on the ZS125, not a pulse time: fuel flow in L/h is
+            this constant / 1000 times the value. 180 comes from a week of
+            riding (2026-10-06..13): it puts Artur's usual 2.5 L/100 km in
+            range and gives a smooth VE curve topping at ~0.93. Fuel scales
+            1:1 with it: if a fill-up shows the trip reading 10 % high, lower
+            it by 10 %. The serial "TRIP" line logs value_s, the sum needed
+            to refit it exactly: constant = litres * 3600 / value_s.
+
     comment "Model constants"
 
     config FUEL_VE_PERCENT
@@ -203,5 +236,19 @@ menu "PID scan (discovery test)"
         int "Report period (s)"
         range 5 600
         default 30
+
+endmenu
+
+menu "Boot screen"
+
+    config DASH_SPLASH_HOLD_MS
+        int "How long the boot screen stays up (ms)"
+        range 0 10000
+        default 2500
+        help
+            The boot screen (sprite, firmware version, authors) is held this
+            long before the dashboard self-test starts. The boot record
+            (boot_diag) is still kept in NVS and logged on the serial port
+            at every start; it is no longer drawn on the screen.
 
 endmenu
