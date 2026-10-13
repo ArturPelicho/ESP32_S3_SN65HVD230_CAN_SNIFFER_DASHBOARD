@@ -57,11 +57,8 @@
 #ifndef CONFIG_FUEL_CUT_MAX_O2_MV
 #define CONFIG_FUEL_CUT_MAX_O2_MV 150
 #endif
-#ifndef CONFIG_FUEL_INJ_FLOW_CC_MIN_X10
-#define CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 900
-#endif
-#ifndef CONFIG_FUEL_INJ_DEAD_TIME_US
-#define CONFIG_FUEL_INJ_DEAD_TIME_US 600
+#ifndef CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000
+#define CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 180
 #endif
 #if !defined(CONFIG_FUEL_SOURCE_INJECTOR) && !defined(CONFIG_FUEL_SOURCE_SPEED_DENSITY)
 #define CONFIG_FUEL_SOURCE_INJECTOR 1
@@ -101,8 +98,7 @@ static inline fuel_estimator_config_t fuel_estimator_config_from_kconfig(void)
 static inline inj_meter_config_t inj_meter_config_from_kconfig(void)
 {
     inj_meter_config_t cfg = {
-        .flow_cc_per_min = CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 / 10.0f,
-        .dead_time_ms = CONFIG_FUEL_INJ_DEAD_TIME_US / 1000.0f,
+        .lph_per_unit = CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 / 1000.0f,
         .cylinders = CONFIG_FUEL_CYLINDERS,
         .strokes_per_cycle = CONFIG_FUEL_STROKES_PER_CYCLE,
     };

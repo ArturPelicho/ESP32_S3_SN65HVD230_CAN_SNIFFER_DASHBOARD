@@ -180,12 +180,12 @@ static TickType_t s_bike_engine_at;
 static TickType_t s_bike_power_at;
 static portMUX_TYPE s_bike_lock = portMUX_INITIALIZER_UNLOCKED;
 
-/* Fuel measured from the injector pulse (inj_meter.h). can_task adds every
+/* Fuel measured from the ECU's injection value (inj_meter.h). can_task adds every
  * engine frame to the trip totals under s_bike_lock; fuel_task saves them
  * to NVS. The trip survives key-off and runs until "TRIP RESET" over BLE,
  * so a fill-to-fill comparison can span several stops. */
 #define TRIP_NVS_NAMESPACE "trip"
-#define TRIP_NVS_KEY "totals2"  /* totals1: before the 16-bit wrap fix */
+#define TRIP_NVS_KEY "totals3"  /* totals1: before the wrap fix; totals2: pulse-time model */
 #define TRIP_NVS_CLASS_KEY "injclass"
 #define TRIP_SAVE_PERIOD_MS 15000
 static inj_meter_config_t s_inj_config;
@@ -901,7 +901,7 @@ static void fuel_estimate_update(uint32_t dt_ms)
     bool engine_fresh, power_fresh;
     bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
     if (engine_fresh) {
-        in.measured_flow_lph = inj_meter_flow_lph(&s_inj_config, bike.rpm, bike.inj_tenth_us / 10000.0f);
+        in.measured_flow_lph = inj_meter_flow_lph(&s_inj_config, bike.rpm, bike.inj_rebuilt / 10000.0f);
         in.measured_flow_valid = true;
         in.rpm = bike.rpm;
         in.rpm_valid = true;
@@ -1047,17 +1047,17 @@ static inj_meter_totals_t trip_snapshot(uint32_t *classes)
     return totals;
 }
 
-/* One line with the raw sums, so flow and dead time can be refitted from
- * fill-ups later: litres = flow * (open - injections * dead). */
+/* One line with the raw sums, so the fuel constant can be refitted from
+ * fill-ups later: litres = constant * value_s / 3600. */
 static void trip_format(const inj_meter_totals_t *t, char *out, size_t out_size)
 {
     int millilitres = (int)(inj_meter_litres(&s_inj_config, t) * 1000.0 + 0.5);
-    snprintf(out, out_size, "TRIP fuel=%d.%03dL injections=%llu open=%llums run=%lus "
-             "flow=%d.%dcc/min dead=%dus",
-             millilitres / 1000, millilitres % 1000, (unsigned long long)t->injections,
-             (unsigned long long)t->open_ms, (unsigned long)t->running_s,
-             CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 / 10, CONFIG_FUEL_INJ_FLOW_CC_MIN_X10 % 10,
-             CONFIG_FUEL_INJ_DEAD_TIME_US);
+    snprintf(out, out_size, "TRIP fuel=%d.%03dL value_s=%llu run=%lus injections=%llu "
+             "value_sum=%llu k=%d.%03dL/h",
+             millilitres / 1000, millilitres % 1000, (unsigned long long)t->value_seconds,
+             (unsigned long)t->running_s, (unsigned long long)t->injections,
+             (unsigned long long)t->value_sum, CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 / 1000,
+             CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 % 1000);
 }
 
 /* Saves the trip every TRIP_SAVE_PERIOD_MS while it grows, and at once
@@ -1093,7 +1093,6 @@ static void trip_service(void)
  * start-up, after each save and on the BLE "CAL" command. */
 #define CAL_NVS_KEY "steady2"  /* steady1: before the 16-bit wrap fix */
 #define CAL_SAVE_PERIOD_MS (5U * 60U * 1000U)
-#define CAL_MIN_DEAD_BASIS 2.0f
 static steady_cal_t s_cal;
 static volatile bool s_cal_report_requested;
 static volatile bool s_cal_report_to_ble;
@@ -1140,7 +1139,7 @@ static steady_cal_sample_t cal_sample(void)
     size_t temp = row_index_for_pid(0x05);
     steady_cal_sample_t sample = {
         .rpm = bike.rpm,
-        .pulse_ms = bike.inj_tenth_us / 10000.0f,
+        .inj_value = bike.inj_rebuilt / 10000.0f,
         .map_kpa = (float)s_row_values[map],
         .intake_temp_c = (float)s_row_values[iat],
         .throttle_pct = s_row_values[thr] / 10.0f,  /* rows store tenths */
@@ -1177,63 +1176,50 @@ static void cal_line(const char *line, bool to_ble)
     }
 }
 
-/* One line per RPM band with data, then the dead time and the overall
- * flow implied at the configured VE. */
+/* One line per RPM band with data: the operating point, the fuel the
+ * injection value stands for, and the VE that fuel implies at lambda 1.
+ * A smooth VE curve with a plausible top (0.8-0.95 for a small engine)
+ * means the fuel constant is about right; VE scales 1:1 with it. */
 static void cal_report(bool to_ble)
 {
     const fuel_estimator_config_t *fc = &s_fuel_estimator.config;
     steady_cal_engine_t engine = {
         .displacement_cc = s_fuel_estimator.displacement_m3 * 1e6f,
-        .volumetric_efficiency = fc->volumetric_efficiency,
         .stoich_afr = fc->stoich_afr,
         .fuel_density_g_per_ml = fc->fuel_density_g_per_ml,
-        .dead_time_ms = s_inj_config.dead_time_ms,
+        .lph_per_unit = s_inj_config.lph_per_unit,
+        .cylinders = fc->cylinders,
+        .strokes_per_cycle = fc->strokes_per_cycle,
     };
-    int ve = (int)lroundf(fc->volumetric_efficiency * 100.0f);
     char line[192];
-    double flow_sum = 0.0, flow_seconds = 0.0;
     uint32_t windows = 0;
     for (int i = 0; i < STEADY_CAL_BINS; ++i) {
         steady_cal_band_t band;
         if (!steady_cal_band(&s_cal.totals, i, &band)) continue;
         windows += band.windows;
-        float flow = 0.0f;
-        bool flow_ok = steady_cal_band_flow(&band, &engine, &flow);
-        if (flow_ok) {
-            flow_sum += (double)flow * band.seconds;
-            flow_seconds += band.seconds;
-        }
+        float ve = 0.0f;
+        bool ve_ok = steady_cal_band_ve(&band, &engine, &ve);
         char stft[12], ltft[12];
         format_signed_tenths(band.stft_pct, stft, sizeof(stft));
         format_signed_tenths(band.ltft_pct, ltft, sizeof(ltft));
-        int pw = (int)lroundf(band.pulse_ms * 100.0f);
+        int inj = (int)lroundf(band.inj_value * 100.0f);
+        int lph = (int)lroundf(band.inj_value * s_inj_config.lph_per_unit * 100.0f);
         int o2 = (int)lroundf(band.o2_volts * 100.0f);
         int thr = (int)lroundf(band.throttle_pct * 10.0f);
         snprintf(line, sizeof(line),
                  "CAL %d-%drpm %lus n=%lu rpm=%d thr=%d.%d%% map=%dkPa iat=%dC "
-                 "pw=%d.%02dms stft=%s%% ltft=%s%% o2=%d.%02dV -> %dcc/min@VE%d",
+                 "inj=%d.%02d stft=%s%% ltft=%s%% o2=%d.%02dV -> %d.%02dL/h ve=%d%%",
                  i * STEADY_CAL_BIN_RPM, i * STEADY_CAL_BIN_RPM + STEADY_CAL_BIN_RPM - 1,
                  (unsigned long)band.seconds, (unsigned long)band.windows,
                  (int)lroundf(band.rpm), thr / 10, thr % 10, (int)lroundf(band.map_kpa),
-                 (int)lroundf(band.intake_temp_c), pw / 100, pw % 100, stft, ltft,
-                 o2 / 100, o2 % 100, flow_ok ? (int)lroundf(flow) : 0, ve);
+                 (int)lroundf(band.intake_temp_c), inj / 100, inj % 100, stft, ltft,
+                 o2 / 100, o2 % 100, lph / 100, lph % 100,
+                 ve_ok ? (int)lroundf(ve * 100.0f) : 0);
         cal_line(line, to_ble);
     }
-
-    char dead_text[32] = "n/a";
-    float dead = 0.0f, basis = 0.0f;
-    if (steady_cal_dead_time(&s_cal.totals, &dead, &basis) && basis >= CAL_MIN_DEAD_BASIS) {
-        int dead_us = (int)lroundf(dead * 1000.0f);
-        snprintf(dead_text, sizeof(dead_text), "%dus", dead_us);
-    }
-    int basis_tenths = (int)lroundf(basis * 10.0f);
-    snprintf(line, sizeof(line),
-             "CAL summary windows=%lu dead=%s (basis %d.%d, needs %d) flow=%dcc/min@VE%d "
-             "(using dead %dus)",
-             (unsigned long)windows, dead_text, basis_tenths / 10, basis_tenths % 10,
-             (int)CAL_MIN_DEAD_BASIS,
-             flow_seconds > 0.0 ? (int)lround(flow_sum / flow_seconds) : 0, ve,
-             CONFIG_FUEL_INJ_DEAD_TIME_US);
+    snprintf(line, sizeof(line), "CAL summary windows=%lu k=%d.%03dL/h per unit",
+             (unsigned long)windows, CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 / 1000,
+             CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 % 1000);
     cal_line(line, to_ble);
     if (to_ble) ble_send_text("\r>");
 }
@@ -1310,9 +1296,9 @@ static void fuel_task(void *arg)
             bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
             uint32_t classes[INJ_CLASSES];
             trip_snapshot(classes);
-            ESP_LOGI(TAG, "BIKE inj=%lu.%04lums wraps=%u frames_by_wraps=%lu/%lu/%lu/%lu odd=%lu",
-                     (unsigned long)(bike.inj_tenth_us / 10000U),
-                     (unsigned long)(bike.inj_tenth_us % 10000U), bike.inj_wraps,
+            ESP_LOGI(TAG, "BIKE inj=%lu.%04lu wraps=%u frames_by_wraps=%lu/%lu/%lu/%lu odd=%lu",
+                     (unsigned long)(bike.inj_rebuilt / 10000U),
+                     (unsigned long)(bike.inj_rebuilt % 10000U), bike.inj_wraps,
                      (unsigned long)classes[0], (unsigned long)classes[1],
                      (unsigned long)classes[2], (unsigned long)classes[3],
                      (unsigned long)classes[4]);
@@ -1481,13 +1467,13 @@ static void tft_render(void)
     tft_draw_field(168, 310, panel_y + 9, row_index_for_pid(0x0B), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 27, row_index_for_pid(0x0F), ignition_on, NULL);
     tft_draw_field(168, 310, panel_y + 45, row_index_for_pid(0x0E), ignition_on, spark_color);
-    /* Injection pulse width from the broadcast, rebuilt past 16 bits.
+    /* The ECU's injection value, rebuilt past 16 bits. Not a time on this
+     * ECU: it behaves as a fuel rate (inj_meter.h), so no unit is shown.
      * Orange if a value fits no wrap pattern (bike_can_unwrap_inj). */
     tft_text_bold(168, panel_y + 63, "INJ", COLOR_CYAN, 2);
     if (ignition_on && bike_engine_fresh) {
-        snprintf(text, sizeof(text), "%lu.%02lu", (unsigned long)(bike.inj_tenth_us / 10000U),
-                 (unsigned long)((bike.inj_tenth_us / 100U) % 100U));
-        tft_text(214, panel_y + 70, "ms", COLOR_LABEL, 1);
+        snprintf(text, sizeof(text), "%lu.%02lu", (unsigned long)(bike.inj_rebuilt / 10000U),
+                 (unsigned long)((bike.inj_rebuilt / 100U) % 100U));
         tft_text_right(310, panel_y + 63, text,
                        bike.inj_wraps == BIKE_CAN_INJ_UNKNOWN ? COLOR_ORANGE : COLOR_CYAN, 2);
     } else {
@@ -2132,7 +2118,7 @@ static void can_task(void *arg)
                 s_bike_engine_at = now;
                 int64_t now_us = esp_timer_get_time();
                 if (s_trip_frame_us != 0) {
-                    inj_meter_add(&s_inj_config, &s_trip, decoded.rpm, decoded.inj_tenth_us / 10000.0f,
+                    inj_meter_add(&s_inj_config, &s_trip, decoded.rpm, decoded.inj_rebuilt / 10000.0f,
                                   (float)(now_us - s_trip_frame_us) / 1000.0f);
                 }
                 s_trip_frame_us = now_us;
@@ -2155,7 +2141,7 @@ static void can_task(void *arg)
             now - last_wrap_log >= pdMS_TO_TICKS(250)) {
             ESP_LOGI(TAG, "INJ %s raw=%u -> %lu (wraps=%u) rpm=%u",
                      decoded.inj_wraps == BIKE_CAN_INJ_UNKNOWN ? "odd" : "wrap",
-                     decoded.inj_raw, (unsigned long)decoded.inj_tenth_us,
+                     decoded.inj_raw, (unsigned long)decoded.inj_rebuilt,
                      decoded.inj_wraps, decoded.rpm);
             last_wrap_log = now;
         }

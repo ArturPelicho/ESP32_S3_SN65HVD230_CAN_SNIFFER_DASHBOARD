@@ -11,18 +11,19 @@
 #define PI 3.14159265f
 
 static const steady_cal_engine_t ENGINE = {
-    .displacement_cc = 124.8f, .volumetric_efficiency = 0.80f, .stoich_afr = 14.7f,
-    .fuel_density_g_per_ml = 0.745f, .dead_time_ms = 0.6f,
+    .displacement_cc = 124.8f, .stoich_afr = 14.7f, .fuel_density_g_per_ml = 0.745f,
+    .lph_per_unit = 0.18f, .cylinders = 1, .strokes_per_cycle = 4,
 };
 
-/* Pulse an injector of 100 cc/min with 0.6 ms dead time needs at this
- * MAP/IAT, if VE really is 80 %. */
-static float true_pulse(float map_kpa, float iat_c)
+/* Injection value an engine with VE 90 % sends at this rpm/MAP/IAT, if the
+ * value is fuel at 0.18 L/h per unit and the mixture is stoichiometric. */
+static float true_value(float rpm, float map_kpa, float iat_c)
 {
     float x = map_kpa / (iat_c + 273.15f);
-    float air_mg = x * 1000.0f / 287.05f * 124.8f * 0.80f;
+    float air_mg = x * 1000.0f / 287.05f * 124.8f * 0.90f;
     float fuel_ul = air_mg / 14.7f / 0.745f;
-    return 0.6f + fuel_ul / (100.0f / 60.0f);
+    float lph = fuel_ul * (rpm / 120.0f) * 3600.0f / 1e6f;
+    return lph / 0.18f;
 }
 
 static steady_cal_sample_t cruise(float rpm, float map, float t)
@@ -34,7 +35,7 @@ static steady_cal_sample_t cruise(float rpm, float map, float t)
         .rpm_valid = true, .map_valid = true, .intake_temp_valid = true, .throttle_valid = true,
         .o2_valid = true, .trims_valid = true, .engine_temp_valid = true, .battery_valid = true,
     };
-    s.pulse_ms = true_pulse(map, 25.0f);
+    s.inj_value = true_value(rpm, map, 25.0f);
     return s;
 }
 
@@ -55,9 +56,9 @@ int main(void)
     steady_cal_init(&cal, &cfg);
     float t = 0.0f;
 
-    /* Sanity of the synthetic engine: ~8.6 ul per injection at 80 kPa. */
-    float p80 = true_pulse(80.0f, 25.0f);
-    assert(p80 > 5.0f && p80 < 6.0f);
+    /* Sanity of the synthetic engine: ~13 units (2.4 L/h) at 8200 rpm. */
+    float v80 = true_value(8200.0f, 80.0f, 25.0f);
+    assert(v80 > 11.0f && v80 < 15.0f);
 
     /* Highway: 8200 rpm, three loads (flat, uphill, downhill), 2 min each.
      * Each change of MAP closes a window; long stretches split every 30 s. */
@@ -73,15 +74,12 @@ int main(void)
     assert(band.seconds > 330.0f);
     assert(fabsf(band.ltft_pct - 4.0f) < 0.01f);
 
-    float dead, basis;
-    assert(steady_cal_dead_time(&cal.totals, &dead, &basis));
-    printf("dead %.3f ms (basis %.2f)\n", dead, basis);
-    assert(fabsf(dead - 0.6f) < 0.02f);
-
-    float flow;
-    assert(steady_cal_band_flow(&band, &ENGINE, &flow));
-    printf("flow %.1f cc/min\n", flow);
-    assert(fabsf(flow - 100.0f) < 1.0f);
+    /* The band's mean value is a mix of three loads, but the VE it implies
+     * is still the engine's 90 % (value and MAP/T are both linear in load). */
+    float ve;
+    assert(steady_cal_band_ve(&band, &ENGINE, &ve));
+    printf("ve %.3f\n", ve);
+    assert(fabsf(ve - 0.90f) < 0.005f);
 
     /* City: RPM never holds +-5 % for 10 s, so nothing is kept. */
     steady_cal_t city;
@@ -114,7 +112,7 @@ int main(void)
         steady_cal_add(&cut, &s, DT);
     }
     steady_cal_sample_t s = cruise(5000.0f, 0.0f, tk);
-    s.pulse_ms = 0.0f;
+    s.inj_value = 0.0f;
     assert(steady_cal_add(&cut, &s, DT) < 0);       /* 8 s < 10 s: dropped */
     assert(cut.totals.bins[5].windows == 0);
 

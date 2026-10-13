@@ -26,7 +26,7 @@ static bool usable(const steady_cal_config_t *cfg, const steady_cal_sample_t *s)
 {
     return s->rpm_valid && s->map_valid && s->intake_temp_valid && s->throttle_valid &&
            s->o2_valid && s->engine_temp_valid && s->battery_valid &&
-           s->rpm >= STEADY_CAL_MIN_RPM && s->pulse_ms > 0.0f && s->map_kpa > 0.0f &&
+           s->rpm >= STEADY_CAL_MIN_RPM && s->inj_value > 0.0f && s->map_kpa > 0.0f &&
            s->engine_temp_c >= cfg->min_engine_temp_c && s->battery_v >= cfg->min_battery_v;
 }
 
@@ -59,7 +59,7 @@ static void accumulate(steady_cal_window_t *w, const steady_cal_sample_t *s, flo
     float x = s->map_kpa / (s->intake_temp_c + STEADY_CAL_KELVIN);
     w->seconds += dt_s;
     w->rpm += (double)s->rpm * dt_s;
-    w->pulse += (double)s->pulse_ms * dt_s;
+    w->inj += (double)s->inj_value * dt_s;
     w->x += (double)x * dt_s;
     w->map += (double)s->map_kpa * dt_s;
     w->throttle += (double)s->throttle_pct * dt_s;
@@ -85,7 +85,7 @@ static int commit(steady_cal_t *cal)
     if (bin < 0) bin = 0;
     if (bin >= STEADY_CAL_BINS) bin = STEADY_CAL_BINS - 1;
     double x = w->x / t;
-    double y = w->pulse / t;
+    double y = w->inj / t;
     steady_cal_bin_t *b = &cal->totals.bins[bin];
     b->seconds += t;
     b->windows += 1;
@@ -132,7 +132,7 @@ bool steady_cal_band(const steady_cal_totals_t *totals, int bin, steady_cal_band
     out->seconds = t;
     out->windows = b->windows;
     out->rpm = mean(b->rpm, t);
-    out->pulse_ms = mean(b->sy, t);
+    out->inj_value = mean(b->sy, t);
     out->x = mean(b->sx, t);
     out->map_kpa = mean(b->map, t);
     out->intake_temp_c = mean(b->intake_temp, t);
@@ -143,38 +143,19 @@ bool steady_cal_band(const steady_cal_totals_t *totals, int bin, steady_cal_band
     return true;
 }
 
-/* Least squares with one slope per band and a shared intercept d.
- * Minimising each band's residual over its slope leaves, per band,
- *   RSS(d) = Syy - 2 d Sy + d^2 W - (Sxy - d Sx)^2 / Sxx
- * and summing d/dRSS = 0 over bands gives
- *   d = sum(Sy - Sx Sxy / Sxx) / sum(W - Sx^2 / Sxx). */
-bool steady_cal_dead_time(const steady_cal_totals_t *totals, float *dead_ms, float *basis)
+bool steady_cal_band_ve(const steady_cal_band_t *band, const steady_cal_engine_t *e, float *ve)
 {
-    double num = 0.0, den = 0.0;
-    for (int i = 0; i < STEADY_CAL_BINS; ++i) {
-        const steady_cal_bin_t *b = &totals->bins[i];
-        if (b->windows < 2 || b->sxx <= 0.0) continue;
-        num += b->sy - b->sx * b->sxy / b->sxx;
-        den += b->seconds - b->sx * b->sx / b->sxx;
-    }
-    *basis = (float)den;
-    if (den <= 1e-9) return false;
-    *dead_ms = (float)(num / den);
-    return true;
-}
-
-bool steady_cal_band_flow(const steady_cal_band_t *band, const steady_cal_engine_t *e,
-                          float *flow_cc_per_min)
-{
-    float effective_ms = band->pulse_ms - e->dead_time_ms;
-    if (effective_ms <= 0.0f || e->stoich_afr <= 0.0f || e->fuel_density_g_per_ml <= 0.0f) {
+    if (band->inj_value <= 0.0f || band->x <= 0.0f || band->rpm < STEADY_CAL_MIN_RPM ||
+        e->displacement_cc <= 0.0f || e->strokes_per_cycle == 0 || e->cylinders == 0) {
         return false;
     }
+    float injections_per_s = band->rpm / 60.0f / ((float)e->strokes_per_cycle / 2.0f) *
+                             (float)e->cylinders;
+    float fuel_lph = e->lph_per_unit * band->inj_value;
+    /* L/h -> ul per injection, then mg. */
+    float fuel_mg = fuel_lph * 1e6f / 3600.0f / injections_per_s * e->fuel_density_g_per_ml;
     /* x is kPa/K: density = x * 1000 / R, kg/m^3 == mg/cc. */
-    float air_mg = band->x * 1000.0f / STEADY_CAL_R_AIR * e->displacement_cc *
-                   e->volumetric_efficiency;
-    float fuel_ul = air_mg / e->stoich_afr / e->fuel_density_g_per_ml;
-    /* ul per ms of open injector = ml/s; x 60 = cc/min. */
-    *flow_cc_per_min = fuel_ul / effective_ms * 60.0f;
+    float full_cylinder_mg = band->x * 1000.0f / STEADY_CAL_R_AIR * e->displacement_cc;
+    *ve = fuel_mg * e->stoich_afr / full_cylinder_mg;
     return true;
 }

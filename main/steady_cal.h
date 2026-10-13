@@ -1,20 +1,15 @@
 #pragma once
 
-/* Injector calibration from steady riding.
+/* Fuel model check from steady riding.
  *
- * Nothing on the bike measures fuel or air mass directly, so the injector
- * flow cannot be found from sensors alone. What steady riding does give,
- * with the ECU in closed loop (lambda ~1):
- *
- *   fuel per injection  ~  air per intake  ~  VE * MAP / T_intake
- *   pulse = dead + fuel / flow  =  dead + k * MAP / T_intake,  k ~ VE / flow
- *
- * So, per 1000 rpm band (where VE changes little):
- *   - the pulse actually needed at each steady operating point;
- *   - the dead time, from where pulse vs MAP/T crosses zero, pooled over
- *     the bands (needs some load variation within a band: hills help);
- *   - a flow estimate per band assuming a VE (the same constant as the
- *     speed-density model), which a known fuel figure can later replace.
+ * Nothing on the bike measures fuel or air mass directly. What steady
+ * riding with the ECU in closed loop (lambda ~1) does give, per 1000 rpm
+ * band: the ECU's injection value, MAP, intake temperature, trims and O2
+ * at that operating point. With the fuel the injection value stands for
+ * (inj_meter.h) and air = VE * MAP/(R*T) * displacement, lambda 1 gives the
+ * VE each band implies. A smooth, plausible VE curve across bands says the
+ * fuel model has the right shape; its overall level says whether the fuel
+ * constant is high or low (VE scales 1:1 with it).
  *
  * A "window" is a stretch of at least min_window_s where RPM, throttle
  * and MAP stay within tolerance of their running mean, the engine is
@@ -58,7 +53,7 @@ typedef struct {
 
 typedef struct {
     float rpm;
-    float pulse_ms;
+    float inj_value;     /* ECU injection value (inj_meter.h), 0 on fuel cut */
     float map_kpa;
     float intake_temp_c;
     float throttle_pct;
@@ -67,7 +62,7 @@ typedef struct {
     float ltft_pct;
     float engine_temp_c;
     float battery_v;
-    bool rpm_valid;      /* rpm and pulse come together from the broadcast */
+    bool rpm_valid;      /* rpm and inj_value come together from the broadcast */
     bool map_valid;
     bool intake_temp_valid;
     bool throttle_valid;
@@ -78,7 +73,7 @@ typedef struct {
 } steady_cal_sample_t;
 
 /* One RPM band. Weighted sums over windows, weight = seconds;
- * x = MAP / T_intake in kPa/K, y = pulse in ms. */
+ * x = MAP / T_intake in kPa/K, y = injection value. */
 typedef struct {
     double seconds;
     uint32_t windows;
@@ -98,7 +93,7 @@ typedef struct {
 typedef struct {
     bool active;
     float seconds;
-    double rpm, pulse, x, map, throttle, intake_temp, stft, ltft, o2;
+    double rpm, inj, x, map, throttle, intake_temp, stft, ltft, o2;
     float o2_min, o2_max;
 } steady_cal_window_t;
 
@@ -121,25 +116,21 @@ int steady_cal_add(steady_cal_t *cal, const steady_cal_sample_t *sample, float d
 typedef struct {
     float seconds;
     uint32_t windows;
-    float rpm, pulse_ms, map_kpa, intake_temp_c, throttle_pct, stft_pct, ltft_pct, o2_volts;
+    float rpm, inj_value, map_kpa, intake_temp_c, throttle_pct, stft_pct, ltft_pct, o2_volts;
     float x;              /* mean MAP / T_intake, kPa/K */
 } steady_cal_band_t;
 bool steady_cal_band(const steady_cal_totals_t *totals, int bin, steady_cal_band_t *out);
 
-/* Dead time where pulse vs MAP/T crosses zero, with one slope per band and
- * one shared intercept. *basis is the weight of the load variation it
- * rests on (seconds x relative variance of MAP/T); below a few units the
- * value means little. Returns false when there is no variation at all. */
-bool steady_cal_dead_time(const steady_cal_totals_t *totals, float *dead_ms, float *basis);
-
-/* Injector flow (cc/min) the band implies, given the swept volume, an
- * assumed VE, the stoichiometric AFR, fuel density and dead time. */
+/* Volumetric efficiency the band implies at lambda 1: air needed for the
+ * band's fuel, over the air the swept volume holds at its MAP and intake
+ * temperature. Returns false when there is no fuel or no air data. */
 typedef struct {
     float displacement_cc;
-    float volumetric_efficiency;
     float stoich_afr;
     float fuel_density_g_per_ml;
-    float dead_time_ms;
+    float lph_per_unit;       /* fuel per unit of injection value, inj_meter.h */
+    uint8_t cylinders;
+    uint8_t strokes_per_cycle;
 } steady_cal_engine_t;
-bool steady_cal_band_flow(const steady_cal_band_t *band, const steady_cal_engine_t *engine,
-                          float *flow_cc_per_min);
+bool steady_cal_band_ve(const steady_cal_band_t *band, const steady_cal_engine_t *engine,
+                        float *ve);

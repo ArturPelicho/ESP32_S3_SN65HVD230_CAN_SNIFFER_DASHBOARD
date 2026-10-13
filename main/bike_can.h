@@ -5,9 +5,10 @@
  *
  *   0x110, every ~9 ms  B2-B3  engine speed, RPM x 4 (same raw as PID 0C)
  *                       B4     an engine temperature (scale not yet known)
- *                       B5-B6  injection pulse width, 0.1 us per bit, low
- *                              16 bits only (see bike_can_unwrap_inj);
- *                              0 on fuel cut and engine off
+ *                       B5-B6  injection value, low 16 bits only (see
+ *                              bike_can_unwrap_inj); 0 on fuel cut and
+ *                              engine off. Behaves as a fuel rate, not a
+ *                              pulse time (inj_meter.h)
  *                       B7     status bits
  *   0x111, every ~9 ms  B6     battery voltage, 0.1 V per bit (decays to
  *                              0 for a few seconds after engine stop)
@@ -44,8 +45,9 @@ typedef struct {
     bool engine_valid;      /* an engine frame has been decoded */
     uint16_t rpm;
     uint8_t temp_raw;
-    uint16_t inj_raw;       /* as sent: low 16 bits of the pulse, 0.1 us per bit */
-    uint32_t inj_tenth_us;  /* pulse width rebuilt from inj_raw, 0.1 us per bit */
+    uint16_t inj_raw;       /* as sent: low 16 bits of the injection value */
+    uint32_t inj_rebuilt;   /* injection value rebuilt from inj_raw; the
+                             * dashboard shows it / 10000 */
     uint8_t inj_wraps;      /* times it went past 16 bits, BIKE_CAN_INJ_UNKNOWN if
                              * inj_raw fits no known pattern (then = inj_raw) */
     uint8_t status;
@@ -53,12 +55,13 @@ typedef struct {
     uint16_t battery_mv;
 } bike_can_data_t;
 
-/* The ECU computes the pulse in 0.1 ms steps but sends it in 0.1 us units
- * truncated to 16 bits, so it wraps every 6.5536 ms (seen on the road:
- * the value climbs to ~6.5 ms, restarts near 0 and keeps climbing).
+/* The ECU sends its injection value as a multiple of 1000 truncated to 16
+ * bits, so it wraps every 65536 (seen on the road: shown / 10000 it climbs
+ * to ~6.5, restarts near 0 and keeps climbing; a week of riding fit the
+ * rule below in 99.98 % of 1.28 million frames).
  * True values are multiples of 1000; 65536 is not, so the last three
  * digits of what arrives tell how many times it wrapped:
- *   ...000 -> 0, ...464 -> 1, ...928 -> 2, ...392 -> 3 (up to 26.2 ms). */
+ *   ...000 -> 0, ...464 -> 1, ...928 -> 2, ...392 -> 3 (up to 262143). */
 #define BIKE_CAN_INJ_STEP 1000U
 #define BIKE_CAN_INJ_MAX_WRAPS 3
 #define BIKE_CAN_INJ_UNKNOWN 0xFF

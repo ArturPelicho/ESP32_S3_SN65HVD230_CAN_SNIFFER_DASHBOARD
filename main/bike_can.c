@@ -32,7 +32,7 @@ int bike_can_decode(const bike_can_config_t *cfg, uint32_t id, bool extended,
         out->rpm = be16(data, cfg->rpm_byte) / 4;
         out->temp_raw = data[cfg->temp_byte];
         out->inj_raw = be16(data, cfg->inj_byte);
-        out->inj_tenth_us = bike_can_unwrap_inj(out->inj_raw, &out->inj_wraps);
+        out->inj_rebuilt = bike_can_unwrap_inj(out->inj_raw, &out->inj_wraps);
         out->status = data[cfg->status_byte];
         out->engine_valid = true;
         return BIKE_CAN_ENGINE;

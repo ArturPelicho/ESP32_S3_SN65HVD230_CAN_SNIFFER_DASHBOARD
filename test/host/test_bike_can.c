@@ -55,7 +55,7 @@ int main(void)
     assert(bike_can_unwrap_inj(1234, &wraps) == 1234 && wraps == BIKE_CAN_INJ_UNKNOWN);
     const uint8_t wrapped[8] = { 0x03, 0xE5, 0x49, 0xB4, 0xA2, 0x11, 0x70, 0xA8 }; /* 0x1170 = 4464 */
     bike_can_decode(&cfg, 0x110, false, wrapped, 8, &d);
-    assert(d.inj_raw == 4464 && d.inj_tenth_us == 70000 && d.inj_wraps == 1);
+    assert(d.inj_raw == 4464 && d.inj_rebuilt == 70000 && d.inj_wraps == 1);
 
     /* Other IDs, extended IDs and short frames are ignored. */
     assert(bike_can_decode(&cfg, 0x7E8, false, idle, 8, &d) == BIKE_CAN_NONE);
