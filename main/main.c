@@ -10,6 +10,7 @@
 #include "esp_heap_caps.h"
 #include "nvs_flash.h"
 #include "esp_timer.h"
+#include "esp_app_desc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -256,6 +257,7 @@ static const uint8_t *glyph_for(char c)
     if (c == '.') { static const uint8_t period[5] = {0x00,0x00,0x60,0x60,0x00}; return period; }
     if (c == '/') { static const uint8_t slash[5] = {0x20,0x10,0x08,0x04,0x02}; return slash; }
     if (c == '%') { static const uint8_t percent[5] = {0x23,0x13,0x08,0x64,0x62}; return percent; }
+    if (c == '+') { static const uint8_t plus[5] = {0x08,0x08,0x3E,0x08,0x08}; return plus; }
     return blank;
 }
 
@@ -511,28 +513,88 @@ static bool tft_health_tick(void)
     return render;
 }
 
-/* Boot record on the splash screen, held for CONFIG_BOOT_DIAG_HOLD_MS on
- * every start (CONFIG_BOOT_DIAG_ALWAYS_SHOW) or only when the previous
- * start failed or this one was not a clean power-on. See boot_diag.h for
- * how to interpret the numbers. */
-#define TFT_BOOT_DIAG_HOLD_MS CONFIG_BOOT_DIAG_HOLD_MS
+/* Boot screen: a pixel-art side view of the bike, the firmware version
+ * and the authors, held for CONFIG_DASH_SPLASH_HOLD_MS. The boot record
+ * (boot_diag) is no longer drawn here; it stays in NVS and the serial log. */
+#ifndef CONFIG_DASH_SPLASH_HOLD_MS
+#define CONFIG_DASH_SPLASH_HOLD_MS 2500
+#endif
 
-static void tft_draw_boot_diag(void)
+#define SPLASH_SPRITE_W 40
+#define SPLASH_SPRITE_H 22
+#define SPLASH_SPRITE_SCALE 4
+
+/* One character per pixel, '.' transparent; colours in splash_color(). */
+static const char *const s_splash_sprite[SPLASH_SPRITE_H] = {
+    ".......................DD...............",
+    ".......................DDD..............",
+    "..........................DDD...........",
+    ".................RRRRRR...SS............",
+    "..RRRR..........RRRRRRRR..SSWWW.........",
+    "..RRR.RRRDDDDDDDRRWWWWRR...SWYY.........",
+    ".....RRRRDDDDDDDRRRRRRRR...SWWW.RRRR....",
+    ".DSSSSSDDDDDDDDDRRRRRRRR....SRRRRRR.....",
+    ".DSSSSSSSTTRRRR......DD....TSRRRTTTT....",
+    "...TTTSSSSSRRRR.......DD..TTTSSSSSTTT...",
+    "..TTTS..G.SSTTTGGGGGGGDD.TTTSSSG..STTT..",
+    "..TTSG..G..GSTTGDDDDDGDD.TTSG.SS..GSTT..",
+    ".TTS..G.G.GGGSSGDSDSDG..TTS..GSS.G..STT.",
+    ".TTS...GSGG.GGGSDDDDDG..TTS...GSS...STT.",
+    ".TTSGGGSSGGGGSTGSGGGGG..TTSGGGSSSGGGSTT.",
+    ".TTS...GSG...STT........TTS...GSG...STT.",
+    ".TTS..G.G.G..STT........TTS..G.G.G..STT.",
+    "..TTSG..G..GSTT..........TTSG..G..GSTT..",
+    "..TTTS..G..STTT..........TTTS..G..STTT..",
+    "...TTTSSSSSTTT............TTTSSSSSTTT...",
+    "....TTTTTTTTT..............TTTTTTTTT....",
+    "......TTTTT..................TTTTT......",
+};
+
+static bool splash_color(char c, uint16_t *color)
 {
-    const boot_diag_info_t *d = boot_diag_info();
-    char line[40];
-    uint16_t color = boot_diag_noteworthy() ? 0xFFE0 : 0x8410;
+    switch (c) {
+    case 'T': *color = 0x4A4A; return true; /* tyre */
+    case 'S': *color = 0xBDF9; return true; /* rims, fork, exhaust */
+    case 'G': *color = 0x7BD0; return true; /* spokes, engine */
+    case 'D': *color = 0x5AED; return true; /* seat, frame, bars */
+    case 'R': *color = 0xE0E3; return true; /* tank, fenders */
+    case 'W': *color = 0xF79E; return true;
+    case 'Y': *color = 0xFEE0; return true; /* headlight */
+    default: return false;
+    }
+}
+
+static void tft_text_centered(int y, const char *text, uint16_t color, int scale)
+{
+    int len = (int)strlen(text);
+    int x = (TFT_WIDTH - (len * 6 * scale - scale)) / 2;
+    tft_text_bold(x, y, text, color, scale);
+}
+
+static void tft_draw_splash(void)
+{
+    const int x0 = (TFT_WIDTH - SPLASH_SPRITE_W * SPLASH_SPRITE_SCALE) / 2;
+    const int y0 = 14;
+    for (int y = 0; y < SPLASH_SPRITE_H; ++y) {
+        for (int x = 0; x < SPLASH_SPRITE_W; ++x) {
+            uint16_t color;
+            if (splash_color(s_splash_sprite[y][x], &color)) {
+                tft_fill_rect(x0 + x * SPLASH_SPRITE_SCALE, y0 + y * SPLASH_SPRITE_SCALE,
+                              SPLASH_SPRITE_SCALE, SPLASH_SPRITE_SCALE, color);
+            }
+        }
+    }
+    /* Road line under the wheels. */
+    tft_fill_rect(24, y0 + SPLASH_SPRITE_H * SPLASH_SPRITE_SCALE + 2, TFT_WIDTH - 48, 2, 0x4208);
+
+    tft_text_centered(122, "MOTA CAN", 0xFFFF, 4);
+    tft_text_centered(160, "ZONGSHEN CARRERA 125", 0xC618, 2);
+
     /* 2x font: 26 characters per line at most. */
-    snprintf(line, sizeof(line), "BOOT %lu  FAILED %lu",
-             (unsigned long)d->boot_count, (unsigned long)d->failed_boots);
-    tft_text(12, 136, line, color, 2);
-    snprintf(line, sizeof(line), "RESET %s", boot_diag_reason_name(d->reason));
-    tft_text(12, 158, line, color, 2);
-    snprintf(line, sizeof(line), "LAST RESET %s", boot_diag_reason_name(d->prev_reason));
-    tft_text(12, 180, line, color, 2);
-    snprintf(line, sizeof(line), "LAST STAGE %u OF %u", d->prev_stage,
-             (unsigned)BOOT_DIAG_STAGE_RUNNING);
-    tft_text(12, 202, line, color, 2);
+    char line[32];
+    snprintf(line, sizeof(line), "FW %.23s", esp_app_get_description()->version);
+    tft_text_centered(190, line, 0x8410, 2);
+    tft_text_centered(214, "ARTUR + CLAUDE", 0x07FF, 2);
 }
 
 static void tft_start(void)
@@ -582,8 +644,7 @@ static void tft_start(void)
     tft_panel_init_sequence();
     s_tft_ready = true;
     tft_clear(0x0000);
-    tft_text(12, 12, "MOTA CAN", 0xFFFF, 3);
-    tft_draw_boot_diag();
+    tft_draw_splash();
     tft_flush();
     boot_diag_mark(BOOT_DIAG_STAGE_PANEL_INIT);
     ESP_LOGI(TAG, "ST7789 TFT started: %dx%d, %u framebuffer(s) MOSI=%d SCK=%d CS=%d DC=%d RST=%d",
@@ -1555,12 +1616,7 @@ static void display_task(void *arg)
 {
     (void)arg;
     tft_start();
-#if CONFIG_BOOT_DIAG_ALWAYS_SHOW
-    bool hold_boot_diag = true;
-#else
-    bool hold_boot_diag = boot_diag_noteworthy();
-#endif
-    if (hold_boot_diag) vTaskDelay(pdMS_TO_TICKS(TFT_BOOT_DIAG_HOLD_MS));
+    vTaskDelay(pdMS_TO_TICKS(CONFIG_DASH_SPLASH_HOLD_MS));
 
     /* Self-test: briefly force a simulated over-temperature reading so the
      * hero row's flashing red alert box can be visually confirmed on every

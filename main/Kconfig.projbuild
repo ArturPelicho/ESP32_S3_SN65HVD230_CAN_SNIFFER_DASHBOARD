@@ -239,20 +239,16 @@ menu "PID scan (discovery test)"
 
 endmenu
 
-menu "Boot diagnostics"
+menu "Boot screen"
 
-    config BOOT_DIAG_ALWAYS_SHOW
-        bool "Hold the boot record on the splash on every start"
-        default y
-        help
-            Shows BOOT / FAILED / RESET / LAST RESET / LAST STAGE on the
-            splash for BOOT_DIAG_HOLD_MS on every start, not only after a
-            failed one. Useful while chasing the black-screen-at-key-on
-            problem; turn off to start the dashboard faster.
-
-    config BOOT_DIAG_HOLD_MS
-        int "How long the boot record stays on screen (ms)"
+    config DASH_SPLASH_HOLD_MS
+        int "How long the boot screen stays up (ms)"
         range 0 10000
-        default 4000
+        default 2500
+        help
+            The boot screen (sprite, firmware version, authors) is held this
+            long before the dashboard self-test starts. The boot record
+            (boot_diag) is still kept in NVS and logged on the serial port
+            at every start; it is no longer drawn on the screen.
 
 endmenu

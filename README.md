@@ -66,8 +66,11 @@ endpoint; measure the bike's own termination first.
   intake and ambient temperature, battery voltage and more.
 - Battery voltage (from `0x111`) next to the cylinder head temperature, and
   the ECU's injection value as a cyan `INJ` field.
+- Boot screen: pixel-art bike, firmware version and authors (Artur, Claude),
+  held for `DASH_SPLASH_HOLD_MS` (menuconfig, **Boot screen**).
 - Boot diagnostics (`main/boot_diag.c`): boot progress is recorded in NVS and
-  shown on the splash, to track down a black screen at key-on.
+  logged on the serial port at every start, to track down a black screen at
+  key-on.
 - All thresholds are set in `idf.py menuconfig` under **Dashboard thresholds**.
 
 **Fuel consumption**
@@ -157,7 +160,7 @@ gcc -std=c11 -Wall -I main test/host/test_steady_cal.c main/steady_cal.c -lm -o 
 | `main/steady_cal.*` | Fuel model check from steady riding |
 | `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
 | `main/pid_scan*` | PID discovery test |
-| `main/boot_diag.*` | Boot progress record shown on the splash |
+| `main/boot_diag.*` | Boot progress record (NVS + serial log) |
 | `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
 | `test/host/` | Host unit tests |
