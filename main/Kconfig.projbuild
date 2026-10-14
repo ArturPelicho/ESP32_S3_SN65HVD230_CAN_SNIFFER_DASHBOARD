@@ -252,3 +252,54 @@ menu "Boot screen"
             at every start; it is no longer drawn on the screen.
 
 endmenu
+
+menu "Speed, gears, tank and phone link"
+
+    comment "Defaults only: each value can be changed from the phone app (PARAM SET), kept in NVS"
+
+    choice SPEED_FUEL_SOURCE
+        prompt "Speed source for the fuel totals"
+        default SPEED_FUEL_SOURCE_GPS_EXT
+        help
+            Every speed source stays visible on its own (phone app, logs);
+            this only picks the one that feeds L/100km, the distance and
+            the range. When it drops out, the gear estimate stands in, then
+            the recent average is held (see below).
+
+        config SPEED_FUEL_SOURCE_GPS_EXT
+            bool "Phone GPS over BLE (Vel_GPS_Ext)"
+        config SPEED_FUEL_SOURCE_WHEEL
+            bool "Wheel sensor (Vel_Roda)"
+        config SPEED_FUEL_SOURCE_GPS_INT
+            bool "GPS module on the board (Vel_GPS_Int)"
+        config SPEED_FUEL_SOURCE_GEAR
+            bool "RPM x learnt gear ratio (Vel_Mudanca)"
+    endchoice
+
+    config SPEED_HOLD_S
+        int "Hold the recent average speed through drop-outs for (s)"
+        range 0 600
+        default 120
+        help
+            Tunnels, GPS loss: while the engine is pulling, distance keeps
+            accumulating at the average of the last ~20 s for this long.
+            The gear estimate, once learnt, takes priority over this.
+
+    config GEAR_COUNT
+        int "Number of gears"
+        range 1 7
+        default 5
+
+    config TANK_CAPACITY_DL
+        int "Fuel tank capacity (decilitres)"
+        range 10 500
+        default 160
+        help
+            Level after a "FILL FULL". The Carrera 125 tank holds 16 L.
+
+    config RANGE_BASELINE_X100
+        int "Consumption for the range before 20 km since a fill (L/100km x100)"
+        range 50 3000
+        default 265
+
+endmenu

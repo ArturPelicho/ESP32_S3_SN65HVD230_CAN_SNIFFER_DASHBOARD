@@ -1,0 +1,59 @@
+name: Android app
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+      - name: Check the APK
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          "$BT/apksigner" verify --verbose "$APK"
+          "$BT/aapt2" dump badging "$APK" | head -5
+          VER="0.1.${GITHUB_RUN_NUMBER}"
+          echo "VER=$VER" >> "$GITHUB_ENV"
+          echo "APK_NAME=mota-dash-v${VER}-${GITHUB_SHA::7}.apk" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mota-dash-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+      # A plain .apk the phone's browser can download and install directly
+      # (an Actions artifact is a zip and needs a GitHub login). One release
+      # per build, named with the version, marked as the latest release.
+      - name: Publish the release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
+          gh release create "app-v${VER}" "$APK_NAME" --latest --target "$GITHUB_SHA" \
+            --title "Mota Dash v${VER}" \
+            --notes "App do telemóvel v${VER}, branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Instalar por cima da versão anterior."
+          # Drafts left by the old app-latest delete-and-recreate.
+          gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[] | select(.draft) | .id' |
+            while read -r id; do gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/$id"; done
+          gh release delete app-latest --cleanup-tag --yes || true

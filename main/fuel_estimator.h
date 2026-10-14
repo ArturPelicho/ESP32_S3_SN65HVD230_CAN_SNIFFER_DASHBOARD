@@ -153,6 +153,9 @@ typedef struct {
 
 void fuel_estimator_init(fuel_estimator_t *est, const fuel_estimator_config_t *config);
 
+/* Restarts the since-start average, litres and distance. */
+void fuel_estimator_reset_totals(fuel_estimator_t *est);
+
 /* Feeds the latest inputs; dt_ms is the time since the previous call and
  * drives the smoothing and the since-start totals. Never blocks. Returns
  * out->valid. */

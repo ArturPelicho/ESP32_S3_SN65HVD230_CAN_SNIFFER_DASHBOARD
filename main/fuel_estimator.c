@@ -26,6 +26,13 @@ void fuel_estimator_init(fuel_estimator_t *est, const fuel_estimator_config_t *c
     est->running_hours = 0.0;
 }
 
+void fuel_estimator_reset_totals(fuel_estimator_t *est)
+{
+    est->total_fuel_l = 0.0;
+    est->total_distance_km = 0.0;
+    est->running_hours = 0.0;
+}
+
 /* Narrowband sensors sit near 0.45 V at stoichiometry and swing to about
  * 0.1 V lean / 0.8 V rich. Averaged over the ECU's closed-loop switching
  * this maps, roughly linearly, onto lambda 1.10 .. 0.90. Outside that the
