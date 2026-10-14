@@ -293,9 +293,9 @@ menu "Speed, gears, tank and phone link"
     config TANK_CAPACITY_DL
         int "Fuel tank capacity (decilitres)"
         range 10 500
-        default 120
+        default 160
         help
-            Level after a "FILL FULL". Set the real capacity from the app.
+            Level after a "FILL FULL". The Carrera 125 tank holds 16 L.
 
     config RANGE_BASELINE_X100
         int "Consumption for the range before 20 km since a fill (L/100km x100)"

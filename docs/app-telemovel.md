@@ -6,11 +6,15 @@ está ligado enquanto a placa estiver ligada: fora da mota o gasto é quase zero
 
 ## Instalar
 
-1. No GitHub, separador **Actions** → workflow **Android app** → a execução
-   mais recente do branch → secção **Artifacts** → `mota-dash-apk`.
-2. Descarregar o zip no telemóvel, abrir e instalar o `app-debug.apk`
-   (permitir "instalar apps desconhecidas" para o browser ou gestor de ficheiros).
-3. As versões seguintes instalam-se por cima (mesma chave de assinatura).
+1. No telemóvel, abrir
+   <https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/tag/app-latest>
+   e tocar em `mota-dash.apk` (é o APK direto, sem zip).
+2. Abrir o ficheiro descarregado e instalar (permitir "instalar apps
+   desconhecidas" para o browser ou para o gestor de ficheiros).
+3. Se o Xiaomi disser "A app não foi instalada": não instalar a partir de
+   dentro de um zip; desligar por momentos a verificação de segurança do
+   gestor de ficheiros / Play Protect para esta instalação.
+4. As versões seguintes instalam-se por cima (mesma chave de assinatura).
 
 ## Primeira vez
 
