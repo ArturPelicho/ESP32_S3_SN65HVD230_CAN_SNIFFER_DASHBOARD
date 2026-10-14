@@ -196,6 +196,9 @@ fun ControlScreen(activity: MainActivity) {
         Section("Ligação e telemóvel") {
             KeyValue("Estado", statusText(status), if (connected) Palette.green else Palette.orange)
             KeyValue("Placa", Link.savedAddress(ctx) ?: "nenhuma (a procurar \"OBDII\")")
+            KeyValue("Versão da app", runCatching {
+                ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
+            }.getOrNull() ?: "?")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
                 OutlinedButton(onClick = { Link.saveAddress(ctx, null); Link.service?.reconnect() ?: MotaService.start(ctx) }) {
                     Text("Procurar outra")

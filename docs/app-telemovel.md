@@ -7,8 +7,8 @@ está ligado enquanto a placa estiver ligada: fora da mota o gasto é quase zero
 ## Instalar
 
 1. No telemóvel, abrir
-   <https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/tag/app-latest>
-   e tocar em `mota-dash.apk` (é o APK direto, sem zip).
+   <https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/latest>
+   e tocar em `mota-dash-v0.1.N-xxxxxxx.apk` (é o APK direto, sem zip; o nome traz a versão).
 2. Abrir o ficheiro descarregado e instalar (permitir "instalar apps
    desconhecidas" para o browser ou para o gestor de ficheiros).
 3. Se o Xiaomi disser "A app não foi instalada": não instalar a partir de
