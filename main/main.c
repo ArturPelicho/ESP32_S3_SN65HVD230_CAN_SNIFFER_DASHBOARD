@@ -39,6 +39,11 @@
 #include "obd_poller.h"
 #include "pid_scan_task.h"
 #include "boot_diag.h"
+#include "gear_learner.h"
+#include "phone_proto.h"
+#include "rt_params.h"
+#include "speed_source.h"
+#include "tank.h"
 
 static const char *TAG = "mota_can";
 
@@ -198,6 +203,47 @@ static volatile bool s_trip_reset_requested;
  * explanation, kept in NVS beside the trip. */
 #define INJ_CLASSES (BIKE_CAN_INJ_MAX_WRAPS + 2)
 static uint32_t s_inj_class[INJ_CLASSES];
+
+/* Road speed, gears and tank. Every speed source publishes into s_speed
+ * (under s_speed_lock, from whichever task receives it); fuel_task owns the
+ * selection, the gear learner and the tank, and publishes what the display
+ * and the phone show into s_ride (under s_fuel_lock). */
+static speed_sources_t s_speed;
+static portMUX_TYPE s_speed_lock = portMUX_INITIALIZER_UNLOCKED;
+static phone_gps_t s_gps_fix;       /* last phone fix */
+static uint32_t s_gps_fix_ms;       /* when it arrived */
+static uint32_t s_gps_fix_count;    /* fixes received since boot */
+static speed_select_t s_speed_sel;
+static gear_learner_t s_gear;
+static tank_state_t s_tank;
+typedef struct {
+    bool speed_ok;
+    float speed_kmh;
+    speed_origin_t origin;
+    uint8_t gear;
+    uint8_t gears_found;
+    bool gears_complete;
+    float learn_s;
+    tank_view_t tank;
+} ride_view_t;
+static ride_view_t s_ride;
+/* Requests from the BLE command task, served by fuel_task. */
+static volatile bool s_avg_reset_requested;
+static volatile bool s_gear_reset_requested;
+static volatile bool s_gear_report_requested;
+static volatile bool s_tank_report_requested;
+static volatile int s_fill_request;  /* 0 none, 1 add, 2 full, 3 set level */
+static volatile float s_fill_litres;
+#define TANK_NVS_KEY "tank1"
+#define GEAR_NVS_KEY "gearhist"
+#define TANK_SAVE_PERIOD_MS 15000
+#define GEAR_SAVE_PERIOD_MS 30000
+static volatile bool s_cht_critical; /* last stop-now state, for the phone */
+
+static uint32_t now_ms(void)
+{
+    return (uint32_t)(esp_timer_get_time() / 1000);
+}
 
 static int gap_event(struct ble_gap_event *event, void *arg);
 
@@ -930,17 +976,15 @@ static void tft_draw_field(int x, int right_x, int y, size_t i, bool ignition_on
 #define O2_INACTIVE_MV 1010
 
 /* Fuel estimate inputs are read straight from the telemetry rows; road
- * speed comes from OBD PID 0x0D when the ECU answers it, otherwise the
- * estimator falls back to L/h. A GPS or wheel-speed source would feed the
- * same speed input. */
-static void fuel_estimate_update(uint32_t dt_ms)
+ * speed is the one ride_speed_step() selected (speed_source.h), and with
+ * none the estimator falls back to L/h. */
+static void fuel_estimate_update(uint32_t dt_ms, bool speed_ok, float speed_kmh)
 {
     size_t map = row_index_for_pid(0x0B);
     size_t iat = row_index_for_pid(0x0F);
     size_t rpm = row_index_for_pid(0x0C);
     size_t o2 = row_index_for_pid(0x14);
     size_t thr = row_index_for_pid(0x11);
-    size_t spd = row_index_for_pid(0x0D);
     /* The ECU reports 0xCA (1010 mV) while the O2 sensor is cold or
      * inactive, e.g. with the engine off: a placeholder, not "rich". */
     bool o2_valid = s_row_valid[o2] && s_row_values[o2] != O2_INACTIVE_MV;
@@ -950,13 +994,13 @@ static void fuel_estimate_update(uint32_t dt_ms)
         .rpm = (float)s_row_values[rpm],
         .o2_volts = s_row_values[o2] / 1000.0f,   /* row stores millivolts */
         .throttle_pct = s_row_values[thr] / 10.0f, /* row stores tenths of % */
-        .speed_kmh = (float)s_row_values[spd],
+        .speed_kmh = speed_kmh,
         .map_valid = s_row_valid[map],
         .intake_temp_valid = s_row_valid[iat],
         .rpm_valid = s_row_valid[rpm],
         .o2_valid = o2_valid,
         .throttle_valid = s_row_valid[thr],
-        .speed_valid = s_row_valid[spd],
+        .speed_valid = speed_ok,
     };
 #if CONFIG_FUEL_SOURCE_INJECTOR
     bool engine_fresh, power_fresh;
@@ -1125,8 +1169,8 @@ static void trip_format(const inj_meter_totals_t *t, char *out, size_t out_size)
              "value_sum=%llu k=%d.%03dL/h",
              millilitres / 1000, millilitres % 1000, (unsigned long long)t->value_seconds,
              (unsigned long)t->running_s, (unsigned long long)t->injections,
-             (unsigned long long)t->value_sum, CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 / 1000,
-             CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 % 1000);
+             (unsigned long long)t->value_sum, (int)rt_param(RTP_FUEL_K) / 1000,
+             (int)rt_param(RTP_FUEL_K) % 1000);
 }
 
 /* Saves the trip every TRIP_SAVE_PERIOD_MS while it grows, and at once
@@ -1287,8 +1331,8 @@ static void cal_report(bool to_ble)
         cal_line(line, to_ble);
     }
     snprintf(line, sizeof(line), "CAL summary windows=%lu k=%d.%03dL/h per unit",
-             (unsigned long)windows, CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 / 1000,
-             CONFIG_FUEL_INJ_LPH_PER_UNIT_X1000 % 1000);
+             (unsigned long)windows, (int)rt_param(RTP_FUEL_K) / 1000,
+             (int)rt_param(RTP_FUEL_K) % 1000);
     cal_line(line, to_ble);
     if (to_ble) ble_send_text("\r>");
 }
@@ -1322,6 +1366,286 @@ static void cal_service(float dt_s)
     }
 }
 
+/* ---- Road speed, gears and tank (fuel_task) ---- */
+
+/* "-12.34" with the given decimals, without printf float support. */
+static void fmt_fixed(char *out, size_t size, float value, int decimals)
+{
+    int scale = 1;
+    for (int i = 0; i < decimals; ++i) scale *= 10;
+    long v = lroundf(value * scale);
+    const char *sign = v < 0 ? "-" : "";
+    if (v < 0) v = -v;
+    if (decimals == 0) snprintf(out, size, "%s%ld", sign, v);
+    else snprintf(out, size, "%s%ld.%0*ld", sign, v / scale, decimals, v % scale);
+}
+
+static bool ignition_on_now(void)
+{
+    return s_last_response != 0 &&
+           xTaskGetTickCount() - s_last_response <= pdMS_TO_TICKS(TFT_DATA_TIMEOUT_MS);
+}
+
+static float current_rpm(void)
+{
+    bool engine_fresh, power_fresh;
+    bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+    if (engine_fresh) return bike.rpm;
+    size_t rpm_i = row_index_for_pid(0x0C);
+    return ignition_on_now() && s_row_valid[rpm_i] ? (float)s_row_values[rpm_i] : 0.0f;
+}
+
+static void gear_load(void)
+{
+    gear_learner_config_t cfg = GEAR_LEARNER_DEFAULT_CONFIG((uint8_t)rt_param(RTP_GEARS));
+    gear_learner_init(&s_gear, &cfg);
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) return;
+    static gear_histogram_t hist;
+    size_t len = sizeof(hist);
+    if (nvs_get_blob(nvs, GEAR_NVS_KEY, &hist, &len) == ESP_OK && len == sizeof(hist)) {
+        gear_learner_load(&s_gear, &hist);
+        ESP_LOGI(TAG, "gears: %u of %u learnt", s_gear.found, s_gear.config.gears);
+    }
+    nvs_close(nvs);
+}
+
+static void gear_save(void)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) return;
+    if (nvs_set_blob(nvs, GEAR_NVS_KEY, &s_gear.hist, sizeof(s_gear.hist)) != ESP_OK ||
+        nvs_commit(nvs) != ESP_OK) {
+        ESP_LOGW(TAG, "gears not saved");
+    }
+    nvs_close(nvs);
+}
+
+static void tank_load(void)
+{
+    tank_init(&s_tank);
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READONLY, &nvs) != ESP_OK) return;
+    tank_state_t t;
+    size_t len = sizeof(t);
+    if (nvs_get_blob(nvs, TANK_NVS_KEY, &t, &len) == ESP_OK && len == sizeof(t) &&
+        tank_is_valid(&t)) {
+        s_tank = t;
+    }
+    nvs_close(nvs);
+}
+
+static void tank_save(void)
+{
+    nvs_handle_t nvs;
+    if (nvs_open(TRIP_NVS_NAMESPACE, NVS_READWRITE, &nvs) != ESP_OK) return;
+    if (nvs_set_blob(nvs, TANK_NVS_KEY, &s_tank, sizeof(s_tank)) != ESP_OK ||
+        nvs_commit(nvs) != ESP_OK) {
+        ESP_LOGW(TAG, "tank not saved");
+    }
+    nvs_close(nvs);
+}
+
+/* Re-applies runtime parameters after a PARAM SET. */
+static void ride_params_apply(void)
+{
+    static uint32_t applied = UINT32_MAX;
+    uint32_t gen = rt_params_generation();
+    if (gen == applied) return;
+    applied = gen;
+    portENTER_CRITICAL(&s_bike_lock);
+    s_inj_config.lph_per_unit = rt_param(RTP_FUEL_K) / 1000.0f;
+    portEXIT_CRITICAL(&s_bike_lock);
+    if (s_gear.config.gears != rt_param(RTP_GEARS)) {
+        gear_learner_set_gears(&s_gear, (uint8_t)rt_param(RTP_GEARS));
+    }
+}
+
+static void gear_report(void)
+{
+    char line[160];
+    char num[12];
+    int used = snprintf(line, sizeof(line), "GEAR found=%u/%u learnt=%lus gear=%u",
+                        s_gear.found, s_gear.config.gears,
+                        (unsigned long)gear_learner_total_s(&s_gear), s_gear.gear);
+    for (int i = 0; i < s_gear.found && used < (int)sizeof(line) - 16; ++i) {
+        fmt_fixed(num, sizeof(num), s_gear.ratio[i], 2);
+        used += snprintf(line + used, sizeof(line) - (size_t)used, " g%u=%s", s_gear.gear_no[i], num);
+    }
+    ESP_LOGI(TAG, "%s", line);
+    ble_send_text(line);
+    ble_send_text("\r>");
+}
+
+/* Speed sources and gear tracking, then the speed the fuel totals use.
+ * Every 100 ms step of fuel_task. */
+static bool ride_speed_step(uint32_t dt_ms, float *kmh)
+{
+    uint32_t t = now_ms();
+    float rpm = current_rpm();
+
+    size_t spd_i = row_index_for_pid(0x0D);
+    if (ignition_on_now() && s_row_valid[spd_i]) {
+        portENTER_CRITICAL(&s_speed_lock);
+        speed_sources_publish(&s_speed, SPEED_SRC_OBD, (float)s_row_values[spd_i], -1.0f, t);
+        portEXIT_CRITICAL(&s_speed_lock);
+    }
+
+    if (s_gear_reset_requested) {
+        s_gear_reset_requested = false;
+        gear_learner_reset(&s_gear);
+        ESP_LOGI(TAG, "gears reset");
+    }
+    phone_gps_t fix;
+    uint32_t fix_ms, fix_count;
+    portENTER_CRITICAL(&s_speed_lock);
+    fix = s_gps_fix;
+    fix_ms = s_gps_fix_ms;
+    fix_count = s_gps_fix_count;
+    portEXIT_CRITICAL(&s_speed_lock);
+    static uint32_t seen_count, prev_fix_ms;
+    gear_learner_feed_rpm(&s_gear, rpm);
+    if (fix_count != seen_count) {
+        seen_count = fix_count;
+        if (fix.flags & PHONE_GPS_SPEED) {
+            float gap_s = prev_fix_ms != 0 ? (fix_ms - prev_fix_ms) / 1000.0f : 1.0f;
+            if (gap_s > 1.5f) gap_s = 1.5f; /* a drop-out stands for no more than one fix */
+            gear_learner_on_speed(&s_gear, fix.speed_kmh, fix.speed_acc_kmh, gap_s);
+        }
+        prev_fix_ms = fix_ms;
+    }
+    float gear_kmh;
+    if (gear_learner_track(&s_gear, rpm, &gear_kmh)) {
+        portENTER_CRITICAL(&s_speed_lock);
+        speed_sources_publish(&s_speed, SPEED_SRC_GEAR, gear_kmh, -1.0f, t);
+        portEXIT_CRITICAL(&s_speed_lock);
+    }
+    static TickType_t gear_saved_at;
+    if (s_gear.dirty && (xTaskGetTickCount() - gear_saved_at >= pdMS_TO_TICKS(GEAR_SAVE_PERIOD_MS) ||
+                         rpm == 0.0f)) {
+        gear_learner_take_dirty(&s_gear);
+        gear_save();
+        gear_saved_at = xTaskGetTickCount();
+    }
+    if (s_gear_report_requested) {
+        s_gear_report_requested = false;
+        gear_report();
+    }
+
+    speed_select_config_t cfg = {
+        .primary = (speed_src_id_t)rt_param(RTP_SPD_SRC),
+        .hold_max_ms = (uint32_t)rt_param(RTP_SPD_HOLD_S) * 1000U,
+        .avg_tau_s = 20.0f,
+    };
+    speed_sources_t sources;
+    portENTER_CRITICAL(&s_speed_lock);
+    sources = s_speed;
+    portEXIT_CRITICAL(&s_speed_lock);
+    speed_origin_t origin;
+    bool ok = speed_select_update(&s_speed_sel, &cfg, &sources, t, dt_ms / 1000.0f,
+                                  rpm >= CONFIG_FUEL_MOVING_RPM, kmh, &origin);
+    float learn_s = gear_learner_total_s(&s_gear);
+    portENTER_CRITICAL(&s_fuel_lock);
+    s_ride.speed_ok = ok;
+    s_ride.speed_kmh = *kmh;
+    s_ride.origin = origin;
+    s_ride.gear = s_gear.gear;
+    s_ride.gears_found = s_gear.found;
+    s_ride.gears_complete = gear_learner_complete(&s_gear);
+    s_ride.learn_s = learn_s;
+    portEXIT_CRITICAL(&s_fuel_lock);
+    return ok;
+}
+
+static void tank_report(const char *prefix)
+{
+    float k = rt_param(RTP_FUEL_K) / 1000.0f;
+    tank_view_t v;
+    tank_view(&s_tank, k, rt_param(RTP_BASE_L100) / 100.0f, &v);
+    char level[12], used[12], km[12], avg[12], range[12];
+    fmt_fixed(level, sizeof(level), v.remaining_l, 2);
+    fmt_fixed(used, sizeof(used), v.used_since_fill_l, 2);
+    fmt_fixed(km, sizeof(km), v.km_since_fill, 1);
+    fmt_fixed(avg, sizeof(avg), v.avg_l_per_100km, 2);
+    fmt_fixed(range, sizeof(range), v.range_km, 0);
+    char line[160];
+    snprintf(line, sizeof(line), "%s level=%s%s used=%sL km=%s avg=%s%s range=%s%s cap=%ld.%ldL",
+             prefix, v.level_known ? level : "?", v.level_known ? "L" : "", used, km,
+             v.avg_valid ? avg : "?", v.avg_valid ? "L/100km" : "", v.range_valid ? range : "?",
+             v.range_valid ? "km" : "", (long)rt_param(RTP_TANK_DL) / 10,
+             (long)rt_param(RTP_TANK_DL) % 10);
+    ESP_LOGI(TAG, "%s", line);
+    ble_send_text(line);
+    ble_send_text("\r");
+}
+
+/* Tank level from the injection integral and the selected speed, plus
+ * fill-ups and the average reset asked for over BLE. */
+static void ride_tank_step(uint32_t dt_ms, bool speed_ok, float kmh)
+{
+    static double last_value_s = -1.0;
+    inj_meter_totals_t trip = trip_snapshot(NULL);
+    double dv = last_value_s < 0.0 ? 0.0 : trip.value_seconds - last_value_s;
+    if (dv < 0.0) dv = 0.0; /* TRIP RESET */
+    last_value_s = trip.value_seconds;
+    tank_add(&s_tank, dv, speed_ok ? (double)kmh * dt_ms / 3.6e6 : 0.0);
+
+    float k = rt_param(RTP_FUEL_K) / 1000.0f;
+    static bool dirty;
+    static TickType_t saved_at;
+    if (dv > 0.0 || speed_ok) dirty = true;
+    int req = s_fill_request;
+    if (req != 0) {
+        float litres = s_fill_litres;
+        s_fill_request = 0;
+        if (req == 3) {
+            tank_set_level(&s_tank, litres);
+        } else {
+            float suggested = 0.0f, estimated = 0.0f;
+            bool have = tank_fill(&s_tank, litres, req == 2, rt_param(RTP_TANK_DL) / 10.0f, k,
+                                  &suggested, &estimated);
+            if (have) {
+                char e[12], p[12], line[128];
+                fmt_fixed(e, sizeof(e), estimated, 2);
+                fmt_fixed(p, sizeof(p), litres, 2);
+                snprintf(line, sizeof(line), "FILL est=%sL pump=%sL k=%ld suggested_k=%ld",
+                         e, p, (long)rt_param(RTP_FUEL_K), lroundf(suggested * 1000.0f));
+                ESP_LOGI(TAG, "%s", line);
+                ble_send_text(line);
+                ble_send_text("\r");
+            }
+        }
+        tank_save();
+        dirty = false;
+        saved_at = xTaskGetTickCount();
+        tank_report("TANK");
+        ble_send_text(">");
+    }
+    if (s_avg_reset_requested) {
+        s_avg_reset_requested = false;
+        fuel_estimator_reset_totals(&s_fuel_estimator);
+        ESP_LOGI(TAG, "average reset");
+    }
+    if (s_tank_report_requested) {
+        s_tank_report_requested = false;
+        tank_report("TANK");
+        ble_send_text(">");
+    }
+    /* Saved like the trip: every period while riding, and once the
+     * engine stops. */
+    bool stopped = dv == 0.0 && !speed_ok;
+    if (dirty && (stopped || xTaskGetTickCount() - saved_at >= pdMS_TO_TICKS(TANK_SAVE_PERIOD_MS))) {
+        tank_save();
+        dirty = false;
+        saved_at = xTaskGetTickCount();
+    }
+    tank_view_t v;
+    tank_view(&s_tank, k, rt_param(RTP_BASE_L100) / 100.0f, &v);
+    portENTER_CRITICAL(&s_fuel_lock);
+    s_ride.tank = v;
+    portEXIT_CRITICAL(&s_fuel_lock);
+}
+
 static void fuel_task(void *arg)
 {
     (void)arg;
@@ -1333,7 +1657,12 @@ static void fuel_task(void *arg)
         if (s_self_test_active) {
             continue;
         }
-        fuel_estimate_update((uint32_t)pdTICKS_TO_MS(last - before));
+        uint32_t dt_ms = (uint32_t)pdTICKS_TO_MS(last - before);
+        ride_params_apply();
+        float speed_kmh = 0.0f;
+        bool speed_ok = ride_speed_step(dt_ms, &speed_kmh);
+        fuel_estimate_update(dt_ms, speed_ok, speed_kmh);
+        ride_tank_step(dt_ms, speed_ok, speed_kmh);
         trip_service();
         cal_service(pdTICKS_TO_MS(last - before) / 1000.0f);
         if (++log_count >= FUEL_LOG_EVERY) {
@@ -1447,6 +1776,7 @@ static void tft_render(void)
     bool hero_valid = ignition_on && s_row_valid[0];
     int temp_c = hero_valid ? s_row_values[0] : 0;
     bool hero_critical = cht_critical_update(hero_valid, temp_c);
+    s_cht_critical = hero_critical;
     if (hero_critical) {
         tft_fill_rect(0, 0, hero_w, 84, COLOR_RED);
         if (blink_on) {
@@ -1474,6 +1804,16 @@ static void tft_render(void)
     if (hero_valid) {
         tft_text_bold(unit_x, 22, "C", hero_color, 3);
     }
+    /* Gear from RPM and the learnt ratios, under the unit. */
+    ride_view_t ride;
+    portENTER_CRITICAL(&s_fuel_lock);
+    ride = s_ride;
+    portEXIT_CRITICAL(&s_fuel_lock);
+    if (ignition_on && ride.gear != 0 && !hero_critical) {
+        char gear_text[8];
+        snprintf(gear_text, sizeof(gear_text), "G%u", ride.gear);
+        tft_text_bold(unit_x + 2, 48, gear_text, COLOR_CYAN, 2);
+    }
     if (hero_critical) {
         if (blink_on) {
             tft_text_bold(8, 66, "STOP ENGINE", COLOR_WHITE, 2);
@@ -1491,7 +1831,7 @@ static void tft_render(void)
     bool rpm_valid = ignition_on && s_row_valid[rpm_i];
     /* At or above the shift point the whole RPM block flashes red with
      * white text: change up or roll off now. */
-    bool shift = rpm_valid && s_row_values[rpm_i] >= CONFIG_DASH_RPM_SHIFT;
+    bool shift = rpm_valid && s_row_values[rpm_i] >= rt_param(RTP_RPM_SHIFT);
     bool shift_flash = shift && blink_on;
     if (shift_flash) {
         tft_fill_rect(hero_w + 4, 2, 320 - hero_w - 4, 40, COLOR_RED);
@@ -1737,6 +2077,14 @@ static const ble_uuid16_t s_obd_notify_uuid = BLE_UUID16_INIT(0xFFF1);
 static const ble_uuid16_t s_obd_write_uuid = BLE_UUID16_INIT(0xFFF2);
 static const ble_uuid16_t s_hm10_service_uuid = BLE_UUID16_INIT(0xFFE0);
 static const ble_uuid16_t s_hm10_characteristic_uuid = BLE_UUID16_INIT(0xFFE1);
+/* Phone app link (phone_proto.h): 6d6f7461-000N-4b1e-9c3a-5a1e00000000. */
+#define MOTA_UUID(n) BLE_UUID128_INIT(0x00, 0x00, 0x00, 0x00, 0x1e, 0x5a, 0x3a, 0x9c, \
+                                      0x1e, 0x4b, (n), 0x00, 0x61, 0x74, 0x6f, 0x6d)
+static const ble_uuid128_t s_mota_service_uuid = MOTA_UUID(0x01);
+static const ble_uuid128_t s_mota_gps_uuid = MOTA_UUID(0x02);
+static const ble_uuid128_t s_mota_telemetry_uuid = MOTA_UUID(0x03);
+static uint16_t s_mota_telemetry_handle;
+static volatile bool s_mota_telemetry_on;
 
 struct ble_command {
     char text[BLE_COMMAND_LENGTH];
@@ -1864,6 +2212,67 @@ static void process_elm_command(char *command)
     } else if (!strcmp(command, "TRIP RESET")) {
         s_trip_reset_requested = true;
         ble_send_text("OK\r\r>");
+    } else if (!strcmp(command, "PARAM")) {
+        char line[96];
+        for (int i = 0; i < RTP_COUNT; ++i) {
+            const rtp_def_t *d = rt_param_def((rtp_id_t)i);
+            snprintf(line, sizeof(line), "PARAM %s=%ld min=%ld max=%ld def=%ld unit=%s\r", d->name,
+                     (long)rt_param((rtp_id_t)i), (long)d->min, (long)d->max, (long)d->def,
+                     d->unit);
+            ble_send_text(line);
+        }
+        ble_send_text(">");
+    } else if (!strncmp(command, "PARAM SET ", 10)) {
+        char name[24] = { 0 };
+        long value = 0;
+        rtp_id_t id = RTP_COUNT;
+        if (sscanf(command + 10, "%23s %ld", name, &value) == 2) id = rt_param_find(name);
+        if (id != RTP_COUNT && rt_param_set(id, (int32_t)value)) {
+            char line[64];
+            snprintf(line, sizeof(line), "PARAM %s=%ld\r>", name, value);
+            ble_send_text(line);
+        } else {
+            ble_send_text("ERROR\r>");
+        }
+    } else if (!strcmp(command, "AVG RESET")) {
+        s_avg_reset_requested = true;
+        ble_send_text("OK\r>");
+    } else if (!strncmp(command, "FILL FULL ", 10) || !strncmp(command, "FILL ADD ", 9) ||
+               !strncmp(command, "TANK SET ", 9)) {
+        bool full = command[5] == 'F';
+        bool set = command[0] == 'T';
+        char *end = NULL;
+        float litres = strtof(command + (full ? 10 : 9), &end);
+        if (end == NULL || end == command + (full ? 10 : 9) || !(litres >= 0.0f) || litres > 100.0f ||
+            s_fill_request != 0) {
+            ble_send_text("ERROR\r>");
+        } else {
+            s_fill_litres = litres;
+            s_fill_request = set ? 3 : full ? 2 : 1; /* fuel_task answers with TANK */
+        }
+    } else if (!strcmp(command, "TANK")) {
+        s_tank_report_requested = true;
+    } else if (!strcmp(command, "GEAR")) {
+        s_gear_report_requested = true;
+    } else if (!strcmp(command, "GEAR RESET")) {
+        s_gear_reset_requested = true;
+        ble_send_text("OK\r>");
+    } else if (!strcmp(command, "SPEED")) {
+        uint32_t t = now_ms();
+        speed_sources_t sources;
+        portENTER_CRITICAL(&s_speed_lock);
+        sources = s_speed;
+        portEXIT_CRITICAL(&s_speed_lock);
+        char line[48], num[12];
+        for (int i = 0; i < SPEED_SRC_COUNT; ++i) {
+            float v;
+            bool fresh = speed_sources_fresh(&sources, (speed_src_id_t)i, t, &v);
+            fmt_fixed(num, sizeof(num), v, 1);
+            snprintf(line, sizeof(line), "SPEED %s=%s%s\r", speed_src_name((speed_src_id_t)i),
+                     fresh ? num : "--", i == rt_param(RTP_SPD_SRC) ? " (fuel)" : "");
+            ble_send_text(line);
+        }
+        ble_send_text(">");
     } else if (!strcmp(command, "ATST") || !strcmp(command, "ATIGN")) {
         ble_send_text("OK\r\r>");
     } else if (strlen(command) == 4 && command[0] == '0' &&
@@ -1998,6 +2407,49 @@ static int hm10_access_cb(uint16_t conn_handle, uint16_t attr_handle,
     return uart_write_access_cb(conn_handle, attr_handle, ctxt, arg);
 }
 
+/* Phone GPS fix (phone_proto.h): becomes the GPS_EXT speed source and
+ * feeds the gear learner. Runs in the NimBLE host task. */
+static int mota_gps_access_cb(uint16_t conn_handle, uint16_t attr_handle,
+                              struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    (void)conn_handle;
+    (void)attr_handle;
+    (void)arg;
+    if (ctxt->op != BLE_GATT_ACCESS_OP_WRITE_CHR) return BLE_ATT_ERR_UNLIKELY;
+    uint8_t buf[64];
+    uint16_t len = 0;
+    if (OS_MBUF_PKTLEN(ctxt->om) > sizeof(buf) ||
+        ble_hs_mbuf_to_flat(ctxt->om, buf, sizeof(buf), &len) != 0) {
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    }
+    phone_gps_t fix;
+    if (!phone_gps_decode(buf, len, &fix)) return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    uint32_t t = now_ms();
+    portENTER_CRITICAL(&s_speed_lock);
+    s_gps_fix = fix;
+    s_gps_fix_ms = t;
+    ++s_gps_fix_count;
+    if (fix.flags & PHONE_GPS_SPEED) {
+        speed_sources_publish(&s_speed, SPEED_SRC_GPS_EXT, fix.speed_kmh, fix.speed_acc_kmh,
+                              t - fix.fix_age_ms);
+    }
+    portEXIT_CRITICAL(&s_speed_lock);
+    return 0;
+}
+
+static int mota_telemetry_access_cb(uint16_t conn_handle, uint16_t attr_handle,
+                                    struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    (void)conn_handle;
+    (void)attr_handle;
+    (void)arg;
+    if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
+        uint8_t v = PHONE_PROTO_VERSION;
+        return os_mbuf_append(ctxt->om, &v, 1) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
 static const struct ble_gatt_svc_def s_gatt_services[] = {
     {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -2031,6 +2483,24 @@ static const struct ble_gatt_svc_def s_gatt_services[] = {
             { 0 }
         },
     },
+    {
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid = &s_mota_service_uuid.u,
+        .characteristics = (struct ble_gatt_chr_def[]) {
+            {
+                .uuid = &s_mota_gps_uuid.u,
+                .access_cb = mota_gps_access_cb,
+                .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
+            },
+            {
+                .uuid = &s_mota_telemetry_uuid.u,
+                .access_cb = mota_telemetry_access_cb,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &s_mota_telemetry_handle,
+            },
+            { 0 }
+        },
+    },
     { 0 }
 };
 
@@ -2060,6 +2530,16 @@ static void start_advertising(void)
         ESP_LOGE(TAG, "BLE advertisement fields failed: %d", rc);
         return;
     }
+    /* The phone app's 128-bit service doesn't fit beside the name in the
+     * advertisement, so it goes in the scan response. */
+    struct ble_hs_adv_fields rsp = {0};
+    rsp.uuids128 = (ble_uuid128_t *)&s_mota_service_uuid;
+    rsp.num_uuids128 = 1;
+    rsp.uuids128_is_complete = 0;
+    rc = ble_gap_adv_rsp_set_fields(&rsp);
+    if (rc != 0) {
+        ESP_LOGW(TAG, "BLE scan response failed: %d", rc);
+    }
     params.conn_mode = BLE_GAP_CONN_MODE_UND;
     params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     rc = ble_gap_adv_start(s_own_addr_type, NULL, BLE_HS_FOREVER, &params, gap_event, NULL);
@@ -2085,6 +2565,7 @@ static int gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         s_ble_conn = BLE_HS_CONN_HANDLE_NONE;
         s_ble_notify_ready = false;
+        s_mota_telemetry_on = false;
         s_monitor_mode = false;
         ESP_LOGI(TAG, "BLE disconnected");
         start_advertising();
@@ -2094,7 +2575,9 @@ static int gap_event(struct ble_gap_event *event, void *arg)
         return 0;
     case BLE_GAP_EVENT_SUBSCRIBE:
         ESP_LOGI(TAG, "BLE notify subscription: %d", event->subscribe.cur_notify);
-        if (event->subscribe.attr_handle == s_ble_notify_handle &&
+        if (event->subscribe.attr_handle == s_mota_telemetry_handle) {
+            s_mota_telemetry_on = event->subscribe.cur_notify;
+        } else if (event->subscribe.attr_handle == s_ble_notify_handle &&
             event->subscribe.cur_notify) {
             s_ble_notify_ready = true;
             ble_send_text("\r\nELM327 v1.5\r\n>");
@@ -2284,6 +2767,121 @@ static void twai_start(void)
              CAN_BITRATE, CAN_TX_GPIO, CAN_RX_GPIO);
 }
 
+/* Telemetry to the phone app every 100 ms while it is subscribed
+ * (phone_proto.h). Core 0 beside the BLE host; reads the same published
+ * values the display does and never waits on them. */
+#define PHONE_LINK_PERIOD_MS 100
+
+static void phone_telemetry_fill(phone_telemetry_t *tm)
+{
+    static uint16_t seq;
+    memset(tm, 0, sizeof(*tm));
+    tm->seq = seq++;
+    bool on = ignition_on_now();
+    bool engine_fresh, power_fresh;
+    bike_can_data_t bike = bike_snapshot(&engine_fresh, &power_fresh);
+    if (on) tm->flags |= PHONE_TM_DATA;
+    if (engine_fresh) tm->flags |= PHONE_TM_ENGINE;
+    if (power_fresh) tm->flags |= PHONE_TM_POWER;
+    if (s_cht_critical) tm->flags |= PHONE_TM_CHT_CRITICAL;
+
+#define ROW_OK(pid) (on && s_row_valid[row_index_for_pid(pid)])
+#define ROW(pid) (s_row_values[row_index_for_pid(pid)])
+    tm->rpm = (uint16_t)current_rpm();
+    tm->cht_c = ROW_OK(0x05) ? (int16_t)ROW(0x05) : PHONE_TM_NA16S;
+    tm->battery_mv = power_fresh ? bike.battery_mv : 0;
+    tm->throttle_x10 = ROW_OK(0x11) ? (uint16_t)ROW(0x11) : PHONE_TM_NA16;
+    tm->map_kpa = ROW_OK(0x0B) ? (uint16_t)ROW(0x0B) : PHONE_TM_NA16;
+    tm->iat_c = ROW_OK(0x0F) ? (int16_t)ROW(0x0F) : PHONE_TM_NA16S;
+    tm->o2_mv = ROW_OK(0x14) ? (uint16_t)ROW(0x14) : PHONE_TM_NA16;
+    tm->stft_x10 = ROW_OK(0x06) ? (int16_t)ROW(0x06) : PHONE_TM_NA16S;
+    tm->ltft_x10 = ROW_OK(0x07) ? (int16_t)ROW(0x07) : PHONE_TM_NA16S;
+    tm->spark_x10 = ROW_OK(0x0E) ? (int16_t)ROW(0x0E) : PHONE_TM_NA16S;
+#undef ROW_OK
+#undef ROW
+    tm->inj_x10000 = engine_fresh ? bike.inj_rebuilt : 0;
+    if (tm->rpm >= rt_param(RTP_RPM_SHIFT)) tm->flags2 |= PHONE_TM2_SHIFT;
+    tm->shift_rpm = (uint16_t)rt_param(RTP_RPM_SHIFT);
+
+    fuel_estimate_t est;
+    ride_view_t ride;
+    portENTER_CRITICAL(&s_fuel_lock);
+    est = s_fuel_estimate;
+    ride = s_ride;
+    portEXIT_CRITICAL(&s_fuel_lock);
+    if (on && est.valid) tm->flags |= PHONE_TM_FUEL_VALID;
+    if (est.fuel_cut) tm->flags |= PHONE_TM_FUEL_CUT;
+    bool inst_km = est.instant_unit == FUEL_UNIT_L_PER_100KM;
+    bool avg_km = est.avg_unit == FUEL_UNIT_L_PER_100KM;
+    if (inst_km) tm->flags |= PHONE_TM_INST_PER_KM;
+    if (avg_km) tm->flags |= PHONE_TM_AVG_PER_KM;
+    tm->flow_lph_x100 = phone_u16(est.fuel_flow_l_per_h, 100.0f);
+    tm->inst_x100 = phone_u16(inst_km ? est.l_per_100km : est.fuel_flow_l_per_h, 100.0f);
+    tm->avg_x100 = phone_u16(avg_km ? est.avg_l_per_100km : est.avg_l_per_h, 100.0f);
+    tm->used_ml = (uint32_t)lroundf(est.total_fuel_l * 1000.0f);
+    tm->dist_m = (uint32_t)lroundf(est.total_distance_km * 1000.0f);
+
+    uint32_t t = now_ms();
+    speed_sources_t sources;
+    portENTER_CRITICAL(&s_speed_lock);
+    sources = s_speed;
+    portEXIT_CRITICAL(&s_speed_lock);
+    for (int i = 0; i < PHONE_TM_SPEEDS && i < SPEED_SRC_COUNT; ++i) {
+        float v;
+        tm->speed_x100[i] = speed_sources_fresh(&sources, (speed_src_id_t)i, t, &v)
+                                ? phone_u16(v, 100.0f) : PHONE_TM_NA16;
+    }
+    tm->fuel_speed_x100 = ride.speed_ok ? phone_u16(ride.speed_kmh, 100.0f) : PHONE_TM_NA16;
+    tm->fuel_speed_src = (uint8_t)rt_param(RTP_SPD_SRC);
+    tm->fuel_speed_origin = (uint8_t)ride.origin;
+    tm->gear = ride.gear;
+    tm->gears_found = ride.gears_found;
+    if (ride.gears_complete) tm->flags2 |= PHONE_TM2_GEARS_COMPLETE;
+    tm->learn_s = ride.learn_s > 65000.0f ? 65000 : (uint16_t)ride.learn_s;
+    if (ride.tank.level_known) {
+        tm->flags2 |= PHONE_TM2_TANK_KNOWN;
+        tm->tank_x100 = phone_u16(ride.tank.remaining_l, 100.0f);
+    } else {
+        tm->tank_x100 = PHONE_TM_NA16;
+    }
+    if (ride.tank.range_valid) {
+        tm->flags2 |= PHONE_TM2_RANGE;
+        tm->range_km_x10 = phone_u16(ride.tank.range_km, 10.0f);
+    } else {
+        tm->range_km_x10 = PHONE_TM_NA16;
+    }
+    if (ride.tank.avg_valid) {
+        tm->flags2 |= PHONE_TM2_FILL_AVG;
+        tm->fill_avg_x100 = phone_u16(ride.tank.avg_l_per_100km, 100.0f);
+    } else {
+        tm->fill_avg_x100 = PHONE_TM_NA16;
+    }
+    tm->fill_m = (uint32_t)lroundf(ride.tank.km_since_fill * 1000.0f);
+}
+
+static void phone_link_task(void *arg)
+{
+    (void)arg;
+    TickType_t last = xTaskGetTickCount();
+    while (true) {
+        vTaskDelayUntil(&last, pdMS_TO_TICKS(PHONE_LINK_PERIOD_MS));
+        uint16_t conn = s_ble_conn;
+        if (conn == BLE_HS_CONN_HANDLE_NONE || !s_mota_telemetry_on || s_self_test_active) {
+            continue;
+        }
+        /* The packet needs the larger MTU the app asks for on connect. */
+        if (ble_att_mtu(conn) < PHONE_TM_LEN + 3) continue;
+        phone_telemetry_t tm;
+        phone_telemetry_fill(&tm);
+        uint8_t buf[PHONE_TM_LEN];
+        size_t len = phone_telemetry_encode(&tm, buf, sizeof(buf));
+        struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, (uint16_t)len);
+        if (om == NULL) continue;
+        int rc = ble_gatts_notify_custom(conn, s_mota_telemetry_handle, om);
+        if (rc != 0) ESP_LOGD(TAG, "telemetry notify failed: %d", rc);
+    }
+}
+
 static void ble_start(void)
 {
     s_ble_command_queue = xQueueCreate(BLE_COMMAND_QUEUE_LENGTH, sizeof(struct ble_command));
@@ -2317,7 +2915,13 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_result);
     boot_diag_init();
 
+    rt_params_init();
     s_inj_config = inj_meter_config_from_kconfig();
+    s_inj_config.lph_per_unit = rt_param(RTP_FUEL_K) / 1000.0f;
+    speed_sources_init(&s_speed);
+    speed_select_init(&s_speed_sel);
+    gear_load();
+    tank_load();
     trip_load();
     cal_load();
     s_cal_report_requested = true; /* print what was learnt so far at start-up */
@@ -2336,7 +2940,8 @@ void app_main(void)
      * its published result, which reads as "no data" until the first step. */
     fuel_estimator_config_t fuel_config = fuel_estimator_config_from_kconfig();
     fuel_estimator_init(&s_fuel_estimator, &fuel_config);
-    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 4096, NULL, 4, NULL, 0);
+    xTaskCreatePinnedToCore(fuel_task, "fuel_task", 6144, NULL, 4, NULL, 0);
+    xTaskCreatePinnedToCore(phone_link_task, "phone_link", 3072, NULL, 3, NULL, 0);
     boot_diag_mark(BOOT_DIAG_STAGE_TASKS_STARTED);
 
     scan_init();
