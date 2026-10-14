@@ -85,8 +85,10 @@ void tank_view(const tank_state_t *t, float k, float baseline_l_per_100km, tank_
     if (!t->level_known) return;
     out->remaining_l = t->level_at_fill_l - out->used_since_fill_l;
     if (out->remaining_l < 0.0f) out->remaining_l = 0.0f;
-    float per100 = out->avg_valid && out->avg_l_per_100km > 0.0f ? out->avg_l_per_100km
-                                                                 : baseline_l_per_100km;
+    float base = baseline_l_per_100km > 0.0f ? baseline_l_per_100km : 0.0f;
+    float per100 = (base * TANK_BLEND_KM + out->used_since_fill_l * 100.0f) /
+                   (TANK_BLEND_KM + out->km_since_fill);
+    out->range_l_per_100km = per100;
     if (per100 > 0.0f) {
         out->range_valid = true;
         out->range_km = out->remaining_l / per100 * 100.0f;

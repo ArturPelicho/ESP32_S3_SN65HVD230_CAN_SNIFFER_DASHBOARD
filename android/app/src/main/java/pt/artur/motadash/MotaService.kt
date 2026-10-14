@@ -284,6 +284,7 @@ class MotaService : Service() {
         sendCommand("ATE0")
         sendCommand("PARAM")
         sendCommand("TANK")
+        Link.readDtc()
         Link.setStatus(LinkStatus.CONNECTED)
         updateNotification("Ligado à mota")
         startGps()

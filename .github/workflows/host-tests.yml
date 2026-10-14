@@ -19,8 +19,8 @@ jobs:
           set -e
           for t in fuel_estimator:fuel_estimator can_bus_recovery_fsm:can_bus_recovery_fsm pid_scan:pid_scan \
                    bike_can:bike_can inj_meter:inj_meter steady_cal:steady_cal gear_learner:gear_learner \
-                   speed_source:speed_source tank:tank phone_proto:phone_proto; do
-            test=${t%%:*}; src=${t##*:}
-            gcc -std=c11 -Wall -Wextra -I main test/host/test_$test.c main/$src.c -lm -o /tmp/$test
+                   speed_source:speed_source tank:tank phone_proto:phone_proto obd_dtc:obd_dtc+isotp_rx; do
+            test=${t%%:*}; srcs=${t##*:}
+            gcc -std=c11 -Wall -Wextra -I main test/host/test_$test.c $(printf 'main/%s.c ' ${srcs//+/ }) -lm -o /tmp/$test
             /tmp/$test
           done

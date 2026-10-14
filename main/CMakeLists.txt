@@ -16,6 +16,8 @@ idf_component_register(
          "tank.c"
          "phone_proto.c"
          "rt_params.c"
+         "isotp_rx.c"
+         "obd_dtc.c"
     INCLUDE_DIRS "."
     REQUIRES bt nvs_flash esp_driver_twai esp_lcd esp_driver_spi esp_driver_gpio esp_timer esp_app_format
 )

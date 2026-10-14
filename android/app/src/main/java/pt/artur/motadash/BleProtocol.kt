@@ -34,7 +34,8 @@ object BleProtocol {
     const val GPS_SPEED_ACC = 8
 
     const val GPS_LEN = 24
-    const val TM_LEN = 73
+    const val TM_LEN = 73          // shortest version-1 telemetry
+    const val TM_LEN_RANGE = 75    // + consumption the range uses
     const val NA16 = 0xFFFF
     const val NA16S = Short.MIN_VALUE.toInt()
 
@@ -111,6 +112,7 @@ object BleProtocol {
         val fillM = u32()
         val learnS = u16()
         val shiftRpm = u16()
+        val rangeL100 = if (data.size >= TM_LEN_RANGE) u16() else NA16
         fun opt(v: Int, scale: Double) = if (v == NA16) null else v / scale
         fun optS(v: Int, scale: Double) = if (v == NA16S) null else v / scale
         return Telemetry(
@@ -156,6 +158,7 @@ object BleProtocol {
             fillKm = fillM / 1000.0,
             learnS = learnS,
             shiftRpm = shiftRpm,
+            rangeL100 = opt(rangeL100, 100.0),
         )
     }
 }
@@ -203,6 +206,8 @@ data class Telemetry(
     val fillKm: Double,
     val learnS: Int,
     val shiftRpm: Int,
+    /** L/100 km the range is computed with: baseline blended with the since-fill average. */
+    val rangeL100: Double? = null,
 ) {
     /** Speed to show: wheel sensor, then the gear estimate (CAN rate), then GPS. */
     val displaySpeed: Double?

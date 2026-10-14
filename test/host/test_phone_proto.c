@@ -52,6 +52,7 @@ int main(void)
     t.gear = 5;
     t.fill_m = 98765;
     t.shift_rpm = 10000;
+    t.range_l100_x100 = 255;
     size_t n = phone_telemetry_encode(&t, buf, sizeof(buf));
     assert(n == PHONE_TM_LEN);
     assert(phone_telemetry_encode(&t, buf, PHONE_TM_LEN - 1) == 0);

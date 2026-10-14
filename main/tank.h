@@ -38,13 +38,22 @@ typedef struct {
     float km_since_fill;
     bool avg_valid;            /* enough distance since the fill */
     float avg_l_per_100km;     /* since the fill */
+    float range_l_per_100km;   /* what the range is computed with */
     bool range_valid;
     float range_km;
 } tank_view_t;
 
-/* Since-fill average needs this much distance before it replaces the
- * baseline for the range. */
+/* Since-fill average is reported once this much distance is covered. */
 #define TANK_AVG_MIN_KM 20.0f
+/* The range consumption blends the baseline with the since-fill average,
+ * the baseline weighing as much as this many km of riding:
+ *   (baseline * TANK_BLEND_KM + litres since fill * 100) / (TANK_BLEND_KM + km)
+ * so it follows the riding from the first metres without jumping, and is
+ * mostly the real average after a couple of hundred km. */
+#define TANK_BLEND_KM 50.0f
+/* At a fill, the blended value becomes the new baseline when at least
+ * this much was ridden since the previous fill. */
+#define TANK_LEARN_MIN_KM 30.0f
 
 void tank_init(tank_state_t *t);
 bool tank_is_valid(const tank_state_t *t);
@@ -62,7 +71,6 @@ bool tank_fill(tank_state_t *t, float litres, bool full, float capacity_l, float
 /* Sets the level directly (e.g. read off the stock gauge). */
 void tank_set_level(tank_state_t *t, float litres);
 
-/* baseline_l_per_100km is used for the range until the since-fill average
- * is valid. */
+/* baseline_l_per_100km: see TANK_BLEND_KM. */
 void tank_view(const tank_state_t *t, float k_lph_per_unit, float baseline_l_per_100km,
                tank_view_t *out);

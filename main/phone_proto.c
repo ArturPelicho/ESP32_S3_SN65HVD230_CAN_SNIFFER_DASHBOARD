@@ -108,6 +108,7 @@ size_t phone_telemetry_encode(const phone_telemetry_t *t, uint8_t *buf, size_t s
     put32(&p, t->fill_m);
     put16(&p, t->learn_s);
     put16(&p, t->shift_rpm);
+    put16(&p, t->range_l100_x100);
     return (size_t)(p - buf);
 }
 
@@ -146,5 +147,6 @@ bool phone_telemetry_decode(const uint8_t *buf, size_t len, phone_telemetry_t *t
     t->fill_m = get32(&p);
     t->learn_s = get16(&p);
     t->shift_rpm = get16(&p);
+    t->range_l100_x100 = get16(&p);
     return true;
 }

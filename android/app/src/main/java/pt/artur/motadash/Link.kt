@@ -10,6 +10,28 @@ enum class LinkStatus { STOPPED, NO_DEVICE, SCANNING, WAITING, CONNECTING, CONNE
 
 data class ParamInfo(val name: String, val value: Int, val min: Int, val max: Int, val def: Int, val unit: String)
 
+/** Fault codes from the board's "DTC" answer (main.c dtc_report). */
+data class DtcState(
+    val reading: Boolean = false,
+    val mil: Boolean? = null,
+    val milCount: Int? = null,
+    val groups: Map<String, List<String>> = emptyMap(),   // STORED / PENDING / PERMANENT -> codes
+    val notes: Map<String, String> = emptyMap(),          // group -> NONE / NO DATA / UNSUPPORTED
+    val readAt: Long? = null,
+    val clearResult: String? = null,
+) {
+    val total: Int get() = groups.values.sumOf { it.size }
+}
+
+/** Screen orientation choices, as ActivityInfo values. */
+enum class Orientation(val label: String, val value: Int) {
+    AUTO("Automática", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER),
+    PORTRAIT("Vertical", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
+    LANDSCAPE("Horizontal", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+    LANDSCAPE_INV("Horizontal invertida", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE),
+    LANDSCAPE_ANY("Horizontal (as duas)", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE),
+}
+
 data class GpsInfo(
     val hz: Double = 0.0,
     val speedKmh: Double? = null,
@@ -46,6 +68,9 @@ object Link {
     private val _fillLine = MutableStateFlow<String?>(null)
     val fillLine: StateFlow<String?> = _fillLine.asStateFlow()
 
+    private val _dtc = MutableStateFlow(DtcState())
+    val dtc: StateFlow<DtcState> = _dtc.asStateFlow()
+
     @Volatile var service: MotaService? = null
 
     fun setStatus(s: LinkStatus) { _status.value = s }
@@ -75,12 +100,57 @@ object Link {
                 map + (name to info)
             }
         }
+        if (line.startsWith("DTC ")) onDtcLine(line.removePrefix("DTC ").trim())
+        if (line == "?") _dtc.update { it.copy(reading = false) } // firmware without DTC support
         if (line.startsWith("TANK ")) _tankLine.value = line
         if (line.startsWith("GEAR ")) _gearLine.value = line
         if (line.startsWith("FILL ")) {
             _fillLine.value = line
             _suggestedK.value = fillRe.find(line)?.groupValues?.get(1)?.toInt()
         }
+    }
+
+    private val milRe = Regex("""^MIL=(\S+) COUNT=(\S+)$""")
+
+    private fun onDtcLine(rest: String) {
+        milRe.find(rest)?.let { m ->
+            _dtc.update {
+                it.copy(reading = true, mil = m.groupValues[1].toIntOrNull()?.let { v -> v != 0 },
+                    milCount = m.groupValues[2].toIntOrNull(), groups = emptyMap(), notes = emptyMap())
+            }
+            return
+        }
+        when {
+            rest == "END" -> _dtc.update { it.copy(reading = false, readAt = System.currentTimeMillis()) }
+            rest.startsWith("CLEAR") -> _dtc.update {
+                it.copy(clearResult = when {
+                    rest.startsWith("CLEARED") -> "Erros apagados."
+                    rest.startsWith("CLEAR REFUSED") ->
+                        "A centralina recusou (código ${rest.substringAfterLast(' ')}). " +
+                            "Tenta com a ignição ligada e o motor parado."
+                    else -> "Sem resposta da centralina."
+                })
+            }
+            else -> {
+                val group = rest.substringBefore(' ')
+                val value = rest.substringAfter(' ', "")
+                if (value.matches(Regex("[PCBU][0-9A-F]{4}"))) {
+                    _dtc.update { it.copy(groups = it.groups + (group to (it.groups[group].orEmpty() + value))) }
+                } else if (value.isNotEmpty()) {
+                    _dtc.update { it.copy(notes = it.notes + (group to value)) }
+                }
+            }
+        }
+    }
+
+    fun readDtc(keepClearResult: Boolean = false) {
+        _dtc.update { it.copy(reading = true, clearResult = if (keepClearResult) it.clearResult else null) }
+        send("DTC")
+    }
+
+    fun clearDtc() {
+        _dtc.update { it.copy(clearResult = "A apagar…") }
+        send("DTC CLEAR")
     }
 
     fun send(command: String) {
@@ -97,6 +167,12 @@ object Link {
             if (address == null) remove("address") else putString("address", address)
         }.apply()
     }
+    fun orientation(ctx: Context): Orientation {
+        val name = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("orientation", null)
+        return Orientation.entries.firstOrNull { it.name == name } ?: Orientation.AUTO
+    }
+    fun setOrientation(ctx: Context, o: Orientation) =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("orientation", o.name).apply()
     fun keepScreenOn(ctx: Context): Boolean =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("screen_on", true)
     fun setKeepScreenOn(ctx: Context, on: Boolean) =

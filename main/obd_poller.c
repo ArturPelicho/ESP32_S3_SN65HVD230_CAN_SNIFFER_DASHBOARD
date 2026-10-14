@@ -1,5 +1,7 @@
 #include "obd_poller.h"
 
+#include "isotp_rx.h"
+
 #include <inttypes.h>
 #include <string.h>
 
@@ -16,8 +18,13 @@ static const char *TAG = "obd_poller";
 #define DISCOVERY_TRIES 2
 #define BACKOFF_MAX_SHIFT 16
 #define PAD_BYTE 0x55
+/* Diagnostic requests other than Mode 01 (fault codes, clearing): some
+ * ECUs take a while, and may answer "response pending" first. */
+#define RAW_TIMEOUT_MS 1500
+#define RAW_PENDING_EXTEND_MS 3000
+#define NRC_RESPONSE_PENDING 0x78
 
-enum event_type { EVENT_FRAME, EVENT_QUERY };
+enum event_type { EVENT_FRAME, EVENT_QUERY, EVENT_RAW };
 
 struct obd_event {
     uint8_t type;
@@ -31,6 +38,13 @@ struct query_result {
     bool ok;
     uint8_t len;
     uint8_t data[8];
+};
+
+struct raw_result {
+    uint8_t seq;
+    uint8_t status; /* obd_req_status_t */
+    uint16_t len;
+    uint8_t data[OBD_POLLER_RAW_MAX];
 };
 
 enum link_state { LINK_OFFLINE, LINK_DISCOVERING, LINK_POLLING };
@@ -72,6 +86,17 @@ static bool s_busy_is_discovery;
 static TickType_t s_busy_deadline;
 
 static int s_pending_query = -1;
+
+/* Raw (any mode, multi-frame) request: one at a time, under s_query_lock. */
+static QueueHandle_t s_raw_result;
+static bool s_pending_raw;
+static uint8_t s_raw_req[7];
+static uint8_t s_raw_req_len;
+static uint8_t s_raw_seq;
+static bool s_busy_is_raw;
+static uint32_t s_raw_id; /* responding ECU, 0 until the first frame */
+static uint8_t s_raw_buf[OBD_POLLER_RAW_MAX];
+static isotp_rx_t s_raw_rx;
 
 static inline bool tick_reached(TickType_t now, TickType_t when)
 {
@@ -192,8 +217,68 @@ static void post_query_result(uint8_t pid, bool ok, const uint8_t *data, uint8_t
     xQueueOverwrite(s_query_result, &result);
 }
 
+static void post_raw_result(obd_req_status_t status, const uint8_t *data, size_t len)
+{
+    static struct raw_result result; /* too big for the poller stack */
+    result.seq = s_raw_seq;
+    result.status = (uint8_t)status;
+    result.len = (uint16_t)len;
+    if (len) memcpy(result.data, data, len);
+    xQueueOverwrite(s_raw_result, &result);
+    s_busy = false;
+    s_busy_is_raw = false;
+}
+
+static void handle_raw_frame(const struct obd_event *ev, TickType_t now)
+{
+    if (s_raw_id != 0 && ev->id != s_raw_id) {
+        return; /* another ECU; the first one to answer is the one we follow */
+    }
+    isotp_rx_result_t r = isotp_rx_feed(&s_raw_rx, ev->data, ev->len);
+    if (r == ISOTP_RX_IGNORED) {
+        return;
+    }
+    s_last_reply = now;
+    s_consecutive_timeouts = 0;
+    if (r == ISOTP_RX_ERROR) {
+        post_raw_result(OBD_REQ_TIMEOUT, NULL, 0);
+        return;
+    }
+    s_raw_id = ev->id;
+    if (r == ISOTP_RX_NEED_FC) {
+        uint8_t fc[8];
+        isotp_flow_control(fc, PAD_BYTE);
+        uint32_t fc_id = isotp_physical_request_id(ev->id, s_cfg.extended_id);
+        for (int i = 0; i < 3 && !s_cfg.send(fc_id, s_cfg.extended_id, fc, s_cfg.send_ctx); ++i) {
+        }
+        s_busy_deadline = now + pdMS_TO_TICKS(RAW_TIMEOUT_MS);
+        return;
+    }
+    if (r != ISOTP_RX_DONE) {
+        return;
+    }
+    const uint8_t *m = s_raw_buf;
+    size_t len = s_raw_rx.len;
+    uint8_t mode = s_raw_req[0];
+    if (len >= 3 && m[0] == 0x7F && m[1] == mode) {
+        if (m[2] == NRC_RESPONSE_PENDING) {
+            s_busy_deadline = now + pdMS_TO_TICKS(RAW_PENDING_EXTEND_MS);
+            return;
+        }
+        post_raw_result(OBD_REQ_NEGATIVE, m, 3);
+    } else if (len >= 1 && m[0] == (uint8_t)(mode + 0x40)) {
+        post_raw_result(OBD_REQ_OK, m, len);
+    } else {
+        s_raw_id = 0; /* not ours (e.g. a late Mode 01 reply) */
+    }
+}
+
 static void handle_frame(const struct obd_event *ev, TickType_t now)
 {
+    if (s_busy && s_busy_is_raw) {
+        handle_raw_frame(ev, now);
+        return;
+    }
     if (ev->len < 3 || (ev->data[0] & 0xF0) != 0) {
         return; /* not an ISO-TP single frame */
     }
@@ -249,6 +334,11 @@ static void handle_frame(const struct obd_event *ev, TickType_t now)
 
 static void handle_timeout(TickType_t now)
 {
+    if (s_busy_is_raw) {
+        /* Not a Mode 01 miss: the ECU may simply not have this mode. */
+        post_raw_result(OBD_REQ_TIMEOUT, NULL, 0);
+        return;
+    }
     s_busy = false;
     if (s_consecutive_timeouts < UINT8_MAX) {
         ++s_consecutive_timeouts;
@@ -314,10 +404,33 @@ static bool send_request(uint8_t pid, TickType_t now)
     s_busy_entry = -1;
     s_busy_is_query = false;
     s_busy_is_discovery = false;
+    s_busy_is_raw = false;
     s_busy_deadline = now + pdMS_TO_TICKS(s_cfg.response_timeout_ms);
     if (s_busy_deadline == now) {
         ++s_busy_deadline;
     }
+    return true;
+}
+
+static bool send_raw(TickType_t now)
+{
+    uint8_t data[8] = { s_raw_req_len, PAD_BYTE, PAD_BYTE, PAD_BYTE,
+                        PAD_BYTE, PAD_BYTE, PAD_BYTE, PAD_BYTE };
+    memcpy(&data[1], s_raw_req, s_raw_req_len);
+    if (!s_cfg.send(s_cfg.request_id, s_cfg.extended_id, data, s_cfg.send_ctx)) {
+        s_tx_retry_at = now + TX_RETRY_TICKS;
+        return false;
+    }
+    ESP_LOGD(TAG, "TX raw mode %02X", s_raw_req[0]);
+    s_busy = true;
+    s_busy_pid = 0;
+    s_busy_entry = -1;
+    s_busy_is_query = false;
+    s_busy_is_discovery = false;
+    s_busy_is_raw = true;
+    s_raw_id = 0;
+    isotp_rx_init(&s_raw_rx, s_raw_buf, sizeof(s_raw_buf));
+    s_busy_deadline = now + pdMS_TO_TICKS(RAW_TIMEOUT_MS);
     return true;
 }
 
@@ -332,6 +445,13 @@ static TickType_t schedule(TickType_t now)
         return ticks_until(now, s_tx_retry_at);
     }
 
+    if (s_pending_raw) {
+        if (send_raw(now)) {
+            s_pending_raw = false;
+            return ticks_until(now, s_busy_deadline);
+        }
+        return TX_RETRY_TICKS;
+    }
     if (s_pending_query >= 0) {
         uint8_t pid = (uint8_t)s_pending_query;
         if (send_request(pid, now)) {
@@ -417,6 +537,11 @@ static void poller_task(void *arg)
         do {
             if (ev.type == EVENT_QUERY) {
                 s_pending_query = ev.data[0];
+            } else if (ev.type == EVENT_RAW) {
+                memcpy(s_raw_req, ev.data, ev.len);
+                s_raw_req_len = ev.len;
+                s_raw_seq = (uint8_t)ev.id;
+                s_pending_raw = true;
             } else {
                 handle_frame(&ev, xTaskGetTickCount());
             }
@@ -448,8 +573,9 @@ esp_err_t obd_poller_start(const obd_poller_config_t *config)
 
     s_query_lock = xSemaphoreCreateMutex();
     s_query_result = xQueueCreate(1, sizeof(struct query_result));
+    s_raw_result = xQueueCreate(1, sizeof(struct raw_result));
     QueueHandle_t events = xQueueCreate(EVENT_QUEUE_LENGTH, sizeof(struct obd_event));
-    if (s_query_lock == NULL || s_query_result == NULL || events == NULL) {
+    if (s_query_lock == NULL || s_query_result == NULL || s_raw_result == NULL || events == NULL) {
         return ESP_ERR_NO_MEM;
     }
     s_events = events;
@@ -504,4 +630,42 @@ bool obd_poller_query(uint8_t pid, uint8_t *response, uint8_t *response_len,
     }
     xSemaphoreGive(s_query_lock);
     return ok;
+}
+
+obd_req_status_t obd_poller_request(const uint8_t *request, uint8_t request_len,
+                                    uint8_t *response, size_t response_size,
+                                    size_t *response_len, uint32_t timeout_ms)
+{
+    *response_len = 0;
+    if (s_events == NULL || request_len == 0 || request_len > 7) {
+        return OBD_REQ_TIMEOUT;
+    }
+    TickType_t start = xTaskGetTickCount();
+    TickType_t timeout = pdMS_TO_TICKS(timeout_ms);
+    if (xSemaphoreTake(s_query_lock, timeout) != pdTRUE) {
+        return OBD_REQ_TIMEOUT;
+    }
+    xQueueReset(s_raw_result);
+    static uint8_t seq;
+    ++seq;
+
+    obd_req_status_t status = OBD_REQ_TIMEOUT;
+    struct obd_event ev = { .type = EVENT_RAW, .len = request_len, .id = seq };
+    memcpy(ev.data, request, request_len);
+    if (xQueueSend(s_events, &ev, ticks_until(xTaskGetTickCount(), start + timeout)) == pdTRUE) {
+        static struct raw_result result; /* only touched under s_query_lock */
+        while (xQueueReceive(s_raw_result, &result,
+                             ticks_until(xTaskGetTickCount(), start + timeout)) == pdTRUE) {
+            if (result.seq != seq) {
+                continue;
+            }
+            status = (obd_req_status_t)result.status;
+            size_t n = result.len < response_size ? result.len : response_size;
+            memcpy(response, result.data, n);
+            *response_len = n;
+            break;
+        }
+    }
+    xSemaphoreGive(s_query_lock);
+    return status;
 }

@@ -3,6 +3,8 @@ package pt.artur.motadash.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,20 +38,40 @@ import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
 import pt.artur.motadash.MainActivity
 import pt.artur.motadash.MotaService
+import pt.artur.motadash.Orientation
 import pt.artur.motadash.ParamInfo
 import pt.artur.motadash.Permissions
 
-/** Human labels for the board's runtime parameters (main/rt_params.c). */
-private val PARAM_LABELS = mapOf(
-    "FUEL_K" to "Constante de combustível (L/h ×1000 por INJ)",
-    "TANK_DL" to "Capacidade do depósito (dL)",
-    "SPD_SRC" to "Fonte de velocidade dos consumos",
-    "SPD_HOLD_S" to "Manter média sem velocidade (s)",
-    "GEARS" to "Número de mudanças",
-    "BASE_L100" to "Consumo base p/ autonomia (L/100 ×100)",
-    "RPM_SHIFT" to "Aviso de troca de mudança (rpm)",
+/**
+ * How the board's runtime parameters (main/rt_params.c) are shown: the
+ * board stores integers, the app shows value / scale in a human unit.
+ */
+private data class ParamSpec(val label: String, val unit: String, val scale: Int = 1, val decimals: Int = 0,
+                             val order: Int, val hint: String? = null)
+
+private val PARAM_SPECS = mapOf(
+    "TANK_DL" to ParamSpec("Capacidade do depósito", "L", 10, 1, 0),
+    "BASE_L100" to ParamSpec("Consumo para a autonomia", "L/100 km", 100, 2, 1,
+        "Aprende sozinho: a autonomia mistura este valor com a média desde o abastecimento, " +
+            "e a cada abastecimento (com 30 km ou mais) passa a ser a média dessa viagem."),
+    "FUEL_K" to ParamSpec("Constante de combustível", "L/h por INJ", 1000, 3, 2,
+        "Corrigida pela bomba: ao atestar duas vezes seguidas aparece a sugestão em baixo."),
+    "RPM_SHIFT" to ParamSpec("Aviso de troca de mudança", "rpm", order = 3),
+    "GEARS" to ParamSpec("Número de mudanças", "", order = 4),
+    "SPD_HOLD_S" to ParamSpec("Manter média sem velocidade", "s", order = 5),
+    "SPD_SRC" to ParamSpec("Fonte de velocidade dos consumos", "", order = 6, hint = "Escolhe em cima."),
 )
 
+private fun spec(p: ParamInfo) = PARAM_SPECS[p.name] ?: ParamSpec(p.name, p.unit, order = 99)
+
+private fun shown(raw: Int, s: ParamSpec): String =
+    if (s.scale == 1) raw.toString()
+    else String.format(java.util.Locale.US, "%.${s.decimals}f", raw.toDouble() / s.scale)
+
+private fun parsed(text: String, s: ParamSpec): Int? =
+    text.trim().replace(',', '.').toDoubleOrNull()?.let { Math.round(it * s.scale).toInt() }
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ControlScreen(activity: MainActivity) {
     val status by Link.status.collectAsStateWithLifecycle()
@@ -104,19 +126,20 @@ fun ControlScreen(activity: MainActivity) {
             )
             if (t != null) {
                 KeyValue("No depósito", "${fmt(t?.tankL, 2)} L")
-                KeyValue("Autonomia", "${fmt(t?.rangeKm, 0)} km")
+                KeyValue("Autonomia", "${fmt(t?.rangeKm, 0)} km a ${fmt(t?.rangeL100, 2)} L/100")
                 KeyValue("Desde o abastecimento", "${fmt(t?.fillKm, 1)} km · ${fmt(t?.fillAvg, 2)} L/100")
             }
             tankLine?.let { Text(it, color = Palette.label, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp)) }
             fillLine?.let { Text(it, color = Palette.text, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp)) }
             suggestedK?.let { k ->
                 val cur = params["FUEL_K"]?.value
-                Text("Calibração: a bomba sugere FUEL_K = $k (atual ${cur ?: "?"})",
+                fun lph(v: Int?) = if (v == null) "?" else String.format(java.util.Locale.US, "%.3f", v / 1000.0)
+                Text("Calibração: a bomba sugere ${lph(k)} L/h por INJ (atual ${lph(cur)})",
                     color = Palette.amber, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(enabled = connected, onClick = {
                         Link.send("PARAM SET FUEL_K $k"); Link.clearSuggestion()
-                    }) { Text("Aplicar $k") }
+                    }) { Text("Aplicar ${lph(k)}") }
                     OutlinedButton(onClick = { Link.clearSuggestion() }) { Text("Ignorar") }
                 }
             }
@@ -142,7 +165,8 @@ fun ControlScreen(activity: MainActivity) {
             if (params.isEmpty()) {
                 Text(if (connected) "A ler…" else "Liga à mota para ver os parâmetros.", color = Palette.label)
             }
-            params.values.sortedBy { it.name }.forEach { p -> ParamRow(p, connected) }
+            params.values.filter { it.name != "SPD_SRC" }.sortedBy { spec(it).order }
+                .forEach { p -> ParamRow(p, connected, if (p.name == "BASE_L100") t?.rangeL100 else null) }
         }
 
         Section("Mudanças") {
@@ -153,6 +177,20 @@ fun ControlScreen(activity: MainActivity) {
                 OutlinedButton(enabled = connected, onClick = { Link.send("GEAR RESET") },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.red)) { Text("Reaprender") }
             }
+        }
+
+        Section("Ecrã") {
+            var orient by remember { mutableStateOf(Link.orientation(ctx)) }
+            Text("Orientação", color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Orientation.entries.forEach { o ->
+                    FilterChip(selected = orient == o, onClick = {
+                        orient = o; Link.setOrientation(ctx, o); activity.applyOrientation()
+                    }, label = { Text(o.label, fontSize = 12.sp) })
+                }
+            }
+            Text("\"Horizontal invertida\" é a do DMD2 com o telemóvel rodado para a direita.",
+                color = Palette.label, fontSize = 12.sp)
         }
 
         Section("Ligação e telemóvel") {
@@ -186,25 +224,31 @@ fun ControlScreen(activity: MainActivity) {
 }
 
 @Composable
-private fun ParamRow(p: ParamInfo, connected: Boolean) {
-    var text by remember(p.name, p.value) { mutableStateOf(p.value.toString()) }
-    val v = text.toIntOrNull()
+private fun ParamRow(p: ParamInfo, connected: Boolean, live: Double?) {
+    val ps = spec(p)
+    var text by remember(p.name, p.value) { mutableStateOf(shown(p.value, ps)) }
+    val v = parsed(text, ps)
     val valid = v != null && v >= p.min && v <= p.max
-    Column(Modifier.fillMaxWidth().padding(top = 8.dp).background(Color.Transparent)) {
-        Text(PARAM_LABELS[p.name] ?: p.name, color = Palette.text, fontSize = 13.sp)
+    Column(Modifier.fillMaxWidth().padding(top = 10.dp).background(Color.Transparent)) {
+        Text(ps.label + if (ps.unit.isNotEmpty()) " (${ps.unit})" else "", color = Palette.text, fontSize = 14.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = text, onValueChange = { text = it }, singleLine = true, isError = !valid,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (ps.scale == 1) KeyboardType.Number else KeyboardType.Decimal),
                 modifier = Modifier.width(130.dp),
             )
             Button(enabled = connected && valid && v != p.value, onClick = { Link.send("PARAM SET ${p.name} $v") },
                 modifier = Modifier.padding(start = 8.dp)) { Text("Guardar") }
             if (p.def != p.value) {
                 OutlinedButton(enabled = connected, onClick = { Link.send("PARAM SET ${p.name} ${p.def}") },
-                    modifier = Modifier.padding(start = 6.dp)) { Text("${p.def}") }
+                    modifier = Modifier.padding(start = 6.dp)) { Text(shown(p.def, ps)) }
             }
         }
-        Text("${p.name} · ${p.min}..${p.max} ${p.unit}", color = Palette.label, fontSize = 11.sp)
+        if (live != null) {
+            Text("Agora a autonomia usa ${fmt(live, 2)} ${ps.unit}", color = Palette.amber, fontSize = 12.sp)
+        }
+        ps.hint?.let { Text(it, color = Palette.label, fontSize = 11.sp) }
+        Text("${shown(p.min, ps)} a ${shown(p.max, ps)} ${ps.unit}", color = Palette.dim, fontSize = 11.sp)
     }
 }

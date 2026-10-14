@@ -1,6 +1,6 @@
 #pragma once
 
-/* Non-blocking OBD-II Mode 01 poller.
+/* Non-blocking OBD-II Mode 01 poller, with one-off requests in any mode.
  *
  * Owns the request/response cycle so nothing else has to wait on the bus:
  *  - Asks the ECU which PIDs it supports (Mode 01 PIDs 0x00, 0x20, ...) and
@@ -103,6 +103,24 @@ bool obd_poller_feed_frame_from_isr(uint32_t id, const uint8_t *data, uint8_t le
  * (41 PID A B ...) and *response_len its length. */
 bool obd_poller_query(uint8_t pid, uint8_t *response, uint8_t *response_len,
                       uint32_t timeout_ms);
+
+/* Longest reply obd_poller_request() keeps (Mode 03 with 60+ codes). */
+#define OBD_POLLER_RAW_MAX 160
+
+typedef enum {
+    OBD_REQ_OK,        /* positive reply in response */
+    OBD_REQ_NEGATIVE,  /* 7F <mode> <NRC> in response */
+    OBD_REQ_TIMEOUT,   /* no (complete) reply */
+} obd_req_status_t;
+
+/* One-off request in any mode (03 fault codes, 04 clear, 07, 0A, 09 ...),
+ * request starting at the service byte, at most 7 bytes. Multi-frame
+ * replies are reassembled (flow control goes to the first ECU that
+ * answers) and "response pending" is waited out. Blocks only the caller;
+ * response holds the reply from the service byte on. */
+obd_req_status_t obd_poller_request(const uint8_t *request, uint8_t request_len,
+                                    uint8_t *response, size_t response_size,
+                                    size_t *response_len, uint32_t timeout_ms);
 
 /* Whether the last support discovery says the ECU has this PID (true when
  * unknown). */

@@ -36,6 +36,7 @@
 #include "services/gatt/ble_svc_gatt.h"
 
 #include "bike_can.h"
+#include "obd_dtc.h"
 #include "obd_poller.h"
 #include "pid_scan_task.h"
 #include "boot_diag.h"
@@ -1568,12 +1569,15 @@ static void tank_report(const char *prefix)
     fmt_fixed(km, sizeof(km), v.km_since_fill, 1);
     fmt_fixed(avg, sizeof(avg), v.avg_l_per_100km, 2);
     fmt_fixed(range, sizeof(range), v.range_km, 0);
-    char line[160];
-    snprintf(line, sizeof(line), "%s level=%s%s used=%sL km=%s avg=%s%s range=%s%s cap=%ld.%ldL",
+    char line[192];
+    char per100[12];
+    fmt_fixed(per100, sizeof(per100), v.range_l_per_100km, 2);
+    snprintf(line, sizeof(line),
+             "%s level=%s%s used=%sL km=%s avg=%s%s range=%s%s at=%sL/100km cap=%ld.%ldL",
              prefix, v.level_known ? level : "?", v.level_known ? "L" : "", used, km,
              v.avg_valid ? avg : "?", v.avg_valid ? "L/100km" : "", v.range_valid ? range : "?",
-             v.range_valid ? "km" : "", (long)rt_param(RTP_TANK_DL) / 10,
-             (long)rt_param(RTP_TANK_DL) % 10);
+             v.range_valid ? "km" : "", v.level_known ? per100 : "?",
+             (long)rt_param(RTP_TANK_DL) / 10, (long)rt_param(RTP_TANK_DL) % 10);
     ESP_LOGI(TAG, "%s", line);
     ble_send_text(line);
     ble_send_text("\r");
@@ -1598,6 +1602,17 @@ static void ride_tank_step(uint32_t dt_ms, bool speed_ok, float kmh)
     if (req != 0) {
         float litres = s_fill_litres;
         s_fill_request = 0;
+        /* The range consumption learnt over this tank becomes the baseline
+         * for the next one. */
+        tank_view_t before;
+        tank_view(&s_tank, k, rt_param(RTP_BASE_L100) / 100.0f, &before);
+        if (before.km_since_fill >= TANK_LEARN_MIN_KM && before.range_l_per_100km > 0.0f &&
+            rt_param_set(RTP_BASE_L100, lroundf(before.range_l_per_100km * 100.0f))) {
+            char line[48];
+            snprintf(line, sizeof(line), "PARAM BASE_L100=%ld\r", (long)rt_param(RTP_BASE_L100));
+            ESP_LOGI(TAG, "learnt %s", line);
+            ble_send_text(line);
+        }
         if (req == 3) {
             tank_set_level(&s_tank, litres);
         } else {
@@ -2072,6 +2087,104 @@ static bool obd_query_pid(uint8_t pid, char *response, size_t response_size)
     return true;
 }
 
+/* Fault codes for the phone app. One line per code, so the app can list
+ * them as they come:
+ *   DTC MIL=1 COUNT=2          (Mode 01 PID 01: lamp and stored count)
+ *   DTC STORED P0133           (Mode 03; then PENDING 07 and PERMANENT 0A)
+ *   DTC STORED NONE | NO DATA | UNSUPPORTED
+ *   DTC END */
+#define DTC_TIMEOUT_MS 2500
+#define DTC_MAX_LISTED 32
+
+static void dtc_report_mode(uint8_t mode, const char *name)
+{
+    uint8_t reply[OBD_POLLER_RAW_MAX];
+    size_t len = 0;
+    char line[48];
+    obd_req_status_t st = obd_poller_request(&mode, 1, reply, sizeof(reply), &len, DTC_TIMEOUT_MS);
+    if (st != OBD_REQ_OK) {
+        snprintf(line, sizeof(line), "DTC %s %s\r", name,
+                 st == OBD_REQ_NEGATIVE ? "UNSUPPORTED" : "NO DATA");
+        ble_send_text(line);
+        return;
+    }
+    uint16_t codes[DTC_MAX_LISTED];
+    int n = obd_dtc_parse(reply, len, mode, codes, DTC_MAX_LISTED);
+    if (n <= 0) {
+        snprintf(line, sizeof(line), "DTC %s NONE\r", name);
+        ble_send_text(line);
+        return;
+    }
+    for (int i = 0; i < n && i < DTC_MAX_LISTED; ++i) {
+        char code[OBD_DTC_TEXT_LEN];
+        obd_dtc_format(codes[i], code);
+        snprintf(line, sizeof(line), "DTC %s %s\r", name, code);
+        ble_send_text(line);
+    }
+    ESP_LOGI(TAG, "DTC %s: %d code(s)", name, n);
+}
+
+static void dtc_report(void)
+{
+    uint8_t reply[8];
+    uint8_t reply_len = 0;
+    char line[48];
+    if (obd_poller_query(0x01, reply, &reply_len, OBD_QUERY_TIMEOUT_MS) && reply_len >= 3) {
+        snprintf(line, sizeof(line), "DTC MIL=%u COUNT=%u\r", (unsigned)(reply[2] >> 7),
+                 (unsigned)(reply[2] & 0x7F));
+    } else {
+        /* ECU silent (ignition off): don't wait out three more timeouts. */
+        ble_send_text("DTC MIL=? COUNT=?\rDTC STORED NO DATA\rDTC PENDING NO DATA\r"
+                      "DTC PERMANENT NO DATA\rDTC END\r>");
+        return;
+    }
+    ble_send_text(line);
+    dtc_report_mode(0x03, "STORED");
+    dtc_report_mode(0x07, "PENDING");
+    dtc_report_mode(0x0A, "PERMANENT");
+    ble_send_text("DTC END\r>");
+}
+
+/* Mode 04. ECUs usually want ignition on and the engine stopped; a refusal
+ * comes back with its NRC (22 = conditions not correct). */
+static void dtc_clear(void)
+{
+    uint8_t mode = 0x04;
+    uint8_t reply[8];
+    size_t len = 0;
+    char line[48];
+    obd_req_status_t st = obd_poller_request(&mode, 1, reply, sizeof(reply), &len, DTC_TIMEOUT_MS);
+    if (st == OBD_REQ_OK) {
+        snprintf(line, sizeof(line), "DTC CLEARED\r>");
+    } else if (st == OBD_REQ_NEGATIVE && len >= 3) {
+        snprintf(line, sizeof(line), "DTC CLEAR REFUSED %02X\r>", reply[2]);
+    } else {
+        snprintf(line, sizeof(line), "DTC CLEAR NO DATA\r>");
+    }
+    ESP_LOGW(TAG, "%s", line);
+    ble_send_text(line);
+}
+
+/* ELM327 passthrough for modes without a PID (03, 04, 07, 0A): the whole
+ * reply as hex on one line, which is what scan apps parse with headers
+ * off. */
+static void elm_raw_mode(uint8_t mode)
+{
+    uint8_t reply[OBD_POLLER_RAW_MAX];
+    size_t len = 0;
+    obd_req_status_t st = obd_poller_request(&mode, 1, reply, sizeof(reply), &len, DTC_TIMEOUT_MS);
+    if (st == OBD_REQ_TIMEOUT) {
+        ble_send_text("NO DATA\r\r>");
+        return;
+    }
+    char hex[4];
+    for (size_t i = 0; i < len; ++i) {
+        snprintf(hex, sizeof(hex), i + 1 < len ? "%02X " : "%02X", reply[i]);
+        ble_send_text(hex);
+    }
+    ble_send_text("\r\r>");
+}
+
 static const ble_uuid16_t s_obd_service_uuid = BLE_UUID16_INIT(0xFFF0);
 static const ble_uuid16_t s_obd_notify_uuid = BLE_UUID16_INIT(0xFFF1);
 static const ble_uuid16_t s_obd_write_uuid = BLE_UUID16_INIT(0xFFF2);
@@ -2273,6 +2386,13 @@ static void process_elm_command(char *command)
             ble_send_text(line);
         }
         ble_send_text(">");
+    } else if (!strcmp(command, "DTC")) {
+        dtc_report();
+    } else if (!strcmp(command, "DTC CLEAR")) {
+        dtc_clear();
+    } else if (!strcmp(command, "03") || !strcmp(command, "04") || !strcmp(command, "07") ||
+               !strcmp(command, "0A")) {
+        elm_raw_mode((uint8_t)strtoul(command, NULL, 16));
     } else if (!strcmp(command, "ATST") || !strcmp(command, "ATIGN")) {
         ble_send_text("OK\r\r>");
     } else if (strlen(command) == 4 && command[0] == '0' &&
@@ -2857,6 +2977,8 @@ static void phone_telemetry_fill(phone_telemetry_t *tm)
         tm->fill_avg_x100 = PHONE_TM_NA16;
     }
     tm->fill_m = (uint32_t)lroundf(ride.tank.km_since_fill * 1000.0f);
+    tm->range_l100_x100 = ride.tank.level_known ? phone_u16(ride.tank.range_l_per_100km, 100.0f)
+                                                : PHONE_TM_NA16;
 }
 
 static void phone_link_task(void *arg)

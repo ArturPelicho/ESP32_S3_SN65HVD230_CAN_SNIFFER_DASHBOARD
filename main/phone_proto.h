@@ -98,9 +98,10 @@ typedef struct {
     uint32_t fill_m;               /* metres since the fill */
     uint16_t learn_s;              /* gear learning seconds, capped */
     uint16_t shift_rpm;
+    uint16_t range_l100_x100;      /* consumption the range uses, NA16 = none */
 } phone_telemetry_t;
 
-#define PHONE_TM_LEN 73
+#define PHONE_TM_LEN 75
 size_t phone_telemetry_encode(const phone_telemetry_t *in, uint8_t *buf, size_t size);
 bool phone_telemetry_decode(const uint8_t *buf, size_t len, phone_telemetry_t *out); /* tests */
 

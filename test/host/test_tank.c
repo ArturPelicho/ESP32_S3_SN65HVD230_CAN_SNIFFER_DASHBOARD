@@ -29,13 +29,22 @@ int main(void)
     tank_view(&t, k, 2.65f, &v);
     assert(v.level_known && near(v.remaining_l, 12.0, 1e-4));
     assert(v.range_valid && near(v.range_km, 12.0 / 2.65 * 100.0, 0.1)); /* baseline */
+    assert(near(v.range_l_per_100km, 2.65, 1e-4));
+
+    /* The first km barely move it: 1 km at 5 L/100km. */
+    tank_state_t probe = t;
+    tank_add(&probe, per_litre * 0.05, 1.0);
+    tank_view(&probe, k, 2.65f, &v);
+    assert(near(v.range_l_per_100km, (2.65 * 50.0 + 5.0) / 51.0, 1e-3) && v.range_l_per_100km < 2.72f);
 
     /* 100 km on 2.5 L: since-fill average takes over. */
     for (int i = 0; i < 100; ++i) tank_add(&t, per_litre * 0.025, 1.0);
     tank_view(&t, k, 2.65f, &v);
     assert(near(v.used_since_fill_l, 2.5, 1e-3) && near(v.remaining_l, 9.5, 1e-3));
     assert(v.avg_valid && near(v.avg_l_per_100km, 2.5, 1e-3));
-    assert(near(v.range_km, 380.0, 0.5));
+    /* Range blends the 2.65 baseline (worth 50 km) with the 2.5 average. */
+    assert(near(v.range_l_per_100km, (2.65 * 50.0 + 250.0) / 150.0, 1e-3));
+    assert(near(v.range_km, 9.5 / 2.55 * 100.0, 0.5));
 
     /* Partial fill of 2 L: level 11.5, but the full reference stays. */
     assert(!tank_fill(&t, 2.0f, false, 12.0f, k, &sk, &est));
