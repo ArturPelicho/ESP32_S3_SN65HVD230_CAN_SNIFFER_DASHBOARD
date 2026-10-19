@@ -11,6 +11,13 @@ idf_component_register(
          "steady_cal.c"
          "pid_scan_task.c"
          "boot_diag.c"
+         "speed_source.c"
+         "gear_learner.c"
+         "tank.c"
+         "phone_proto.c"
+         "rt_params.c"
+         "isotp_rx.c"
+         "obd_dtc.c"
     INCLUDE_DIRS "."
     REQUIRES bt nvs_flash esp_driver_twai esp_lcd esp_driver_spi esp_driver_gpio esp_timer esp_app_format
 )

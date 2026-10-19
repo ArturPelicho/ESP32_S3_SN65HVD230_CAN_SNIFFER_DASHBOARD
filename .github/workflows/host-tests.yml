@@ -1,0 +1,26 @@
+name: Host tests
+
+on:
+  push:
+    paths:
+      - "main/**"
+      - "test/**"
+      - ".github/workflows/host-tests.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run host tests
+        run: |
+          set -e
+          for t in fuel_estimator:fuel_estimator can_bus_recovery_fsm:can_bus_recovery_fsm pid_scan:pid_scan \
+                   bike_can:bike_can inj_meter:inj_meter steady_cal:steady_cal gear_learner:gear_learner \
+                   speed_source:speed_source tank:tank phone_proto:phone_proto obd_dtc:obd_dtc+isotp_rx; do
+            test=${t%%:*}; srcs=${t##*:}
+            gcc -std=c11 -Wall -Wextra -I main test/host/test_$test.c $(printf 'main/%s.c ' ${srcs//+/ }) -lm -o /tmp/$test
+            /tmp/$test
+          done

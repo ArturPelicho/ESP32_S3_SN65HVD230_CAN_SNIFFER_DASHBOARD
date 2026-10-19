@@ -3,3 +3,7 @@ build_fresh/
 sdkconfig.old
 managed_components/
 dependencies.lock
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties

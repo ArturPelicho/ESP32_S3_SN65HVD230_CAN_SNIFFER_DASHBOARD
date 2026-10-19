@@ -108,9 +108,33 @@ endpoint; measure the bike's own termination first.
   under **Fuel injection estimate**. Volumetric efficiency is the calibration
   factor: if the reading is 10 % high against a fill-to-fill check, lower it
   by 10 %.
-- Litres used since start-up. Since the ECU has no usable speed PID, the
-  panel shows a `NO SPEED` hint and L/100km waits for an external speed
-  source (see future plans).
+- Litres used since start-up. The ECU has no usable speed PID, so road
+  speed comes from the sources below; with none the panel shows `NO SPEED`.
+
+**Road speed, gears and tank**
+- Speed sources kept side by side (`main/speed_source.*`): phone GPS over BLE
+  (`GPS_EXT`), wheel sensor, on-board GPS module, gear estimate and OBD. One
+  of them feeds the fuel totals (`SPD_SRC`); when it drops out the gear
+  estimate stands in, then the average of the last ~20 s is held for up to
+  `SPD_HOLD_S` while the engine pulls (tunnels).
+- Gear learning (`main/gear_learner.*`): steady riding with a GPS speed fills
+  a histogram of km/h per 1000 rpm; each gear is a peak, saved in NVS. Once
+  learnt, speed = RPM x ratio at the CAN rate, and a shift is followed by
+  picking the gear that keeps the speed continuous (works without GPS). The
+  gear shows as `G1`..`G5` under the temperature unit.
+- Tank (`main/tank.*`): `FILL FULL <L>`, `FILL ADD <L>` or `TANK SET <L>`;
+  level, since-fill average and range, all saved in NVS. Two fills to full
+  give a suggested `FUEL_K` from the pump litres.
+- Runtime parameters (`main/rt_params.*`, menuconfig **Speed, gears, tank and
+  phone link** for the defaults): `PARAM` lists them, `PARAM SET <NAME> <n>`
+  changes one and stores it. Other commands: `AVG RESET`, `TANK`, `GEAR`,
+  `GEAR RESET`, `SPEED`.
+
+**Phone app** (`android/`, see [docs/app-telemovel.md](docs/app-telemovel.md))
+- Sends the phone's GPS fixes to the board and shows a full dashboard, the
+  controls above and diagnostics. Binary packets in `main/phone_proto.h`,
+  service `6d6f7461-0001-4b1e-9c3a-5a1e00000000`. The APK is built by the
+  "Android app" GitHub Actions workflow.
 
 **BLE ELM327 emulator**
 - Advertises as `OBDII` with an ELM327-style GATT profile (service `FFF0`,
@@ -146,7 +170,13 @@ gcc -std=c11 -Wall -I main test/host/test_pid_scan.c main/pid_scan.c -o scan_tes
 gcc -std=c11 -Wall -I main test/host/test_bike_can.c main/bike_can.c -o bike_test && ./bike_test
 gcc -std=c11 -Wall -I main test/host/test_inj_meter.c main/inj_meter.c -lm -o inj_test && ./inj_test
 gcc -std=c11 -Wall -I main test/host/test_steady_cal.c main/steady_cal.c -lm -o cal_test && ./cal_test
+gcc -std=c11 -Wall -I main test/host/test_gear_learner.c main/gear_learner.c -lm -o gear_test && ./gear_test
+gcc -std=c11 -Wall -I main test/host/test_speed_source.c main/speed_source.c -o speed_test && ./speed_test
+gcc -std=c11 -Wall -I main test/host/test_tank.c main/tank.c -o tank_test && ./tank_test
+gcc -std=c11 -Wall -I main test/host/test_phone_proto.c main/phone_proto.c -lm -o proto_test && ./proto_test
 ```
+
+The "Host tests" GitHub Actions workflow runs all of them on every push.
 
 ## Project layout
 
@@ -162,6 +192,12 @@ gcc -std=c11 -Wall -I main test/host/test_steady_cal.c main/steady_cal.c -lm -o 
 | `main/bike_can.*` | Decoder for the ECU's `0x110` / `0x111` broadcast |
 | `main/pid_scan*` | PID discovery test |
 | `main/boot_diag.*` | Boot progress record (NVS + serial log) |
+| `main/speed_source.*` | Road speed sources and the fuel speed selection |
+| `main/gear_learner.*` | Gear ratio learning and gear tracking |
+| `main/tank.*` | Tank level, range, fill-up calibration |
+| `main/phone_proto.*` | BLE packets to and from the phone app |
+| `main/rt_params.*` | Runtime parameters in NVS |
+| `android/` | Phone app (Kotlin, Jetpack Compose) |
 | `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
 | `test/host/` | Host unit tests |
