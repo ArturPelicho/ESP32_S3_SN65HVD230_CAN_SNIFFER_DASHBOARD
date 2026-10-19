@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -92,7 +93,7 @@ object TrackStore {
                         color = COLORS[_tracks.value.size % COLORS.size], width = 2, visible = true,
                     )
                     save(app, t)
-                    _tracks.value = _tracks.value + t
+                    _tracks.update { it + t }
                     done += t.name
                 }.onFailure { failed += "$name (${it.message})" }
             }
@@ -111,12 +112,12 @@ object TrackStore {
 
     fun update(ctx: Context, t: Track) {
         save(ctx, t)
-        _tracks.value = _tracks.value.map { if (it.id == t.id) t else it }
+        _tracks.update { list -> list.map { if (it.id == t.id) t else it } }
     }
 
     fun delete(ctx: Context, id: String) {
         File(dir(ctx), "$id.json").delete()
-        _tracks.value = _tracks.value.filter { it.id != id }
+        _tracks.update { list -> list.filter { it.id != id } }
         if (_active.value == id) setActive(ctx, null)
     }
 
@@ -161,8 +162,16 @@ object TrackStore {
 
 /** Follows the bike along one track: how far done, how far left, how far off. */
 class TrackFollower(track: Track, private val reversed: Boolean) {
-    private val pts: List<LatLon> = track.lines.flatten().let { if (reversed) it.reversed() else it }
-    private val cum = DoubleArray(pts.size).also { c -> for (i in 1 until pts.size) c[i] = c[i - 1] + metres(pts[i - 1], pts[i]) }
+    private val lines = if (reversed) track.lines.reversed().map { it.reversed() } else track.lines
+    private val pts: List<LatLon> = lines.flatten()
+    /** True where a new line starts: no segment joins it to the point before. */
+    private val gap = BooleanArray(pts.size).also { g ->
+        var k = 0
+        for (l in lines) { if (k > 0 && k < g.size) g[k] = true; k += l.size }
+    }
+    private val cum = DoubleArray(pts.size).also { c ->
+        for (i in 1 until pts.size) c[i] = c[i - 1] + if (gap[i]) 0.0 else metres(pts[i - 1], pts[i])
+    }
     val totalM = cum.lastOrNull() ?: 0.0
     private var lastIdx = -1
 
@@ -173,6 +182,7 @@ class TrackFollower(track: Track, private val reversed: Boolean) {
         fun best(from: Int, to: Int): Triple<Int, Double, Double> {
             var bi = from; var bd = Double.MAX_VALUE; var bt = 0.0
             for (i in from until to) {
+                if (gap[i + 1]) continue
                 val (d, t) = toSegment(here, pts[i], pts[i + 1])
                 if (d < bd) { bd = d; bi = i; bt = t }
             }

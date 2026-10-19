@@ -153,7 +153,9 @@ object MapStyle {
                 "fill-opacity" to listOf("interpolate", listOf("linear"), listOf("zoom"), 14, 0, 15.5, 0.85),
             ), minzoom = 14)
 
-            val notPath = listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true)
+            // Railways fall into the "minor" class; keep them out of the road layers so they stay dashed.
+            val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true),
+                listOf("!=", listOf("get", "kind"), "rail"))
             val tunnel = listOf("==", listOf("get", "is_tunnel"), true)
             lines += layer("rail", "line", "roads", paint = mapOf(
                 "line-color" to c.rail, "line-width" to 1.2, "line-dasharray" to listOf(3, 3),

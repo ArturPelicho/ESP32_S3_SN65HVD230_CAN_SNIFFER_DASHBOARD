@@ -55,6 +55,7 @@
             </intent-filter>
             <!-- Many apps send these files as generic types; accept them and let the parser decide. -->
             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />

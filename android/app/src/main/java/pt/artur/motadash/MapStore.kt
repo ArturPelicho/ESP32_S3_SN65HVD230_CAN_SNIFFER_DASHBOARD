@@ -57,7 +57,7 @@ data class DownloadState(val done: Long, val total: Long, val failed: Boolean = 
  */
 object MapStore {
     private const val RELEASES =
-        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=50"
+        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100&page="
     private const val PREFS = "maps"
 
     private val _index = MutableStateFlow<MapIndex?>(null)
@@ -110,13 +110,17 @@ object MapStore {
     /** Asks GitHub for the newest maps-* release and its index. */
     suspend fun fetchIndex(ctx: Context): Result<MapIndex> = withContext(Dispatchers.IO) {
         runCatching {
-            val releases = JSONArray(get(RELEASES))
+            // App releases (one per build) share the list with the monthly map ones: page until a map one shows up.
             var best: JSONObject? = null
-            for (i in 0 until releases.length()) {
-                val r = releases.getJSONObject(i)
-                val tag = r.optString("tag_name")
-                if (!tag.startsWith("maps-") || r.optBoolean("draft")) continue
-                if (best == null || tag > best.optString("tag_name")) best = r
+            for (page in 1..20) {
+                val releases = JSONArray(get(RELEASES + page))
+                for (i in 0 until releases.length()) {
+                    val r = releases.getJSONObject(i)
+                    val tag = r.optString("tag_name")
+                    if (!tag.startsWith("maps-") || r.optBoolean("draft")) continue
+                    if (best == null || tag > best.optString("tag_name")) best = r
+                }
+                if (best != null || releases.length() < 100) break
             }
             val rel = best ?: error("Ainda não há mapas publicados")
             val assets = rel.getJSONArray("assets")

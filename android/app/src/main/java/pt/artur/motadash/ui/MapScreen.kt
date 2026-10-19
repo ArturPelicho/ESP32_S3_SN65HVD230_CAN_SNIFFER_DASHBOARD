@@ -1,7 +1,9 @@
 package pt.artur.motadash.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -59,9 +61,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -486,17 +490,25 @@ fun MapScreen() {
         while (true) { delay(60_000); minute++ }
     }
 
-    // GPS of the phone, while the map is on screen (works without the board).
-    DisposableEffect(Unit) {
+    // GPS of the phone, while the map is on screen and the app is in front (works without the board).
+    // Keyed on resume so a permission granted later, or a trip to the background, re-registers.
+    val lifeState by lifecycle.currentStateAsState()
+    val resumed = lifeState.isAtLeast(Lifecycle.State.RESUMED)
+    DisposableEffect(resumed) {
         val lm = ctx.getSystemService(LocationManager::class.java)
+        val allowed = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!resumed || lm == null || !allowed) return@DisposableEffect onDispose {}
         val listener = LocationListener { loc ->
-            if (loc.provider == LocationManager.GPS_PROVIDER || fix == null ||
-                fix?.provider != LocationManager.GPS_PROVIDER) fix = loc
+            // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old.
+            val cur = fix
+            if (loc.provider == LocationManager.GPS_PROVIDER || cur == null ||
+                cur.provider != LocationManager.GPS_PROVIDER || ageMs(cur) > 10_000) fix = loc
         }
         try {
-            lm?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { fix = it }
-            lm?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 0f, listener, Looper.getMainLooper())
-            if (lm?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
+            if (fix == null) lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { fix = it }
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 0f, listener, Looper.getMainLooper())
+            if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
                 lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000L, 0f, listener, Looper.getMainLooper())
         } catch (_: Exception) {
         }
@@ -505,9 +517,12 @@ fun MapScreen() {
             override fun onSatelliteStatusChanged(status: GnssStatus) { gnss = Gnss.of(status) }
             override fun onStopped() { gnss = Gnss() }
         }
-        try { lm?.registerGnssStatusCallback(gnssCb, Handler(Looper.getMainLooper())) } catch (_: Exception) {}
-        onDispose { lm?.removeUpdates(listener); lm?.unregisterGnssStatusCallback(gnssCb) }
+        try { lm.registerGnssStatusCallback(gnssCb, Handler(Looper.getMainLooper())) } catch (_: Exception) {}
+        onDispose { lm.removeUpdates(listener); lm.unregisterGnssStatusCallback(gnssCb) }
     }
+
+    // Map downloads finish in the background; pick them up here too, not only on the maps panel.
+    LaunchedEffect(Unit) { while (true) { MapStore.pollDownloads(ctx); delay(3000) } }
 
     val beeper = remember { runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() }
     DisposableEffect(Unit) { onDispose { beeper?.release() } }
@@ -529,7 +544,8 @@ fun MapScreen() {
     }
 
     // Speed: board first (wheel, gear), else phone GPS; 0 when standing still.
-    val phoneSpeed = fix?.takeIf { it.hasSpeed() }?.let { loc ->
+    // A fix older than ~5 s (tunnel, last known position) says nothing about the speed now.
+    val phoneSpeed = fix?.takeIf { it.hasSpeed() && ageMs(it) < 5_000 }?.let { loc ->
         stillFiltered(loc.speed * 3.6, if (loc.hasSpeedAccuracy()) loc.speedAccuracyMetersPerSecond * 3.6 else null)
     }
     val speed = stillFiltered(telemetry?.displaySpeed) ?: phoneSpeed
@@ -903,3 +919,7 @@ private fun bindLifecycle(mv: MapView, lifecycle: Lifecycle) {
 
 /** File size for the Mapas list. */
 internal fun mb(bytes: Long): String = if (bytes <= 0) "?" else "%.0f MB".format(bytes / 1_048_576.0)
+
+/** How old a fix is, in milliseconds. */
+private fun ageMs(loc: Location): Long =
+    (SystemClock.elapsedRealtimeNanos() - loc.elapsedRealtimeNanos) / 1_000_000
