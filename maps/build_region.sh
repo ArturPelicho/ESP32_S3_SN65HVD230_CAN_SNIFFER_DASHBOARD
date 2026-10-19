@@ -13,7 +13,7 @@ mkdir -p out work
 
 echo "== $ID: map extract z0-$MAXZ, bbox $W,$S,$E,$N"
 pmtiles extract "$PLANET" "out/$ID-$VER.pmtiles" --bbox="$W,$S,$E,$N" --maxzoom="$MAXZ"
-pmtiles show "out/$ID-$VER.pmtiles" | head -20
+pmtiles show "out/$ID-$VER.pmtiles" | head -20 || true   # head closes the pipe early
 
 if [ "$(echo "$R" | jq -r '.contours')" != "true" ]; then exit 0; fi
 
@@ -41,5 +41,5 @@ ogr2ogr -f GeoJSONSeq "work/$ID-contours.geojsons" "work/$ID-contours.gpkg" -dia
 tippecanoe -q -f -o "out/$ID-relevo-$VER.pmtiles" -l contours -n "Curvas de nivel $ID" \
   -A "Copernicus DEM GLO-30 (c) DLR/Airbus, ESA" -Z11 -z14 --simplification=6 --no-tile-size-limit \
   -j '{"contours":["any",["==","idx",1],[">=","$zoom",13]]}' "work/$ID-contours.geojsons"
-pmtiles show "out/$ID-relevo-$VER.pmtiles" | head -12
+pmtiles show "out/$ID-relevo-$VER.pmtiles" | head -12 || true   # head closes the pipe early
 rm -rf "$DEM" work/"$ID"*
