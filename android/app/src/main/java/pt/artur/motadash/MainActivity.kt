@@ -41,6 +41,7 @@ import pt.artur.motadash.ui.ControlScreen
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.DiagScreen
 import pt.artur.motadash.ui.DtcScreen
+import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
 
@@ -98,7 +99,7 @@ class MainActivity : ComponentActivity() {
 private fun App(activity: MainActivity) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
-    val titles = listOf("Painel", "Controlo", if (dtc.total > 0) "Erros (${dtc.total})" else "Erros", "Diagnóstico")
+    val titles = listOf("Mapa", "Painel", "Controlo", if (dtc.total > 0) "Erros (${dtc.total})" else "Erros", "Diagnóstico")
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         if (landscape) {
@@ -108,7 +109,7 @@ private fun App(activity: MainActivity) {
                     Box(Modifier.weight(1f).fillMaxHeight().clickable { tab = i }, contentAlignment = Alignment.Center) {
                         Text(t, fontSize = 13.sp, color = when {
                             tab == i -> Palette.amber
-                            i == 2 && dtc.total > 0 -> Palette.orange
+                            i == 3 && dtc.total > 0 -> Palette.orange
                             else -> Palette.label
                         })
                     }
@@ -118,15 +119,16 @@ private fun App(activity: MainActivity) {
             TabRow(selectedTabIndex = tab, containerColor = Color.Black, contentColor = Palette.amber) {
                 titles.forEachIndexed { i, t ->
                     Tab(selected = tab == i, onClick = { tab = i },
-                        text = { Text(t, maxLines = 1, color = if (i == 2 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
+                        text = { Text(t, maxLines = 1, color = if (i == 3 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
                 }
             }
         }
         Box(Modifier.fillMaxSize()) {
             when (tab) {
-                0 -> DashboardScreen()
-                1 -> ControlScreen(activity)
-                2 -> DtcScreen()
+                0 -> MapScreen()
+                1 -> DashboardScreen()
+                2 -> ControlScreen(activity)
+                3 -> DtcScreen()
                 else -> DiagScreen()
             }
         }

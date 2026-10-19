@@ -1,0 +1,6 @@
+[
+  {"id": "portugal", "name": "Portugal continental", "bbox": [-9.60, 36.90, -6.15, 42.20], "maxzoom": 15, "contours": true},
+  {"id": "madeira", "name": "Madeira", "bbox": [-17.35, 32.35, -16.20, 33.15], "maxzoom": 15, "contours": true},
+  {"id": "acores", "name": "Açores", "bbox": [-31.35, 36.90, -24.95, 39.80], "maxzoom": 15, "contours": true},
+  {"id": "espanha", "name": "Espanha", "bbox": [-9.40, 35.90, 4.40, 43.85], "maxzoom": 14, "contours": false}
+]
