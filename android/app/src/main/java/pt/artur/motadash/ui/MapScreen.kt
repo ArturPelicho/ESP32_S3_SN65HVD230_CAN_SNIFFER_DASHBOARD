@@ -21,9 +21,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
 import android.os.SystemClock
-import android.view.Gravity
 import android.view.Surface
 import android.view.WindowManager
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,12 +44,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -465,6 +467,7 @@ fun MapScreen() {
     var gnss by remember { mutableStateOf(Gnss()) }
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
+    var mapBearing by remember { mutableFloatStateOf(0f) }
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
     val reversed by TrackStore.reversed.collectAsStateWithLifecycle()
@@ -552,9 +555,9 @@ fun MapScreen() {
                         holder.map = m
                         m.uiSettings.isLogoEnabled = false
                         m.uiSettings.isAttributionEnabled = false
-                        m.uiSettings.isCompassEnabled = true
-                        m.uiSettings.setCompassGravity(Gravity.TOP or Gravity.START)
-                        m.uiSettings.setCompassMargins(24, (64 * c.resources.displayMetrics.density).toInt(), 0, 0)
+                        // Our own north needle (below) only shows the direction; MapLibre's one reset the map on touch.
+                        m.uiSettings.isCompassEnabled = false
+                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat() }
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
                         fun touched() { holder.gestureAt = SystemClock.elapsedRealtime() }
                         // Dragging or turning the map stops following; pinching only overrides the zoom.
@@ -669,6 +672,7 @@ fun MapScreen() {
                     .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
             )
             if (showGps) GpsPanel(fix, gnss, speed)
+            if (!showGps && abs(wrap180(mapBearing)) > 1f) NorthNeedle(mapBearing)
         }
 
         Column(
@@ -765,6 +769,28 @@ private fun TrackBox(t: Track, p: TrackProgress?) {
 }
 
 private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
+
+/** Where north is on the rotated map; not touchable. */
+@Composable
+private fun NorthNeedle(bearing: Float) {
+    Box(
+        Modifier.padding(top = 8.dp).size(44.dp).background(Color(0xCC0B0E12), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(34.dp).rotate(-bearing)) {
+            val w = size.width
+            val h = size.height
+            val north = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, h * 0.08f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
+            }
+            val south = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, h * 0.92f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
+            }
+            drawPath(north, Color(0xFFE2463C))
+            drawPath(south, Color(0xFFDDE2E8))
+        }
+    }
+}
 
 /** Round road sign with the speed limit. */
 @Composable
