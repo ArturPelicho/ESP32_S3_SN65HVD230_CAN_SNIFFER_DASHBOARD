@@ -215,6 +215,14 @@ fun ControlScreen(activity: MainActivity) {
                 if (opt) Palette.orange else Palette.green)
             if (opt) Button(onClick = { activity.requestNoBatteryOptimisation() }) { Text("Desligar otimização") }
             OutlinedButton(onClick = { activity.openAppSettings() }) { Text("Definições da app (Xiaomi: Arranque automático)") }
+            val scale by UiScale.value.collectAsStateWithLifecycle()
+            Text("Tamanho da interface", color = Palette.text, modifier = Modifier.padding(top = 6.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                UiScale.steps.forEach { v ->
+                    FilterChip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
+                        label = { Text("${(v * 100).toInt()}%") })
+                }
+            }
             var screenOn by remember { mutableStateOf(Link.keepScreenOn(ctx)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Ecrã sempre ligado com a app aberta", color = Palette.text, modifier = Modifier.weight(1f))

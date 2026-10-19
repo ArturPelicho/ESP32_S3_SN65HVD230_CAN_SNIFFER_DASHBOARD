@@ -25,12 +25,19 @@ data class MapRegion(
     val contoursFile: String?,
     val contoursBytes: Long,
     val contoursUrl: String?,
+    val limitsFile: String? = null,
+    val limitsBytes: Long = 0,
+    val limitsUrl: String? = null,
 )
 
 data class MapIndex(val version: String, val regions: List<MapRegion>)
 
 /** A region file on the phone. */
-data class InstalledMap(val id: String, val version: String, val enabled: Boolean, val map: File, val contours: File?)
+data class InstalledMap(
+    val id: String, val version: String, val enabled: Boolean, val map: File, val contours: File?,
+    /** Speed limits and speed cameras (layers "limits" and "cameras"), if downloaded. */
+    val limits: File? = null,
+)
 
 enum class MapTheme(val label: String) { AUTO("Automático"), DAY("Dia"), NIGHT("Noite") }
 enum class MapLanguage(val label: String) { PT("Português"), LOCAL("Língua local") }
@@ -77,6 +84,8 @@ object MapStore {
     fun setFollowMode(ctx: Context, m: FollowMode) = prefs(ctx).edit().putString("follow", m.name).apply()
     fun autoZoom(ctx: Context): Boolean = prefs(ctx).getBoolean("auto_zoom", true)
     fun setAutoZoom(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("auto_zoom", on).apply()
+    fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
+    fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
 
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
@@ -93,7 +102,8 @@ object MapStore {
             val map = File(d, p.getString("file_$id", null) ?: return@mapNotNull null)
             if (!map.exists()) return@mapNotNull null
             val contours = p.getString("contours_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
-            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours)
+            val limits = p.getString("limits_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
+            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours, limits)
         }
     }
 
@@ -146,6 +156,7 @@ object MapStore {
             val bbox = r.getJSONArray("bbox")
             val file = r.getString("file")
             val cf = r.optString("contoursFile").ifEmpty { null }
+            val lf = r.optString("limitsFile").ifEmpty { null }
             MapRegion(
                 id = r.getString("id"),
                 name = r.getString("name"),
@@ -156,6 +167,9 @@ object MapStore {
                 contoursFile = cf,
                 contoursBytes = r.optLong("contoursBytes"),
                 contoursUrl = cf?.let { urls?.get(it) } ?: r.optString("contoursUrl").ifEmpty { null },
+                limitsFile = lf,
+                limitsBytes = r.optLong("limitsBytes"),
+                limitsUrl = lf?.let { urls?.get(it) } ?: r.optString("limitsUrl").ifEmpty { null },
             )
         })
     }
@@ -168,6 +182,8 @@ object MapStore {
                 put("file", r.file); put("bytes", r.bytes); put("url", r.url ?: "")
                 put("contoursFile", r.contoursFile ?: ""); put("contoursBytes", r.contoursBytes)
                 put("contoursUrl", r.contoursUrl ?: "")
+                put("limitsFile", r.limitsFile ?: ""); put("limitsBytes", r.limitsBytes)
+                put("limitsUrl", r.limitsUrl ?: "")
             }
         }))
     }
@@ -179,13 +195,21 @@ object MapStore {
 
     private fun dm(ctx: Context) = ctx.getSystemService(DownloadManager::class.java)
 
-    /** Starts (or restarts) the download of a region's map and contour files. */
-    fun download(ctx: Context, r: MapRegion) {
+    /**
+     * Starts (or restarts) the download of a region's map, contour and speed limit files.
+     * With [limitsOnly], fetches just the speed limits for a map already on the phone.
+     */
+    fun download(ctx: Context, r: MapRegion, limitsOnly: Boolean = false) {
         val url = r.url ?: return
+        val p = prefs(ctx)
+        if (limitsOnly && (r.limitsFile == null || r.limitsUrl == null || p.getString("file_${r.id}", null) == null)) return
         cancel(ctx, r.id)
         val files = buildList {
-            add(r.file to url)
-            if (r.contoursFile != null && r.contoursUrl != null) add(r.contoursFile to r.contoursUrl)
+            if (!limitsOnly) {
+                add(r.file to url)
+                if (r.contoursFile != null && r.contoursUrl != null) add(r.contoursFile to r.contoursUrl)
+            }
+            if (r.limitsFile != null && r.limitsUrl != null) add(r.limitsFile to r.limitsUrl)
         }
         val ids = files.map { (name, u) ->
             File(dir(ctx), "$name.part").delete()
@@ -196,11 +220,12 @@ object MapStore {
                 .setDestinationUri(Uri.fromFile(File(dir(ctx), "$name.part")))
             dm(ctx).enqueue(req)
         }
-        prefs(ctx).edit()
+        p.edit()
             .putString("dl_${r.id}", ids.joinToString(","))
-            .putString("dlver_${r.id}", available(r.id) ?: "")
-            .putString("dlfile_${r.id}", r.file)
-            .putString("dlcontours_${r.id}", r.contoursFile ?: "")
+            .putString("dlver_${r.id}", if (limitsOnly) p.getString("ver_${r.id}", "") else available(r.id) ?: "")
+            .putString("dlfile_${r.id}", if (limitsOnly) p.getString("file_${r.id}", "") else r.file)
+            .putString("dlcontours_${r.id}", if (limitsOnly) p.getString("contours_${r.id}", "") else r.contoursFile ?: "")
+            .putString("dllimits_${r.id}", r.limitsFile ?: "")
             .apply()
         pollDownloads(ctx)
     }
@@ -254,11 +279,15 @@ object MapStore {
         val d = dir(ctx)
         val file = p.getString("dlfile_$id", null) ?: return
         val contours = p.getString("dlcontours_$id", "")!!.ifEmpty { null }
-        File(d, "$file.part").renameTo(File(d, file))
-        contours?.let { File(d, "$it.part").renameTo(File(d, it)) }
+        val limits = p.getString("dllimits_$id", "")!!.ifEmpty { null }
+        // A speed-limits-only download leaves the map and contours as they are (no .part for them).
+        for (name in listOfNotNull(file, contours, limits)) {
+            val part = File(d, "$name.part")
+            if (part.exists()) part.renameTo(File(d, name))
+        }
         // Old version's files go once the new ones are in place.
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null))
-            .filter { it != file && it != contours }
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
+            .filter { it != file && it != contours && it != limits }
             .forEach { File(d, it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) + id)
@@ -266,9 +295,11 @@ object MapStore {
             .putString("file_$id", file)
             .apply {
                 if (contours != null) putString("contours_$id", contours) else remove("contours_$id")
+                if (limits != null) putString("limits_$id", limits) else remove("limits_$id")
             }
             .putBoolean("on_$id", true)
             .remove("dl_$id").remove("dlver_$id").remove("dlfile_$id").remove("dlcontours_$id")
+            .remove("dllimits_$id")
             .apply()
     }
 
@@ -280,11 +311,11 @@ object MapStore {
     fun delete(ctx: Context, id: String) {
         cancel(ctx, id)
         val p = prefs(ctx)
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null))
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
             .forEach { File(dir(ctx), it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) - id)
-            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("on_$id")
+            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("limits_$id").remove("on_$id")
             .apply()
         refreshInstalled(ctx)
     }

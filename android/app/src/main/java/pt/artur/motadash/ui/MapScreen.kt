@@ -6,6 +6,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
+import android.location.GnssStatus
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.Handler
 import android.hardware.GeomagneticField
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -25,6 +30,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,7 +60,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sqrt
 import kotlinx.coroutines.delay
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.gestures.RotateGestureDetector
@@ -64,7 +75,11 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.android.style.sources.VectorSource
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.MultiLineString
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.Point
 import pt.artur.motadash.FollowMode
@@ -74,7 +89,10 @@ import pt.artur.motadash.MapStyle
 import pt.artur.motadash.MapTheme
 
 /** Keeps the MapLibre objects between recompositions and drives the camera. */
-private class MapHolder(private val arrow: Bitmap) {
+/** A speed camera ahead on the road. */
+data class CameraAlert(val meters: Int, val kmh: Int?, val key: String)
+
+private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap) {
     var map: MapLibreMap? = null
     var view: MapView? = null
     var style: Style? = null
@@ -110,6 +128,7 @@ private class MapHolder(private val arrow: Bitmap) {
         style = null
         m.setStyle(Style.Builder().fromJson(json)) { s ->
             s.addImage("me-arrow", arrow)
+            s.addImage("radar", radar)
             style = s
             drawMarker()
         }
@@ -173,6 +192,69 @@ private class MapHolder(private val arrow: Bitmap) {
         first = false
     }
 
+    /** Speed limit of the road under the bike (OpenStreetMap maxspeed), null when unknown. */
+    var limit: Int? = null
+        private set
+    private var limitMiss = 0
+    var camera: CameraAlert? = null
+        private set
+    private var lastCameraScan = 0L
+
+    /** Looks up the speed limit under the bike and speed cameras ahead; call on each GPS fix. */
+    fun scan() {
+        val m = map ?: return
+        val st = style ?: return
+        val loc = fix ?: return
+        val hitLayers = st.layers.map { it.id }.filter { it.startsWith("limit-hit-") }
+        if (hitLayers.isEmpty()) { limit = null; camera = null; return }
+
+        // Limit: the nearest tagged road within 30 m, preferring the one going our way.
+        val p = m.projection.toScreenLocation(LatLng(loc.latitude, loc.longitude))
+        val r = 48f
+        var best: Int? = null
+        var bestScore = Double.MAX_VALUE
+        for (f in m.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), *hitLayers.toTypedArray())) {
+            val parts: List<List<Point>> = when (val g = f.geometry()) {
+                is LineString -> listOf(g.coordinates())
+                is MultiLineString -> g.coordinates()
+                else -> continue
+            }
+            for (line in parts) for (i in 0 until line.size - 1) {
+                val (d, segBearing) = segment(loc, line[i], line[i + 1])
+                if (d > 30) continue
+                val diff = angleDiff(segBearing, heading.toDouble())
+                val forward = diff <= 90
+                val across = minOf(diff, 180 - diff)
+                val score = d + if (speedKmh > 10) across * 0.5 else 0.0
+                val k = num(f, "kmh") ?: num(f, if (forward) "kmh_f" else "kmh_b")
+                if (k != null && score < bestScore) { bestScore = score; best = k }
+            }
+        }
+        if (best != null) { limit = best; limitMiss = 0 } else if (++limitMiss > 6) limit = null
+
+        // Cameras: every 2 s, the nearest one ahead within 600 m while riding.
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastCameraScan < 2_000) return
+        lastCameraScan = now
+        if (speedKmh < 20) { camera = null; return }
+        var found: CameraAlert? = null
+        for (src in st.sources.filter { it.id.startsWith("lm-") }) {
+            val vs = src as? VectorSource ?: continue
+            for (f in vs.querySourceFeatures(arrayOf("cameras"), Expression.literal(true))) {
+                val pt = f.geometry() as? Point ?: continue
+                val (dx, dy) = metres(loc, pt)
+                val d = sqrt(dx * dx + dy * dy)
+                if (d > 600) continue
+                val to = Math.toDegrees(atan2(dx, dy))
+                if (angleDiff(to, heading.toDouble()) > 35) continue
+                if (found == null || d < found.meters) {
+                    found = CameraAlert(d.toInt(), num(f, "kmh"), "%.5f,%.5f".format(pt.latitude(), pt.longitude()))
+                }
+            }
+        }
+        camera = found
+    }
+
     fun zoomBy(step: Double) {
         val m = map ?: return
         userZoom = ((userZoom ?: m.cameraPosition.zoom) + step).coerceIn(3.0, 19.5)
@@ -180,6 +262,32 @@ private class MapHolder(private val arrow: Bitmap) {
         if (follow) update(300) else m.animateCamera(CameraUpdateFactory.zoomTo(userZoom!!), 300)
     }
 }
+
+private fun num(f: Feature, key: String): Int? =
+    if (f.hasNonNullValueForProperty(key)) f.getNumberProperty(key)?.toInt() else null
+
+/** Metres east and north of [p] from the fix (flat-earth, fine over a few km). */
+private fun metres(loc: Location, p: Point): Pair<Double, Double> {
+    val dx = (p.longitude() - loc.longitude) * 111_320.0 * cos(Math.toRadians(loc.latitude))
+    val dy = (p.latitude() - loc.latitude) * 110_540.0
+    return dx to dy
+}
+
+/** Distance from the fix to segment a-b in metres, and the segment's bearing in degrees. */
+private fun segment(loc: Location, a: Point, b: Point): Pair<Double, Double> {
+    val (ax, ay) = metres(loc, a)
+    val (bx, by) = metres(loc, b)
+    val vx = bx - ax
+    val vy = by - ay
+    val len2 = vx * vx + vy * vy
+    val t = if (len2 == 0.0) 0.0 else (-(ax * vx + ay * vy) / len2).coerceIn(0.0, 1.0)
+    val cx = ax + t * vx
+    val cy = ay + t * vy
+    return sqrt(cx * cx + cy * cy) to Math.toDegrees(atan2(vx, vy))
+}
+
+/** 0..180 degrees between two bearings. */
+private fun angleDiff(a: Double, b: Double): Double = abs(((a - b) % 360 + 540) % 360 - 180)
 
 /** Zoom by speed: close in town, wider on the open road. */
 private fun autoZoomFor(kmh: Double): Double = when {
@@ -237,6 +345,20 @@ private class Compass(private val ctx: Context, private val onHeading: (Float) -
 
 private fun wrap180(d: Float): Float = ((d + 540f) % 360f) - 180f
 
+/** Speed camera mark: red disc with a white camera. */
+private fun radarBitmap(): Bitmap {
+    val s = 64
+    val b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
+    val c = Canvas(b)
+    val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+    fill.color = 0xFFFFFFFF.toInt(); c.drawCircle(s / 2f, s / 2f, s / 2f - 1, fill)
+    fill.color = 0xFFE2463C.toInt(); c.drawCircle(s / 2f, s / 2f, s / 2f - 5, fill)
+    fill.color = 0xFFFFFFFF.toInt(); c.drawRoundRect(14f, 22f, 50f, 46f, 5f, 5f, fill)
+    c.drawRect(24f, 17f, 36f, 23f, fill)
+    fill.color = 0xFFE2463C.toInt(); c.drawCircle(32f, 34f, 7f, fill)
+    return b
+}
+
 /** The arrow that marks the bike, pointing north before rotation. */
 private fun arrowBitmap(): Bitmap {
     val s = 96
@@ -266,9 +388,14 @@ fun MapScreen() {
     var showMaps by remember { mutableStateOf(false) }
     var follow by remember { mutableStateOf(true) }
     var fix by remember { mutableStateOf<Location?>(null) }
+    var limit by remember { mutableStateOf<Int?>(null) }
+    var camera by remember { mutableStateOf<CameraAlert?>(null) }
+    var cameraBeep by remember { mutableStateOf(MapStore.cameraBeep(ctx)) }
+    var gnss by remember { mutableStateOf(Gnss()) }
+    var showGps by remember { mutableStateOf(false) }
     var minute by remember { mutableLongStateOf(0L) }
     val holder = remember {
-        MapHolder(arrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
+        MapHolder(arrowBitmap(), radarBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
     }
 
     LaunchedEffect(Unit) {
@@ -290,8 +417,17 @@ fun MapScreen() {
                 lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000L, 0f, listener, Looper.getMainLooper())
         } catch (_: Exception) {
         }
-        onDispose { lm?.removeUpdates(listener) }
+        // Satellites, for the GPS panel.
+        val gnssCb = object : GnssStatus.Callback() {
+            override fun onSatelliteStatusChanged(status: GnssStatus) { gnss = Gnss.of(status) }
+            override fun onStopped() { gnss = Gnss() }
+        }
+        try { lm?.registerGnssStatusCallback(gnssCb, Handler(Looper.getMainLooper())) } catch (_: Exception) {}
+        onDispose { lm?.removeUpdates(listener); lm?.unregisterGnssStatusCallback(gnssCb) }
     }
+
+    val beeper = remember { runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() }
+    DisposableEffect(Unit) { onDispose { beeper?.release() } }
 
     // Compass, so the arrow and the map turn with the bike when stopped.
     val compass = remember {
@@ -338,7 +474,7 @@ fun MapScreen() {
                         m.uiSettings.isAttributionEnabled = false
                         m.uiSettings.isCompassEnabled = true
                         m.uiSettings.setCompassGravity(Gravity.TOP or Gravity.START)
-                        m.uiSettings.setCompassMargins(24, 24, 0, 0)
+                        m.uiSettings.setCompassMargins(24, (64 * c.resources.displayMetrics.density).toInt(), 0, 0)
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
                         fun touched() { holder.gestureAt = SystemClock.elapsedRealtime() }
                         // Dragging or turning the map stops following; pinching only overrides the zoom.
@@ -374,6 +510,11 @@ fun MapScreen() {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
             holder.update(900)
+            holder.scan()
+            limit = holder.limit
+            val cam = holder.camera
+            if (cam != null && cam.key != camera?.key && cameraBeep) beeper?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
+            camera = cam
         }
         LaunchedEffect(fix?.latitude?.toInt(), fix?.longitude?.toInt()) {
             // Magnetic declination is about -1° to -3° in Portugal; recompute once per degree moved.
@@ -388,11 +529,18 @@ fun MapScreen() {
         ) {
             MapButton("+") { holder.zoomBy(1.0) }
             MapButton("−") { holder.zoomBy(-1.0) }
-            Column(
-                Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp)
+            Row(
+                Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(speed?.let { "%.0f".format(it) } ?: "--", color = Palette.text, fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                Text("km/h", color = Palette.label, fontSize = 12.sp)
+                val over = limit != null && speed != null && speed > limit!! + 2
+                Column {
+                    Text(speed?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
+                        fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                    Text("km/h", color = Palette.label, fontSize = 12.sp)
+                }
+                limit?.let { LimitSign(it) }
             }
         }
 
@@ -414,6 +562,37 @@ fun MapScreen() {
                 theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme)
             }
             MapButton("☰") { showMaps = true }
+        }
+
+        // GPS quality, top left; tap for the GPS panel.
+        Column(Modifier.align(Alignment.TopStart).padding(10.dp)) {
+            val acc = fix?.takeIf { it.hasAccuracy() }?.accuracy
+            val col = when {
+                fix == null || acc == null -> Palette.red
+                acc <= 10 -> Palette.green
+                acc <= 25 -> Palette.orange
+                else -> Palette.red
+            }
+            Text(
+                if (fix == null) "GPS sem sinal" else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
+                color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(8.dp))
+                    .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+            if (showGps) GpsPanel(fix, gnss, speed)
+        }
+
+        camera?.let { cam ->
+            Row(
+                Modifier.align(Alignment.TopCenter).padding(top = 10.dp)
+                    .background(Palette.red, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("RADAR", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("${(cam.meters + 25) / 50 * 50} m", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                cam.kmh?.let { LimitSign(it, small = true) }
+            }
         }
 
         Text(
@@ -443,9 +622,82 @@ fun MapScreen() {
                 onLang = { lang = it; MapStore.setLanguage(ctx, it) },
                 onMode = { mode = it; MapStore.setFollowMode(ctx, it); holder.mode = it; holder.update(600) },
                 onAutoZoom = { autoZoom = it; MapStore.setAutoZoom(ctx, it); holder.autoZoom = it; holder.userZoom = null },
+                cameraBeep = cameraBeep,
+                onCameraBeep = { cameraBeep = it; MapStore.setCameraBeep(ctx, it) },
                 onClose = { showMaps = false },
             )
         }
+    }
+}
+
+/** Round road sign with the speed limit. */
+@Composable
+private fun LimitSign(kmh: Int, small: Boolean = false) {
+    Box(
+        Modifier.size(if (small) 40.dp else 54.dp)
+            .background(Color.White, CircleShape)
+            .border(if (small) 4.dp else 6.dp, Color(0xFFE2463C), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("$kmh", color = Color.Black, fontSize = if (small) 15.sp else if (kmh >= 100) 18.sp else 22.sp,
+            fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Satellites seen and used, per constellation. */
+data class Gnss(val visible: Int = 0, val used: Int = 0, val byName: Map<String, Pair<Int, Int>> = emptyMap(), val bestCn0: Float = 0f) {
+    companion object {
+        fun of(s: GnssStatus): Gnss {
+            val by = LinkedHashMap<String, Pair<Int, Int>>()
+            var used = 0
+            var best = 0f
+            for (i in 0 until s.satelliteCount) {
+                val name = when (s.getConstellationType(i)) {
+                    GnssStatus.CONSTELLATION_GPS -> "GPS"
+                    GnssStatus.CONSTELLATION_GALILEO -> "Galileo"
+                    GnssStatus.CONSTELLATION_GLONASS -> "GLONASS"
+                    GnssStatus.CONSTELLATION_BEIDOU -> "BeiDou"
+                    GnssStatus.CONSTELLATION_QZSS -> "QZSS"
+                    GnssStatus.CONSTELLATION_SBAS -> "SBAS"
+                    else -> "Outros"
+                }
+                val u = s.usedInFix(i)
+                if (u) used++
+                best = maxOf(best, s.getCn0DbHz(i))
+                val (v0, u0) = by[name] ?: (0 to 0)
+                by[name] = (v0 + 1) to (u0 + if (u) 1 else 0)
+            }
+            return Gnss(s.satelliteCount, used, by, best)
+        }
+    }
+}
+
+@Composable
+private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
+    var now by remember { mutableLongStateOf(SystemClock.elapsedRealtimeNanos()) }
+    LaunchedEffect(Unit) { while (true) { delay(1000); now = SystemClock.elapsedRealtimeNanos() } }
+    Column(
+        Modifier.padding(top = 6.dp).width(250.dp)
+            .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text("GPS do telemóvel", color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        if (fix == null) {
+            Text("À espera do primeiro sinal…", color = Palette.label, fontSize = 13.sp)
+        } else {
+            KeyValue("Latitude", "%.6f".format(fix.latitude))
+            KeyValue("Longitude", "%.6f".format(fix.longitude))
+            KeyValue("Precisão", if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
+            KeyValue("Altitude", if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
+                (if (fix.hasVerticalAccuracy()) " ±%.0f".format(fix.verticalAccuracyMeters) else "") else "--")
+            KeyValue("Velocidade", speed?.let { "%.0f km/h".format(it) } ?: "--")
+            KeyValue("Rumo", if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
+            KeyValue("Idade do sinal", "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
+            KeyValue("Fonte", if (fix.provider == LocationManager.GPS_PROVIDER) "satélites" else "rede")
+        }
+        KeyValue("Satélites", "${gnss.used} em uso de ${gnss.visible}")
+        for ((name, vu) in gnss.byName) KeyValue("  $name", "${vu.second}/${vu.first}")
+        if (gnss.bestCn0 > 0) KeyValue("Melhor sinal", "%.0f dB-Hz".format(gnss.bestCn0))
     }
 }
 

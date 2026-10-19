@@ -52,7 +52,7 @@ jobs:
           gh release download --repo protomaps/go-pmtiles --pattern '*Linux_x86_64.tar.gz' -O pmtiles.tgz
           tar xzf pmtiles.tgz pmtiles && sudo mv pmtiles /usr/local/bin/
           sudo apt-get update -qq
-          sudo apt-get install -y -qq gdal-bin
+          sudo apt-get install -y -qq gdal-bin osmium-tool
           if ! sudo apt-get install -y -qq tippecanoe; then
             sudo apt-get install -y -qq build-essential libsqlite3-dev zlib1g-dev
             git clone --depth 1 https://github.com/felt/tippecanoe /tmp/tippecanoe
@@ -94,15 +94,18 @@ jobs:
           # Add file names and sizes for the regions that built.
           jq -c '.regions[]' tmp.json | while read -r r; do
             id=$(echo "$r" | jq -r .id)
-            m="$id-$VER.pmtiles"; c="$id-relevo-$VER.pmtiles"
+            m="$id-$VER.pmtiles"; c="$id-relevo-$VER.pmtiles"; l="$id-limites-$VER.pmtiles"
             [ -f "out/$m" ] || continue
             mb=$(stat -c %s "out/$m"); cb=0; [ -f "out/$c" ] && cb=$(stat -c %s "out/$c")
-            echo "$r" | jq --arg m "$m" --argjson mb "$mb" --arg c "$c" --argjson cb "$cb" '
-              . + {file: $m, bytes: $mb} + (if $cb > 0 then {contoursFile: $c, contoursBytes: $cb} else {} end)'
+            lb=0; [ -f "out/$l" ] && lb=$(stat -c %s "out/$l")
+            echo "$r" | jq --arg m "$m" --argjson mb "$mb" --arg c "$c" --argjson cb "$cb" --arg l "$l" --argjson lb "$lb" '
+              . + {file: $m, bytes: $mb}
+                + (if $cb > 0 then {contoursFile: $c, contoursBytes: $cb} else {} end)
+                + (if $lb > 0 then {limitsFile: $l, limitsBytes: $lb} else {} end)'
           done | jq -s --arg v "$VER" --arg planet "$PLANET" '{version: $v, source: $planet, regions: .}' > "out/$INDEX"
           cat "out/$INDEX"
           test "$(jq '.regions | length' "out/$INDEX")" -gt 0
           gh release delete "maps-$VER" --cleanup-tag --yes || true
           gh release create "maps-$VER" out/*.pmtiles "out/$INDEX" --latest=false --target "$GITHUB_SHA" \
             --title "Mapas offline $VER" \
-            --notes "Mapas para a Mota Dash, dados OpenStreetMap (Protomaps $(basename "$PLANET")) e curvas de nível Copernicus DEM. A app descarrega-os sozinha em Mapa > Mapas."
+            --notes "Mapas para a Mota Dash, dados OpenStreetMap (Protomaps $(basename "$PLANET")), curvas de nível Copernicus DEM e limites de velocidade/radares do OpenStreetMap (Geofabrik). A app descarrega-os sozinha em Mapa > Mapas."

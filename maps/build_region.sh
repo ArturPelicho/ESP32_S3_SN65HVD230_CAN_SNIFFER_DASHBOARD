@@ -4,6 +4,7 @@
 # Reads the region from maps/regions.json and writes to out/:
 #   <id>-<version>.pmtiles          roads, places, water... (Protomaps basemap, OpenStreetMap data)
 #   <id>-relevo-<version>.pmtiles   contour lines every 20 m from the Copernicus 30 m DEM (if the region asks for it)
+#   <id>-limites-<version>.pmtiles  speed limits and speed cameras from OpenStreetMap (Geofabrik extract)
 set -euo pipefail
 ID="$1"; VER="$2"; PLANET="$3"
 R=$(jq -c --arg id "$ID" '.[] | select(.id == $id)' maps/regions.json)
@@ -14,6 +15,9 @@ mkdir -p out work
 echo "== $ID: map extract z0-$MAXZ, bbox $W,$S,$E,$N"
 pmtiles extract "$PLANET" "out/$ID-$VER.pmtiles" --bbox="$W,$S,$E,$N" --maxzoom="$MAXZ"
 pmtiles show "out/$ID-$VER.pmtiles" | head -20 || true   # head closes the pipe early
+
+# Speed limits are a bonus: a failure here must not stop the map from publishing.
+maps/build_limits.sh "$ID" "$VER" || { echo "!! $ID: speed limits failed, publishing without them"; rm -f "out/$ID-limites-$VER.pmtiles"; }
 
 if [ "$(echo "$R" | jq -r '.contours')" != "true" ]; then exit 0; fi
 

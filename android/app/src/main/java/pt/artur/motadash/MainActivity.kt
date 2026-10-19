@@ -44,6 +44,10 @@ import pt.artur.motadash.ui.DtcScreen
 import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
+import pt.artur.motadash.ui.UiScale
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 
 class MainActivity : ComponentActivity() {
 
@@ -60,9 +64,14 @@ class MainActivity : ComponentActivity() {
         if (Permissions.ready(this)) MotaService.start(this) else askPermissions.launch(Permissions.needed())
         applyScreenOn()
         applyOrientation()
+        UiScale.load(this)
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Palette.panel)) {
-                App(this)
+            val scale by UiScale.value.collectAsStateWithLifecycle()
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density * scale, d.fontScale)) {
+                MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Palette.panel)) {
+                    App(this)
+                }
             }
         }
     }

@@ -52,6 +52,8 @@ fun MapsPanel(
     onLang: (MapLanguage) -> Unit,
     onMode: (FollowMode) -> Unit,
     onAutoZoom: (Boolean) -> Unit,
+    cameraBeep: Boolean,
+    onCameraBeep: (Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
     val ctx = LocalContext.current
@@ -102,6 +104,14 @@ fun MapsPanel(
             }
             Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
         }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Bip ao aproximar de um radar", color = Palette.text, fontSize = 15.sp)
+                Text("Limites e radares vêm do OpenStreetMap: confirma sempre os sinais na estrada.",
+                    color = Palette.label, fontSize = 12.sp)
+            }
+            Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
+        }
         Text("Tema do mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MapTheme.entries.forEach { t ->
@@ -140,7 +150,10 @@ fun MapsPanel(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(r?.name ?: id, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                        val size = r?.let { mb(it.bytes) + if (it.contoursBytes > 0) " + relevo ${mb(it.contoursBytes)}" else "" }
+                        val size = r?.let {
+                            mb(it.bytes) + (if (it.contoursBytes > 0) " + relevo ${mb(it.contoursBytes)}" else "") +
+                                if (it.limitsBytes > 0) " + limites ${mb(it.limitsBytes)}" else ""
+                        }
                         val state = when {
                             dl != null && dl.failed -> "O download falhou"
                             dl != null -> "A descarregar " + (if (dl.total > 0) "${dl.done * 100 / dl.total}%" else "…")
@@ -163,6 +176,12 @@ fun MapsPanel(
                             Button(onClick = { MapStore.download(ctx, r) }) { Text("Descarregar") }
                         r?.url != null && index != null && have != null && have.version < index!!.version ->
                             Button(onClick = { MapStore.download(ctx, r) }) { Text("Atualizar") }
+                    }
+                    // Map already here from before speed limits existed: fetch only those, without the whole map.
+                    if (r != null && r.limitsUrl != null && have != null && have.limits == null && dl == null) {
+                        Button(onClick = { MapStore.download(ctx, r, limitsOnly = true) }) {
+                            Text("Só limites e radares (${mb(r.limitsBytes)})")
+                        }
                     }
                     if (have != null && dl == null) {
                         if (confirmDelete == id) {

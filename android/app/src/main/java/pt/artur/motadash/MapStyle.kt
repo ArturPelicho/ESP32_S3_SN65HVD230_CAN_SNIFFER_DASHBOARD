@@ -193,6 +193,27 @@ object MapStyle {
                 "line-opacity" to 0.7,
             ))
 
+            m.limits?.let { f ->
+                val ls = "lm-${m.id}"
+                sources[ls] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
+                    "attribution" to "© OpenStreetMap")
+                // Almost invisible: only there so the screen can ask which limit is under the bike.
+                lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
+                    "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,
+                ), minzoom = 12)
+                labels += layer("camera", "symbol", "cameras", source = ls, layout = mapOf(
+                    "icon-image" to "radar",
+                    "icon-size" to listOf("interpolate", listOf("linear"), listOf("zoom"), 12, 0.45, 16, 0.8),
+                    "icon-allow-overlap" to true,
+                    "text-field" to listOf("to-string", listOf("coalesce", listOf("get", "kmh"), "")),
+                    "text-font" to listOf(MEDIUM),
+                    "text-size" to 12,
+                    "text-offset" to listOf(0, 1.6),
+                    "text-optional" to true,
+                ), paint = mapOf("text-color" to "#e2463c", "text-halo-color" to c.halo, "text-halo-width" to 1.6),
+                    minzoom = 12)
+            }
+
             labels += layer("water-label", "symbol", "water", layout = mapOf(
                 "text-field" to name(lang), "text-font" to listOf(ITALIC), "text-size" to 13,
             ), paint = mapOf("text-color" to c.waterLabel, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
