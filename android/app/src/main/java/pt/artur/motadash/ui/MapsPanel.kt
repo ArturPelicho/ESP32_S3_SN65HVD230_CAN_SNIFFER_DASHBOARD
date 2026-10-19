@@ -34,19 +34,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pt.artur.motadash.FollowMode
 import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapTheme
 
-/** Mapas: download, update, switch off or delete regions, plus theme and label language. */
+/** Mapas: view options (follow mode, auto zoom, theme, names), then download, update, switch off or delete regions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MapsPanel(
     theme: MapTheme,
     lang: MapLanguage,
+    mode: FollowMode,
+    autoZoom: Boolean,
     onTheme: (MapTheme) -> Unit,
     onLang: (MapLanguage) -> Unit,
+    onMode: (FollowMode) -> Unit,
+    onAutoZoom: (Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
     val ctx = LocalContext.current
@@ -84,6 +89,33 @@ fun MapsPanel(
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = onClose) { Text("Fechar") }
         }
+        Text("Vista", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FollowMode.entries.forEach { m ->
+                FilterChip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Zoom automático", color = Palette.text, fontSize = 15.sp)
+                Text("Aproxima na cidade e afasta na estrada, conforme a velocidade.", color = Palette.label, fontSize = 12.sp)
+            }
+            Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
+        }
+        Text("Tema do mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapTheme.entries.forEach { t ->
+                FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
+            }
+        }
+        Text("Automático muda para noite com o pôr do sol onde estás.", color = Palette.label, fontSize = 12.sp)
+        Text("Nomes no mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapLanguage.entries.forEach { l ->
+                FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
+            }
+        }
+        Text("Regiões", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Text("$status · livre no telemóvel: ${mb(free)}", color = Palette.label, fontSize = 13.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { check() }) { Text("Procurar atualizações") }
@@ -144,19 +176,6 @@ fun MapsPanel(
             }
         }
 
-        Text("Tema do mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapTheme.entries.forEach { t ->
-                FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
-            }
-        }
-        Text("Automático muda para noite com o pôr do sol onde estás.", color = Palette.label, fontSize = 12.sp)
-        Text("Nomes no mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapLanguage.entries.forEach { l ->
-                FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
-            }
-        }
         Text("Dados © OpenStreetMap, mapa base Protomaps, relevo Copernicus DEM.", color = Palette.label, fontSize = 12.sp)
     }
 }

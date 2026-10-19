@@ -35,6 +35,12 @@ data class InstalledMap(val id: String, val version: String, val enabled: Boolea
 enum class MapTheme(val label: String) { AUTO("Automático"), DAY("Dia"), NIGHT("Noite") }
 enum class MapLanguage(val label: String) { PT("Português"), LOCAL("Língua local") }
 
+/** How the map follows the bike: heading up, heading up tilted (3D), or north up. */
+enum class FollowMode(val label: String, val button: String) {
+    HEADING("Direção para cima", "▲"), THREE_D("3D", "3D"), NORTH("Norte para cima", "N");
+    fun next() = entries[(ordinal + 1) % entries.size]
+}
+
 /** State of a region's download, for the Mapas list. */
 data class DownloadState(val done: Long, val total: Long, val failed: Boolean = false)
 
@@ -66,6 +72,11 @@ object MapStore {
     fun language(ctx: Context): MapLanguage =
         MapLanguage.entries.firstOrNull { it.name == prefs(ctx).getString("lang", null) } ?: MapLanguage.PT
     fun setLanguage(ctx: Context, l: MapLanguage) = prefs(ctx).edit().putString("lang", l.name).apply()
+    fun followMode(ctx: Context): FollowMode =
+        FollowMode.entries.firstOrNull { it.name == prefs(ctx).getString("follow", null) } ?: FollowMode.THREE_D
+    fun setFollowMode(ctx: Context, m: FollowMode) = prefs(ctx).edit().putString("follow", m.name).apply()
+    fun autoZoom(ctx: Context): Boolean = prefs(ctx).getBoolean("auto_zoom", true)
+    fun setAutoZoom(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("auto_zoom", on).apply()
 
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
