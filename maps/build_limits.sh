@@ -11,7 +11,7 @@ PBF="work/osm-$ID.pbf"
 OSM=$(echo "$R" | jq -r '.osm // empty')
 [ -n "$OSM" ] || exit 0
 echo "== $ID: speed limits and cameras from $OSM"
-curl -sfL -o "$PBF" "https://download.geofabrik.de/$OSM-latest.osm.pbf"
+curl -sfL --retry 4 --retry-all-errors -o "$PBF" "https://download.geofabrik.de/$OSM-latest.osm.pbf"
 osmium extract -b "$W,$S,$E,$N" "$PBF" -o "work/$ID-clip.pbf" --overwrite
 osmium tags-filter "work/$ID-clip.pbf" w/maxspeed w/maxspeed:forward w/maxspeed:backward -o "work/$ID-ways.pbf" --overwrite
 osmium tags-filter "work/$ID-clip.pbf" n/highway=speed_camera -o "work/$ID-cams.pbf" --overwrite

@@ -13,7 +13,12 @@ MAXZ=$(echo "$R" | jq -r '.maxzoom')
 mkdir -p out work
 
 echo "== $ID: map extract z0-$MAXZ, bbox $W,$S,$E,$N"
-pmtiles extract "$PLANET" "out/$ID-$VER.pmtiles" --bbox="$W,$S,$E,$N" --maxzoom="$MAXZ"
+# The planet server sometimes resets long downloads; try a few times.
+for try in 1 2 3 4; do
+  pmtiles extract "$PLANET" "out/$ID-$VER.pmtiles" --bbox="$W,$S,$E,$N" --maxzoom="$MAXZ" && break
+  [ "$try" -lt 4 ] || exit 1
+  echo "!! extract failed (try $try), retrying in $((try * 30)) s"; rm -f "out/$ID-$VER.pmtiles"; sleep $((try * 30))
+done
 pmtiles show "out/$ID-$VER.pmtiles" | head -20 || true   # head closes the pipe early
 
 # Speed limits are a bonus: a failure here must not stop the map from publishing.
