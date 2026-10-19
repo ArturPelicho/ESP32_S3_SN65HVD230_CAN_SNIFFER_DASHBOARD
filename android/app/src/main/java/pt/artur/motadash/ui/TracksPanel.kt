@@ -67,7 +67,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
             OutlinedButton(onClick = onClose) { Text("Fechar") }
         }
         Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text("Abrir ficheiro (GPX, KML, KMZ, GeoJSON, TCX, FIT)") }
-        Text("Também podes abrir um ficheiro com a Mota Dash a partir do gestor de ficheiros ou do WhatsApp.",
+        Text("Também podes abrir um ficheiro com a NavExpress a partir do gestor de ficheiros ou do WhatsApp.",
             color = Palette.label, fontSize = 12.sp)
         message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
         if (tracks.isEmpty()) Text("Ainda não há trajetos.", color = Palette.label, fontSize = 14.sp)

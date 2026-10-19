@@ -1,4 +1,12 @@
-# MOTA CAN Reader
+# NavExpress
+
+<img src="docs/img/navexpress-icon.svg" width="96" align="right" alt="NavExpress icon">
+
+- **NavExpress Brain**: the boards on the bike (this firmware, ESP32-S3 + CAN).
+- **NavExpress Mobile**: the phone app, shown on the phone simply as
+  **NavExpress** (`android/`).
+
+The name comes from the Espressif ESP32 at the heart of the CAN reader.
 
 An all-in-one smart dashboard for the **ZongShen Carrera 125 Euro5+**
 (ZS125GY-13-E55), built on an ESP32-S3. It reads the bike's CAN bus,
@@ -143,7 +151,7 @@ endpoint; measure the bike's own termination first.
   changes one and stores it. Other commands: `AVG RESET`, `TANK`, `GEAR`,
   `GEAR RESET`, `SPEED`.
 
-**Phone app** (`android/`, see [docs/app-telemovel.md](docs/app-telemovel.md))
+**NavExpress Mobile, the phone app** (`android/`, see [docs/app-telemovel.md](docs/app-telemovel.md))
 - Goal: replace DMD2 for riding. Tabs: Mapa, Painel, Controlo, Erros,
   Diagnóstico.
 - **Mapa** (MapLibre, works offline): regions downloaded from the "maps-…"

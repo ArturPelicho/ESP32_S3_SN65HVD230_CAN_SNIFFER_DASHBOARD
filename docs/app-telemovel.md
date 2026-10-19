@@ -1,4 +1,4 @@
-# App do telemóvel (Mota Dash)
+# App do telemóvel (NavExpress)
 
 A app liga-se sozinha à placa sempre que a ignição liga, envia o GPS do
 telemóvel (a fonte `Vel_GPS_Ext`) e mostra o painel completo. O GPS só
@@ -8,7 +8,7 @@ está ligado enquanto a placa estiver ligada: fora da mota o gasto é quase zero
 
 1. No telemóvel, abrir
    <https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/latest>
-   e tocar em `mota-dash-v0.1.N-xxxxxxx.apk` (é o APK direto, sem zip; o nome traz a versão).
+   e tocar em `navexpress-v0.1.N-xxxxxxx.apk` (até à v0.1.20 chamava-se `mota-dash-…`) (é o APK direto, sem zip; o nome traz a versão).
 2. Abrir o ficheiro descarregado e instalar (permitir "instalar apps
    desconhecidas" para o browser ou para o gestor de ficheiros).
 3. Se o Xiaomi disser "A app não foi instalada": não instalar a partir de

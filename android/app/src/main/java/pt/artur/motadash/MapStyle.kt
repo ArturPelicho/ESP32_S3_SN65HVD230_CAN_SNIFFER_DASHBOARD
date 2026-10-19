@@ -6,7 +6,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * The Mota Dash map style, built for the Protomaps basemap schema (v4) that
+ * The NavExpress map style, built for the Protomaps basemap schema (v4) that
  * the "Map data" workflow extracts from OpenStreetMap. Every road class has
  * its own colour so secondary roads stand out from minor ones, and labels
  * are large enough to read with a helmet on.
@@ -307,7 +307,7 @@ object MapStyle {
 
         val style = mapOf(
             "version" to 8,
-            "name" to "Mota Dash",
+            "name" to "NavExpress",
             "glyphs" to "asset://glyphs/{fontstack}/{range}.pbf",
             "sources" to sources,
             "layers" to fills + lines + tracks + labels,
