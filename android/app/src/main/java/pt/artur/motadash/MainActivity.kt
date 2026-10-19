@@ -31,6 +31,8 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,6 +53,9 @@ import androidx.compose.ui.unit.Density
 
 class MainActivity : ComponentActivity() {
 
+    /** Bumped when a track file arrives, so the app switches to the map. */
+    val openMap = MutableStateFlow(0)
+
     private val askPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             MotaService.start(this)
@@ -65,6 +70,7 @@ class MainActivity : ComponentActivity() {
         applyScreenOn()
         applyOrientation()
         UiScale.load(this)
+        handleTrackIntent(intent)
         setContent {
             val scale by UiScale.value.collectAsStateWithLifecycle()
             val d = LocalDensity.current
@@ -75,6 +81,32 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleTrackIntent(intent)
+    }
+
+    /** A track file opened or shared with the app: import it and show the map. */
+    private fun handleTrackIntent(intent: Intent?) {
+        intent ?: return
+        val uris: List<Uri> = when (intent.action) {
+            Intent.ACTION_VIEW -> listOfNotNull(intent.data)
+            Intent.ACTION_SEND -> listOfNotNull(intent.streamUri())
+            Intent.ACTION_SEND_MULTIPLE -> intent.streamUris()
+            else -> emptyList()
+        }
+        if (uris.isEmpty()) return
+        TrackStore.import(this, uris)
+        openMap.value++
+        intent.action = null      // don't import again on rotation
+    }
+
+    @Suppress("DEPRECATION")
+    private fun Intent.streamUri(): Uri? = getParcelableExtra(Intent.EXTRA_STREAM)
+
+    @Suppress("DEPRECATION")
+    private fun Intent.streamUris(): List<Uri> = getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
 
     fun applyScreenOn() {
         if (Link.keepScreenOn(this)) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -107,6 +139,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App(activity: MainActivity) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    val openMap by activity.openMap.collectAsStateWithLifecycle()
+    LaunchedEffect(openMap) { if (openMap > 0) tab = 0 }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
     val titles = listOf("Mapa", "Painel", "Controlo", if (dtc.total > 0) "Erros (${dtc.total})" else "Erros", "Diagnóstico")
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE

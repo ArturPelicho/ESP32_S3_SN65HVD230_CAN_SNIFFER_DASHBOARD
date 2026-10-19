@@ -257,6 +257,40 @@ object MapStyle {
             ), filter = listOf("has", "name"))
         }
 
+        // Imported tracks (GPX...) over the roads, under the labels; filled by the screen.
+        val kind = listOf("get", "kind")
+        val tracks = listOf(
+            mapOf("id" to "trk-casing", "type" to "line", "source" to "tracks",
+                "filter" to listOf("==", kind, "line"),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to c.halo, "line-opacity" to 0.85, "line-width" to trackWidth(3.0))),
+            mapOf("id" to "trk-line", "type" to "line", "source" to "tracks",
+                "filter" to listOf("==", kind, "line"),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to listOf("get", "color"), "line-width" to trackWidth(0.0))),
+            // Arrows along the followed track, in the riding direction.
+            mapOf("id" to "trk-arrow", "type" to "symbol", "source" to "tracks",
+                "filter" to listOf("all", listOf("==", kind, "line"), listOf("==", listOf("get", "active"), true)),
+                "layout" to mapOf("symbol-placement" to "line", "symbol-spacing" to 90, "icon-image" to "trk-arrow",
+                    "icon-size" to 0.55, "icon-allow-overlap" to true, "icon-ignore-placement" to true),
+                "minzoom" to 11),
+            // Dashed line from the bike back to the track when off it.
+            mapOf("id" to "trk-join", "type" to "line", "source" to "join",
+                "paint" to mapOf("line-color" to c.label, "line-width" to 2.5, "line-dasharray" to listOf(1.5, 1.5))),
+            mapOf("id" to "trk-wpt", "type" to "circle", "source" to "tracks",
+                "filter" to listOf("==", kind, "wpt"),
+                "paint" to mapOf("circle-radius" to 6, "circle-color" to listOf("get", "color"),
+                    "circle-stroke-color" to c.halo, "circle-stroke-width" to 2)),
+            mapOf("id" to "trk-wpt-label", "type" to "symbol", "source" to "tracks",
+                "filter" to listOf("==", kind, "wpt"),
+                "layout" to mapOf("text-field" to listOf("get", "name"), "text-font" to listOf(MEDIUM), "text-size" to 13,
+                    "text-offset" to listOf(0, 1.2), "text-anchor" to "top", "text-optional" to true),
+                "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.8),
+                "minzoom" to 11),
+        )
+        sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
+        sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
+
         // The bike's position on top of everything (filled by the screen).
         labels += mapOf(
             "id" to "me", "type" to "symbol", "source" to "me",
@@ -276,10 +310,18 @@ object MapStyle {
             "name" to "Mota Dash",
             "glyphs" to "asset://glyphs/{fontstack}/{range}.pbf",
             "sources" to sources,
-            "layers" to fills + lines + labels,
+            "layers" to fills + lines + tracks + labels,
         )
         return JSONObject(style).toString()
     }
+
+    /** Track width from its "w" property (1-3), narrower when zoomed out, plus [extra] for the casing. */
+    private fun trackWidth(extra: Double): List<Any> = listOf(
+        "interpolate", listOf("linear"), listOf("zoom"),
+        8, listOf("+", listOf("*", listOf("get", "w"), 1.2), extra * 0.6),
+        14, listOf("+", listOf("*", listOf("get", "w"), 2.5), extra),
+        18, listOf("+", listOf("*", listOf("get", "w"), 4), extra * 1.4),
+    )
 
     /** True when the sun is below the horizon at this place and time (good enough for day/night maps). */
     fun isNight(lat: Double, lon: Double, millis: Long = System.currentTimeMillis()): Boolean {

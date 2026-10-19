@@ -72,18 +72,25 @@ import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.VectorSource
+import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.MultiLineString
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.Point
 import pt.artur.motadash.FollowMode
+import pt.artur.motadash.LatLon
 import pt.artur.motadash.Link
+import pt.artur.motadash.Track
+import pt.artur.motadash.TrackFollower
+import pt.artur.motadash.TrackProgress
+import pt.artur.motadash.TrackStore
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.MapTheme
@@ -92,7 +99,7 @@ import pt.artur.motadash.MapTheme
 /** A speed camera ahead on the road. */
 data class CameraAlert(val meters: Int, val kmh: Int?, val key: String)
 
-private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap) {
+private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, private val trackArrow: Bitmap) {
     var map: MapLibreMap? = null
     var view: MapView? = null
     var style: Style? = null
@@ -129,8 +136,10 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap) {
         m.setStyle(Style.Builder().fromJson(json)) { s ->
             s.addImage("me-arrow", arrow)
             s.addImage("radar", radar)
+            s.addImage("trk-arrow", trackArrow)
             style = s
             drawMarker()
+            tracks?.let { s.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(it) }
         }
     }
 
@@ -255,6 +264,52 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap) {
         camera = found
     }
 
+    private var tracks: FeatureCollection? = null
+
+    /** Draws the visible tracks; the followed one gets arrows in the riding direction. */
+    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean) {
+        val fs = mutableListOf<Feature>()
+        for (t in list.filter { it.visible }) {
+            val active = t.id == activeId
+            for (l in t.lines) {
+                val pts = l.map { Point.fromLngLat(it.lon, it.lat) }.let { if (active && reversed) it.reversed() else it }
+                fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
+                    addStringProperty("kind", "line"); addStringProperty("color", t.color)
+                    addNumberProperty("w", t.width); addBooleanProperty("active", active)
+                }
+            }
+            for (w in t.waypoints) {
+                fs += Feature.fromGeometry(Point.fromLngLat(w.lon, w.lat)).apply {
+                    addStringProperty("kind", "wpt"); addStringProperty("color", t.color); addStringProperty("name", w.name)
+                }
+            }
+        }
+        val fc = FeatureCollection.fromFeatures(fs)
+        tracks = fc
+        style?.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(fc)
+    }
+
+    /** Dashed line from the bike to the nearest point of the track, or nothing. */
+    fun setJoin(to: LatLon?) {
+        val loc = fix
+        val src = style?.getSourceAs<GeoJsonSource>("join") ?: return
+        if (to == null || loc == null) { src.setGeoJson(FeatureCollection.fromFeatures(emptyList())); return }
+        src.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(listOf(
+            Point.fromLngLat(loc.longitude, loc.latitude), Point.fromLngLat(to.lon, to.lat)))))
+    }
+
+    /** Stops following and fits the whole track on screen. */
+    fun showTrack(t: Track) {
+        val m = map ?: return
+        val pts = t.lines.flatten().map { LatLng(it.lat, it.lon) } + t.waypoints.map { LatLng(it.lat, it.lon) }
+        if (pts.isEmpty()) return
+        setFollow(false)
+        gestureAt = SystemClock.elapsedRealtime() + 20_000     // leave it on screen a while before following again
+        if (pts.size == 1) { m.easeCamera(CameraUpdateFactory.newLatLngZoom(pts[0], 15.0), 800); return }
+        val b = LatLngBounds.Builder().includes(pts).build()
+        m.easeCamera(CameraUpdateFactory.newLatLngBounds(b, 80, 80, 80, 80), 800)
+    }
+
     fun zoomBy(step: Double) {
         val m = map ?: return
         userZoom = ((userZoom ?: m.cameraPosition.zoom) + step).coerceIn(3.0, 19.5)
@@ -345,6 +400,22 @@ private class Compass(private val ctx: Context, private val onHeading: (Float) -
 
 private fun wrap180(d: Float): Float = ((d + 540f) % 360f) - 180f
 
+/** Chevron drawn along the followed track. */
+private fun trackArrowBitmap(): Bitmap {
+    val s = 48
+    val b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
+    val c = Canvas(b)
+    // Points east (along the line); MapLibre turns it with the line.
+    val p = Path().apply { moveTo(14f, 8f); lineTo(36f, 24f); lineTo(14f, 40f) }
+    c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF0B0E12.toInt(); style = Paint.Style.STROKE; strokeWidth = 12f; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+    })
+    c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt(); style = Paint.Style.STROKE; strokeWidth = 6f; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+    })
+    return b
+}
+
 /** Speed camera mark: red disc with a white camera. */
 private fun radarBitmap(): Bitmap {
     val s = 64
@@ -393,13 +464,22 @@ fun MapScreen() {
     var cameraBeep by remember { mutableStateOf(MapStore.cameraBeep(ctx)) }
     var gnss by remember { mutableStateOf(Gnss()) }
     var showGps by remember { mutableStateOf(false) }
+    var showTracks by remember { mutableStateOf(false) }
+    val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
+    val activeId by TrackStore.active.collectAsStateWithLifecycle()
+    val reversed by TrackStore.reversed.collectAsStateWithLifecycle()
+    val trackMessage by TrackStore.message.collectAsStateWithLifecycle()
+    val activeTrack = tracks.firstOrNull { it.id == activeId }
+    val follower = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { TrackFollower(it, reversed) } }
+    var progress by remember { mutableStateOf<TrackProgress?>(null) }
     var minute by remember { mutableLongStateOf(0L) }
     val holder = remember {
-        MapHolder(arrowBitmap(), radarBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
+        MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
     }
 
     LaunchedEffect(Unit) {
         MapStore.load(ctx)
+        TrackStore.load(ctx)
         while (true) { delay(60_000); minute++ }
     }
 
@@ -506,11 +586,20 @@ fun MapScreen() {
         )
 
         LaunchedEffect(styleJson) { holder.applyStyle(styleJson) }
+        LaunchedEffect(tracks, activeId, reversed) {
+            holder.setTracks(tracks, activeId, reversed)
+            if (follower == null) { progress = null; holder.setJoin(null) }
+        }
+        LaunchedEffect(trackMessage) {
+            if (trackMessage != null && !showTracks) { delay(6000); TrackStore.clearMessage() }
+        }
         LaunchedEffect(fix) {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
             holder.update(900)
             holder.scan()
+            progress = follower?.locate(f.latitude, f.longitude)
+            holder.setJoin(progress?.takeIf { it.offM > 30 }?.nearest)
             limit = holder.limit
             val cam = holder.camera
             if (cam != null && cam.key != camera?.key && cameraBeep) beeper?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
@@ -582,9 +671,14 @@ fun MapScreen() {
             if (showGps) GpsPanel(fix, gnss, speed)
         }
 
+        Column(
+            Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
         camera?.let { cam ->
             Row(
-                Modifier.align(Alignment.TopCenter).padding(top = 10.dp)
+                Modifier
                     .background(Palette.red, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -593,6 +687,18 @@ fun MapScreen() {
                 Text("${(cam.meters + 25) / 50 * 50} m", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 cam.kmh?.let { LimitSign(it, small = true) }
             }
+        }
+        if (activeTrack != null) TrackBox(activeTrack, progress)
+        }
+
+        // Tracks button, top right.
+        Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) {
+            MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+        }
+        trackMessage?.takeIf { !showTracks }?.let {
+            Text(it, color = Palette.text, fontSize = 14.sp,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
+                    .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp))
         }
 
         Text(
@@ -615,6 +721,13 @@ fun MapScreen() {
             }
         }
 
+        if (showTracks) {
+            TracksPanel(
+                onShow = { t -> showTracks = false; holder.showTrack(t) },
+                onClose = { showTracks = false; TrackStore.clearMessage() },
+            )
+        }
+
         if (showMaps) {
             MapsPanel(
                 theme = theme, lang = lang, mode = mode, autoZoom = autoZoom,
@@ -629,6 +742,29 @@ fun MapScreen() {
         }
     }
 }
+
+/** Followed track: distance left, and how far off it the bike is. */
+@Composable
+private fun TrackBox(t: Track, p: TrackProgress?) {
+    val off = p != null && p.offM > 50
+    Column(
+        Modifier.background(if (off) Palette.orange else Color(0xE60B0E12), RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(t.name, color = if (off) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
+        when {
+            p == null -> Text("À espera do GPS", color = Palette.text, fontSize = 16.sp)
+            p.offM > 1000 -> Text("Trajeto a ${km(p.offM)}", color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Faltam ${km(p.leftM)}", color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                if (off) Text("fora ${p.offM.toInt()} m", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
 
 /** Round road sign with the speed limit. */
 @Composable
