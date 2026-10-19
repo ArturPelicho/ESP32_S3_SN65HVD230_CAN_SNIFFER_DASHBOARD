@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Mota Dash (teste)" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Teste: Marquês até Belém pela Marginal</name></metadata>
+  <wpt lat="38.72530" lon="-9.15010"><name>Marquês de Pombal</name></wpt>
+  <wpt lat="38.70760" lon="-9.13650"><name>Praça do Comércio</name></wpt>
+  <wpt lat="38.69160" lon="-9.21600"><name>Torre de Belém</name></wpt>
+  <trk>
+    <name>Marquês - Belém</name>
+    <trkseg>
+      <trkpt lat="38.72530" lon="-9.15010"/>
+      <trkpt lat="38.72250" lon="-9.14790"/>
+      <trkpt lat="38.71950" lon="-9.14530"/>
+      <trkpt lat="38.71650" lon="-9.14280"/>
+      <trkpt lat="38.71420" lon="-9.14100"/>
+      <trkpt lat="38.71190" lon="-9.13910"/>
+      <trkpt lat="38.70990" lon="-9.13770"/>
+      <trkpt lat="38.70760" lon="-9.13650"/>
+      <trkpt lat="38.70690" lon="-9.14010"/>
+      <trkpt lat="38.70610" lon="-9.14460"/>
+      <trkpt lat="38.70560" lon="-9.15000"/>
+      <trkpt lat="38.70480" lon="-9.15550"/>
+      <trkpt lat="38.70350" lon="-9.16200"/>
+      <trkpt lat="38.70200" lon="-9.16950"/>
+      <trkpt lat="38.70000" lon="-9.17700"/>
+      <trkpt lat="38.69780" lon="-9.18500"/>
+      <trkpt lat="38.69590" lon="-9.19300"/>
+      <trkpt lat="38.69450" lon="-9.20100"/>
+      <trkpt lat="38.69300" lon="-9.20850"/>
+      <trkpt lat="38.69160" lon="-9.21600"/>
+    </trkseg>
+  </trk>
+</gpx>

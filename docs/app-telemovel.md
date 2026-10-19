@@ -32,6 +32,7 @@ está ligado enquanto a placa estiver ligada: fora da mota o gasto é quase zero
 
 ## Separadores
 
+- **Mapa**: mapa offline que segue a mota (ver abaixo).
 - **Painel**: luzes de troca, velocidade (roda > mudança > GPS), mudança, RPM,
   depósito e temperatura da cabeça em barras de segmentos, consumo agora e
   médio, autonomia, hora, bateria, ar de admissão, acelerador, viagem, e um
@@ -69,3 +70,30 @@ bomba e sugere um novo `FUEL_K`, que se aplica com um botão.
 Não há nada a fazer: numa volta normal, com o GPS ligado, a placa aprende a
 relação de cada mudança (troços estáveis de ~2 s). O progresso aparece no
 Painel e no Diagnóstico. Se mudares de pneu ou de cremalheira, **Reaprender**.
+
+## Mapa
+
+- **Mapas offline**: ☰ → *Mapas offline*. Descarrega cada região com Wi-Fi
+  (Portugal ~616 MB, relevo 88 MB, limites 8 MB). Cada região pode ser
+  desligada sem a apagar. "Procurar atualizações" mostra quando há mapas novos
+  (refeitos todos os meses com dados novos do OpenStreetMap). Se já tens o
+  mapa de antes dos limites, "Só limites e radares" descarrega só esses.
+- **Botões à direita**: modo (▲ direção para cima, 3D, N norte para cima),
+  ◎ voltar a seguir a mota, tema AUTO/DIA/NOITE, ☰ mapas e opções.
+  À esquerda + e − por cima da velocidade.
+- **Zoom automático** pela velocidade (perto na cidade, longe na estrada) e
+  inclinação automática em 3D. Pinça ou +/− mandam no zoom 10 s; arrastar o
+  mapa deixa de seguir, e volta a seguir sozinho a andar.
+- **Parado**, a seta e o mapa rodam com a bússola do telemóvel.
+- **Velocidade** fica a 0 parado. Ao lado aparece o sinal do limite da estrada
+  (fica vermelha acima do limite) e em cima um aviso RADAR com a distância,
+  com bip (desliga-se em ☰). Limites e radares vêm do OpenStreetMap:
+  os sinais na estrada mandam sempre.
+- **GPS**: toca em "GPS" no canto para ver satélites, precisão e altitude.
+- **Trajetos** (botão GPX em cima à direita): abre GPX, KML, KMZ, GeoJSON,
+  TCX e FIT, ou usa "Abrir com"/"Partilhar" noutra app. Em cada trajeto:
+  mostrar, cor, espessura, nome (toca nele), ver no mapa, apagar e
+  **Seguir** (setas no sentido da viagem, "Faltam X km" e aviso laranja
+  quando sais do trajeto, com sentido inverso opcional). Ficheiro de teste:
+  [samples/gpx/teste-lisboa-marginal.gpx](../samples/gpx/teste-lisboa-marginal.gpx).
+- **Tamanho da interface**: Controlo → 85 % a 150 %.
