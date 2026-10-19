@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Speed limits and speed cameras for one region, from the Geofabrik OpenStreetMap extract.
+#   build_limits.sh <id> <version>   ->  out/<id>-limites-<version>.pmtiles
+# Layers: "limits" (lines with kmh, or kmh_f/kmh_b by direction), "cameras" (points, kmh and dir if tagged).
+set -euo pipefail
+ID="$1"; VER="$2"
+R=$(jq -c --arg id "$ID" '.[] | select(.id == $id)' maps/regions.json)
+read -r W S E N < <(echo "$R" | jq -r '.bbox | map(tostring) | join(" ")')
+mkdir -p out work
+PBF="work/osm-$ID.pbf"
+OSM=$(echo "$R" | jq -r '.osm // empty')
+[ -n "$OSM" ] || exit 0
+echo "== $ID: speed limits and cameras from $OSM"
+curl -sfL --retry 4 --retry-all-errors -o "$PBF" "https://download.geofabrik.de/$OSM-latest.osm.pbf"
+osmium extract -b "$W,$S,$E,$N" "$PBF" -o "work/$ID-clip.pbf" --overwrite
+osmium tags-filter "work/$ID-clip.pbf" w/maxspeed w/maxspeed:forward w/maxspeed:backward -o "work/$ID-ways.pbf" --overwrite
+osmium tags-filter "work/$ID-clip.pbf" n/highway=speed_camera -o "work/$ID-cams.pbf" --overwrite
+osmium export "work/$ID-ways.pbf" -f geojsonseq --geometry-types=linestring -o "work/$ID-ways.geojsons" --overwrite
+osmium export "work/$ID-cams.pbf" -f geojsonseq --geometry-types=point -o "work/$ID-cams.geojsons" --overwrite
+python3 maps/limits.py ways "work/$ID-ways.geojsons" "work/$ID-limits.geojsons"
+python3 maps/limits.py cameras "work/$ID-cams.geojsons" "work/$ID-cameras.geojsons"
+tippecanoe -q -f -o "out/$ID-limites-$VER.pmtiles" -n "Limites $ID" -A "(c) OpenStreetMap contributors" \
+  -Z12 -z14 -r1 --no-feature-limit --no-tile-size-limit --no-line-simplification --no-tiny-polygon-reduction \
+  -L limits:"work/$ID-limits.geojsons" -L cameras:"work/$ID-cameras.geojsons"
+pmtiles show "out/$ID-limites-$VER.pmtiles" | head -12 || true   # head closes the pipe early
+rm -f "$PBF" work/"$ID"-*

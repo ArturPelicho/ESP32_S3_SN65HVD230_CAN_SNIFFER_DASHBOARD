@@ -1,0 +1,111 @@
+name: Map data
+
+# Builds the offline maps for the Mota Dash app and publishes them as a
+# release "maps-<date>" (not marked latest, so the APK stays the latest
+# release). The app reads maps-index-<date>.json from the newest one.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *"   # monthly refresh of the OpenStreetMap data
+  push:
+    paths:
+      - "maps/**"
+      - ".github/workflows/maps.yml"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      planet: ${{ steps.v.outputs.planet }}
+      regions: ${{ steps.v.outputs.regions }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          echo "version=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          KEY=$(curl -sf https://build-metadata.protomaps.dev/builds.json | jq -r 'map(.key) | sort | last' || true)
+          if [ -z "$KEY" ] || [ "$KEY" = "null" ]; then
+            for i in $(seq 0 14); do
+              K="$(date -u -d "-$i day" +%Y%m%d).pmtiles"
+              if curl -sfI "https://build.protomaps.com/$K" >/dev/null; then KEY="$K"; break; fi
+            done
+          fi
+          test -n "$KEY"
+          echo "Planet build: $KEY"
+          echo "planet=https://build.protomaps.com/$KEY" >> "$GITHUB_OUTPUT"
+          echo "regions=$(jq -c 'map(.id)' maps/regions.json)" >> "$GITHUB_OUTPUT"
+
+  region:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        id: ${{ fromJson(needs.setup.outputs.regions) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo protomaps/go-pmtiles --pattern '*Linux_x86_64.tar.gz' -O pmtiles.tgz
+          tar xzf pmtiles.tgz pmtiles && sudo mv pmtiles /usr/local/bin/
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gdal-bin osmium-tool
+          if ! sudo apt-get install -y -qq tippecanoe; then
+            sudo apt-get install -y -qq build-essential libsqlite3-dev zlib1g-dev
+            git clone --depth 1 https://github.com/felt/tippecanoe /tmp/tippecanoe
+            make -C /tmp/tippecanoe -j"$(nproc)" && sudo make -C /tmp/tippecanoe install
+          fi
+          tippecanoe --version || true
+      - name: Build ${{ matrix.id }}
+        run: maps/build_region.sh "${{ matrix.id }}" "${{ needs.setup.outputs.version }}" "${{ needs.setup.outputs.planet }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: map-${{ matrix.id }}
+          path: out/*.pmtiles
+          compression-level: 0
+          retention-days: 3
+
+  publish:
+    needs: [setup, region]
+    if: ${{ !cancelled() && needs.setup.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          pattern: map-*
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ needs.setup.outputs.version }}
+          PLANET: ${{ needs.setup.outputs.planet }}
+        run: |
+          ls -la out
+          INDEX="maps-index-$VER.json"
+          jq --arg v "$VER" --arg planet "$PLANET" '
+            {version: $v, source: $planet, regions: .}' maps/regions.json > tmp.json
+          # Add file names and sizes for the regions that built.
+          jq -c '.regions[]' tmp.json | while read -r r; do
+            id=$(echo "$r" | jq -r .id)
+            m="$id-$VER.pmtiles"; c="$id-relevo-$VER.pmtiles"; l="$id-limites-$VER.pmtiles"
+            [ -f "out/$m" ] || continue
+            mb=$(stat -c %s "out/$m"); cb=0; [ -f "out/$c" ] && cb=$(stat -c %s "out/$c")
+            lb=0; [ -f "out/$l" ] && lb=$(stat -c %s "out/$l")
+            echo "$r" | jq --arg m "$m" --argjson mb "$mb" --arg c "$c" --argjson cb "$cb" --arg l "$l" --argjson lb "$lb" '
+              . + {file: $m, bytes: $mb}
+                + (if $cb > 0 then {contoursFile: $c, contoursBytes: $cb} else {} end)
+                + (if $lb > 0 then {limitsFile: $l, limitsBytes: $lb} else {} end)'
+          done | jq -s --arg v "$VER" --arg planet "$PLANET" '{version: $v, source: $planet, regions: .}' > "out/$INDEX"
+          cat "out/$INDEX"
+          test "$(jq '.regions | length' "out/$INDEX")" -gt 0
+          gh release delete "maps-$VER" --cleanup-tag --yes || true
+          gh release create "maps-$VER" out/*.pmtiles "out/$INDEX" --latest=false --target "$GITHUB_SHA" \
+            --title "Mapas offline $VER" \
+            --notes "Mapas para a Mota Dash, dados OpenStreetMap (Protomaps $(basename "$PLANET")), curvas de nível Copernicus DEM e limites de velocidade/radares do OpenStreetMap (Geofabrik). A app descarrega-os sozinha em Mapa > Mapas."

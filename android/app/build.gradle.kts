@@ -57,4 +57,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // Offline vector map (reads the PMTiles files built by the "Map data" workflow).
+    implementation("org.maplibre.gl:android-sdk:12.3.1")
 }

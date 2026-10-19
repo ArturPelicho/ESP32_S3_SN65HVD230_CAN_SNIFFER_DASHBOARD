@@ -5,6 +5,19 @@ An all-in-one smart dashboard for the **ZongShen Carrera 125 Euro5+**
 shows live engine telemetry on a colour TFT, estimates fuel consumption and
 bridges the data to phone apps over BLE as an ELM327 adapter.
 
+## Quick links
+
+| What | Link |
+|---|---|
+| Phone app, newest APK (file name carries the version) | [Releases → latest](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/latest) |
+| Offline maps (Portugal, Madeira, Açores, Espanha; relief, speed limits and cameras) | [Releases "maps-…"](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?q=maps&expanded=true), downloaded by the app itself in Mapa → ☰ |
+| Every app and map build | [All releases](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases) |
+| Sample track to test the GPX screen | [samples/gpx/teste-lisboa-marginal.gpx](samples/gpx/teste-lisboa-marginal.gpx) ([raw download](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/raw/HEAD/samples/gpx/teste-lisboa-marginal.gpx)) |
+| How to install and use the app (Portuguese) | [docs/app-telemovel.md](docs/app-telemovel.md) |
+| Wiring and pins | [PINOUT.md](PINOUT.md) |
+| PID scan procedure (Portuguese) | [docs/pid-scan-protocol.md](docs/pid-scan-protocol.md) |
+| Work in progress | [Pull requests](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/pulls) · [CI runs](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/actions) |
+
 The code is kept modular on purpose: sensors, displays and even the MCU are
 expected to change, so each subsystem sits behind its own module and runs in
 its own non-blocking task across both cores.
@@ -131,6 +144,19 @@ endpoint; measure the bike's own termination first.
   `GEAR RESET`, `SPEED`.
 
 **Phone app** (`android/`, see [docs/app-telemovel.md](docs/app-telemovel.md))
+- Goal: replace DMD2 for riding. Tabs: Mapa, Painel, Controlo, Erros,
+  Diagnóstico.
+- **Mapa** (MapLibre, works offline): regions downloaded from the "maps-…"
+  releases (map, 20 m contour lines, speed limits and speed cameras from
+  OpenStreetMap), day/night/automatic theme, Portuguese or local names, a
+  colour per road class. Follows the bike in heading-up, 3D or north-up,
+  with zoom and tilt set by speed and the bike low on the screen; compass
+  heading when stopped; speed with the road's limit sign and a camera
+  warning with a beep; GPS panel (satellites, accuracy, altitude).
+- **Tracks**: opens GPX, KML, KMZ, GeoJSON, TCX and FIT (also with "Open
+  with" / "Share"); shows, colours, renames and deletes them; follows one
+  with direction arrows, distance left and an off-track warning.
+- Interface size from 85 % to 150 % for reading with a helmet on.
 - Sends the phone's GPS fixes to the board and shows a full dashboard, the
   controls above and diagnostics. Binary packets in `main/phone_proto.h`,
   service `6d6f7461-0001-4b1e-9c3a-5a1e00000000`. The APK is built by the
@@ -177,6 +203,8 @@ gcc -std=c11 -Wall -I main test/host/test_phone_proto.c main/phone_proto.c -lm -
 ```
 
 The "Host tests" GitHub Actions workflow runs all of them on every push.
+The "Android app" workflow builds and publishes the APK, and "Map data"
+rebuilds the offline maps every month from fresh OpenStreetMap data.
 
 ## Project layout
 
@@ -197,7 +225,9 @@ The "Host tests" GitHub Actions workflow runs all of them on every push.
 | `main/tank.*` | Tank level, range, fill-up calibration |
 | `main/phone_proto.*` | BLE packets to and from the phone app |
 | `main/rt_params.*` | Runtime parameters in NVS |
-| `android/` | Phone app (Kotlin, Jetpack Compose) |
+| `android/` | Phone app (Kotlin, Jetpack Compose, MapLibre) |
+| `maps/` | Offline map builder for the "Map data" workflow (regions, contours, speed limits) |
+| `samples/` | Test files (GPX track) |
 | `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
 | `test/host/` | Host unit tests |
