@@ -54,6 +54,7 @@ jobs:
             --title "Mota Dash v${VER}" \
             --notes "App do telemóvel v${VER}, branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Instalar por cima da versão anterior."
           # Drafts left by the old app-latest delete-and-recreate.
-          gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[] | select(.draft) | .id' |
+          # Only app drafts: a maps-* release is a draft while its files upload.
+          gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[] | select(.draft and (.tag_name | startswith("app-"))) | .id' |
             while read -r id; do gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/$id"; done
           gh release delete app-latest --cleanup-tag --yes || true

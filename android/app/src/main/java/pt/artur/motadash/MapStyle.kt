@@ -153,17 +153,23 @@ object MapStyle {
                 "fill-opacity" to listOf("interpolate", listOf("linear"), listOf("zoom"), 14, 0, 15.5, 0.85),
             ), minzoom = 14)
 
-            val isPath = listOf("match", ROAD_CLASS, listOf("tk", "pa"), true, false)
             val notPath = listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true)
             val tunnel = listOf("==", listOf("get", "is_tunnel"), true)
             lines += layer("rail", "line", "roads", paint = mapOf(
                 "line-color" to c.rail, "line-width" to 1.2, "line-dasharray" to listOf(3, 3),
             ), filter = listOf("==", listOf("get", "kind"), "rail"), minzoom = 11)
+            // Dirt tracks stand out (brown dashes); footpaths stay faint so towns stay readable.
+            lines += layer("path", "line", "roads", layout = mapOf("line-cap" to "butt"), paint = mapOf(
+                "line-color" to c.path,
+                "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 14, 0.6, 18, 2),
+                "line-dasharray" to listOf(2, 2),
+                "line-opacity" to 0.55,
+            ), filter = listOf("match", ROAD_CLASS, "pa", true, false), minzoom = 14)
             lines += layer("track", "line", "roads", layout = mapOf("line-cap" to "butt"), paint = mapOf(
-                "line-color" to byClass(c.track, c.track, c.track, c.track, c.track, c.track, c.track, c.track, c.path),
+                "line-color" to c.track,
                 "line-width" to roadWidth(0.6),
                 "line-dasharray" to listOf(2.2, 1.4),
-            ), filter = isPath, minzoom = 12)
+            ), filter = listOf("match", ROAD_CLASS, "tk", true, false), minzoom = 12)
             lines += layer("casing", "line", "roads", layout = mapOf(
                 "line-cap" to "round", "line-join" to "round", "line-sort-key" to RANK,
             ), paint = mapOf(
