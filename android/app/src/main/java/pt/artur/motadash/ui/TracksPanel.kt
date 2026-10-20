@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pt.artur.motadash.MapStore
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackStore
 
@@ -69,6 +70,18 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
         Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text("Abrir ficheiro (GPX, KML, KMZ, GeoJSON, TCX, FIT)") }
         Text("Também podes abrir um ficheiro com a NavExpress a partir do gestor de ficheiros ou do WhatsApp.",
             color = Palette.label, fontSize = 12.sp)
+        Text("Para criar um trajeto: toque longo no mapa, \"Começar trajeto novo aqui\", e depois toque longo noutros sítios para " +
+            "juntar waypoints. Toque longo num waypoint para o deslocar ou apagar, e na linha para renomear, gravar ou partilhar.",
+            color = Palette.label, fontSize = 12.sp)
+        var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Trajetos novos seguem as estradas", color = Palette.text, fontSize = 15.sp)
+                Text("Precisa de rede (BRouter, OpenStreetMap). Sem rede liga os waypoints em linha reta.",
+                    color = Palette.label, fontSize = 12.sp)
+            }
+            Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
+        }
         message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
         if (tracks.isEmpty()) Text("Ainda não há trajetos.", color = Palette.label, fontSize = 14.sp)
 
@@ -98,7 +111,8 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                         }
                         val parts = listOfNotNull(
                             "%.1f km".format(t.lengthM / 1000),
-                            if (t.lines.size > 1) "${t.lines.size} partes" else null,
+                            if (t.lines.size > 1 && t.plan.isEmpty()) "${t.lines.size} partes" else null,
+                            if (t.plan.isNotEmpty()) "${t.plan.size} waypoints" else null,
                             if (t.waypoints.isNotEmpty()) "${t.waypoints.size} pontos" else null,
                             if (following) "a seguir" + (if (reversed) " (sentido inverso)" else "") else null,
                         )

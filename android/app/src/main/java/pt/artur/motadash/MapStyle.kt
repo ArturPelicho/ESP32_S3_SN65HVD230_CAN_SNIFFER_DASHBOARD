@@ -289,6 +289,16 @@ object MapStyle {
                     "text-offset" to listOf(0, 1.2), "text-anchor" to "top", "text-optional" to true),
                 "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.8),
                 "minzoom" to 11),
+            // Numbered waypoints of a trajeto planned on the map.
+            mapOf("id" to "rte-pt", "type" to "circle", "source" to "tracks",
+                "filter" to listOf("==", kind, "rtept"),
+                "paint" to mapOf("circle-radius" to 12, "circle-color" to listOf("get", "color"),
+                    "circle-stroke-color" to "#ffffff", "circle-stroke-width" to 2.5)),
+            mapOf("id" to "rte-num", "type" to "symbol", "source" to "tracks",
+                "filter" to listOf("==", kind, "rtept"),
+                "layout" to mapOf("text-field" to listOf("to-string", listOf("get", "n")), "text-font" to listOf(MEDIUM),
+                    "text-size" to 13, "text-allow-overlap" to true, "text-ignore-placement" to true),
+                "paint" to mapOf("text-color" to "#ffffff", "text-halo-color" to "#000000", "text-halo-width" to 1.2)),
         )
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))

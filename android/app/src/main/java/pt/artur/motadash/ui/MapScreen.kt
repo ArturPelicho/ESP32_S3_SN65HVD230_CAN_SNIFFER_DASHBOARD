@@ -3,11 +3,13 @@ package pt.artur.motadash.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.RectF
 import android.location.GnssStatus
 import android.media.AudioManager
@@ -25,6 +27,9 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Surface
 import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,9 +42,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -58,10 +69,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +84,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sqrt
 import kotlinx.coroutines.delay
+import java.io.File
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.gestures.RotateGestureDetector
 import org.maplibre.android.gestures.StandardScaleGestureDetector
@@ -93,6 +107,8 @@ import org.maplibre.geojson.Point
 import pt.artur.motadash.FollowMode
 import pt.artur.motadash.LatLon
 import pt.artur.motadash.Link
+import pt.artur.motadash.GpxWriter
+import pt.artur.motadash.Planner
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackFollower
 import pt.artur.motadash.TrackProgress
@@ -126,6 +142,8 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         private set
 
     var gesturing = false
+    /** Moving a waypoint: the map stays where the hand puts it. */
+    var editing = false
     var gestureAt = 0L
     /** Zoom picked by hand (buttons or pinch) and until when it beats auto zoom. */
     var userZoom: Double? = null
@@ -178,7 +196,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         val m = map ?: return
         val loc = fix ?: return
         val now = SystemClock.elapsedRealtime()
-        if (!follow && !gesturing && speedKmh > 10 && now - gestureAt > 10_000) setFollow(true)
+        if (!follow && !gesturing && !editing && speedKmh > 10 && now - gestureAt > 10_000) setFollow(true)
 
         // Auto zoom: out at once when speeding up, back in only after 8 s slower.
         val target = autoZoomFor(speedKmh)
@@ -278,10 +296,17 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         for (t in list.filter { it.visible }) {
             val active = t.id == activeId
             for (l in t.lines) {
+                if (l.size < 2) continue
                 val pts = l.map { Point.fromLngLat(it.lon, it.lat) }.let { if (active && reversed) it.reversed() else it }
                 fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
-                    addStringProperty("kind", "line"); addStringProperty("color", t.color)
+                    addStringProperty("kind", "line"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
                     addNumberProperty("w", t.width); addBooleanProperty("active", active)
+                }
+            }
+            t.plan.forEachIndexed { i, p ->
+                fs += Feature.fromGeometry(Point.fromLngLat(p.lon, p.lat)).apply {
+                    addStringProperty("kind", "rtept"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
+                    addNumberProperty("n", i + 1)
                 }
             }
             for (w in t.waypoints) {
@@ -316,6 +341,39 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         m.easeCamera(CameraUpdateFactory.newLatLngBounds(b, 80, 80, 80, 80), 800)
     }
 
+    /** Puts p in the middle of the screen, flat, for moving a waypoint. */
+    fun centreOn(p: LatLon) {
+        val m = map ?: return
+        setFollow(false)
+        val pos = CameraPosition.Builder().target(LatLng(p.lat, p.lon))
+            .zoom(maxOf(m.cameraPosition.zoom, 15.0)).tilt(0.0).padding(0.0, 0.0, 0.0, 0.0).build()
+        m.easeCamera(CameraUpdateFactory.newCameraPosition(pos), 600)
+    }
+
+    /** The map point under the middle of the screen (where the moving waypoint's pin is). */
+    fun centre(): LatLon? {
+        val m = map ?: return null
+        val v = view ?: return null
+        val ll = m.projection.fromScreenLocation(PointF(v.width / 2f, v.height / 2f))
+        return LatLon(ll.latitude, ll.longitude)
+    }
+
+    /** What is under a long press: a planned waypoint first, then a track line, else the map. */
+    fun pick(ll: LatLng): MapMenu {
+        val m = map ?: return MapMenu(0f, 0f, LatLon(ll.latitude, ll.longitude))
+        val p = m.projection.toScreenLocation(ll)
+        fun near(layer: String, r: Float) = if (style?.getLayer(layer) == null) emptyList()
+            else m.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), layer)
+        val at = LatLon(ll.latitude, ll.longitude)
+        near("rte-pt", 36f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
+            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), point = (num(f, "n") ?: 1) - 1)
+        }
+        near("trk-line", 28f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
+            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"))
+        }
+        return MapMenu(p.x, p.y, at)
+    }
+
     fun zoomBy(step: Double) {
         val m = map ?: return
         userZoom = ((userZoom ?: m.cameraPosition.zoom) + step).coerceIn(3.0, 19.5)
@@ -323,6 +381,12 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         if (follow) update(300) else m.animateCamera(CameraUpdateFactory.zoomTo(userZoom!!), 300)
     }
 }
+
+/** Long-press menu: where it opens and what is under the finger (a track, one of its waypoints, or the map). */
+private data class MapMenu(val x: Float, val y: Float, val at: LatLon, val tid: String? = null, val point: Int? = null)
+
+/** A waypoint being moved: it sits under the pin in the middle of the screen. */
+private data class Moving(val tid: String, val point: Int)
 
 private fun num(f: Feature, key: String): Int? =
     if (f.hasNonNullValueForProperty(key)) f.getNumberProperty(key)?.toInt() else null
@@ -479,6 +543,18 @@ fun MapScreen() {
     val activeTrack = tracks.firstOrNull { it.id == activeId }
     val follower = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { TrackFollower(it, reversed) } }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
+    var menu by remember { mutableStateOf<MapMenu?>(null) }
+    var moving by remember { mutableStateOf<Moving?>(null) }
+    var renaming by remember { mutableStateOf<Track?>(null) }
+    var saving by remember { mutableStateOf<Track?>(null) }
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gpx+xml")) { uri ->
+        val t = saving
+        saving = null
+        if (uri != null && t != null) {
+            val ok = runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(GpxWriter.write(t).toByteArray()) } }.isSuccess
+            Toast.makeText(ctx, if (ok) "Gravado: ${t.name}" else "Não deu para gravar", Toast.LENGTH_SHORT).show()
+        }
+    }
     var minute by remember { mutableLongStateOf(0L) }
     val holder = remember {
         MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
@@ -596,6 +672,12 @@ fun MapScreen() {
                                 holder.manualUntil = SystemClock.elapsedRealtime() + 10_000
                             }
                         })
+                        // Long press: waypoint menu (add, move, delete) or the trajeto's menu.
+                        m.addOnMapLongClickListener { ll ->
+                            holder.setFollow(false); touched()
+                            menu = holder.pick(ll)
+                            true
+                        }
                         holder.pending?.let { holder.applyStyle(it) } ?: holder.applyStyle(styleJson)
                         holder.update(0)
                     }
@@ -662,7 +744,7 @@ fun MapScreen() {
                 mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode
                 holder.setFollow(true); holder.update(600)
             }
-            MapButton("◎", active = follow) { holder.setFollow(true); holder.update(600) }
+            MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
             MapButton(
                 when (theme) { MapTheme.AUTO -> "AUTO"; MapTheme.DAY -> "DIA"; MapTheme.NIGHT -> "NOITE" },
                 small = true,
@@ -708,7 +790,75 @@ fun MapScreen() {
                 cam.kmh?.let { LimitSign(it, small = true) }
             }
         }
-        if (activeTrack != null) TrackBox(activeTrack, progress)
+        moving?.let { mv ->
+            Row(
+                Modifier.background(Color(0xE60B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("A mover o waypoint ${mv.point + 1}", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Button(onClick = {
+                    holder.centre()?.let { Planner.move(ctx, mv.tid, mv.point, it) }
+                    moving = null; holder.editing = false
+                }) { Text("Fixar aqui") }
+                OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text("Cancelar") }
+            }
+        }
+        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress)
+        }
+
+        // Pin in the middle of the screen while moving a waypoint; the map slides under it.
+        moving?.let { mv ->
+            val color = tracks.firstOrNull { it.id == mv.tid }?.color?.let { parseColor(it) } ?: Palette.cyan
+            Box(Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(64.dp)) {
+                    val c = center
+                    drawLine(Color.Black, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 5f)
+                    drawLine(Color.Black, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 5f)
+                    drawLine(Color.White, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 2.5f)
+                    drawLine(Color.White, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 2.5f)
+                }
+                Box(Modifier.size(30.dp).background(color, CircleShape).border(2.5.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center) {
+                    Text("${mv.point + 1}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        menu?.let { mm ->
+            Box(Modifier.offset { IntOffset(mm.x.toInt(), mm.y.toInt()) }) {
+                MapMenuItems(
+                    mm, tracks, activeTrack, moving,
+                    onDismiss = { menu = null },
+                    onMoveStart = { t, k ->
+                        moving = Moving(t.id, k); holder.editing = true; holder.centreOn(t.plan[k])
+                    },
+                    onMoveFix = { mv ->
+                        holder.centre()?.let { Planner.move(ctx, mv.tid, mv.point, it) }
+                        moving = null; holder.editing = false
+                    },
+                    onMoveCancel = { moving = null; holder.editing = false },
+                    onRename = { renaming = it },
+                    onSave = { saving = it; save.launch(GpxWriter.fileName(it)) },
+                    onShare = { shareGpx(ctx, it) },
+                )
+            }
+        }
+
+        renaming?.let { t ->
+            var text by remember(t.id) { mutableStateOf(t.name) }
+            AlertDialog(
+                onDismissRequest = { renaming = null },
+                title = { Text("Mudar o nome") },
+                text = { OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true) },
+                confirmButton = {
+                    Button(onClick = {
+                        TrackStore.change(ctx, t.id) { it.copy(name = text.trim().ifEmpty { it.name }) }
+                        renaming = null
+                    }) { Text("Guardar") }
+                },
+                dismissButton = { OutlinedButton(onClick = { renaming = null }) { Text("Cancelar") } },
+            )
         }
 
         // Tracks button, top right.
@@ -761,6 +911,78 @@ fun MapScreen() {
             )
         }
     }
+}
+
+/** The long-press menu: add a waypoint, move or delete one, or work on the whole trajeto. */
+@Composable
+private fun MapMenuItems(
+    mm: MapMenu,
+    tracks: List<Track>,
+    current: Track?,
+    moving: Moving?,
+    onDismiss: () -> Unit,
+    onMoveStart: (Track, Int) -> Unit,
+    onMoveFix: (Moving) -> Unit,
+    onMoveCancel: () -> Unit,
+    onRename: (Track) -> Unit,
+    onSave: (Track) -> Unit,
+    onShare: (Track) -> Unit,
+) {
+    val ctx = LocalContext.current
+    var confirmDelete by remember { mutableStateOf(false) }
+    val t = tracks.firstOrNull { it.id == mm.tid }
+    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        when {
+            moving != null -> {
+                MenuItem("Fixar waypoint ${moving.point + 1} aqui?", onDismiss) { onMoveFix(moving) }
+                MenuItem("Cancelar", onDismiss) { onMoveCancel() }
+            }
+            t != null && mm.point != null && mm.point in t.plan.indices -> {
+                val n = mm.point + 1
+                Text("Waypoint $n · ${t.name}", color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                MenuItem("Deslocar waypoint $n", onDismiss) { onMoveStart(t, mm.point) }
+                MenuItem("Apagar waypoint $n", onDismiss) { Planner.remove(ctx, t.id, mm.point) }
+                if (current?.id != t.id) MenuItem("Continuar este trajeto", onDismiss) { TrackStore.setActive(ctx, t.id) }
+            }
+            t != null -> {
+                Text(t.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                if (current?.id != t.id) MenuItem("Seguir este trajeto", onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
+                MenuItem("Renomear", onDismiss) { onRename(t) }
+                MenuItem("Gravar GPX no telemóvel", onDismiss) { onSave(t) }
+                MenuItem("Partilhar GPX", onDismiss) { onShare(t) }
+                if (confirmDelete) {
+                    MenuItem("Confirmar: apagar ${t.name}", onDismiss) { TrackStore.delete(ctx, t.id) }
+                } else {
+                    DropdownMenuItem(text = { Text("Apagar trajeto", fontSize = 16.sp, color = Palette.red) },
+                        onClick = { confirmDelete = true })
+                }
+            }
+            else -> {
+                if (current != null && current.plan.isNotEmpty()) {
+                    MenuItem("Adicionar waypoint ${current.plan.size + 1} a ${current.name}", onDismiss) { Planner.add(ctx, current.id, mm.at) }
+                }
+                MenuItem("Começar trajeto novo aqui", onDismiss) { Planner.start(ctx, mm.at) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MenuItem(label: String, onDismiss: () -> Unit, action: () -> Unit) {
+    DropdownMenuItem(text = { Text(label, fontSize = 16.sp) }, onClick = { onDismiss(); action() })
+}
+
+/** Sends the track as a GPX file to another app (WhatsApp, e-mail, Drive...). */
+private fun shareGpx(ctx: Context, t: Track) {
+    runCatching {
+        val dir = File(ctx.cacheDir, "share").apply { mkdirs() }
+        val f = File(dir, GpxWriter.fileName(t)).apply { writeText(GpxWriter.write(t)) }
+        val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
+        val send = Intent(Intent.ACTION_SEND).setType("application/gpx+xml")
+            .putExtra(Intent.EXTRA_STREAM, uri).putExtra(Intent.EXTRA_SUBJECT, t.name)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        ctx.startActivity(Intent.createChooser(send, "Partilhar ${t.name}"))
+    }.onFailure { Toast.makeText(ctx, "Não deu para partilhar", Toast.LENGTH_SHORT).show() }
 }
 
 /** Followed track: distance left, and how far off it the bike is. */

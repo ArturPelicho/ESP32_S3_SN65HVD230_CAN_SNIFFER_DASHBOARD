@@ -87,6 +87,10 @@ object MapStore {
     fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
     fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
 
+    /** Trajetos planned on the map follow the roads (BRouter, needs network) instead of straight lines. */
+    fun routeRoads(ctx: Context): Boolean = prefs(ctx).getBoolean("route_roads", true)
+    fun setRouteRoads(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("route_roads", on).apply()
+
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
         prefs(ctx).getString("index", null)?.let { runCatching { _index.value = parseIndex(JSONObject(it), null) } }

@@ -27,6 +27,8 @@ data class Track(
     val color: String,
     val width: Int,          // 1 thin, 2 normal, 3 thick
     val visible: Boolean,
+    /** Numbered waypoints of a trajeto planned on the map; empty for imported files. */
+    val plan: List<LatLon> = emptyList(),
 ) {
     val lengthM: Double by lazy { lines.sumOf { l -> (1 until l.size).sumOf { metres(l[it - 1], l[it]) } } }
     val points: Int get() = lines.sumOf { it.size }
@@ -115,6 +117,20 @@ object TrackStore {
         _tracks.update { list -> list.map { if (it.id == t.id) t else it } }
     }
 
+    fun add(ctx: Context, t: Track) {
+        load(ctx)
+        save(ctx, t)
+        _tracks.update { it + t }
+    }
+
+    /** Changes one track atomically (screen and route lookups may change it at once) and saves it. */
+    fun change(ctx: Context, id: String, f: (Track) -> Track): Track? {
+        var out: Track? = null
+        _tracks.update { list -> list.map { if (it.id == id) f(it).also { n -> out = n } else it } }
+        out?.let { save(ctx, it) }
+        return out
+    }
+
     fun delete(ctx: Context, id: String) {
         File(dir(ctx), "$id.json").delete()
         _tracks.update { list -> list.filter { it.id != id } }
@@ -140,11 +156,13 @@ object TrackStore {
             JSONArray(l.map { p -> JSONArray(listOfNotNull(p.lat, p.lon, p.ele)) })
         }))
         put("wpts", JSONArray(t.waypoints.map { w -> JSONArray(listOf(w.lat, w.lon, w.name)) }))
+        if (t.plan.isNotEmpty()) put("plan", JSONArray(t.plan.map { p -> JSONArray(listOf(p.lat, p.lon)) }))
     }
 
     private fun fromJson(o: JSONObject): Track {
         val ls = o.getJSONArray("lines")
         val ws = o.optJSONArray("wpts") ?: JSONArray()
+        val pl = o.optJSONArray("plan") ?: JSONArray()
         return Track(
             id = o.getString("id"), name = o.getString("name"),
             lines = List(ls.length()) { i ->
@@ -156,6 +174,7 @@ object TrackStore {
             },
             waypoints = List(ws.length()) { i -> ws.getJSONArray(i).let { Waypoint(it.getDouble(0), it.getDouble(1), it.getString(2)) } },
             color = o.optString("color", COLORS[0]), width = o.optInt("width", 2), visible = o.optBoolean("visible", true),
+            plan = List(pl.length()) { i -> pl.getJSONArray(i).let { LatLon(it.getDouble(0), it.getDouble(1)) } },
         )
     }
 }
