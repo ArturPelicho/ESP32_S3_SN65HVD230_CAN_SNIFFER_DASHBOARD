@@ -36,10 +36,10 @@ jobs:
           "$BT/aapt2" dump badging "$APK" | head -5
           VER="0.1.${GITHUB_RUN_NUMBER}"
           echo "VER=$VER" >> "$GITHUB_ENV"
-          echo "APK_NAME=mota-dash-v${VER}-${GITHUB_SHA::7}.apk" >> "$GITHUB_ENV"
+          echo "APK_NAME=navexpress-v${VER}-${GITHUB_SHA::7}.apk" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: mota-dash-apk
+          name: navexpress-apk
           path: android/app/build/outputs/apk/debug/*.apk
       # A plain .apk the phone's browser can download and install directly
       # (an Actions artifact is a zip and needs a GitHub login). One release
@@ -51,7 +51,7 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
           gh release create "app-v${VER}" "$APK_NAME" --latest --target "$GITHUB_SHA" \
-            --title "Mota Dash v${VER}" \
+            --title "NavExpress v${VER}" \
             --notes "App do telemóvel v${VER}, branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Instalar por cima da versão anterior."
           # Drafts left by the old app-latest delete-and-recreate.
           # Only app drafts: a maps-* release is a draft while its files upload.

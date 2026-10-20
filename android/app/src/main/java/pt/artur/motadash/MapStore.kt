@@ -3,6 +3,7 @@ package pt.artur.motadash
 import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.StringRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,10 @@ data class MapRegion(
     val limitsFile: String? = null,
     val limitsBytes: Long = 0,
     val limitsUrl: String? = null,
+    /** Terrain heights (raster-dem, Mapbox RGB encoding) for the shaded relief. */
+    val shadeFile: String? = null,
+    val shadeBytes: Long = 0,
+    val shadeUrl: String? = null,
 )
 
 data class MapIndex(val version: String, val regions: List<MapRegion>)
@@ -37,15 +42,43 @@ data class InstalledMap(
     val id: String, val version: String, val enabled: Boolean, val map: File, val contours: File?,
     /** Speed limits and speed cameras (layers "limits" and "cameras"), if downloaded. */
     val limits: File? = null,
+    /** Terrain heights for the shaded relief, if downloaded. */
+    val shade: File? = null,
 )
 
-enum class MapTheme(val label: String) { AUTO("Automático"), DAY("Dia"), NIGHT("Noite") }
-enum class MapLanguage(val label: String) { PT("Português"), LOCAL("Língua local") }
+enum class MapTheme(@StringRes private val res: Int) {
+    AUTO(R.string.maps_theme_auto), DAY(R.string.maps_theme_day), NIGHT(R.string.maps_theme_night);
+    val label: String get() = L.s(res)
+}
+enum class MapLanguage(@StringRes private val res: Int) {
+    PT(R.string.maps_lang_pt), LOCAL(R.string.maps_lang_local);
+    val label: String get() = L.s(res)
+}
 
 /** How the map follows the bike: heading up, heading up tilted (3D), or north up. */
-enum class FollowMode(val label: String, val button: String) {
-    HEADING("Direção para cima", "▲"), THREE_D("3D", "3D"), NORTH("Norte para cima", "N");
+enum class FollowMode(@StringRes private val res: Int, val button: String) {
+    HEADING(R.string.maps_follow_heading, "▲"), THREE_D(R.string.maps_follow_3d, "3D"), NORTH(R.string.maps_follow_north, "N");
+    val label: String get() = L.s(res)
     fun next() = entries[(ordinal + 1) % entries.size]
+}
+
+/** Map layers the rider can switch on and off from the map's layers button. */
+enum class MapLayer(@StringRes val res: Int) {
+    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras);
+    val label: String get() = L.s(res)
+}
+
+/**
+ * Auto zoom by speed: [nearZoom] at or below [slowKmh], [farZoom] at or above [fastKmh],
+ * in a straight line between them.
+ */
+data class AutoZoom(val slowKmh: Int = 20, val fastKmh: Int = 110, val nearZoom: Double = 17.0, val farZoom: Double = 14.0)
+
+fun AutoZoom.zoomFor(kmh: Double): Double = when {
+    fastKmh <= slowKmh -> if (kmh <= slowKmh) nearZoom else farZoom
+    kmh <= slowKmh -> nearZoom
+    kmh >= fastKmh -> farZoom
+    else -> nearZoom + (farZoom - nearZoom) * (kmh - slowKmh) / (fastKmh - slowKmh)
 }
 
 /** State of a region's download, for the Mapas list. */
@@ -57,7 +90,7 @@ data class DownloadState(val done: Long, val total: Long, val failed: Boolean = 
  */
 object MapStore {
     private const val RELEASES =
-        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=50"
+        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100&page="
     private const val PREFS = "maps"
 
     private val _index = MutableStateFlow<MapIndex?>(null)
@@ -84,12 +117,51 @@ object MapStore {
     fun setFollowMode(ctx: Context, m: FollowMode) = prefs(ctx).edit().putString("follow", m.name).apply()
     fun autoZoom(ctx: Context): Boolean = prefs(ctx).getBoolean("auto_zoom", true)
     fun setAutoZoom(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("auto_zoom", on).apply()
+    private val _autoZoomFlow = MutableStateFlow(AutoZoom())
+    /** The auto zoom settings, for the map to follow while the Mapas panel changes them. */
+    val autoZoomFlow: StateFlow<AutoZoom> = _autoZoomFlow.asStateFlow()
+    fun autoZoomCfg(ctx: Context): AutoZoom {
+        val p = prefs(ctx); val d = AutoZoom()
+        return AutoZoom(p.getInt("az_slow", d.slowKmh), p.getInt("az_fast", d.fastKmh),
+            p.getFloat("az_near", d.nearZoom.toFloat()).toDouble(), p.getFloat("az_far", d.farZoom.toFloat()).toDouble())
+    }
+    fun setAutoZoomCfg(ctx: Context, a: AutoZoom) {
+        prefs(ctx).edit().putInt("az_slow", a.slowKmh).putInt("az_fast", a.fastKmh)
+            .putFloat("az_near", a.nearZoom.toFloat()).putFloat("az_far", a.farZoom.toFloat()).apply()
+        _autoZoomFlow.value = a
+    }
+
+    private val _contourStepFlow = MutableStateFlow(0)
+    /** Contour spacing in metres (10, 20, 50 or 100), or 0 for by zoom; see [MapStyle.build]. */
+    val contourStepFlow: StateFlow<Int> = _contourStepFlow.asStateFlow()
+    fun contourStep(ctx: Context): Int = prefs(ctx).getInt("contour_step", 0)
+    fun setContourStep(ctx: Context, step: Int) {
+        prefs(ctx).edit().putInt("contour_step", step).apply()
+        _contourStepFlow.value = step
+    }
+
     fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
     fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
+
+    fun layers(ctx: Context): Set<MapLayer> {
+        val off = prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()
+        return MapLayer.entries.filter { it.name !in off }.toSet()
+    }
+    fun setLayer(ctx: Context, l: MapLayer, on: Boolean) {
+        val off = (prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()).toMutableSet()
+        if (on) off -= l.name else off += l.name
+        prefs(ctx).edit().putStringSet("layers_off", off).apply()
+    }
+
+    /** Trajetos planned on the map follow the roads (BRouter, needs network) instead of straight lines. */
+    fun routeRoads(ctx: Context): Boolean = prefs(ctx).getBoolean("route_roads", true)
+    fun setRouteRoads(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("route_roads", on).apply()
 
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
         prefs(ctx).getString("index", null)?.let { runCatching { _index.value = parseIndex(JSONObject(it), null) } }
+        _autoZoomFlow.value = autoZoomCfg(ctx)
+        _contourStepFlow.value = contourStep(ctx)
         refreshInstalled(ctx)
         pollDownloads(ctx)
     }
@@ -103,29 +175,34 @@ object MapStore {
             if (!map.exists()) return@mapNotNull null
             val contours = p.getString("contours_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
             val limits = p.getString("limits_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
-            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours, limits)
+            val shade = p.getString("shade_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
+            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours, limits, shade)
         }
     }
 
     /** Asks GitHub for the newest maps-* release and its index. */
     suspend fun fetchIndex(ctx: Context): Result<MapIndex> = withContext(Dispatchers.IO) {
         runCatching {
-            val releases = JSONArray(get(RELEASES))
+            // App releases (one per build) share the list with the monthly map ones: page until a map one shows up.
             var best: JSONObject? = null
-            for (i in 0 until releases.length()) {
-                val r = releases.getJSONObject(i)
-                val tag = r.optString("tag_name")
-                if (!tag.startsWith("maps-") || r.optBoolean("draft")) continue
-                if (best == null || tag > best.optString("tag_name")) best = r
+            for (page in 1..20) {
+                val releases = JSONArray(get(RELEASES + page))
+                for (i in 0 until releases.length()) {
+                    val r = releases.getJSONObject(i)
+                    val tag = r.optString("tag_name")
+                    if (!tag.startsWith("maps-") || r.optBoolean("draft")) continue
+                    if (best == null || tag > best.optString("tag_name")) best = r
+                }
+                if (best != null || releases.length() < 100) break
             }
-            val rel = best ?: error("Ainda não há mapas publicados")
+            val rel = best ?: error(L.s(R.string.maps_err_none_published))
             val assets = rel.getJSONArray("assets")
             val urls = HashMap<String, String>()
             for (i in 0 until assets.length()) {
                 val a = assets.getJSONObject(i)
                 urls[a.getString("name")] = a.getString("browser_download_url")
             }
-            val indexName = urls.keys.firstOrNull { it.startsWith("maps-index-") } ?: error("Release sem índice")
+            val indexName = urls.keys.firstOrNull { it.startsWith("maps-index-") } ?: error(L.s(R.string.maps_err_no_index))
             val json = JSONObject(get(urls.getValue(indexName)))
             val idx = parseIndex(json, urls)
             // Keep the urls inside the saved copy so downloads work from it later.
@@ -157,6 +234,7 @@ object MapStore {
             val file = r.getString("file")
             val cf = r.optString("contoursFile").ifEmpty { null }
             val lf = r.optString("limitsFile").ifEmpty { null }
+            val sf = r.optString("shadeFile").ifEmpty { null }
             MapRegion(
                 id = r.getString("id"),
                 name = r.getString("name"),
@@ -170,6 +248,9 @@ object MapStore {
                 limitsFile = lf,
                 limitsBytes = r.optLong("limitsBytes"),
                 limitsUrl = lf?.let { urls?.get(it) } ?: r.optString("limitsUrl").ifEmpty { null },
+                shadeFile = sf,
+                shadeBytes = r.optLong("shadeBytes"),
+                shadeUrl = sf?.let { urls?.get(it) } ?: r.optString("shadeUrl").ifEmpty { null },
             )
         })
     }
@@ -184,6 +265,7 @@ object MapStore {
                 put("contoursUrl", r.contoursUrl ?: "")
                 put("limitsFile", r.limitsFile ?: ""); put("limitsBytes", r.limitsBytes)
                 put("limitsUrl", r.limitsUrl ?: "")
+                put("shadeFile", r.shadeFile ?: ""); put("shadeBytes", r.shadeBytes); put("shadeUrl", r.shadeUrl ?: "")
             }
         }))
     }
@@ -196,25 +278,29 @@ object MapStore {
     private fun dm(ctx: Context) = ctx.getSystemService(DownloadManager::class.java)
 
     /**
-     * Starts (or restarts) the download of a region's map, contour and speed limit files.
-     * With [limitsOnly], fetches just the speed limits for a map already on the phone.
+     * Starts (or restarts) the download of a region's map, contour, speed limit and relief files.
+     * With [extrasOnly], fetches just the speed limits and relief a map already on the phone lacks.
      */
-    fun download(ctx: Context, r: MapRegion, limitsOnly: Boolean = false) {
+    fun download(ctx: Context, r: MapRegion, extrasOnly: Boolean = false) {
         val url = r.url ?: return
         val p = prefs(ctx)
-        if (limitsOnly && (r.limitsFile == null || r.limitsUrl == null || p.getString("file_${r.id}", null) == null)) return
+        if (extrasOnly && p.getString("file_${r.id}", null) == null) return
+        val wantLimits = r.limitsFile != null && r.limitsUrl != null && (!extrasOnly || p.getString("limits_${r.id}", null) == null)
+        val wantShade = r.shadeFile != null && r.shadeUrl != null && (!extrasOnly || p.getString("shade_${r.id}", null) == null)
+        if (extrasOnly && !wantLimits && !wantShade) return
         cancel(ctx, r.id)
         val files = buildList {
-            if (!limitsOnly) {
+            if (!extrasOnly) {
                 add(r.file to url)
                 if (r.contoursFile != null && r.contoursUrl != null) add(r.contoursFile to r.contoursUrl)
             }
-            if (r.limitsFile != null && r.limitsUrl != null) add(r.limitsFile to r.limitsUrl)
+            if (wantLimits) add(r.limitsFile!! to r.limitsUrl!!)
+            if (wantShade) add(r.shadeFile!! to r.shadeUrl!!)
         }
         val ids = files.map { (name, u) ->
             File(dir(ctx), "$name.part").delete()
             val req = DownloadManager.Request(Uri.parse(u))
-                .setTitle("Mapa ${r.name}")
+                .setTitle(L.s(R.string.maps_download_title, r.name))
                 .setDescription(name)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                 .setDestinationUri(Uri.fromFile(File(dir(ctx), "$name.part")))
@@ -222,10 +308,11 @@ object MapStore {
         }
         p.edit()
             .putString("dl_${r.id}", ids.joinToString(","))
-            .putString("dlver_${r.id}", if (limitsOnly) p.getString("ver_${r.id}", "") else available(r.id) ?: "")
-            .putString("dlfile_${r.id}", if (limitsOnly) p.getString("file_${r.id}", "") else r.file)
-            .putString("dlcontours_${r.id}", if (limitsOnly) p.getString("contours_${r.id}", "") else r.contoursFile ?: "")
-            .putString("dllimits_${r.id}", r.limitsFile ?: "")
+            .putString("dlver_${r.id}", if (extrasOnly) p.getString("ver_${r.id}", "") else available(r.id) ?: "")
+            .putString("dlfile_${r.id}", if (extrasOnly) p.getString("file_${r.id}", "") else r.file)
+            .putString("dlcontours_${r.id}", if (extrasOnly) p.getString("contours_${r.id}", "") else r.contoursFile ?: "")
+            .putString("dllimits_${r.id}", if (wantLimits) r.limitsFile else p.getString("limits_${r.id}", "") ?: "")
+            .putString("dlshade_${r.id}", if (wantShade) r.shadeFile else p.getString("shade_${r.id}", "") ?: "")
             .apply()
         pollDownloads(ctx)
     }
@@ -280,14 +367,16 @@ object MapStore {
         val file = p.getString("dlfile_$id", null) ?: return
         val contours = p.getString("dlcontours_$id", "")!!.ifEmpty { null }
         val limits = p.getString("dllimits_$id", "")!!.ifEmpty { null }
-        // A speed-limits-only download leaves the map and contours as they are (no .part for them).
-        for (name in listOfNotNull(file, contours, limits)) {
+        val shade = p.getString("dlshade_$id", "")!!.ifEmpty { null }
+        // An extras-only download leaves the files already here as they are (no .part for them).
+        for (name in listOfNotNull(file, contours, limits, shade)) {
             val part = File(d, "$name.part")
             if (part.exists()) part.renameTo(File(d, name))
         }
         // Old version's files go once the new ones are in place.
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
-            .filter { it != file && it != contours && it != limits }
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null),
+            p.getString("shade_$id", null))
+            .filter { it != file && it != contours && it != limits && it != shade }
             .forEach { File(d, it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) + id)
@@ -296,10 +385,11 @@ object MapStore {
             .apply {
                 if (contours != null) putString("contours_$id", contours) else remove("contours_$id")
                 if (limits != null) putString("limits_$id", limits) else remove("limits_$id")
+                if (shade != null) putString("shade_$id", shade) else remove("shade_$id")
             }
             .putBoolean("on_$id", true)
             .remove("dl_$id").remove("dlver_$id").remove("dlfile_$id").remove("dlcontours_$id")
-            .remove("dllimits_$id")
+            .remove("dllimits_$id").remove("dlshade_$id")
             .apply()
     }
 
@@ -311,11 +401,12 @@ object MapStore {
     fun delete(ctx: Context, id: String) {
         cancel(ctx, id)
         val p = prefs(ctx)
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null),
+            p.getString("shade_$id", null))
             .forEach { File(dir(ctx), it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) - id)
-            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("limits_$id").remove("on_$id")
+            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("limits_$id").remove("shade_$id").remove("on_$id")
             .apply()
         refreshInstalled(ctx)
     }

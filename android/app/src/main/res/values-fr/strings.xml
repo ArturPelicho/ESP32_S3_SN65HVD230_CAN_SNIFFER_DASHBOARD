@@ -1,0 +1,9 @@
+<resources>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_phone">Langue du téléphone</string>
+    <string name="settings_theme">Thème</string>
+    <string name="theme_auto">Automatique (coucher du soleil)</string>
+    <string name="theme_sand">Sable</string>
+    <string name="theme_night">Nuit du désert</string>
+    <string name="theme_graphite">Graphite</string>
+</resources>

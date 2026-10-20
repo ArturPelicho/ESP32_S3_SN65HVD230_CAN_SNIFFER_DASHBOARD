@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map options in the Mapas panel (MapsPanel.kt): auto zoom ranges, contour spacing. -->
+<resources>
+    <string name="mapopts_az_speed">Speed: %1$d–%2$d km/h</string>
+    <string name="mapopts_az_speed_hint">Closest zoom at or below the first speed, farthest at or above the second.</string>
+    <string name="mapopts_az_zoom">Zoom: %1$s (≈ %2$d m) to %3$s (≈ %4$d m)</string>
+    <string name="mapopts_az_zoom_hint">In brackets: the ground covered by 1.6 cm of screen (100 dp).</string>
+    <string name="mapopts_contour_title">Contour spacing</string>
+    <string name="mapopts_contour_auto">Auto (by zoom)</string>
+    <string name="mapopts_contour_m">%1$d m</string>
+    <string name="mapopts_contour_hint">Auto: 100 m lines when zoomed out, down to 10 m close in. 10 m and 50 m lines only come with relief built from now on: re-download the region\'s relief when the next maps version comes out.</string>
+</resources>

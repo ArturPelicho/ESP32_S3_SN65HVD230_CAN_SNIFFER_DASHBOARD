@@ -32,7 +32,7 @@ object TrackParser {
             else -> parseXml(bytes)
         }
         val lines = t.lines.filter { it.size >= 2 }
-        if (lines.isEmpty() && t.waypoints.isEmpty()) error("O ficheiro não tem trajetos nem pontos")
+        if (lines.isEmpty() && t.waypoints.isEmpty()) error(L.s(R.string.tracks_err_no_tracks))
         return t.copy(lines = lines)
     }
 
@@ -150,7 +150,7 @@ object TrackParser {
                 if (!e.isDirectory && e.name.lowercase().endsWith(".kml")) return parseXml(z.readBytes())
             }
         }
-        error("O KMZ não tem nenhum KML dentro")
+        error(L.s(R.string.tracks_err_kmz_no_kml))
     }
 
     // ---- GeoJSON --------------------------------------------------------------
@@ -202,7 +202,7 @@ object TrackParser {
 
     /** Reads "record" messages (position_lat / position_long / altitude) into one line. */
     private fun parseFit(b: ByteArray): ParsedTrack {
-        if (!isFit(b)) error("Não é um ficheiro FIT")
+        if (!isFit(b)) error(L.s(R.string.tracks_err_not_fit))
         val headerSize = b[0].toInt() and 0xFF
         val dataSize = le32(b, 4)
         val end = minOf(b.size, headerSize + dataSize)
@@ -213,7 +213,7 @@ object TrackParser {
         while (i < end) {
             val h = b[i].toInt() and 0xFF; i++
             if (h and 0x80 != 0) {                     // compressed timestamp header: data message
-                val d = defs[(h shr 5) and 0x3] ?: error("FIT inválido")
+                val d = defs[(h shr 5) and 0x3] ?: error(L.s(R.string.tracks_err_fit_invalid))
                 i = fitData(b, i, d, line, semi)
             } else if (h and 0x40 != 0) {              // definition message
                 val local = h and 0x0F
@@ -232,7 +232,7 @@ object TrackParser {
                 }
                 defs[local] = FitDef(global, big, fields, dev)
             } else {
-                val d = defs[h and 0x0F] ?: error("FIT inválido")
+                val d = defs[h and 0x0F] ?: error(L.s(R.string.tracks_err_fit_invalid))
                 i = fitData(b, i, d, line, semi)
             }
         }

@@ -1,6 +1,7 @@
 package pt.artur.motadash
 
 import android.content.Context
+import androidx.annotation.StringRes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,12 +25,15 @@ data class DtcState(
 }
 
 /** Screen orientation choices, as ActivityInfo values. */
-enum class Orientation(val label: String, val value: Int) {
-    AUTO("Automática", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER),
-    PORTRAIT("Vertical", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
-    LANDSCAPE("Horizontal", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
-    LANDSCAPE_INV("Horizontal invertida", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE),
-    LANDSCAPE_ANY("Horizontal (as duas)", android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE),
+enum class Orientation(@StringRes val labelRes: Int, val value: Int) {
+    AUTO(R.string.link_orient_auto, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER),
+    PORTRAIT(R.string.link_orient_portrait, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
+    LANDSCAPE(R.string.link_orient_landscape, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+    LANDSCAPE_INV(R.string.link_orient_landscape_inv, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE),
+    LANDSCAPE_ANY(R.string.link_orient_landscape_any, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+
+    /** In the app's language (read at call time). */
+    val label: String get() = L.s(labelRes)
 }
 
 data class GpsInfo(
@@ -39,6 +43,9 @@ data class GpsInfo(
     val hAccM: Double? = null,
     val fixes: Long = 0,
     val sent: Long = 0,
+    val lat: Double? = null,
+    val lon: Double? = null,
+    val altM: Double? = null,
 )
 
 /** State shared by the service (writer) and the UI (reader). */
@@ -124,11 +131,10 @@ object Link {
             rest == "END" -> _dtc.update { it.copy(reading = false, readAt = System.currentTimeMillis()) }
             rest.startsWith("CLEAR") -> _dtc.update {
                 it.copy(clearResult = when {
-                    rest.startsWith("CLEARED") -> "Erros apagados."
+                    rest.startsWith("CLEARED") -> L.s(R.string.link_dtc_cleared)
                     rest.startsWith("CLEAR REFUSED") ->
-                        "A centralina recusou (código ${rest.substringAfterLast(' ')}). " +
-                            "Tenta com a ignição ligada e o motor parado."
-                    else -> "Sem resposta da centralina."
+                        L.s(R.string.link_dtc_refused, rest.substringAfterLast(' '))
+                    else -> L.s(R.string.link_dtc_no_reply)
                 })
             }
             else -> {
@@ -149,7 +155,7 @@ object Link {
     }
 
     fun clearDtc() {
-        _dtc.update { it.copy(clearResult = "A apagar…") }
+        _dtc.update { it.copy(clearResult = L.s(R.string.link_dtc_clearing)) }
         send("DTC CLEAR")
     }
 

@@ -1,11 +1,15 @@
 package pt.artur.motadash.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.RectF
 import android.location.GnssStatus
 import android.media.AudioManager
@@ -23,7 +27,19 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Surface
 import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.mutableIntStateOf
+import pt.artur.motadash.MapLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,9 +51,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -55,18 +78,27 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sqrt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import pt.artur.motadash.ElevProfile
+import java.io.File
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.gestures.RotateGestureDetector
 import org.maplibre.android.gestures.StandardScaleGestureDetector
@@ -79,6 +111,8 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.VectorSource
 import org.maplibre.geojson.FeatureCollection
@@ -87,15 +121,21 @@ import org.maplibre.geojson.MultiLineString
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.Point
 import pt.artur.motadash.FollowMode
+import pt.artur.motadash.L
 import pt.artur.motadash.LatLon
 import pt.artur.motadash.Link
+import pt.artur.motadash.GpxWriter
+import pt.artur.motadash.Planner
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackFollower
 import pt.artur.motadash.TrackProgress
 import pt.artur.motadash.TrackStore
 import pt.artur.motadash.MapStore
+import pt.artur.motadash.AutoZoom
+import pt.artur.motadash.zoomFor
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.MapTheme
+import pt.artur.motadash.R
 
 /** Keeps the MapLibre objects between recompositions and drives the camera. */
 /** A speed camera ahead on the road. */
@@ -122,11 +162,14 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         private set
 
     var gesturing = false
+    /** Moving a waypoint: the map stays where the hand puts it. */
+    var editing = false
     var gestureAt = 0L
     /** Zoom picked by hand (buttons or pinch) and until when it beats auto zoom. */
     var userZoom: Double? = null
     var manualUntil = 0L
     private var autoLevel = 17.0
+    var azCfg = AutoZoom()
     private var zoomInSince = 0L
     private var first = true
 
@@ -140,9 +183,20 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             s.addImage("radar", radar)
             s.addImage("trk-arrow", trackArrow)
             style = s
+            show3dBuildings()
             drawMarker()
             tracks?.let { s.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(it) }
         }
+    }
+
+    /** Buildings in volume only in the 3D follow mode. */
+    /** The 3D buildings layer is on (layers button); they show only in the 3D view. */
+    var buildings3d = true
+
+    fun show3dBuildings() {
+        val s = style ?: return
+        val v = if (mode == FollowMode.THREE_D && buildings3d) Property.VISIBLE else Property.NONE
+        for (l in s.layers) if (l.id.startsWith("building-3d-")) l.setProperties(PropertyFactory.visibility(v))
     }
 
     fun setFollow(on: Boolean) {
@@ -174,10 +228,10 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         val m = map ?: return
         val loc = fix ?: return
         val now = SystemClock.elapsedRealtime()
-        if (!follow && !gesturing && speedKmh > 10 && now - gestureAt > 10_000) setFollow(true)
+        if (!follow && !gesturing && !editing && speedKmh > 10 && now - gestureAt > 10_000) setFollow(true)
 
         // Auto zoom: out at once when speeding up, back in only after 8 s slower.
-        val target = autoZoomFor(speedKmh)
+        val target = azCfg.zoomFor(speedKmh)
         when {
             first || target < autoLevel -> { autoLevel = target; zoomInSince = 0 }
             target > autoLevel + 0.05 -> {
@@ -273,11 +327,19 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         val fs = mutableListOf<Feature>()
         for (t in list.filter { it.visible }) {
             val active = t.id == activeId
-            for (l in t.lines) {
+            for ((leg, l) in t.lines.withIndex()) {
+                if (l.size < 2) continue
                 val pts = l.map { Point.fromLngLat(it.lon, it.lat) }.let { if (active && reversed) it.reversed() else it }
                 fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
-                    addStringProperty("kind", "line"); addStringProperty("color", t.color)
+                    addStringProperty("kind", "line"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
                     addNumberProperty("w", t.width); addBooleanProperty("active", active)
+                    if (t.plan.isNotEmpty()) addNumberProperty("leg", leg)
+                }
+            }
+            t.plan.forEachIndexed { i, p ->
+                fs += Feature.fromGeometry(Point.fromLngLat(p.lon, p.lat)).apply {
+                    addStringProperty("kind", "rtept"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
+                    addNumberProperty("n", i + 1)
                 }
             }
             for (w in t.waypoints) {
@@ -312,6 +374,39 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         m.easeCamera(CameraUpdateFactory.newLatLngBounds(b, 80, 80, 80, 80), 800)
     }
 
+    /** Puts p in the middle of the screen, flat, for moving a waypoint. */
+    fun centreOn(p: LatLon) {
+        val m = map ?: return
+        setFollow(false)
+        val pos = CameraPosition.Builder().target(LatLng(p.lat, p.lon))
+            .zoom(maxOf(m.cameraPosition.zoom, 15.0)).tilt(0.0).padding(0.0, 0.0, 0.0, 0.0).build()
+        m.easeCamera(CameraUpdateFactory.newCameraPosition(pos), 600)
+    }
+
+    /** The map point under the middle of the screen (where the moving waypoint's pin is). */
+    fun centre(): LatLon? {
+        val m = map ?: return null
+        val v = view ?: return null
+        val ll = m.projection.fromScreenLocation(PointF(v.width / 2f, v.height / 2f))
+        return LatLon(ll.latitude, ll.longitude)
+    }
+
+    /** What is under a long press: a planned waypoint first, then a track line, else the map. */
+    fun pick(ll: LatLng): MapMenu {
+        val m = map ?: return MapMenu(0f, 0f, LatLon(ll.latitude, ll.longitude))
+        val p = m.projection.toScreenLocation(ll)
+        fun near(layer: String, r: Float) = if (style?.getLayer(layer) == null) emptyList()
+            else m.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), layer)
+        val at = LatLon(ll.latitude, ll.longitude)
+        near("rte-pt", 36f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
+            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), point = (num(f, "n") ?: 1) - 1)
+        }
+        near("trk-line", 28f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
+            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), leg = num(f, "leg"))
+        }
+        return MapMenu(p.x, p.y, at)
+    }
+
     fun zoomBy(step: Double) {
         val m = map ?: return
         userZoom = ((userZoom ?: m.cameraPosition.zoom) + step).coerceIn(3.0, 19.5)
@@ -319,6 +414,17 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         if (follow) update(300) else m.animateCamera(CameraUpdateFactory.zoomTo(userZoom!!), 300)
     }
 }
+
+/** Long-press menu: where it opens and what is under the finger (a track, one of its waypoints, or the map). */
+private data class MapMenu(
+    val x: Float, val y: Float, val at: LatLon,
+    val tid: String? = null,
+    val point: Int? = null,      // a waypoint of a planned trajeto
+    val leg: Int? = null,        // the line between waypoints leg and leg + 1
+)
+
+/** A waypoint being moved: it sits under the pin in the middle of the screen. */
+private data class Moving(val tid: String, val point: Int)
 
 private fun num(f: Feature, key: String): Int? =
     if (f.hasNonNullValueForProperty(key)) f.getNumberProperty(key)?.toInt() else null
@@ -345,14 +451,6 @@ private fun segment(loc: Location, a: Point, b: Point): Pair<Double, Double> {
 
 /** 0..180 degrees between two bearings. */
 private fun angleDiff(a: Double, b: Double): Double = abs(((a - b) % 360 + 540) % 360 - 180)
-
-/** Zoom by speed: close in town, wider on the open road. */
-private fun autoZoomFor(kmh: Double): Double = when {
-    kmh <= 35 -> 17.0
-    kmh <= 50 -> 16.3
-    kmh < 90 -> 16.0 - (kmh - 50) / 40 * 1.4
-    else -> 14.6
-}
 
 /** 3D tilt: steep when stopped, flatter at speed. */
 private fun tiltFor(kmh: Double): Double = 60.0 - kmh.coerceIn(0.0, 90.0) / 90.0 * 22.0
@@ -448,6 +546,7 @@ private fun arrowBitmap(): Bitmap {
 }
 
 @SuppressLint("MissingPermission") // location permission is asked for at app start
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MapScreen() {
     val ctx = LocalContext.current
@@ -467,18 +566,46 @@ fun MapScreen() {
     var gnss by remember { mutableStateOf(Gnss()) }
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
+    var showLayers by remember { mutableStateOf(false) }
+    var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
+    var themeTick by remember { mutableIntStateOf(0) }
     var mapBearing by remember { mutableFloatStateOf(0f) }
+    var mapTilt by remember { mutableFloatStateOf(0f) }
+    val contourStep by MapStore.contourStepFlow.collectAsStateWithLifecycle()
+    val azCfg by MapStore.autoZoomFlow.collectAsStateWithLifecycle()
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
     val reversed by TrackStore.reversed.collectAsStateWithLifecycle()
     val trackMessage by TrackStore.message.collectAsStateWithLifecycle()
     val activeTrack = tracks.firstOrNull { it.id == activeId }
     val follower = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { TrackFollower(it, reversed) } }
+    // Heights along the followed track (its own, or read from the downloaded relief), for the profile strip.
+    var profile by remember { mutableStateOf<ElevProfile?>(null) }
+    LaunchedEffect(activeTrack?.id, activeTrack?.lines, reversed, installed) {
+        val t = activeTrack
+        profile = if (t == null) null else withContext(Dispatchers.IO) {
+            runCatching { ElevProfile.of(t, reversed, installed.filter { it.enabled }) }.getOrNull()
+        }
+    }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
+    var menu by remember { mutableStateOf<MapMenu?>(null) }
+    var moving by remember { mutableStateOf<Moving?>(null) }
+    var renaming by remember { mutableStateOf<Track?>(null) }
+    var saving by remember { mutableStateOf<Track?>(null) }
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gpx+xml")) { uri ->
+        val t = saving
+        saving = null
+        if (uri != null && t != null) {
+            val ok = runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(GpxWriter.write(t).toByteArray()) } }.isSuccess
+            Toast.makeText(ctx, if (ok) ctx.getString(R.string.map_file_saved, t.name) else ctx.getString(R.string.map_save_failed), Toast.LENGTH_SHORT).show()
+        }
+    }
     var minute by remember { mutableLongStateOf(0L) }
     val holder = remember {
         MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
     }
+    LaunchedEffect(azCfg) { holder.azCfg = azCfg }
 
     LaunchedEffect(Unit) {
         MapStore.load(ctx)
@@ -486,17 +613,25 @@ fun MapScreen() {
         while (true) { delay(60_000); minute++ }
     }
 
-    // GPS of the phone, while the map is on screen (works without the board).
-    DisposableEffect(Unit) {
+    // GPS of the phone, while the map is on screen and the app is in front (works without the board).
+    // Keyed on resume so a permission granted later, or a trip to the background, re-registers.
+    val lifeState by lifecycle.currentStateAsState()
+    val resumed = lifeState.isAtLeast(Lifecycle.State.RESUMED)
+    DisposableEffect(resumed) {
         val lm = ctx.getSystemService(LocationManager::class.java)
+        val allowed = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!resumed || lm == null || !allowed) return@DisposableEffect onDispose {}
         val listener = LocationListener { loc ->
-            if (loc.provider == LocationManager.GPS_PROVIDER || fix == null ||
-                fix?.provider != LocationManager.GPS_PROVIDER) fix = loc
+            // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old.
+            val cur = fix
+            if (loc.provider == LocationManager.GPS_PROVIDER || cur == null ||
+                cur.provider != LocationManager.GPS_PROVIDER || ageMs(cur) > 10_000) fix = loc
         }
         try {
-            lm?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { fix = it }
-            lm?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 0f, listener, Looper.getMainLooper())
-            if (lm?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true)
+            if (fix == null) lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { fix = it }
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 0f, listener, Looper.getMainLooper())
+            if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
                 lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000L, 0f, listener, Looper.getMainLooper())
         } catch (_: Exception) {
         }
@@ -505,9 +640,12 @@ fun MapScreen() {
             override fun onSatelliteStatusChanged(status: GnssStatus) { gnss = Gnss.of(status) }
             override fun onStopped() { gnss = Gnss() }
         }
-        try { lm?.registerGnssStatusCallback(gnssCb, Handler(Looper.getMainLooper())) } catch (_: Exception) {}
-        onDispose { lm?.removeUpdates(listener); lm?.unregisterGnssStatusCallback(gnssCb) }
+        try { lm.registerGnssStatusCallback(gnssCb, Handler(Looper.getMainLooper())) } catch (_: Exception) {}
+        onDispose { lm.removeUpdates(listener); lm.unregisterGnssStatusCallback(gnssCb) }
     }
+
+    // Map downloads finish in the background; pick them up here too, not only on the maps panel.
+    LaunchedEffect(Unit) { while (true) { MapStore.pollDownloads(ctx); delay(3000) } }
 
     val beeper = remember { runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() }
     DisposableEffect(Unit) { onDispose { beeper?.release() } }
@@ -529,21 +667,24 @@ fun MapScreen() {
     }
 
     // Speed: board first (wheel, gear), else phone GPS; 0 when standing still.
-    val phoneSpeed = fix?.takeIf { it.hasSpeed() }?.let { loc ->
+    // A fix older than ~5 s (tunnel, last known position) says nothing about the speed now.
+    val phoneSpeed = fix?.takeIf { it.hasSpeed() && ageMs(it) < 5_000 }?.let { loc ->
         stillFiltered(loc.speed * 3.6, if (loc.hasSpeedAccuracy()) loc.speedAccuracyMetersPerSecond * 3.6 else null)
     }
     val speed = stillFiltered(telemetry?.displaySpeed) ?: phoneSpeed
     SideEffect { holder.speedKmh = speed ?: 0.0 }
 
-    val night = when (theme) {
+    // Linked to the app theme, the map is dark exactly when the app is; otherwise its own day/night choice.
+    val linked = ThemeStore.linkMap(ctx)
+    val night = if (linked) Palette.dark else when (theme) {
         MapTheme.DAY -> false
         MapTheme.NIGHT -> true
         MapTheme.AUTO -> minute.let { MapStyle.isNight(fix?.latitude ?: 39.5, fix?.longitude ?: -8.0) }
     }
     val enabled = installed.filter { it.enabled }
-    val styleJson = remember(enabled, night, lang) { MapStyle.build(enabled, night, lang) }
+    val styleJson = remember(enabled, night, lang, layers, contourStep) { MapStyle.build(enabled, night, lang, layers, contourStep) }
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { c ->
@@ -557,7 +698,7 @@ fun MapScreen() {
                         m.uiSettings.isAttributionEnabled = false
                         // Our own north needle (below) only shows the direction; MapLibre's one reset the map on touch.
                         m.uiSettings.isCompassEnabled = false
-                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat() }
+                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat(); mapTilt = m.cameraPosition.tilt.toFloat() }
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
                         fun touched() { holder.gestureAt = SystemClock.elapsedRealtime() }
                         // Dragging or turning the map stops following; pinching only overrides the zoom.
@@ -580,6 +721,12 @@ fun MapScreen() {
                                 holder.manualUntil = SystemClock.elapsedRealtime() + 10_000
                             }
                         })
+                        // Long press: waypoint menu (add, move, delete) or the trajeto's menu.
+                        m.addOnMapLongClickListener { ll ->
+                            holder.setFollow(false); touched()
+                            menu = holder.pick(ll)
+                            true
+                        }
                         holder.pending?.let { holder.applyStyle(it) } ?: holder.applyStyle(styleJson)
                         holder.update(0)
                     }
@@ -599,6 +746,7 @@ fun MapScreen() {
         LaunchedEffect(fix) {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
+            ThemeStore.lat = f.latitude; ThemeStore.lon = f.longitude
             holder.update(900)
             holder.scan()
             progress = follower?.locate(f.latitude, f.longitude)
@@ -614,65 +762,103 @@ fun MapScreen() {
                 it.altitude.toFloat(), System.currentTimeMillis()).declination }
         }
 
-        // Zoom buttons and speed, bottom left.
-        Column(
-            Modifier.align(Alignment.BottomStart).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            MapButton("+") { holder.zoomBy(1.0) }
-            MapButton("−") { holder.zoomBy(-1.0) }
-            Row(
-                Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                val over = limit != null && speed != null && speed > limit!! + 2
-                Column {
-                    Text(speed?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
-                        fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                    Text("km/h", color = Palette.label, fontSize = 12.sp)
-                }
-                limit?.let { LimitSign(it) }
-            }
+        // The button bar along one edge (settings), arranged in as many lines as it needs.
+        val side = LayoutStore.barSide(ctx)
+        val buttons = LayoutStore.buttons(ctx)
+        val vertical = side == BarSide.RIGHT || side == BarSide.LEFT
+        val perLine = ((((if (vertical) maxHeight else maxWidth).value - 12f) / 60f).toInt()).coerceAtLeast(1)
+        val lines = (buttons.size + perLine - 1) / perLine
+        val thick = (lines * 60 + 12).dp
+        val inset = PaddingValues(
+            start = if (side == BarSide.LEFT) thick else 0.dp, end = if (side == BarSide.RIGHT) thick else 0.dp,
+            top = if (side == BarSide.TOP) thick else 0.dp, bottom = if (side == BarSide.BOTTOM) thick else 0.dp,
+        )
+        val barAlign = when (side) {
+            BarSide.RIGHT -> Alignment.CenterEnd
+            BarSide.LEFT -> Alignment.CenterStart
+            BarSide.TOP -> Alignment.TopCenter
+            BarSide.BOTTOM -> Alignment.BottomCenter
         }
 
-        // View buttons, right side: follow mode (▲ / 3D / N), follow, theme, maps.
-        Column(
-            Modifier.align(Alignment.CenterEnd).padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            MapButton(mode.button, active = mode != FollowMode.NORTH) {
-                mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode
+        // The rider's elements (speed by default; any Painel element can join it), clear of the bar.
+        WidgetBoard(LayoutStore.MAP,
+            widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
+                altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt,
+                profile = profile, doneM = progress?.doneM),
+            modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
+
+        @Composable
+        fun BarButton(b: MapCtl) = when (b) {
+            MapCtl.SETTINGS -> ScreenSettingsButton(Modifier.size(52.dp)) { showSheet = true }
+            MapCtl.MODE -> MapButton(mode.button, active = mode != FollowMode.NORTH) {
+                mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings()
                 holder.setFollow(true); holder.update(600)
             }
-            MapButton("◎", active = follow) { holder.setFollow(true); holder.update(600) }
-            MapButton(
-                when (theme) { MapTheme.AUTO -> "AUTO"; MapTheme.DAY -> "DIA"; MapTheme.NIGHT -> "NOITE" },
-                small = true,
-            ) {
-                theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme)
+            MapCtl.FOLLOW -> MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
+            MapCtl.ZOOM_IN -> MapButton("+") { holder.zoomBy(1.0) }
+            MapCtl.ZOOM_OUT -> MapButton("−") { holder.zoomBy(-1.0) }
+            MapCtl.GPS -> GpsButton(fix, gnss, active = showGps) { showGps = !showGps }
+            MapCtl.DAYNIGHT -> {
+                themeTick
+                val m = if (linked) when (ThemeStore.mode(ctx)) {
+                    ThemeMode.AUTO -> MapTheme.AUTO; ThemeMode.DAY -> MapTheme.DAY; ThemeMode.NIGHT -> MapTheme.NIGHT
+                } else theme
+                MapButton(when (m) {
+                    MapTheme.AUTO -> stringResource(R.string.map_theme_auto)
+                    MapTheme.DAY -> stringResource(R.string.map_theme_day)
+                    MapTheme.NIGHT -> stringResource(R.string.map_theme_night)
+                }, small = true) {
+                    if (linked) { ThemeStore.cycleMode(ctx); themeTick++ }
+                    else { theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme) }
+                }
             }
-            MapButton("☰") { showMaps = true }
+            MapCtl.LAYERS -> LayersButton(active = showLayers) { showLayers = !showLayers }
+            MapCtl.GPX -> MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+            MapCtl.MAPS -> MapButton("☰") { showMaps = true }
         }
 
-        // GPS quality, top left; tap for the GPS panel.
-        Column(Modifier.align(Alignment.TopStart).padding(10.dp)) {
-            val acc = fix?.takeIf { it.hasAccuracy() }?.accuracy
-            val col = when {
-                fix == null || acc == null -> Palette.red
-                acc <= 10 -> Palette.green
-                acc <= 25 -> Palette.orange
-                else -> Palette.red
+        // Full lines on the outside, the remainder on the inner line.
+        val chunks = buttons.chunked(perLine).let { if (side == BarSide.RIGHT || side == BarSide.BOTTOM) it.reversed() else it }
+        if (vertical) {
+            Row(Modifier.align(barAlign).fillMaxHeight().padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                chunks.forEach { line ->
+                    Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)) {
+                        line.forEach { BarButton(it) }
+                    }
+                }
             }
-            Text(
-                if (fix == null) "GPS sem sinal" else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
-                color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(8.dp))
-                    .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
-            )
-            if (showGps) GpsPanel(fix, gnss, speed)
-            if (!showGps && abs(wrap180(mapBearing)) > 1f) NorthNeedle(mapBearing)
+        } else {
+            Column(Modifier.align(barAlign).fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                chunks.forEach { line ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+                        line.forEach { BarButton(it) }
+                    }
+                }
+            }
+        }
+
+        // GPS details and the layers list open next to the bar.
+        val panelAlign = if (side == BarSide.LEFT) Alignment.TopStart else if (side == BarSide.RIGHT) Alignment.TopEnd else Alignment.TopStart
+        if (showGps) Box(Modifier.align(panelAlign).padding(inset).padding(10.dp)) { GpsPanel(fix, gnss, speed) }
+        if (showLayers) {
+            Column(
+                Modifier.align(barAlign).padding(inset).padding(10.dp)
+                    .background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                MapLayer.entries.forEach { l ->
+                    FilterChip(selected = l in layers, onClick = {
+                        val on = l !in layers
+                        MapStore.setLayer(ctx, l, on)
+                        layers = if (on) layers + l else layers - l
+                        if (l == MapLayer.BUILDINGS_3D) { holder.buildings3d = on; holder.show3dBuildings() }
+                    }, label = { Text(l.label) })
+                }
+                if (enabled.none { it.shade != null || it.contours != null }) {
+                    Text(stringResource(R.string.map_layers_hint), color = Palette.label, fontSize = 12.sp)
+                }
+            }
         }
 
         Column(
@@ -687,22 +873,86 @@ fun MapScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("RADAR", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.map_speed_camera), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("${(cam.meters + 25) / 50 * 50} m", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 cam.kmh?.let { LimitSign(it, small = true) }
             }
         }
-        if (activeTrack != null) TrackBox(activeTrack, progress)
+        moving?.let { mv ->
+            Row(
+                Modifier.background(Palette.overlay, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(stringResource(R.string.map_moving_waypoint, mv.point + 1), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Button(onClick = {
+                    holder.centre()?.let { Planner.move(ctx, mv.tid, mv.point, it) }
+                    moving = null; holder.editing = false
+                }) { Text(stringResource(R.string.map_fix_here)) }
+                OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
+            }
+        }
+        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress)
         }
 
-        // Tracks button, top right.
-        Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) {
-            MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+        // Pin in the middle of the screen while moving a waypoint; the map slides under it.
+        moving?.let { mv ->
+            val color = tracks.firstOrNull { it.id == mv.tid }?.color?.let { parseColor(it) } ?: Palette.cyan
+            Box(Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(64.dp)) {
+                    val c = center
+                    drawLine(Color.Black, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 5f)
+                    drawLine(Color.Black, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 5f)
+                    drawLine(Color.White, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 2.5f)
+                    drawLine(Color.White, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 2.5f)
+                }
+                Box(Modifier.size(30.dp).background(color, CircleShape).border(2.5.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center) {
+                    Text("${mv.point + 1}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
+
+        menu?.let { mm ->
+            Box(Modifier.offset { IntOffset(mm.x.toInt(), mm.y.toInt()) }) {
+                MapMenuItems(
+                    mm, tracks, activeTrack, moving, fix?.let { LatLon(it.latitude, it.longitude) },
+                    onDismiss = { menu = null },
+                    onMoveStart = { t, k ->
+                        moving = Moving(t.id, k); holder.editing = true; holder.centreOn(t.plan[k])
+                    },
+                    onMoveFix = { mv ->
+                        holder.centre()?.let { Planner.move(ctx, mv.tid, mv.point, it) }
+                        moving = null; holder.editing = false
+                    },
+                    onMoveCancel = { moving = null; holder.editing = false },
+                    onRename = { renaming = it },
+                    onSave = { saving = it; save.launch(GpxWriter.fileName(it)) },
+                    onShare = { shareGpx(ctx, it) },
+                )
+            }
+        }
+
+        renaming?.let { t ->
+            var text by remember(t.id) { mutableStateOf(t.name) }
+            AlertDialog(
+                onDismissRequest = { renaming = null },
+                title = { Text(stringResource(R.string.map_rename_title)) },
+                text = { OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true) },
+                confirmButton = {
+                    Button(onClick = {
+                        TrackStore.change(ctx, t.id) { it.copy(name = text.trim().ifEmpty { it.name }) }
+                        renaming = null
+                    }) { Text(stringResource(R.string.map_save)) }
+                },
+                dismissButton = { OutlinedButton(onClick = { renaming = null }) { Text(stringResource(R.string.map_cancel)) } },
+            )
+        }
+
         trackMessage?.takeIf { !showTracks }?.let {
             Text(it, color = Palette.text, fontSize = 14.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
-                    .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp))
+                    .background(Palette.overlay, RoundedCornerShape(10.dp)).padding(12.dp))
         }
 
         Text(
@@ -718,10 +968,10 @@ fun MapScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(if (installed.isEmpty()) "Ainda não há mapas no telemóvel" else "Os mapas estão todos desligados",
+                Text(if (installed.isEmpty()) stringResource(R.string.map_no_maps) else stringResource(R.string.map_all_off),
                     color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text("Descarrega Portugal com Wi-Fi e o mapa funciona sem rede.", color = Palette.label, fontSize = 14.sp)
-                Button(onClick = { showMaps = true }) { Text("Mapas") }
+                Text(stringResource(R.string.map_download_hint), color = Palette.label, fontSize = 14.sp)
+                Button(onClick = { showMaps = true }) { Text(stringResource(R.string.map_maps)) }
             }
         }
 
@@ -732,12 +982,19 @@ fun MapScreen() {
             )
         }
 
+        if (showSheet) {
+            WidgetSheet(LayoutStore.MAP, stringResource(R.string.w_map_title), onClose = { showSheet = false }) {
+                BarSettings()
+                OutlinedButton(onClick = { showSheet = false; showMaps = true }) { Text(stringResource(R.string.w_map_settings)) }
+            }
+        }
+
         if (showMaps) {
             MapsPanel(
                 theme = theme, lang = lang, mode = mode, autoZoom = autoZoom,
                 onTheme = { theme = it; MapStore.setTheme(ctx, it) },
                 onLang = { lang = it; MapStore.setLanguage(ctx, it) },
-                onMode = { mode = it; MapStore.setFollowMode(ctx, it); holder.mode = it; holder.update(600) },
+                onMode = { mode = it; MapStore.setFollowMode(ctx, it); holder.mode = it; holder.show3dBuildings(); holder.update(600) },
                 onAutoZoom = { autoZoom = it; MapStore.setAutoZoom(ctx, it); holder.autoZoom = it; holder.userZoom = null },
                 cameraBeep = cameraBeep,
                 onCameraBeep = { cameraBeep = it; MapStore.setCameraBeep(ctx, it) },
@@ -747,22 +1004,124 @@ fun MapScreen() {
     }
 }
 
+/** The long-press menu: add a waypoint, move or delete one, or work on the whole trajeto. */
+@Composable
+private fun MapMenuItems(
+    mm: MapMenu,
+    tracks: List<Track>,
+    current: Track?,
+    moving: Moving?,
+    here: LatLon?,
+    onDismiss: () -> Unit,
+    onMoveStart: (Track, Int) -> Unit,
+    onMoveFix: (Moving) -> Unit,
+    onMoveCancel: () -> Unit,
+    onRename: (Track) -> Unit,
+    onSave: (Track) -> Unit,
+    onShare: (Track) -> Unit,
+) {
+    val ctx = LocalContext.current
+    var confirmDelete by remember { mutableStateOf(false) }
+    var looks by remember { mutableStateOf(false) }
+    val t = tracks.firstOrNull { it.id == mm.tid }
+    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        when {
+            moving != null -> {
+                MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
+                MenuItem(stringResource(R.string.map_cancel), onDismiss) { onMoveCancel() }
+            }
+            t != null && mm.point != null && mm.point in t.plan.indices -> {
+                val n = mm.point + 1
+                Text(stringResource(R.string.map_waypoint_of, n, t.name), color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                MenuItem(stringResource(R.string.map_move_waypoint, n), onDismiss) { onMoveStart(t, mm.point) }
+                MenuItem(stringResource(R.string.map_delete_waypoint, n), onDismiss) { Planner.remove(ctx, t.id, mm.point) }
+                if (current?.id != t.id) MenuItem(stringResource(R.string.map_continue_route), onDismiss) { TrackStore.setActive(ctx, t.id) }
+            }
+            t != null -> {
+                Text(t.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                if (mm.leg != null && mm.leg in 0 until t.plan.size - 1) {
+                    MenuItem(stringResource(R.string.map_insert_waypoint, mm.leg + 2), onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
+                }
+                if (current?.id != t.id) MenuItem(stringResource(R.string.map_follow_route), onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
+                MenuItem(stringResource(R.string.map_reverse), onDismiss) { Planner.reverse(ctx, t.id) }
+                MenuItem(stringResource(R.string.map_rename), onDismiss) { onRename(t) }
+                if (looks) {
+                    // Colour and thickness, right in the menu; the menu stays open to see the change.
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackStore.COLORS.forEach { c ->
+                            Box(
+                                Modifier.size(30.dp).background(parseColor(c), CircleShape)
+                                    .border(3.dp, if (t.color == c) Color.White else Color.Transparent, CircleShape)
+                                    .clickable { TrackStore.change(ctx, t.id) { it.copy(color = c) } }
+                            )
+                        }
+                    }
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackStore.WIDTHS.forEach { (w, label) ->
+                            FilterChip(selected = t.width == w, onClick = { TrackStore.change(ctx, t.id) { it.copy(width = w) } },
+                                label = { Text(label) })
+                        }
+                    }
+                } else {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.map_change_look), fontSize = 16.sp) }, onClick = { looks = true })
+                }
+                MenuItem(stringResource(R.string.map_save_copy), onDismiss) {
+                    TrackStore.duplicate(ctx, t.id)?.let { Toast.makeText(ctx, ctx.getString(R.string.map_copy_saved, it.name), Toast.LENGTH_SHORT).show() }
+                }
+                MenuItem(stringResource(R.string.map_save_gpx), onDismiss) { onSave(t) }
+                MenuItem(stringResource(R.string.map_share_gpx), onDismiss) { onShare(t) }
+                if (confirmDelete) {
+                    MenuItem(stringResource(R.string.map_confirm_delete, t.name), onDismiss) { TrackStore.delete(ctx, t.id) }
+                } else {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.map_delete_route), fontSize = 16.sp, color = Palette.red) },
+                        onClick = { confirmDelete = true })
+                }
+            }
+            else -> {
+                if (current != null && current.plan.isNotEmpty()) {
+                    MenuItem(stringResource(R.string.map_add_waypoint, current.plan.size + 1, current.name), onDismiss) { Planner.add(ctx, current.id, mm.at) }
+                }
+                if (here != null) MenuItem(stringResource(R.string.map_go_there), onDismiss) { Planner.goThere(ctx, here, mm.at) }
+                MenuItem(stringResource(R.string.map_new_route), onDismiss) { Planner.start(ctx, mm.at) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MenuItem(label: String, onDismiss: () -> Unit, action: () -> Unit) {
+    DropdownMenuItem(text = { Text(label, fontSize = 16.sp) }, onClick = { onDismiss(); action() })
+}
+
+/** Sends the track as a GPX file to another app (WhatsApp, e-mail, Drive...). */
+private fun shareGpx(ctx: Context, t: Track) {
+    runCatching {
+        val dir = File(ctx.cacheDir, "share").apply { mkdirs() }
+        val f = File(dir, GpxWriter.fileName(t)).apply { writeText(GpxWriter.write(t)) }
+        val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
+        val send = Intent(Intent.ACTION_SEND).setType("application/gpx+xml")
+            .putExtra(Intent.EXTRA_STREAM, uri).putExtra(Intent.EXTRA_SUBJECT, t.name)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        ctx.startActivity(Intent.createChooser(send, ctx.getString(R.string.map_share_title, t.name)))
+    }.onFailure { Toast.makeText(ctx, ctx.getString(R.string.map_share_failed), Toast.LENGTH_SHORT).show() }
+}
+
 /** Followed track: distance left, and how far off it the bike is. */
 @Composable
 private fun TrackBox(t: Track, p: TrackProgress?) {
     val off = p != null && p.offM > 50
     Column(
-        Modifier.background(if (off) Palette.orange else Color(0xE60B0E12), RoundedCornerShape(12.dp))
+        Modifier.background(if (off) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
             .padding(horizontal = 14.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(t.name, color = if (off) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
         when {
-            p == null -> Text("À espera do GPS", color = Palette.text, fontSize = 16.sp)
-            p.offM > 1000 -> Text("Trajeto a ${km(p.offM)}", color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            p == null -> Text(stringResource(R.string.map_waiting_gps), color = Palette.text, fontSize = 16.sp)
+            p.offM > 1000 -> Text(stringResource(R.string.map_route_away, km(p.offM)), color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Faltam ${km(p.leftM)}", color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                if (off) Text("fora ${p.offM.toInt()} m", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.map_left, km(p.leftM)), color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -770,38 +1129,16 @@ private fun TrackBox(t: Track, p: TrackProgress?) {
 
 private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
 
-/** Where north is on the rotated map; not touchable. */
-@Composable
-private fun NorthNeedle(bearing: Float) {
-    Box(
-        Modifier.padding(top = 8.dp).size(44.dp).background(Color(0xCC0B0E12), CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.size(34.dp).rotate(-bearing)) {
-            val w = size.width
-            val h = size.height
-            val north = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.08f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            val south = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.92f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            drawPath(north, Color(0xFFE2463C))
-            drawPath(south, Color(0xFFDDE2E8))
-        }
-    }
-}
-
 /** Round road sign with the speed limit. */
 @Composable
-private fun LimitSign(kmh: Int, small: Boolean = false) {
+internal fun LimitSign(kmh: Int, small: Boolean = false, scale: Float = 1f) {
     Box(
-        Modifier.size(if (small) 40.dp else 54.dp)
+        Modifier.size((if (small) 40 else 54).dp * scale)
             .background(Color.White, CircleShape)
-            .border(if (small) 4.dp else 6.dp, Color(0xFFE2463C), CircleShape),
+            .border((if (small) 4 else 6).dp * scale, Color(0xFFE2463C), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text("$kmh", color = Color.Black, fontSize = if (small) 15.sp else if (kmh >= 100) 18.sp else 22.sp,
+        Text("$kmh", color = Color.Black, fontSize = (if (small) 15 else if (kmh >= 100) 18 else 22).sp * scale,
             fontWeight = FontWeight.Bold)
     }
 }
@@ -821,7 +1158,7 @@ data class Gnss(val visible: Int = 0, val used: Int = 0, val byName: Map<String,
                     GnssStatus.CONSTELLATION_BEIDOU -> "BeiDou"
                     GnssStatus.CONSTELLATION_QZSS -> "QZSS"
                     GnssStatus.CONSTELLATION_SBAS -> "SBAS"
-                    else -> "Outros"
+                    else -> L.s(R.string.map_gnss_other)
                 }
                 val u = s.usedInFix(i)
                 if (u) used++
@@ -840,26 +1177,70 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
     LaunchedEffect(Unit) { while (true) { delay(1000); now = SystemClock.elapsedRealtimeNanos() } }
     Column(
         Modifier.padding(top = 6.dp).width(250.dp)
-            .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp),
+            .background(Palette.overlay, RoundedCornerShape(10.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text("GPS do telemóvel", color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.map_gps_title), color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         if (fix == null) {
-            Text("À espera do primeiro sinal…", color = Palette.label, fontSize = 13.sp)
+            Text(stringResource(R.string.map_gps_waiting_first), color = Palette.label, fontSize = 13.sp)
         } else {
-            KeyValue("Latitude", "%.6f".format(fix.latitude))
-            KeyValue("Longitude", "%.6f".format(fix.longitude))
-            KeyValue("Precisão", if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
-            KeyValue("Altitude", if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
+            KeyValue(stringResource(R.string.map_gps_latitude), "%.6f".format(fix.latitude))
+            KeyValue(stringResource(R.string.map_gps_longitude), "%.6f".format(fix.longitude))
+            KeyValue(stringResource(R.string.map_gps_accuracy), if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
+            KeyValue(stringResource(R.string.map_gps_altitude), if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
                 (if (fix.hasVerticalAccuracy()) " ±%.0f".format(fix.verticalAccuracyMeters) else "") else "--")
-            KeyValue("Velocidade", speed?.let { "%.0f km/h".format(it) } ?: "--")
-            KeyValue("Rumo", if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
-            KeyValue("Idade do sinal", "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
-            KeyValue("Fonte", if (fix.provider == LocationManager.GPS_PROVIDER) "satélites" else "rede")
+            KeyValue(stringResource(R.string.map_gps_speed), speed?.let { "%.0f km/h".format(it) } ?: "--")
+            KeyValue(stringResource(R.string.map_gps_bearing), if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
+            KeyValue(stringResource(R.string.map_gps_age), "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
+            KeyValue(stringResource(R.string.map_gps_source), if (fix.provider == LocationManager.GPS_PROVIDER) stringResource(R.string.map_gps_src_satellites) else stringResource(R.string.map_gps_src_network))
         }
-        KeyValue("Satélites", "${gnss.used} em uso de ${gnss.visible}")
+        KeyValue(stringResource(R.string.map_gps_satellites), stringResource(R.string.map_gps_sats_used, gnss.used, gnss.visible))
         for ((name, vu) in gnss.byName) KeyValue("  $name", "${vu.second}/${vu.first}")
-        if (gnss.bestCn0 > 0) KeyValue("Melhor sinal", "%.0f dB-Hz".format(gnss.bestCn0))
+        if (gnss.bestCn0 > 0) KeyValue(stringResource(R.string.map_gps_best), "%.0f dB-Hz".format(gnss.bestCn0))
+    }
+}
+
+/** GPS quality at a glance (satellites used, accuracy); tap for the GPS panel. */
+@Composable
+private fun GpsButton(fix: Location?, gnss: Gnss, active: Boolean, onClick: () -> Unit) {
+    val acc = fix?.takeIf { it.hasAccuracy() }?.accuracy
+    val col = when {
+        fix == null || acc == null -> Palette.red
+        acc <= 10 -> Palette.green
+        acc <= 25 -> Palette.orange
+        else -> Palette.red
+    }
+    Column(
+        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
+            .border(2.dp, if (active) Palette.cyan else col, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        Text("GPS", color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(if (fix == null) "--" else acc?.let { "±%.0f".format(it) } ?: "${gnss.used}", color = Palette.label, fontSize = 11.sp)
+    }
+}
+
+/** Two stacked map sheets with the word under them, so it reads as "what the map shows". */
+@Composable
+private fun LayersButton(active: Boolean, onClick: () -> Unit) {
+    Column(
+        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
+            .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        val c = if (active) Palette.cyan else Palette.text
+        Canvas(Modifier.size(width = 30.dp, height = 24.dp)) {
+            val w = size.width
+            val h = size.height
+            fun sheet(y: Float) = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, y - h * 0.26f); lineTo(w * 0.96f, y); lineTo(w / 2, y + h * 0.26f); lineTo(w * 0.04f, y); close()
+            }
+            // The lower sheet peeks out under the top one.
+            drawPath(sheet(h * 0.66f), c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f))
+            drawPath(sheet(h * 0.36f), Palette.overlay)
+            drawPath(sheet(h * 0.36f), c)
+        }
+        Text(stringResource(R.string.map_layers), color = Palette.label, fontSize = 9.sp, maxLines = 1)
     }
 }
 
@@ -867,7 +1248,7 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
 private fun MapButton(label: String, active: Boolean = false, small: Boolean = false, onClick: () -> Unit) {
     Box(
         Modifier.size(52.dp)
-            .background(Color(0xE60B0E12), RoundedCornerShape(14.dp))
+            .background(Palette.overlay, RoundedCornerShape(14.dp))
             .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -903,3 +1284,7 @@ private fun bindLifecycle(mv: MapView, lifecycle: Lifecycle) {
 
 /** File size for the Mapas list. */
 internal fun mb(bytes: Long): String = if (bytes <= 0) "?" else "%.0f MB".format(bytes / 1_048_576.0)
+
+/** How old a fix is, in milliseconds. */
+private fun ageMs(loc: Location): Long =
+    (SystemClock.elapsedRealtimeNanos() - loc.elapsedRealtimeNanos) / 1_000_000

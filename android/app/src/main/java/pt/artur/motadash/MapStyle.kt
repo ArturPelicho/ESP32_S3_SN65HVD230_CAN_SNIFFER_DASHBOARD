@@ -6,7 +6,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * The Mota Dash map style, built for the Protomaps basemap schema (v4) that
+ * The NavExpress map style, built for the Protomaps basemap schema (v4) that
  * the "Map data" workflow extracts from OpenStreetMap. Every road class has
  * its own colour so secondary roads stand out from minor ones, and labels
  * are large enough to read with a helmet on.
@@ -75,16 +75,43 @@ object MapStyle {
         if (lang == MapLanguage.PT) listOf("coalesce", listOf("get", "name:pt"), listOf("get", "name"))
         else listOf("get", "name")
 
+    /** Contour levels: spacing, line width, line opacity. Each line belongs to the coarsest level it is a multiple of. */
+    private val CONTOUR_LEVELS = listOf(Triple(100, 1.1, 0.65), Triple(50, 0.8, 0.5), Triple(20, 0.6, 0.42), Triple(10, 0.45, 0.35))
+
+    /** Zoom each level shows from when the spacing is automatic. */
+    private fun contourMinZoom(level: Int) = when (level) { 100 -> 11; 50 -> 12; 20 -> 13; else -> 14 }
+
+    /**
+     * Filter for the lines of one contour level, from the height alone so it works on both
+     * the older 20 m files and the 10 m ones (100: multiples of 100; 50 and 20: their multiples
+     * that are not 100s; 10: the rest).
+     */
+    private fun contourFilter(level: Int): List<Any> {
+        val ele = listOf("get", "ele")
+        fun mul(n: Int) = listOf("==", listOf("%", ele, n), 0)
+        fun notMul(n: Int) = listOf("!=", listOf("%", ele, n), 0)
+        return when (level) {
+            100 -> mul(100)
+            50 -> listOf("all", mul(50), notMul(100))
+            20 -> listOf("all", mul(20), notMul(100))
+            else -> listOf("all", mul(10), notMul(20), notMul(50))
+        }
+    }
+
     /**
      * Full style JSON. [maps] are the enabled regions on the phone; each
      * gets its own vector source, drawn in the same layer order.
+     * [contourStep]: 0 = contour spacing by zoom (100 m from z11, 50 m from z12, 20 m from z13,
+     * 10 m from z14); 10, 20, 50 or 100 = lines at that spacing from z11.
      */
-    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage): String {
+    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage, layers: Set<MapLayer> = MapLayer.entries.toSet(),
+              contourStep: Int = 0): String {
         val c = if (night) NIGHT else DAY
         val sources = LinkedHashMap<String, Any>()
         val fills = ArrayList<Any>()
         val lines = ArrayList<Any>()
         val labels = ArrayList<Any>()
+        val extrusions = ArrayList<Any>()
 
         fills += mapOf("id" to "bg", "type" to "background", "paint" to mapOf("background-color" to c.bg))
 
@@ -121,6 +148,19 @@ object MapStyle {
                     c.earth),
                 "fill-opacity" to 0.9,
             ))
+            // Shaded relief from the terrain heights, under the water and the roads.
+            m.shade?.takeIf { MapLayer.SHADE in layers }?.let { f ->
+                val hs = "hs-${m.id}"
+                sources[hs] = mapOf("type" to "raster-dem", "url" to "pmtiles://file://${f.absolutePath}",
+                    "encoding" to "mapbox", "tileSize" to 256, "attribution" to "Copernicus DEM")
+                fills += mapOf("id" to "hillshade-${m.id}", "type" to "hillshade", "source" to hs, "paint" to mapOf(
+                    "hillshade-exaggeration" to listOf("interpolate", listOf("linear"), listOf("zoom"), 6, 0.45, 14, 0.25),
+                    "hillshade-shadow-color" to if (c === NIGHT) "#000000" else "#5a4a3a",
+                    "hillshade-highlight-color" to if (c === NIGHT) "#2a3038" else "#ffffff",
+                    "hillshade-accent-color" to if (c === NIGHT) "#000000" else "#6b5a48",
+                    "hillshade-illumination-anchor" to "map",
+                ))
+            }
             fills += layer("water", "fill", "water", paint = mapOf("fill-color" to c.water),
                 filter = listOf("match", listOf("geometry-type"), listOf("Polygon", "MultiPolygon"), true, false))
             fills += layer("waterway", "line", "water", paint = mapOf(
@@ -128,32 +168,47 @@ object MapStyle {
                 "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 10, 0.6, 16, 3),
             ), filter = listOf("match", listOf("geometry-type"), listOf("LineString", "MultiLineString"), true, false), minzoom = 10)
 
-            m.contours?.let { f ->
+            m.contours?.takeIf { MapLayer.CONTOURS in layers }?.let { f ->
                 val cs = "ct-${m.id}"
                 sources[cs] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "Copernicus DEM")
-                val idx = listOf("==", listOf("get", "idx"), 1)
-                fills += layer("contour", "line", "contours", source = cs, paint = mapOf(
-                    "line-color" to c.contour,
-                    "line-opacity" to listOf("case", idx, 0.65, 0.4),
-                    "line-width" to listOf("case", idx, 1.1, 0.5),
-                ))
-                labels += layer("contour-label", "symbol", "contours", source = cs, layout = mapOf(
-                    "symbol-placement" to "line",
-                    "text-field" to listOf("concat", listOf("to-string", listOf("get", "ele")), " m"),
-                    "text-font" to listOf(REGULAR),
-                    "text-size" to 11,
-                    "symbol-spacing" to 350,
-                ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
-                    filter = idx, minzoom = 13)
+                // Finest first so the bolder lines draw on top.
+                val fixed = contourStep in setOf(10, 20, 50, 100)
+                val shown = CONTOUR_LEVELS.filter { (lv, _, _) -> !fixed || lv % contourStep == 0 }
+                for ((lv, width, opacity) in shown.reversed()) {
+                    fills += layer("contour$lv", "line", "contours", source = cs, paint = mapOf(
+                        "line-color" to c.contour, "line-opacity" to opacity, "line-width" to width,
+                    ), filter = contourFilter(lv), minzoom = if (fixed) 11 else contourMinZoom(lv))
+                }
+                // Heights on the 100 m lines, and on the 50 m ones when zoomed right in.
+                for ((lv, minz) in listOf(100 to 13, 50 to 14)) {
+                    if (shown.none { it.first == lv }) continue
+                    labels += layer("contour-label$lv", "symbol", "contours", source = cs, layout = mapOf(
+                        "symbol-placement" to "line",
+                        "text-field" to listOf("concat", listOf("to-string", listOf("get", "ele")), " m"),
+                        "text-font" to listOf(REGULAR),
+                        "text-size" to if (lv == 100) 11 else 10,
+                        "symbol-spacing" to 350,
+                    ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
+                        filter = contourFilter(lv), minzoom = minz)
+                }
             }
 
             fills += layer("building", "fill", "buildings", paint = mapOf(
                 "fill-color" to c.building,
                 "fill-opacity" to listOf("interpolate", listOf("linear"), listOf("zoom"), 14, 0, 15.5, 0.85),
             ), minzoom = 14)
+            // Buildings in volume, for the 3D view only (the screen switches them on); height from OSM, else ~2 floors.
+            extrusions += layer("building-3d", "fill-extrusion", "buildings", layout = mapOf("visibility" to "none"), paint = mapOf(
+                "fill-extrusion-color" to c.building,
+                "fill-extrusion-height" to listOf("coalesce", listOf("get", "height"), 7),
+                "fill-extrusion-base" to listOf("coalesce", listOf("get", "min_height"), 0),
+                "fill-extrusion-opacity" to 0.85,
+            ), minzoom = 15)
 
-            val notPath = listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true)
+            // Railways fall into the "minor" class; keep them out of the road layers so they stay dashed.
+            val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true),
+                listOf("!=", listOf("get", "kind"), "rail"))
             val tunnel = listOf("==", listOf("get", "is_tunnel"), true)
             lines += layer("rail", "line", "roads", paint = mapOf(
                 "line-color" to c.rail, "line-width" to 1.2, "line-dasharray" to listOf(3, 3),
@@ -201,7 +256,7 @@ object MapStyle {
                 lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
                     "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,
                 ), minzoom = 12)
-                labels += layer("camera", "symbol", "cameras", source = ls, layout = mapOf(
+                if (MapLayer.CAMERAS in layers) labels += layer("camera", "symbol", "cameras", source = ls, layout = mapOf(
                     "icon-image" to "radar",
                     "icon-size" to listOf("interpolate", listOf("linear"), listOf("zoom"), 12, 0.45, 16, 0.8),
                     "icon-allow-overlap" to true,
@@ -287,6 +342,16 @@ object MapStyle {
                     "text-offset" to listOf(0, 1.2), "text-anchor" to "top", "text-optional" to true),
                 "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.8),
                 "minzoom" to 11),
+            // Numbered waypoints of a trajeto planned on the map.
+            mapOf("id" to "rte-pt", "type" to "circle", "source" to "tracks",
+                "filter" to listOf("==", kind, "rtept"),
+                "paint" to mapOf("circle-radius" to 12, "circle-color" to listOf("get", "color"),
+                    "circle-stroke-color" to "#ffffff", "circle-stroke-width" to 2.5)),
+            mapOf("id" to "rte-num", "type" to "symbol", "source" to "tracks",
+                "filter" to listOf("==", kind, "rtept"),
+                "layout" to mapOf("text-field" to listOf("to-string", listOf("get", "n")), "text-font" to listOf(MEDIUM),
+                    "text-size" to 13, "text-allow-overlap" to true, "text-ignore-placement" to true),
+                "paint" to mapOf("text-color" to "#ffffff", "text-halo-color" to "#000000", "text-halo-width" to 1.2)),
         )
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
@@ -307,10 +372,10 @@ object MapStyle {
 
         val style = mapOf(
             "version" to 8,
-            "name" to "Mota Dash",
+            "name" to "NavExpress",
             "glyphs" to "asset://glyphs/{fontstack}/{range}.pbf",
             "sources" to sources,
-            "layers" to fills + lines + tracks + labels,
+            "layers" to fills + lines + extrusions + tracks + labels,
         )
         return JSONObject(style).toString()
     }

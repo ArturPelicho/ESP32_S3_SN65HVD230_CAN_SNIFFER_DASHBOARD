@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Definições: theme and app update (ControlScreen.kt). -->
+<resources>
+    <string name="theme_mode_auto">Auto</string>
+    <string name="theme_mode_day">Día</string>
+    <string name="theme_mode_night">Noche</string>
+    <string name="theme_auto_by">El automático sigue</string>
+    <string name="theme_by_sun">Puesta de sol</string>
+    <string name="theme_by_light">Sensor de luz</string>
+    <string name="theme_by_phone">Modo oscuro del móvil</string>
+    <string name="theme_no_light_sensor">Este móvil no tiene sensor de luz, así que se usa la puesta de sol.</string>
+    <string name="theme_day_look">Aspecto de día</string>
+    <string name="theme_day_sand">Arena</string>
+    <string name="theme_day_graphite">Grafito de día</string>
+    <string name="theme_night_look">Aspecto de noche</string>
+    <string name="theme_night_desert">Noche en el desierto</string>
+    <string name="theme_night_graphite">Grafito</string>
+    <string name="theme_night_oled">Negro OLED</string>
+    <string name="theme_link_map">Tema de la app y día/noche del mapa vinculados</string>
+    <string name="upd_check">Buscar actualización</string>
+    <string name="upd_checking">Buscando…</string>
+    <string name="upd_latest">Última versión</string>
+    <string name="upd_up_to_date">Actualizada (v%1$s)</string>
+    <string name="upd_available">v%1$s disponible</string>
+    <string name="upd_install">Descargar e instalar</string>
+    <string name="upd_downloading">Descargando… %1$d%%</string>
+    <string name="upd_allow_hint">Permite instalar desde esta app en la página que se ha abierto y vuelve a tocar.</string>
+    <string name="upd_error">La actualización falló: %1$s</string>
+    <string name="upd_no_network">Sin red</string>
+    <string name="upd_no_release">No se encontró ninguna versión de la app</string>
+    <string name="set_cat_look">Apariencia</string>
+    <string name="set_cat_screen">Pantalla</string>
+    <string name="set_cat_bike">Moto</string>
+    <string name="set_cat_phone">Teléfono</string>
+    <string name="set_cat_about">Acerca de</string>
+</resources>

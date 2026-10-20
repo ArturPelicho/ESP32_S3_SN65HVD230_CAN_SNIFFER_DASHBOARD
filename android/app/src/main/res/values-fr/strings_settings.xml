@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Definições: theme and app update (ControlScreen.kt). -->
+<resources>
+    <string name="theme_mode_auto">Auto</string>
+    <string name="theme_mode_day">Jour</string>
+    <string name="theme_mode_night">Nuit</string>
+    <string name="theme_auto_by">L\'automatique suit</string>
+    <string name="theme_by_sun">Coucher du soleil</string>
+    <string name="theme_by_light">Capteur de lumière</string>
+    <string name="theme_by_phone">Mode sombre du téléphone</string>
+    <string name="theme_no_light_sensor">Ce téléphone n\'a pas de capteur de lumière, le coucher du soleil est donc utilisé.</string>
+    <string name="theme_day_look">Aspect de jour</string>
+    <string name="theme_day_sand">Sable</string>
+    <string name="theme_day_graphite">Graphite de jour</string>
+    <string name="theme_night_look">Aspect de nuit</string>
+    <string name="theme_night_desert">Nuit du désert</string>
+    <string name="theme_night_graphite">Graphite</string>
+    <string name="theme_night_oled">Noir OLED</string>
+    <string name="theme_link_map">Thème de l\'app et jour/nuit de la carte liés</string>
+    <string name="upd_check">Rechercher une mise à jour</string>
+    <string name="upd_checking">Recherche…</string>
+    <string name="upd_latest">Dernière version</string>
+    <string name="upd_up_to_date">À jour (v%1$s)</string>
+    <string name="upd_available">v%1$s disponible</string>
+    <string name="upd_install">Télécharger et installer</string>
+    <string name="upd_downloading">Téléchargement… %1$d%%</string>
+    <string name="upd_allow_hint">Autorisez les installations depuis cette appli sur la page ouverte, puis touchez à nouveau.</string>
+    <string name="upd_error">Échec de la mise à jour : %1$s</string>
+    <string name="upd_no_network">Pas de réseau</string>
+    <string name="upd_no_release">Aucune version de l\'appli trouvée</string>
+    <string name="set_cat_look">Apparence</string>
+    <string name="set_cat_screen">Écran</string>
+    <string name="set_cat_bike">Moto</string>
+    <string name="set_cat_phone">Téléphone</string>
+    <string name="set_cat_about">À propos</string>
+</resources>

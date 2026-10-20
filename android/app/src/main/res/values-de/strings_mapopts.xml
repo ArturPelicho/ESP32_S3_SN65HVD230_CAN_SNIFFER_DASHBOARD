@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map options in the Mapas panel (MapsPanel.kt): auto zoom ranges, contour spacing. -->
+<resources>
+    <string name="mapopts_az_speed">Tempo: %1$d–%2$d km/h</string>
+    <string name="mapopts_az_speed_hint">Am nächsten bis zum ersten Tempo, am weitesten ab dem zweiten.</string>
+    <string name="mapopts_az_zoom">Zoom: %1$s (≈ %2$d m) bis %3$s (≈ %4$d m)</string>
+    <string name="mapopts_az_zoom_hint">In Klammern: das Gelände auf 1,6 cm Bildschirm (100 dp).</string>
+    <string name="mapopts_contour_title">Abstand der Höhenlinien</string>
+    <string name="mapopts_contour_auto">Automatisch (nach Zoom)</string>
+    <string name="mapopts_contour_m">%1$d m</string>
+    <string name="mapopts_contour_hint">Automatisch: 100-m-Linien von weitem, bis 10 m aus der Nähe. 10-m- und 50-m-Linien gibt es nur mit ab jetzt erstelltem Relief: Lade das Relief der Region mit der nächsten Kartenversion neu herunter.</string>
+</resources>

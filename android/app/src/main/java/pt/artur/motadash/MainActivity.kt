@@ -2,6 +2,7 @@ package pt.artur.motadash
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,12 +14,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
@@ -29,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,10 +48,13 @@ import androidx.compose.ui.graphics.Color
 import pt.artur.motadash.ui.ControlScreen
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.DiagScreen
-import pt.artur.motadash.ui.DtcScreen
 import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
+import pt.artur.motadash.ui.ThemeStore
+import pt.artur.motadash.ui.LightSensor
+import androidx.compose.runtime.SideEffect
+import kotlinx.coroutines.delay
 import pt.artur.motadash.ui.UiScale
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -64,22 +73,43 @@ class MainActivity : ComponentActivity() {
     private val askBackground =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        L.init(this)
         if (Permissions.ready(this)) MotaService.start(this) else askPermissions.launch(Permissions.needed())
         applyScreenOn()
         applyOrientation()
         UiScale.load(this)
+        ThemeStore.apply(this)
         handleTrackIntent(intent)
         setContent {
             val scale by UiScale.value.collectAsStateWithLifecycle()
             val d = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(d.density * scale, d.fontScale)) {
-                MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Palette.panel)) {
+                val scheme = Palette.scheme
+                SideEffect { ThemeStore.bars(this, scheme) }
+                MaterialTheme(colorScheme = ThemeStore.material(scheme)) {
                     App(this)
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        LightSensor.start(this)     // listens only when the theme follows the light sensor
+        Attitude.start(this)        // compass and lean elements
+        ThemeStore.apply(this)
+    }
+
+    override fun onPause() {
+        LightSensor.stop()
+        Attitude.stop()
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -142,27 +172,37 @@ private fun App(activity: MainActivity) {
     val openMap by activity.openMap.collectAsStateWithLifecycle()
     LaunchedEffect(openMap) { if (openMap > 0) tab = 0 }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
-    val titles = listOf("Mapa", "Painel", "Controlo", if (dtc.total > 0) "Erros (${dtc.total})" else "Erros", "Diagnóstico")
+    // Map and dashboard first, then diagnostics (with the fault codes), settings at the far end.
+    val titles = listOf(
+        stringResource(R.string.tab_map), stringResource(R.string.tab_dashboard),
+        if (dtc.total > 0) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(R.string.tab_diag),
+        stringResource(R.string.tab_settings),
+    )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    Column(Modifier.fillMaxSize().background(Color.Black)) {
-        if (landscape) {
-            // Slim tabs so the dashboard keeps the height.
-            Row(Modifier.fillMaxWidth().height(30.dp)) {
-                titles.forEachIndexed { i, t ->
-                    Box(Modifier.weight(1f).fillMaxHeight().clickable { tab = i }, contentAlignment = Alignment.Center) {
-                        Text(t, fontSize = 13.sp, color = when {
-                            tab == i -> Palette.amber
-                            i == 3 && dtc.total > 0 -> Palette.orange
-                            else -> Palette.label
+    // AUTO theme by sunset: look again every minute.
+    LaunchedEffect(Unit) { while (true) { ThemeStore.apply(activity); delay(60_000) } }
+    Column(Modifier.fillMaxSize().background(Palette.bg)) {
+        // Tabs as separate keys, so each one's edges are plain; slimmer in landscape to keep the height.
+        Row(
+            Modifier.fillMaxWidth().height(if (landscape) 34.dp else 46.dp).padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            titles.forEachIndexed { i, t ->
+                val on = tab == i
+                Box(
+                    Modifier.weight(1f).fillMaxHeight()
+                        .background(if (on) Palette.amber else Palette.panel, RoundedCornerShape(8.dp))
+                        .border(1.dp, if (on) Palette.amber else Palette.frame, RoundedCornerShape(8.dp))
+                        .clickable { tab = i },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(t, fontSize = if (landscape) 13.sp else 14.sp, maxLines = 1,
+                        fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                        color = when {
+                            on -> Palette.bg
+                            i == 2 && dtc.total > 0 -> Palette.orange
+                            else -> Palette.text
                         })
-                    }
-                }
-            }
-        } else {
-            TabRow(selectedTabIndex = tab, containerColor = Color.Black, contentColor = Palette.amber) {
-                titles.forEachIndexed { i, t ->
-                    Tab(selected = tab == i, onClick = { tab = i },
-                        text = { Text(t, maxLines = 1, color = if (i == 3 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
                 }
             }
         }
@@ -170,9 +210,8 @@ private fun App(activity: MainActivity) {
             when (tab) {
                 0 -> MapScreen()
                 1 -> DashboardScreen()
-                2 -> ControlScreen(activity)
-                3 -> DtcScreen()
-                else -> DiagScreen()
+                2 -> DiagScreen()
+                else -> ControlScreen(activity)
             }
         }
     }

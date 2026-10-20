@@ -40,8 +40,16 @@ object BleProtocol {
     const val NA16S = Short.MIN_VALUE.toInt()
 
     val SPEED_SOURCES = listOf("GPS_EXT", "WHEEL", "GPS_INT", "GEAR", "OBD")
-    val SPEED_SOURCE_LABELS = listOf("Vel_GPS_Ext", "Vel_Roda", "Vel_GPS_Int", "Vel_Mudança", "Vel_OBD")
-    val SPEED_ORIGINS = listOf("nenhuma", "fonte", "mudança", "média mantida")
+    private val SPEED_SOURCE_LABEL_IDS = listOf(
+        R.string.link_speed_src_gps_ext, R.string.link_speed_src_wheel, R.string.link_speed_src_gps_int,
+        R.string.link_speed_src_gear, R.string.link_speed_src_obd,
+    )
+    private val SPEED_ORIGIN_IDS = listOf(
+        R.string.link_origin_none, R.string.link_origin_source, R.string.link_origin_gear, R.string.link_origin_held,
+    )
+    /** Shown to the user, in the app's language (read at call time). */
+    val SPEED_SOURCE_LABELS: List<String> get() = SPEED_SOURCE_LABEL_IDS.map { L.s(it) }
+    val SPEED_ORIGINS: List<String> get() = SPEED_ORIGIN_IDS.map { L.s(it) }
 
     private fun u16(v: Double, scale: Double): Int {
         if (v.isNaN() || v < 0) return NA16

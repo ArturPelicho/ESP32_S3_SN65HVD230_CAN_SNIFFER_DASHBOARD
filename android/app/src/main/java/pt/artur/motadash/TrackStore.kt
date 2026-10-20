@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -26,6 +27,8 @@ data class Track(
     val color: String,
     val width: Int,          // 1 thin, 2 normal, 3 thick
     val visible: Boolean,
+    /** Numbered waypoints of a trajeto planned on the map; empty for imported files. */
+    val plan: List<LatLon> = emptyList(),
 ) {
     val lengthM: Double by lazy { lines.sumOf { l -> (1 until l.size).sumOf { metres(l[it - 1], l[it]) } } }
     val points: Int get() = lines.sumOf { it.size }
@@ -42,7 +45,8 @@ data class TrackProgress(
 /** Imported GPX/KML/... tracks, kept as small JSON files in the app's storage. */
 object TrackStore {
     val COLORS = listOf("#ff2d95", "#2f9bff", "#34d058", "#ff8a00", "#a259ff", "#00d1c1", "#ffe14d", "#ff3b30")
-    val WIDTHS = listOf(1 to "Fino", 2 to "Normal", 3 to "Grosso")
+    val WIDTHS: List<Pair<Int, String>>
+        get() = listOf(1 to L.s(R.string.tracks_width_thin), 2 to L.s(R.string.tracks_width_normal), 3 to L.s(R.string.tracks_width_thick))
     private const val PREFS = "tracks"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -81,9 +85,9 @@ object TrackStore {
             val done = mutableListOf<String>()
             val failed = mutableListOf<String>()
             for (uri in uris) {
-                val name = displayName(app, uri) ?: uri.lastPathSegment ?: "trajeto"
+                val name = displayName(app, uri) ?: uri.lastPathSegment ?: L.s(R.string.tracks_fallback_name)
                 runCatching {
-                    val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("sem acesso")
+                    val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error(L.s(R.string.tracks_err_no_access))
                     val p = TrackParser.parse(bytes, name)
                     val t = Track(
                         id = System.currentTimeMillis().toString() + done.size,
@@ -92,13 +96,13 @@ object TrackStore {
                         color = COLORS[_tracks.value.size % COLORS.size], width = 2, visible = true,
                     )
                     save(app, t)
-                    _tracks.value = _tracks.value + t
+                    _tracks.update { it + t }
                     done += t.name
                 }.onFailure { failed += "$name (${it.message})" }
             }
             _message.value = buildList {
-                if (done.isNotEmpty()) add("Importado: " + done.joinToString(", "))
-                if (failed.isNotEmpty()) add("Não deu para ler: " + failed.joinToString(", "))
+                if (done.isNotEmpty()) add(L.s(R.string.tracks_imported, done.joinToString(", ")))
+                if (failed.isNotEmpty()) add(L.s(R.string.tracks_import_failed, failed.joinToString(", ")))
             }.joinToString("\n")
         }
     }
@@ -111,12 +115,35 @@ object TrackStore {
 
     fun update(ctx: Context, t: Track) {
         save(ctx, t)
-        _tracks.value = _tracks.value.map { if (it.id == t.id) t else it }
+        _tracks.update { list -> list.map { if (it.id == t.id) t else it } }
+    }
+
+    fun add(ctx: Context, t: Track) {
+        load(ctx)
+        save(ctx, t)
+        _tracks.update { it + t }
+    }
+
+    /** Changes one track atomically (screen and route lookups may change it at once) and saves it. */
+    fun change(ctx: Context, id: String, f: (Track) -> Track): Track? {
+        var out: Track? = null
+        _tracks.update { list -> list.map { if (it.id == id) f(it).also { n -> out = n } else it } }
+        out?.let { save(ctx, it) }
+        return out
+    }
+
+    /** Keeps a copy of a track in the app (a version to come back to before changing it). */
+    fun duplicate(ctx: Context, id: String): Track? {
+        val t = _tracks.value.firstOrNull { it.id == id } ?: return null
+        val copy = t.copy(id = System.currentTimeMillis().toString(), name = L.s(R.string.tracks_copy_name, t.name),
+            color = COLORS[(COLORS.indexOf(t.color) + 1).mod(COLORS.size)])
+        add(ctx, copy)
+        return copy
     }
 
     fun delete(ctx: Context, id: String) {
         File(dir(ctx), "$id.json").delete()
-        _tracks.value = _tracks.value.filter { it.id != id }
+        _tracks.update { list -> list.filter { it.id != id } }
         if (_active.value == id) setActive(ctx, null)
     }
 
@@ -139,11 +166,13 @@ object TrackStore {
             JSONArray(l.map { p -> JSONArray(listOfNotNull(p.lat, p.lon, p.ele)) })
         }))
         put("wpts", JSONArray(t.waypoints.map { w -> JSONArray(listOf(w.lat, w.lon, w.name)) }))
+        if (t.plan.isNotEmpty()) put("plan", JSONArray(t.plan.map { p -> JSONArray(listOf(p.lat, p.lon)) }))
     }
 
     private fun fromJson(o: JSONObject): Track {
         val ls = o.getJSONArray("lines")
         val ws = o.optJSONArray("wpts") ?: JSONArray()
+        val pl = o.optJSONArray("plan") ?: JSONArray()
         return Track(
             id = o.getString("id"), name = o.getString("name"),
             lines = List(ls.length()) { i ->
@@ -155,14 +184,23 @@ object TrackStore {
             },
             waypoints = List(ws.length()) { i -> ws.getJSONArray(i).let { Waypoint(it.getDouble(0), it.getDouble(1), it.getString(2)) } },
             color = o.optString("color", COLORS[0]), width = o.optInt("width", 2), visible = o.optBoolean("visible", true),
+            plan = List(pl.length()) { i -> pl.getJSONArray(i).let { LatLon(it.getDouble(0), it.getDouble(1)) } },
         )
     }
 }
 
 /** Follows the bike along one track: how far done, how far left, how far off. */
 class TrackFollower(track: Track, private val reversed: Boolean) {
-    private val pts: List<LatLon> = track.lines.flatten().let { if (reversed) it.reversed() else it }
-    private val cum = DoubleArray(pts.size).also { c -> for (i in 1 until pts.size) c[i] = c[i - 1] + metres(pts[i - 1], pts[i]) }
+    private val lines = if (reversed) track.lines.reversed().map { it.reversed() } else track.lines
+    private val pts: List<LatLon> = lines.flatten()
+    /** True where a new line starts: no segment joins it to the point before. */
+    private val gap = BooleanArray(pts.size).also { g ->
+        var k = 0
+        for (l in lines) { if (k > 0 && k < g.size) g[k] = true; k += l.size }
+    }
+    private val cum = DoubleArray(pts.size).also { c ->
+        for (i in 1 until pts.size) c[i] = c[i - 1] + if (gap[i]) 0.0 else metres(pts[i - 1], pts[i])
+    }
     val totalM = cum.lastOrNull() ?: 0.0
     private var lastIdx = -1
 
@@ -173,6 +211,7 @@ class TrackFollower(track: Track, private val reversed: Boolean) {
         fun best(from: Int, to: Int): Triple<Int, Double, Double> {
             var bi = from; var bd = Double.MAX_VALUE; var bt = 0.0
             for (i in from until to) {
+                if (gap[i + 1]) continue
                 val (d, t) = toSegment(here, pts[i], pts[i + 1])
                 if (d < bd) { bd = d; bi = i; bt = t }
             }
