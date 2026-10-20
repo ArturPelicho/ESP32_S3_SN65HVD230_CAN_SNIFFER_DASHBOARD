@@ -257,7 +257,7 @@ fun MapsPanel(
                             Text(
                                 when {
                                     rdl != null && rdl.failed -> stringResource(R.string.routes_failed)
-                                    rdl != null -> stringResource(R.string.maps_downloading, mb(rdl.done))
+                                    rdl != null -> stringResource(R.string.routes_downloading, mb(rdl.done))
                                     routes.first -> stringResource(R.string.routes_installed, mb(routes.second))
                                     else -> stringResource(R.string.routes_none)
                                 },
