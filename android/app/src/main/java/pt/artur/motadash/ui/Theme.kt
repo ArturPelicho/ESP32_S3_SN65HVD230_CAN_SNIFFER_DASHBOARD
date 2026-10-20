@@ -19,7 +19,7 @@ import androidx.core.view.WindowCompat
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.R
 
-/** Day (always Sand), night, or switching by itself. */
+/** Day, night (each in its chosen look), or switching by itself. */
 enum class ThemeMode(@StringRes val res: Int) {
     AUTO(R.string.theme_mode_auto), DAY(R.string.theme_mode_day), NIGHT(R.string.theme_mode_night)
 }
@@ -29,9 +29,14 @@ enum class AutoBy(@StringRes val res: Int) {
     SUN(R.string.theme_by_sun), LIGHT(R.string.theme_by_light), PHONE(R.string.theme_by_phone)
 }
 
+/** Which light scheme day uses. */
+enum class DayScheme(@StringRes val res: Int) {
+    SAND(R.string.theme_day_sand), GRAPHITE(R.string.theme_day_graphite)
+}
+
 /** Which dark scheme night uses. */
 enum class NightScheme(@StringRes val res: Int) {
-    DESERT(R.string.theme_night_desert), GRAPHITE(R.string.theme_night_graphite)
+    DESERT(R.string.theme_night_desert), GRAPHITE(R.string.theme_night_graphite), OLED(R.string.theme_night_oled)
 }
 
 object ThemeStore {
@@ -64,6 +69,14 @@ object ThemeStore {
 
     fun setAutoBy(ctx: Context, a: AutoBy) {
         prefs(ctx).edit().putString("theme_auto_by", a.name).apply()
+        changed(ctx)
+    }
+
+    fun dayScheme(ctx: Context): DayScheme =
+        runCatching { DayScheme.valueOf(prefs(ctx).getString("theme_day", "SAND")!!) }.getOrDefault(DayScheme.SAND)
+
+    fun setDayScheme(ctx: Context, d: DayScheme) {
+        prefs(ctx).edit().putString("theme_day", d.name).apply()
         changed(ctx)
     }
 
@@ -109,9 +122,13 @@ object ThemeStore {
 
     /** Picks the scheme for now; call at start, on change, every minute, and when the light sensor decides. */
     fun apply(ctx: Context) {
-        Palette.scheme = if (!isNight(ctx)) SAND else when (nightScheme(ctx)) {
+        Palette.scheme = if (!isNight(ctx)) when (dayScheme(ctx)) {
+            DayScheme.SAND -> SAND
+            DayScheme.GRAPHITE -> GRAPHITE_DAY
+        } else when (nightScheme(ctx)) {
             NightScheme.DESERT -> DESERT_NIGHT
             NightScheme.GRAPHITE -> GRAPHITE
+            NightScheme.OLED -> OLED
         }
     }
 

@@ -85,7 +85,7 @@ private fun parsed(text: String, s: ParamSpec): Int? =
 
 /** The groups of Definições, listed on the left; only the chosen one shows on the right. */
 private enum class SetCat(@StringRes val res: Int) {
-    LOOK(R.string.set_cat_look), SCREEN(R.string.set_cat_screen), BIKE(R.string.set_cat_bike),
+    LOOK(R.string.set_cat_look), BIKE(R.string.set_cat_bike),
     PHONE(R.string.set_cat_phone), ABOUT(R.string.set_cat_about),
 }
 
@@ -122,131 +122,138 @@ fun ControlScreen(activity: MainActivity) {
         Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
             when (cat) {
                 SetCat.LOOK -> {
-                Section(stringResource(R.string.settings_language)) {
-                    val current = remember { AppLocale.tag(ctx) }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        AppLocale.OPTIONS.forEach { (tag, name) ->
-                            FilterChip(selected = current == tag,
-                                onClick = { if (tag != current) { AppLocale.set(ctx, tag); activity.recreate() } },
-                                label = { Text(name ?: stringResource(R.string.settings_language_phone)) })
-                        }
-                    }
-                }
-                Section(stringResource(R.string.settings_theme)) {
-                    var mode by remember { mutableStateOf(ThemeStore.mode(ctx)) }
-                    var autoBy by remember { mutableStateOf(ThemeStore.autoBy(ctx)) }
-                    var night by remember { mutableStateOf(ThemeStore.nightScheme(ctx)) }
-                    var linkMap by remember { mutableStateOf(ThemeStore.linkMap(ctx)) }
-                    val hasLight = remember { LightSensor.available(ctx) }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        ThemeMode.entries.forEach { m ->
-                            FilterChip(selected = mode == m,
-                                onClick = { mode = m; ThemeStore.setMode(ctx, m) },
-                                label = { Text(stringResource(m.res)) })
-                        }
-                    }
-                    if (mode == ThemeMode.AUTO) {
-                        Text(stringResource(R.string.theme_auto_by), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AutoBy.entries.forEach { a ->
-                                FilterChip(selected = autoBy == a,
-                                    onClick = { autoBy = a; ThemeStore.setAutoBy(ctx, a) },
-                                    label = { Text(stringResource(a.res)) })
+                    Section(stringResource(R.string.settings_language)) {
+                        val current = remember { AppLocale.tag(ctx) }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            AppLocale.OPTIONS.forEach { (tag, name) ->
+                                FilterChip(selected = current == tag,
+                                    onClick = { if (tag != current) { AppLocale.set(ctx, tag); activity.recreate() } },
+                                    label = { Text(name ?: stringResource(R.string.settings_language_phone)) })
                             }
                         }
-                        if (autoBy == AutoBy.LIGHT && !hasLight) {
-                            Text(stringResource(R.string.theme_no_light_sensor), color = Palette.orange, fontSize = 12.sp)
+                    }
+                    Section(stringResource(R.string.settings_theme)) {
+                        var mode by remember { mutableStateOf(ThemeStore.mode(ctx)) }
+                        var autoBy by remember { mutableStateOf(ThemeStore.autoBy(ctx)) }
+                        var day by remember { mutableStateOf(ThemeStore.dayScheme(ctx)) }
+                        var night by remember { mutableStateOf(ThemeStore.nightScheme(ctx)) }
+                        var linkMap by remember { mutableStateOf(ThemeStore.linkMap(ctx)) }
+                        val hasLight = remember { LightSensor.available(ctx) }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            ThemeMode.entries.forEach { m ->
+                                FilterChip(selected = mode == m,
+                                    onClick = { mode = m; ThemeStore.setMode(ctx, m) },
+                                    label = { Text(stringResource(m.res)) })
+                            }
+                        }
+                        if (mode == ThemeMode.AUTO) {
+                            Text(stringResource(R.string.theme_auto_by), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                AutoBy.entries.forEach { a ->
+                                    FilterChip(selected = autoBy == a,
+                                        onClick = { autoBy = a; ThemeStore.setAutoBy(ctx, a) },
+                                        label = { Text(stringResource(a.res)) })
+                                }
+                            }
+                            if (autoBy == AutoBy.LIGHT && !hasLight) {
+                                Text(stringResource(R.string.theme_no_light_sensor), color = Palette.orange, fontSize = 12.sp)
+                            }
+                        }
+                        Text(stringResource(R.string.theme_day_look), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DayScheme.entries.forEach { d ->
+                                FilterChip(selected = day == d,
+                                    onClick = { day = d; ThemeStore.setDayScheme(ctx, d) },
+                                    label = { Text(stringResource(d.res)) })
+                            }
+                        }
+                        Text(stringResource(R.string.theme_night_look), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            NightScheme.entries.forEach { n ->
+                                FilterChip(selected = night == n,
+                                    onClick = { night = n; ThemeStore.setNightScheme(ctx, n) },
+                                    label = { Text(stringResource(n.res)) })
+                            }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                            Text(stringResource(R.string.theme_link_map), color = Palette.text, modifier = Modifier.weight(1f))
+                            Switch(checked = linkMap, onCheckedChange = { linkMap = it; ThemeStore.setLinkMap(ctx, it) })
                         }
                     }
-                    Text(stringResource(R.string.theme_night_look), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NightScheme.entries.forEach { n ->
-                            FilterChip(selected = night == n,
-                                onClick = { night = n; ThemeStore.setNightScheme(ctx, n) },
-                                label = { Text(stringResource(n.res)) })
+                    Section(stringResource(R.string.set_screen)) {
+                        var orient by remember { mutableStateOf(Link.orientation(ctx)) }
+                        Text(stringResource(R.string.set_orientation), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Orientation.entries.forEach { o ->
+                                FilterChip(selected = orient == o, onClick = {
+                                    orient = o; Link.setOrientation(ctx, o); activity.applyOrientation()
+                                }, label = { Text(o.label, fontSize = 12.sp) })
+                            }
+                        }
+                        Text(stringResource(R.string.set_orientation_help),
+                            color = Palette.label, fontSize = 12.sp)
+                        var screenOn by remember { mutableStateOf(Link.keepScreenOn(ctx)) }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.set_keep_screen_on), color = Palette.text, modifier = Modifier.weight(1f))
+                            Switch(checked = screenOn, onCheckedChange = {
+                                screenOn = it; Link.setKeepScreenOn(ctx, it); activity.applyScreenOn()
+                            })
                         }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                        Text(stringResource(R.string.theme_link_map), color = Palette.text, modifier = Modifier.weight(1f))
-                        Switch(checked = linkMap, onCheckedChange = { linkMap = it; ThemeStore.setLinkMap(ctx, it) })
-                    }
-                }
                     Section(stringResource(R.string.set_ui_size)) {
-                    val scale by UiScale.value.collectAsStateWithLifecycle()
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        UiScale.steps.forEach { v ->
-                            FilterChip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
-                                label = { Text("${(v * 100).toInt()}%") })
+                        val scale by UiScale.value.collectAsStateWithLifecycle()
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            UiScale.steps.forEach { v ->
+                                FilterChip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
+                                    label = { Text("${(v * 100).toInt()}%") })
+                            }
                         }
-                    }
-                    }
-                }
-                SetCat.SCREEN -> {
-                Section(stringResource(R.string.set_screen)) {
-                    var orient by remember { mutableStateOf(Link.orientation(ctx)) }
-                    Text(stringResource(R.string.set_orientation), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Orientation.entries.forEach { o ->
-                            FilterChip(selected = orient == o, onClick = {
-                                orient = o; Link.setOrientation(ctx, o); activity.applyOrientation()
-                            }, label = { Text(o.label, fontSize = 12.sp) })
-                        }
-                    }
-                    Text(stringResource(R.string.set_orientation_help),
-                        color = Palette.label, fontSize = 12.sp)
-                    var screenOn by remember { mutableStateOf(Link.keepScreenOn(ctx)) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.set_keep_screen_on), color = Palette.text, modifier = Modifier.weight(1f))
-                        Switch(checked = screenOn, onCheckedChange = {
-                            screenOn = it; Link.setKeepScreenOn(ctx, it); activity.applyScreenOn()
-                        })
-                    }
                     }
                 }
                 SetCat.BIKE -> {
                     Section(stringResource(R.string.set_link_phone)) {
-                    KeyValue(stringResource(R.string.set_status), statusText(status), if (connected) Palette.green else Palette.orange)
-                    KeyValue(stringResource(R.string.set_board), Link.savedAddress(ctx) ?: stringResource(R.string.set_board_none))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                        OutlinedButton(onClick = { Link.saveAddress(ctx, null); Link.service?.reconnect() ?: MotaService.start(ctx) }) {
-                            Text(stringResource(R.string.set_find_other))
+                        KeyValue(stringResource(R.string.set_status), statusText(status), if (connected) Palette.green else Palette.orange)
+                        KeyValue(stringResource(R.string.set_board), Link.savedAddress(ctx) ?: stringResource(R.string.set_board_none))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                            OutlinedButton(onClick = { Link.saveAddress(ctx, null); Link.service?.reconnect() ?: MotaService.start(ctx) }) {
+                                Text(stringResource(R.string.set_find_other))
+                            }
+                            OutlinedButton(onClick = { MotaService.start(ctx) }) { Text(stringResource(R.string.set_start)) }
+                            OutlinedButton(onClick = { MotaService.stop(ctx) }) { Text(stringResource(R.string.set_stop)) }
                         }
-                        OutlinedButton(onClick = { MotaService.start(ctx) }) { Text(stringResource(R.string.set_start)) }
-                        OutlinedButton(onClick = { MotaService.stop(ctx) }) { Text(stringResource(R.string.set_stop)) }
                     }
+                    Section(stringResource(R.string.set_board_params)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                            OutlinedButton(enabled = connected, onClick = { Link.send("PARAM") }) { Text(stringResource(R.string.set_read_board)) }
+                        }
+                        if (params.isEmpty()) {
+                            Text(stringResource(if (connected) R.string.set_reading else R.string.set_connect_for_params), color = Palette.label)
+                        }
+                        params.values.filter { it.name != "SPD_SRC" }.sortedBy { spec(it).order }
+                            .forEach { p -> ParamRow(p, connected, if (p.name == "BASE_L100") t?.rangeL100 else null) }
                     }
-                Section(stringResource(R.string.set_board_params)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                        OutlinedButton(enabled = connected, onClick = { Link.send("PARAM") }) { Text(stringResource(R.string.set_read_board)) }
-                    }
-                    if (params.isEmpty()) {
-                        Text(stringResource(if (connected) R.string.set_reading else R.string.set_connect_for_params), color = Palette.label)
-                    }
-                    params.values.filter { it.name != "SPD_SRC" }.sortedBy { spec(it).order }
-                        .forEach { p -> ParamRow(p, connected, if (p.name == "BASE_L100") t?.rangeL100 else null) }
-                }
                 }
                 SetCat.PHONE -> {
                     Section(stringResource(R.string.set_cat_phone)) {
-                    val bg = Permissions.background(ctx)
-                    KeyValue(stringResource(R.string.set_location_always),
-                        stringResource(if (bg) R.string.set_yes else R.string.set_location_needed),
-                        if (bg) Palette.green else Palette.orange)
-                    if (!bg) Button(onClick = { activity.requestBackgroundLocation() }) { Text(stringResource(R.string.set_allow_always)) }
-                    val opt = activity.batteryOptimised()
-                    KeyValue(stringResource(R.string.set_battery_opt),
-                        stringResource(if (opt) R.string.set_battery_opt_on else R.string.set_battery_opt_off),
-                        if (opt) Palette.orange else Palette.green)
-                    if (opt) Button(onClick = { activity.requestNoBatteryOptimisation() }) { Text(stringResource(R.string.set_battery_opt_disable)) }
-                    OutlinedButton(onClick = { activity.openAppSettings() }) { Text(stringResource(R.string.set_app_settings)) }
+                        val bg = Permissions.background(ctx)
+                        KeyValue(stringResource(R.string.set_location_always),
+                            stringResource(if (bg) R.string.set_yes else R.string.set_location_needed),
+                            if (bg) Palette.green else Palette.orange)
+                        if (!bg) Button(onClick = { activity.requestBackgroundLocation() }) { Text(stringResource(R.string.set_allow_always)) }
+                        val opt = activity.batteryOptimised()
+                        KeyValue(stringResource(R.string.set_battery_opt),
+                            stringResource(if (opt) R.string.set_battery_opt_on else R.string.set_battery_opt_off),
+                            if (opt) Palette.orange else Palette.green)
+                        if (opt) Button(onClick = { activity.requestNoBatteryOptimisation() }) { Text(stringResource(R.string.set_battery_opt_disable)) }
+                        OutlinedButton(onClick = { activity.openAppSettings() }) { Text(stringResource(R.string.set_app_settings)) }
                     }
                 }
                 SetCat.ABOUT -> {
                     Section(stringResource(R.string.set_cat_about)) {
-                    KeyValue(stringResource(R.string.set_app_version), runCatching {
-                        ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
-                    }.getOrNull() ?: "?")
-                    UpdateBlock()
+                        KeyValue(stringResource(R.string.set_app_version), runCatching {
+                            ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
+                        }.getOrNull() ?: "?")
+                        UpdateBlock()
                     }
                 }
             }

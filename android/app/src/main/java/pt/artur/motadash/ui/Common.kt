@@ -1,6 +1,7 @@
 package pt.artur.motadash.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,7 @@ data class Scheme(
     val amber: Color,       // accent: titles, selected tab
     val cyan: Color,        // second accent: active buttons
     val green: Color, val blue: Color, val orange: Color, val red: Color, val yellow: Color,
+    val outlined: Boolean = false,  // panels same as bg: Section and Tile get a [frame] border
 )
 
 /**
@@ -60,6 +62,29 @@ val GRAPHITE = Scheme(
     green = Color(0xFF34D058), blue = Color(0xFF2F9BFF), orange = Color(0xFFFF8A00), red = Color(0xFFFF3B30), yellow = Color(0xFFFFE14D),
 )
 
+/**
+ * Day: Graphite in daylight, cool light grey with whiter panels, near-black text and deep accents,
+ * for full sun (on the panel: text 15.6:1, label 10:1, accents and status colours >= 6.2:1).
+ */
+val GRAPHITE_DAY = Scheme(
+    dark = false, bg = Color(0xFFC9CED6), panel = Color(0xFFE6E9EE), frame = Color(0xFF8A94A2),
+    label = Color(0xFF2E3640), text = Color(0xFF0D1117), dim = Color(0xFFA9B1BC),
+    amber = Color(0xFF7E4300), cyan = Color(0xFF005A73),
+    green = Color(0xFF17602A), blue = Color(0xFF1A4FA0), orange = Color(0xFF8C3B00), red = Color(0xFFA3161A), yellow = Color(0xFF665200),
+)
+
+/**
+ * Night: pure black everywhere so OLED pixels stay off; panels are told apart by thin grey
+ * outlines, text is soft grey (13:1) and accents muted (>= 4.9:1), nothing glaring.
+ */
+val OLED = Scheme(
+    dark = true, bg = Color(0xFF000000), panel = Color(0xFF000000), frame = Color(0xFF3A3F47),
+    label = Color(0xFF8C929A), text = Color(0xFFC8CCD2), dim = Color(0xFF33373D),
+    amber = Color(0xFFD09A3A), cyan = Color(0xFF4FA8C4),
+    green = Color(0xFF4CA860), blue = Color(0xFF4F8AD0), orange = Color(0xFFD27A2E), red = Color(0xFFD0503F), yellow = Color(0xFFC9B455),
+    outlined = true,
+)
+
 /** Colours of the current scheme; reading them in a composable redraws it when the scheme changes. */
 object Palette {
     var scheme by mutableStateOf(DESERT_NIGHT)
@@ -77,6 +102,8 @@ object Palette {
     val orange get() = scheme.orange
     val red get() = scheme.red
     val yellow get() = scheme.yellow
+    /** True when panels need a [frame] outline to stand out from the background (OLED). */
+    val outlined get() = scheme.outlined
     /** Boxes over the map (speed, buttons, banners), see-through. */
     val overlay get() = scheme.panel.copy(alpha = 0.90f)
     val overlaySoft get() = scheme.panel.copy(alpha = 0.80f)
@@ -113,9 +140,11 @@ fun Tile(
     sub: String? = null,
     background: Color = Palette.panel,
 ) {
+    val shape = RoundedCornerShape(10.dp)
     Column(
         modifier
-            .background(background, RoundedCornerShape(10.dp))
+            .background(background, shape)
+            .then(if (Palette.outlined) Modifier.border(1.dp, Palette.frame, shape) else Modifier)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Text(label, color = Palette.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -139,11 +168,13 @@ fun KeyValue(key: String, value: String, color: Color = Palette.text) {
 
 @Composable
 fun Section(title: String, content: @Composable () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .background(Palette.panel, RoundedCornerShape(10.dp))
+            .background(Palette.panel, shape)
+            .then(if (Palette.outlined) Modifier.border(1.dp, Palette.frame, shape) else Modifier)
             .padding(12.dp)
     ) {
         Text(title, color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)

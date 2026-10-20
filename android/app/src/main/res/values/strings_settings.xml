@@ -9,10 +9,14 @@
     <string name="theme_by_light">Light sensor</string>
     <string name="theme_by_phone">Phone dark mode</string>
     <string name="theme_no_light_sensor">This phone has no light sensor, so sunset is used.</string>
+    <string name="theme_day_look">Day look</string>
+    <string name="theme_day_sand">Sand</string>
+    <string name="theme_day_graphite">Graphite day</string>
     <string name="theme_night_look">Night look</string>
     <string name="theme_night_desert">Desert night</string>
     <string name="theme_night_graphite">Graphite</string>
-    <string name="theme_link_map">Map day/night follows the theme</string>
+    <string name="theme_night_oled">OLED black</string>
+    <string name="theme_link_map">App theme and map day/night are linked</string>
     <string name="upd_check">Check for update</string>
     <string name="upd_checking">Checking…</string>
     <string name="upd_latest">Latest build</string>

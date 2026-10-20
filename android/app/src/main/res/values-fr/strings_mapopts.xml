@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map options in the Mapas panel (MapsPanel.kt): auto zoom ranges, contour spacing. -->
+<resources>
+    <string name="mapopts_az_speed">Vitesse : %1$d–%2$d km/h</string>
+    <string name="mapopts_az_speed_hint">Zoom le plus proche jusqu\'à la première vitesse, le plus éloigné à partir de la seconde.</string>
+    <string name="mapopts_az_zoom">Zoom : %1$s (≈ %2$d m) à %3$s (≈ %4$d m)</string>
+    <string name="mapopts_az_zoom_hint">Entre parenthèses : le terrain couvert par 1,6 cm d\'écran (100 dp).</string>
+    <string name="mapopts_contour_title">Espacement des courbes de niveau</string>
+    <string name="mapopts_contour_auto">Auto (selon le zoom)</string>
+    <string name="mapopts_contour_m">%1$d m</string>
+    <string name="mapopts_contour_hint">Auto : courbes de 100 m de loin, jusqu\'à 10 m de près. Les courbes de 10 m et 50 m n\'arrivent qu\'avec le relief construit désormais : retéléchargez le relief de la région à la prochaine version des cartes.</string>
+</resources>

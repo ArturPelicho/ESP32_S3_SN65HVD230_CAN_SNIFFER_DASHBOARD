@@ -9,10 +9,14 @@
     <string name="theme_by_light">Capteur de lumière</string>
     <string name="theme_by_phone">Mode sombre du téléphone</string>
     <string name="theme_no_light_sensor">Ce téléphone n\'a pas de capteur de lumière, le coucher du soleil est donc utilisé.</string>
+    <string name="theme_day_look">Aspect de jour</string>
+    <string name="theme_day_sand">Sable</string>
+    <string name="theme_day_graphite">Graphite de jour</string>
     <string name="theme_night_look">Aspect de nuit</string>
     <string name="theme_night_desert">Nuit du désert</string>
     <string name="theme_night_graphite">Graphite</string>
-    <string name="theme_link_map">Le jour/nuit de la carte suit le thème</string>
+    <string name="theme_night_oled">Noir OLED</string>
+    <string name="theme_link_map">Thème de l\'app et jour/nuit de la carte liés</string>
     <string name="upd_check">Rechercher une mise à jour</string>
     <string name="upd_checking">Recherche…</string>
     <string name="upd_latest">Dernière version</string>

@@ -62,4 +62,12 @@
     <string name="layer_contours">Höhenlinien</string>
     <string name="layer_3d">3D-Gebäude (3D-Ansicht)</string>
     <string name="layer_cameras">Blitzer</string>
+    <string name="w_north">Norden</string>
+    <string name="w_attitude">Schräglage / Nicken</string>
+    <string name="w_save">Speichern</string>
+    <string name="w_revert">Verwerfen</string>
+    <string name="w_att_lean">Schräglage</string>
+    <string name="w_att_pitch">Nicken</string>
+    <string name="w_att_max">MAX L %1$d° · R %2$d°</string>
+    <string name="w_att_hint">Lange drücken zum Nullen, Motorrad aufrecht und waagrecht.</string>
 </resources>

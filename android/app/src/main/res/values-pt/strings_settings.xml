@@ -9,10 +9,14 @@
     <string name="theme_by_light">Sensor de luz</string>
     <string name="theme_by_phone">Modo escuro do telemóvel</string>
     <string name="theme_no_light_sensor">Este telemóvel não tem sensor de luz, por isso usa-se o pôr do sol.</string>
+    <string name="theme_day_look">Aspeto de dia</string>
+    <string name="theme_day_sand">Areia</string>
+    <string name="theme_day_graphite">Grafite de dia</string>
     <string name="theme_night_look">Aspeto de noite</string>
     <string name="theme_night_desert">Noite no deserto</string>
     <string name="theme_night_graphite">Grafite</string>
-    <string name="theme_link_map">O dia/noite do mapa segue o tema</string>
+    <string name="theme_night_oled">Preto OLED</string>
+    <string name="theme_link_map">Tema da app e dia/noite do mapa ligados</string>
     <string name="upd_check">Procurar atualização</string>
     <string name="upd_checking">A procurar…</string>
     <string name="upd_latest">Última versão</string>

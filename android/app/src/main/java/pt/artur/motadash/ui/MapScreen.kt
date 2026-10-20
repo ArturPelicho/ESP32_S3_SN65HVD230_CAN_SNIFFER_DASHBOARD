@@ -128,6 +128,8 @@ import pt.artur.motadash.TrackFollower
 import pt.artur.motadash.TrackProgress
 import pt.artur.motadash.TrackStore
 import pt.artur.motadash.MapStore
+import pt.artur.motadash.AutoZoom
+import pt.artur.motadash.zoomFor
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.MapTheme
 import pt.artur.motadash.R
@@ -164,6 +166,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     var userZoom: Double? = null
     var manualUntil = 0L
     private var autoLevel = 17.0
+    var azCfg = AutoZoom()
     private var zoomInSince = 0L
     private var first = true
 
@@ -225,7 +228,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         if (!follow && !gesturing && !editing && speedKmh > 10 && now - gestureAt > 10_000) setFollow(true)
 
         // Auto zoom: out at once when speeding up, back in only after 8 s slower.
-        val target = autoZoomFor(speedKmh)
+        val target = azCfg.zoomFor(speedKmh)
         when {
             first || target < autoLevel -> { autoLevel = target; zoomInSince = 0 }
             target > autoLevel + 0.05 -> {
@@ -446,14 +449,6 @@ private fun segment(loc: Location, a: Point, b: Point): Pair<Double, Double> {
 /** 0..180 degrees between two bearings. */
 private fun angleDiff(a: Double, b: Double): Double = abs(((a - b) % 360 + 540) % 360 - 180)
 
-/** Zoom by speed: close in town, wider on the open road. */
-private fun autoZoomFor(kmh: Double): Double = when {
-    kmh <= 35 -> 17.0
-    kmh <= 50 -> 16.3
-    kmh < 90 -> 16.0 - (kmh - 50) / 40 * 1.4
-    else -> 14.6
-}
-
 /** 3D tilt: steep when stopped, flatter at speed. */
 private fun tiltFor(kmh: Double): Double = 60.0 - kmh.coerceIn(0.0, 90.0) / 90.0 * 22.0
 
@@ -573,6 +568,9 @@ fun MapScreen() {
     var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
     var themeTick by remember { mutableIntStateOf(0) }
     var mapBearing by remember { mutableFloatStateOf(0f) }
+    var mapTilt by remember { mutableFloatStateOf(0f) }
+    val contourStep by MapStore.contourStepFlow.collectAsStateWithLifecycle()
+    val azCfg by MapStore.autoZoomFlow.collectAsStateWithLifecycle()
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
     val reversed by TrackStore.reversed.collectAsStateWithLifecycle()
@@ -596,6 +594,7 @@ fun MapScreen() {
     val holder = remember {
         MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
     }
+    LaunchedEffect(azCfg) { holder.azCfg = azCfg }
 
     LaunchedEffect(Unit) {
         MapStore.load(ctx)
@@ -672,7 +671,7 @@ fun MapScreen() {
         MapTheme.AUTO -> minute.let { MapStyle.isNight(fix?.latitude ?: 39.5, fix?.longitude ?: -8.0) }
     }
     val enabled = installed.filter { it.enabled }
-    val styleJson = remember(enabled, night, lang, layers) { MapStyle.build(enabled, night, lang, layers) }
+    val styleJson = remember(enabled, night, lang, layers, contourStep) { MapStyle.build(enabled, night, lang, layers, contourStep) }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(
@@ -688,7 +687,7 @@ fun MapScreen() {
                         m.uiSettings.isAttributionEnabled = false
                         // Our own north needle (below) only shows the direction; MapLibre's one reset the map on touch.
                         m.uiSettings.isCompassEnabled = false
-                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat() }
+                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat(); mapTilt = m.cameraPosition.tilt.toFloat() }
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
                         fun touched() { holder.gestureAt = SystemClock.elapsedRealtime() }
                         // Dragging or turning the map stops following; pinching only overrides the zoom.
@@ -773,7 +772,7 @@ fun MapScreen() {
         // The rider's elements (speed by default; any Painel element can join it), clear of the bar.
         WidgetBoard(LayoutStore.MAP,
             widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
-                altM = fix?.takeIf { it.hasAltitude() }?.altitude),
+                altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt),
             modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
         @Composable
@@ -786,11 +785,6 @@ fun MapScreen() {
             MapCtl.FOLLOW -> MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
             MapCtl.ZOOM_IN -> MapButton("+") { holder.zoomBy(1.0) }
             MapCtl.ZOOM_OUT -> MapButton("−") { holder.zoomBy(-1.0) }
-            MapCtl.COMPASS -> CompassButton(mapBearing) {
-                // North up, or back to heading up.
-                mode = if (mode == FollowMode.NORTH) FollowMode.HEADING else FollowMode.NORTH
-                MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings(); holder.update(600)
-            }
             MapCtl.GPS -> GpsButton(fix, gnss, active = showGps) { showGps = !showGps }
             MapCtl.DAYNIGHT -> {
                 themeTick
@@ -811,20 +805,24 @@ fun MapScreen() {
             MapCtl.MAPS -> MapButton("☰") { showMaps = true }
         }
 
+        // Full lines on the outside, the remainder on the inner line.
+        val chunks = buttons.chunked(perLine).let { if (side == BarSide.RIGHT || side == BarSide.BOTTOM) it.reversed() else it }
         if (vertical) {
-            FlowColumn(
-                Modifier.align(barAlign).fillMaxHeight().padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                maxItemsInEachColumn = perLine,
-            ) { buttons.forEach { BarButton(it) } }
+            Row(Modifier.align(barAlign).fillMaxHeight().padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                chunks.forEach { line ->
+                    Column(Modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)) {
+                        line.forEach { BarButton(it) }
+                    }
+                }
+            }
         } else {
-            FlowRow(
-                Modifier.align(barAlign).fillMaxWidth().padding(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                maxItemsInEachRow = perLine,
-            ) { buttons.forEach { BarButton(it) } }
+            Column(Modifier.align(barAlign).fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                chunks.forEach { line ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+                        line.forEach { BarButton(it) }
+                    }
+                }
+            }
         }
 
         // GPS details and the layers list open next to the bar.
@@ -1187,29 +1185,6 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
     }
 }
 
-/** Where north is on the rotated map; tap for north up (or back to heading up). */
-@Composable
-private fun CompassButton(bearing: Float, onClick: () -> Unit) {
-    Box(
-        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
-            .border(2.dp, Palette.frame, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.size(36.dp).rotate(-bearing)) {
-            val w = size.width
-            val h = size.height
-            val north = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.08f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            val south = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.92f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            drawPath(north, Color(0xFFE2463C))
-            drawPath(south, Palette.label)
-        }
-    }
-}
-
 /** GPS quality at a glance (satellites used, accuracy); tap for the GPS panel. */
 @Composable
 private fun GpsButton(fix: Location?, gnss: Gnss, active: Boolean, onClick: () -> Unit) {
@@ -1230,26 +1205,27 @@ private fun GpsButton(fix: Location?, gnss: Gnss, active: Boolean, onClick: () -
     }
 }
 
-/** Three stacked sheets, the usual layers icon. */
+/** Two stacked map sheets with the word under them, so it reads as "what the map shows". */
 @Composable
 private fun LayersButton(active: Boolean, onClick: () -> Unit) {
-    Box(
+    Column(
         Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
             .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
         val c = if (active) Palette.cyan else Palette.text
-        Canvas(Modifier.size(30.dp)) {
+        Canvas(Modifier.size(width = 30.dp, height = 24.dp)) {
             val w = size.width
             val h = size.height
-            for (k in 0..2) {
-                val y = h * (0.28f + k * 0.22f)
-                val p = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(w / 2, y - h * 0.16f); lineTo(w * 0.95f, y); lineTo(w / 2, y + h * 0.16f); lineTo(w * 0.05f, y); close()
-                }
-                if (k == 0) drawPath(p, c) else drawPath(p, c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f))
+            fun sheet(y: Float) = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, y - h * 0.26f); lineTo(w * 0.96f, y); lineTo(w / 2, y + h * 0.26f); lineTo(w * 0.04f, y); close()
             }
+            // The lower sheet peeks out under the top one.
+            drawPath(sheet(h * 0.66f), c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f))
+            drawPath(sheet(h * 0.36f), Palette.overlay)
+            drawPath(sheet(h * 0.36f), c)
         }
+        Text(stringResource(R.string.map_layers), color = Palette.label, fontSize = 9.sp, maxLines = 1)
     }
 }
 

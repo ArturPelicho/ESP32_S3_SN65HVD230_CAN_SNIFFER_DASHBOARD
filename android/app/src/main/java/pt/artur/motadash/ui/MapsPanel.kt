@@ -14,8 +14,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
@@ -38,14 +40,20 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pt.artur.motadash.AutoZoom
 import pt.artur.motadash.FollowMode
 import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapTheme
 import pt.artur.motadash.R
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
-/** Mapas: view options (follow mode, auto zoom, theme, names), then download, update, switch off or delete regions. */
+/** Mapas: view options (follow mode, auto zoom, theme, names, contour spacing), then download, update, switch off or delete regions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MapsPanel(
@@ -70,6 +78,7 @@ fun MapsPanel(
     var status by remember { mutableStateOf(searching) }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
     var search by remember { mutableStateOf("") }
+    var contourStep by remember { mutableStateOf(MapStore.contourStep(ctx)) }
 
     fun check() {
         status = searching
@@ -116,6 +125,7 @@ fun MapsPanel(
                 }
                 Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
             }
+            if (autoZoom) AutoZoomSliders()
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.maps_camera_beep), color = Palette.text, fontSize = 15.sp)
@@ -137,6 +147,14 @@ fun MapsPanel(
                     FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
                 }
             }
+            Text(stringResource(R.string.mapopts_contour_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(0, 10, 20, 50, 100).forEach { step ->
+                    FilterChip(selected = contourStep == step, onClick = { contourStep = step; MapStore.setContourStep(ctx, step) },
+                        label = { Text(if (step == 0) stringResource(R.string.mapopts_contour_auto) else stringResource(R.string.mapopts_contour_m, step)) })
+                }
+            }
+            Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
             Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -234,6 +252,47 @@ fun MapsPanel(
             Text(stringResource(R.string.maps_attribution), color = Palette.label, fontSize = 12.sp)
         }
     }
+}
+
+/** Speed and zoom ranges of the auto zoom; saved (and sent to the map through MapStore.autoZoomFlow) when a thumb is let go. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AutoZoomSliders() {
+    val ctx = LocalContext.current
+    val start = remember { MapStore.autoZoomCfg(ctx) }
+    var speed by remember { mutableStateOf(start.slowKmh.toFloat()..start.fastKmh.toFloat()) }
+    // Low end = zoomed out (fast), high end = zoomed in (slow).
+    var zoom by remember { mutableStateOf(start.farZoom.toFloat()..start.nearZoom.toFloat()) }
+    fun save() = MapStore.setAutoZoomCfg(ctx, AutoZoom(
+        slowKmh = speed.start.roundToInt(), fastKmh = speed.endInclusive.roundToInt(),
+        nearZoom = (zoom.endInclusive * 2).roundToInt() / 2.0, farZoom = (zoom.start * 2).roundToInt() / 2.0,
+    ))
+    Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
+        Text(stringResource(R.string.mapopts_az_speed, speed.start.roundToInt(), speed.endInclusive.roundToInt()),
+            color = Palette.text, fontSize = 14.sp)
+        RangeSlider(value = speed, onValueChange = { speed = it }, valueRange = 0f..160f, steps = 31,
+            onValueChangeFinished = { save() })
+        Text(stringResource(R.string.mapopts_az_speed_hint), color = Palette.label, fontSize = 12.sp)
+        Text(stringResource(R.string.mapopts_az_zoom, zoomText(zoom.start), metresPer100dp(zoom.start),
+            zoomText(zoom.endInclusive), metresPer100dp(zoom.endInclusive)), color = Palette.text, fontSize = 14.sp)
+        RangeSlider(value = zoom, onValueChange = { zoom = it }, valueRange = 12f..19f, steps = 13,
+            onValueChangeFinished = { save() })
+        Text(stringResource(R.string.mapopts_az_zoom_hint), color = Palette.label, fontSize = 12.sp)
+    }
+}
+
+/** 14.0 -> "14", 14.5 -> "14.5" (local decimal mark). */
+private fun zoomText(z: Float): String {
+    val h = (z * 2).roundToInt() / 2f
+    return if (h % 1f == 0f) h.toInt().toString() else "%.1f".format(h)
+}
+
+/** Ground across 100 dp at latitude 40° at map zoom [z], rounded to a nice number of metres. */
+private fun metresPer100dp(z: Float): Int {
+    val m = 100 * 78271.5 * cos(Math.toRadians(40.0)) / 2.0.pow(z.toDouble())
+    val mag = 10.0.pow(floor(log10(m)))
+    val nice = listOf(1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0).minBy { kotlin.math.abs(it * mag - m) } * mag
+    return nice.roundToInt().coerceAtLeast(1)
 }
 
 /** Lower case without accents, for the search ("Açores" matches "acor"). */

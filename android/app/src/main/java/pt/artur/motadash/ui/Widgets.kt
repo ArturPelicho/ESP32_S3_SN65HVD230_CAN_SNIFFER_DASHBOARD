@@ -1,6 +1,18 @@
 package pt.artur.motadash.ui
 
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Typeface
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import pt.artur.motadash.Attitude
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.RepeatMode
@@ -31,6 +43,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
@@ -107,6 +120,8 @@ enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val
     COORDS(R.string.w_coords, 190f, 50f, 2, 1),
     ALTITUDE(R.string.w_altitude, 140f, 70f, 1, 1),
     FAULTS(R.string.w_faults, 280f, 56f, 2, 1),
+    NORTH(R.string.w_north, 120f, 120f, 1, 2),
+    ATTITUDE(R.string.w_attitude, 240f, 120f, 2, 2),
 }
 
 /** Slot size; Medium is 120 x 60 dp. */
@@ -119,11 +134,14 @@ enum class BarSide(@StringRes val res: Int) {
     RIGHT(R.string.w_bar_right), LEFT(R.string.w_bar_left), TOP(R.string.w_bar_top), BOTTOM(R.string.w_bar_bottom)
 }
 
-/** The map's buttons, in bar order. Settings can't be hidden (it is the way back to the others). */
+/**
+ * The map's buttons, in bar order; the bar fills its outer line first. Settings can't be hidden
+ * (it is the way back to the others).
+ */
 enum class MapCtl(@StringRes val res: Int, val hideable: Boolean = true) {
     SETTINGS(R.string.w_btn_settings, hideable = false),
     MODE(R.string.w_btn_mode), FOLLOW(R.string.w_btn_follow), ZOOM_IN(R.string.w_btn_zoom_in), ZOOM_OUT(R.string.w_btn_zoom_out),
-    COMPASS(R.string.w_btn_compass), GPS(R.string.w_btn_gps), DAYNIGHT(R.string.w_btn_daynight),
+    GPS(R.string.w_btn_gps), DAYNIGHT(R.string.w_btn_daynight),
     LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), MAPS(R.string.w_btn_maps),
 }
 
@@ -132,12 +150,15 @@ class WidgetData(
     val t: Telemetry?, val status: LinkStatus, val gps: GpsInfo, val dtc: DtcState,
     val blinkOn: Boolean, val now: Long, val tankCapacityL: Double,
     val speed: Double?, val limit: Int?, val lat: Double?, val lon: Double?, val altM: Double?,
+    /** The map's rotation and tilt (degrees), for the north element; null off the map (it uses the phone's compass). */
+    val bearing: Float? = null, val tilt: Float? = null,
 )
 
 /** Board data plus a 4 Hz blink and a clock; [speed] null means the board's speed. */
 @Composable
 fun widgetData(
     speed: Double? = null, limit: Int? = null, lat: Double? = null, lon: Double? = null, altM: Double? = null,
+    bearing: Float? = null, tilt: Float? = null,
 ): WidgetData {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val status by Link.status.collectAsStateWithLifecycle()
@@ -152,7 +173,7 @@ fun widgetData(
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(5_000) } }
     return WidgetData(
         t, status, gps, dtc, blink > 0.5f, now, params["TANK_DL"]?.value?.div(10.0) ?: 16.0,
-        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM,
+        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt,
     )
 }
 
@@ -179,8 +200,32 @@ object LayoutStore {
     private fun orient(land: Boolean) = if (land) "land" else "port"
     private fun changed() { version++ }
 
+    /** The screen's layout as it was when move mode started, for Revert. */
+    private val snapshot = HashMap<String, Map<String, String>>()
+    private fun layoutKey(screen: String, k: String) = k.startsWith("slots_${screen}_") || k.startsWith("shown_${screen}_")
+
     fun moving(screen: String) = movingState[screen] == true
-    fun setMoving(screen: String, on: Boolean) { movingState[screen] = on }
+
+    fun startMoving(ctx: Context, screen: String) {
+        snapshot[screen] = prefs(ctx).all.filter { (k, v) -> layoutKey(screen, k) && v is String }.mapValues { it.value as String }
+        movingState[screen] = true
+    }
+
+    /** Keeps the new places (they are saved as they change). */
+    fun saveMoving(screen: String) { movingState[screen] = false; snapshot.remove(screen) }
+
+    /** Puts every element back where it was when move mode started. */
+    fun revertMoving(ctx: Context, screen: String) {
+        val old = snapshot.remove(screen)
+        if (old != null) {
+            val e = prefs(ctx).edit()
+            prefs(ctx).all.keys.filter { layoutKey(screen, it) }.forEach { e.remove(it) }
+            old.forEach { (k, v) -> e.putString(k, v) }
+            e.apply()
+            changed()
+        }
+        movingState[screen] = false
+    }
 
     fun shown(ctx: Context, screen: String, land: Boolean): List<Widget> {
         version
@@ -418,11 +463,16 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
             }
         }
         if (moving) {
-            Text(stringResource(R.string.w_moving_banner), color = Palette.text, fontSize = 13.sp,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
-                    .background(Palette.overlay, RoundedCornerShape(12.dp))
-                    .clickable { LayoutStore.setMoving(screen, false) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp))
+            Row(
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
+                    .background(Palette.overlay, RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Button(onClick = { LayoutStore.saveMoving(screen) }) { Text(stringResource(R.string.w_save)) }
+                OutlinedButton(onClick = { LayoutStore.revertMoving(ctx, screen) }) { Text(stringResource(R.string.w_revert)) }
+            }
         }
     }
 }
@@ -474,6 +524,7 @@ fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Comp
             }
             Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
                 color = Palette.label, fontSize = 12.sp)
+            if (Widget.ATTITUDE in shown) Text(stringResource(R.string.w_att_hint), color = Palette.label, fontSize = 12.sp)
 
             Text(stringResource(R.string.w_size), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             val size = LayoutStore.size(ctx, screen)
@@ -492,7 +543,9 @@ fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Comp
                     Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp)
                 }
-                Switch(checked = LayoutStore.moving(screen), onCheckedChange = { LayoutStore.setMoving(screen, it); if (it) onClose() })
+                Switch(checked = LayoutStore.moving(screen), onCheckedChange = {
+                    if (it) { LayoutStore.startMoving(ctx, screen); onClose() } else LayoutStore.saveMoving(screen)
+                })
             }
             OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
             extra()
@@ -630,6 +683,8 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                 }
             }
             Widget.ALTITUDE -> ValueTile(stringResource(R.string.w_altitude), fmt(d.altM, 0), "m", Palette.text, bg, u)
+            Widget.NORTH -> NorthRose(d, bg)
+            Widget.ATTITUDE -> AttitudeGauge(bg, u)
             Widget.FAULTS -> {
                 val n = d.dtc.total
                 if (n > 0 || d.dtc.mil == true) Cell(if (d.blinkOn) Palette.orange else bg, u) {
@@ -667,7 +722,9 @@ private fun dms(v: Double, pos: String, neg: String): String {
 @Composable
 private fun Cell(bg: Color, u: Float, center: Boolean = false, content: @Composable () -> Unit) {
     Column(
-        Modifier.fillMaxSize().background(bg, RoundedCornerShape(10.dp)).padding(horizontal = (10 * u).dp, vertical = (6 * u).dp),
+        Modifier.fillMaxSize().background(bg, RoundedCornerShape(10.dp))
+            .then(if (Palette.outlined) Modifier.border(1.dp, Palette.frame, RoundedCornerShape(10.dp)) else Modifier)
+            .padding(horizontal = (10 * u).dp, vertical = (6 * u).dp),
         verticalArrangement = if (center) Arrangement.Center else Arrangement.SpaceEvenly,
         horizontalAlignment = if (center) Alignment.CenterHorizontally else Alignment.Start,
     ) { content() }
@@ -696,3 +753,121 @@ private fun SpeedBox(d: WidgetData, u: Float, bg: Color) {
         d.limit?.let { LimitSign(it, scale = u) }
     }
 }
+
+/** Compass rose that turns with the view and, on the map in 3D, leans back with it. */
+@Composable
+private fun NorthRose(d: WidgetData, bg: Color) {
+    val att by Attitude.state.collectAsStateWithLifecycle()
+    val heading = d.bearing ?: att.azimuth
+    val tilt = d.tilt ?: 0f
+    val density = LocalDensity.current.density
+    val cyan = Palette.cyan
+    val text = Palette.text
+    val label = Palette.label
+    val red = Palette.red
+    val paint = remember { Paint().apply { isAntiAlias = true; textAlign = Paint.Align.CENTER; typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) } }
+    Box(Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)).outline(), contentAlignment = Alignment.Center) {
+        BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp), contentAlignment = Alignment.Center) {
+            val side = minOf(maxWidth, maxHeight)
+            Canvas(Modifier.size(side).graphicsLayer { rotationX = tilt; rotationZ = -heading; cameraDistance = 10f * density }) {
+                val r = size.minDimension / 2
+                val c = center
+                drawCircle(cyan.copy(alpha = 0.25f), r * 0.97f, c, style = Stroke(r * 0.03f))
+                drawCircle(cyan, r * 0.78f, c, style = Stroke(r * 0.02f))
+                for (k in 0 until 72) {
+                    val a = Math.toRadians(k * 5.0 - 90.0)
+                    val major = k % 6 == 0
+                    val r2 = r * (if (k % 18 == 0) 0.80f else if (major) 0.86f else 0.92f)
+                    val cos = kotlin.math.cos(a).toFloat()
+                    val sin = kotlin.math.sin(a).toFloat()
+                    drawLine(if (k == 0) red else if (major) text else label,
+                        Offset(c.x + r * 0.97f * cos, c.y + r * 0.97f * sin), Offset(c.x + r2 * cos, c.y + r2 * sin),
+                        strokeWidth = if (major) r * 0.03f else r * 0.012f)
+                }
+                val needle = r * 0.48f
+                drawPath(Path().apply { moveTo(c.x, c.y - needle); lineTo(c.x + r * 0.12f, c.y); lineTo(c.x - r * 0.12f, c.y); close() }, red)
+                drawPath(Path().apply { moveTo(c.x, c.y + needle); lineTo(c.x + r * 0.12f, c.y); lineTo(c.x - r * 0.12f, c.y); close() }, label)
+                paint.textSize = r * 0.2f
+                listOf("N", "E", "S", "W").forEachIndexed { i, l ->
+                    val a = Math.toRadians(i * 90.0 - 90.0)
+                    paint.color = (if (i == 0) red else text).toArgb()
+                    drawContext.canvas.nativeCanvas.drawText(l,
+                        c.x + r * 0.64f * kotlin.math.cos(a).toFloat(), c.y + r * 0.64f * kotlin.math.sin(a).toFloat() + paint.textSize * 0.36f, paint)
+                }
+            }
+            Text("${(heading.roundToInt() + 360) % 360}°", color = cyan, fontSize = 12.sp, fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.BottomCenter)
+                    .background(Palette.overlay, RoundedCornerShape(6.dp)).padding(horizontal = 4.dp))
+        }
+    }
+}
+
+/** Artificial horizon with the bike's lean and pitch; long press zeroes it with the bike upright. */
+@Composable
+private fun AttitudeGauge(bg: Color, u: Float) {
+    val ctx = LocalContext.current
+    val a by Attitude.state.collectAsStateWithLifecycle()
+    val sky = Palette.blue.copy(alpha = 0.5f)
+    val ground = Palette.amber.copy(alpha = 0.45f)
+    val cyan = Palette.cyan
+    val text = Palette.text
+    val amber = Palette.amber
+    Row(
+        Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)).outline()
+            .pointerInput(Unit) { detectTapGestures(onLongPress = { Attitude.zero(ctx) }) }
+            .padding((6 * u).dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.fillMaxHeight().aspectRatio(1f)) {
+            val r = size.minDimension / 2
+            val c = center
+            val perDeg = r * 0.8f / 30f
+            val off = a.pitch.coerceIn(-30f, 30f) * perDeg
+            clipPath(Path().apply { addOval(Rect(c, r * 0.94f)) }) {
+                rotate(-a.lean, c) {
+                    drawRect(sky, Offset(c.x - 2 * r, c.y - 3 * r + off), Size(4 * r, 3 * r))
+                    drawRect(ground, Offset(c.x - 2 * r, c.y + off), Size(4 * r, 3 * r))
+                    drawLine(text, Offset(c.x - 2 * r, c.y + off), Offset(c.x + 2 * r, c.y + off), strokeWidth = r * 0.025f)
+                    for (k in listOf(-20, -10, 10, 20)) {
+                        val y = c.y + off - k * perDeg
+                        val half = r * (if (k % 20 == 0) 0.3f else 0.18f)
+                        drawLine(text.copy(alpha = 0.8f), Offset(c.x - half, y), Offset(c.x + half, y), strokeWidth = r * 0.015f)
+                    }
+                }
+            }
+            drawCircle(cyan, r * 0.95f, c, style = Stroke(r * 0.035f))
+            // Lean scale along the top: 0, 15, 30, 45, 60 each way, and the pointer that turns with the horizon.
+            for (deg in listOf(-60, -45, -30, -15, 0, 15, 30, 45, 60)) {
+                val t = Math.toRadians(deg - 90.0)
+                val r1 = r * 0.95f
+                val r2 = r * (if (deg % 30 == 0) 0.80f else 0.86f)
+                drawLine(cyan, Offset(c.x + r1 * kotlin.math.cos(t).toFloat(), c.y + r1 * kotlin.math.sin(t).toFloat()),
+                    Offset(c.x + r2 * kotlin.math.cos(t).toFloat(), c.y + r2 * kotlin.math.sin(t).toFloat()), strokeWidth = r * 0.03f)
+            }
+            rotate(a.lean, c) {
+                drawPath(Path().apply {
+                    moveTo(c.x, c.y - r * 0.78f); lineTo(c.x - r * 0.08f, c.y - r * 0.64f); lineTo(c.x + r * 0.08f, c.y - r * 0.64f); close()
+                }, amber)
+            }
+            // The bike, fixed.
+            drawLine(amber, Offset(c.x - r * 0.55f, c.y), Offset(c.x - r * 0.18f, c.y), strokeWidth = r * 0.06f)
+            drawLine(amber, Offset(c.x + r * 0.18f, c.y), Offset(c.x + r * 0.55f, c.y), strokeWidth = r * 0.06f)
+            drawCircle(amber, r * 0.05f, c)
+        }
+        Column(Modifier.weight(1f).padding(start = (10 * u).dp), verticalArrangement = Arrangement.Center) {
+            val lean = a.lean.roundToInt()
+            Text(stringResource(R.string.w_att_lean), color = Palette.label, fontSize = (11 * u).sp, fontWeight = FontWeight.Bold)
+            Text(if (!a.ok) "--" else "${abs(lean)}°" + if (lean > 0) " R" else if (lean < 0) " L" else "",
+                color = if (abs(lean) >= 45) Palette.orange else text, fontSize = (30 * u).sp, fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace, maxLines = 1)
+            Text(stringResource(R.string.w_att_pitch) + " " + (if (!a.ok) "--" else "%+d°".format(a.pitch.roundToInt())),
+                color = cyan, fontSize = (13 * u).sp, fontFamily = FontFamily.Monospace, maxLines = 1)
+            Text(stringResource(R.string.w_att_max, a.maxLeft.roundToInt(), a.maxRight.roundToInt()),
+                color = Palette.label, fontSize = (11 * u).sp, fontFamily = FontFamily.Monospace, maxLines = 1)
+        }
+    }
+}
+
+/** A thin outline on the OLED scheme, where panels are as black as the background. */
+private fun Modifier.outline(): Modifier =
+    if (Palette.outlined) border(1.dp, Palette.frame, RoundedCornerShape(12.dp)) else this

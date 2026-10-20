@@ -75,11 +75,37 @@ object MapStyle {
         if (lang == MapLanguage.PT) listOf("coalesce", listOf("get", "name:pt"), listOf("get", "name"))
         else listOf("get", "name")
 
+    /** Contour levels: spacing, line width, line opacity. Each line belongs to the coarsest level it is a multiple of. */
+    private val CONTOUR_LEVELS = listOf(Triple(100, 1.1, 0.65), Triple(50, 0.8, 0.5), Triple(20, 0.6, 0.42), Triple(10, 0.45, 0.35))
+
+    /** Zoom each level shows from when the spacing is automatic. */
+    private fun contourMinZoom(level: Int) = when (level) { 100 -> 11; 50 -> 12; 20 -> 13; else -> 14 }
+
+    /**
+     * Filter for the lines of one contour level, from the height alone so it works on both
+     * the older 20 m files and the 10 m ones (100: multiples of 100; 50 and 20: their multiples
+     * that are not 100s; 10: the rest).
+     */
+    private fun contourFilter(level: Int): List<Any> {
+        val ele = listOf("get", "ele")
+        fun mul(n: Int) = listOf("==", listOf("%", ele, n), 0)
+        fun notMul(n: Int) = listOf("!=", listOf("%", ele, n), 0)
+        return when (level) {
+            100 -> mul(100)
+            50 -> listOf("all", mul(50), notMul(100))
+            20 -> listOf("all", mul(20), notMul(100))
+            else -> listOf("all", mul(10), notMul(20), notMul(50))
+        }
+    }
+
     /**
      * Full style JSON. [maps] are the enabled regions on the phone; each
      * gets its own vector source, drawn in the same layer order.
+     * [contourStep]: 0 = contour spacing by zoom (100 m from z11, 50 m from z12, 20 m from z13,
+     * 10 m from z14); 10, 20, 50 or 100 = lines at that spacing from z11.
      */
-    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage, layers: Set<MapLayer> = MapLayer.entries.toSet()): String {
+    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage, layers: Set<MapLayer> = MapLayer.entries.toSet(),
+              contourStep: Int = 0): String {
         val c = if (night) NIGHT else DAY
         val sources = LinkedHashMap<String, Any>()
         val fills = ArrayList<Any>()
@@ -146,20 +172,26 @@ object MapStyle {
                 val cs = "ct-${m.id}"
                 sources[cs] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "Copernicus DEM")
-                val idx = listOf("==", listOf("get", "idx"), 1)
-                fills += layer("contour", "line", "contours", source = cs, paint = mapOf(
-                    "line-color" to c.contour,
-                    "line-opacity" to listOf("case", idx, 0.65, 0.4),
-                    "line-width" to listOf("case", idx, 1.1, 0.5),
-                ))
-                labels += layer("contour-label", "symbol", "contours", source = cs, layout = mapOf(
-                    "symbol-placement" to "line",
-                    "text-field" to listOf("concat", listOf("to-string", listOf("get", "ele")), " m"),
-                    "text-font" to listOf(REGULAR),
-                    "text-size" to 11,
-                    "symbol-spacing" to 350,
-                ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
-                    filter = idx, minzoom = 13)
+                // Finest first so the bolder lines draw on top.
+                val fixed = contourStep in setOf(10, 20, 50, 100)
+                val shown = CONTOUR_LEVELS.filter { (lv, _, _) -> !fixed || lv % contourStep == 0 }
+                for ((lv, width, opacity) in shown.reversed()) {
+                    fills += layer("contour$lv", "line", "contours", source = cs, paint = mapOf(
+                        "line-color" to c.contour, "line-opacity" to opacity, "line-width" to width,
+                    ), filter = contourFilter(lv), minzoom = if (fixed) 11 else contourMinZoom(lv))
+                }
+                // Heights on the 100 m lines, and on the 50 m ones when zoomed right in.
+                for ((lv, minz) in listOf(100 to 13, 50 to 14)) {
+                    if (shown.none { it.first == lv }) continue
+                    labels += layer("contour-label$lv", "symbol", "contours", source = cs, layout = mapOf(
+                        "symbol-placement" to "line",
+                        "text-field" to listOf("concat", listOf("to-string", listOf("get", "ele")), " m"),
+                        "text-font" to listOf(REGULAR),
+                        "text-size" to if (lv == 100) 11 else 10,
+                        "symbol-spacing" to 350,
+                    ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
+                        filter = contourFilter(lv), minzoom = minz)
+                }
             }
 
             fills += layer("building", "fill", "buildings", paint = mapOf(

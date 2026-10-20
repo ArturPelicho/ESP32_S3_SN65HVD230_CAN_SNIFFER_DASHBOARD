@@ -102,11 +102,13 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         LightSensor.start(this)     // listens only when the theme follows the light sensor
+        Attitude.start(this)        // compass and lean elements
         ThemeStore.apply(this)
     }
 
     override fun onPause() {
         LightSensor.stop()
+        Attitude.stop()
         super.onPause()
     }
 

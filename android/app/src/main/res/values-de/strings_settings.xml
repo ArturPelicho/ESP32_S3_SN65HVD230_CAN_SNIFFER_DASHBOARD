@@ -9,10 +9,14 @@
     <string name="theme_by_light">Lichtsensor</string>
     <string name="theme_by_phone">Dunkelmodus des Handys</string>
     <string name="theme_no_light_sensor">Dieses Handy hat keinen Lichtsensor, daher wird der Sonnenuntergang verwendet.</string>
+    <string name="theme_day_look">Tagansicht</string>
+    <string name="theme_day_sand">Sand</string>
+    <string name="theme_day_graphite">Graphit (Tag)</string>
     <string name="theme_night_look">Nachtansicht</string>
     <string name="theme_night_desert">Wüstennacht</string>
     <string name="theme_night_graphite">Graphit</string>
-    <string name="theme_link_map">Tag/Nacht der Karte folgt dem Design</string>
+    <string name="theme_night_oled">OLED-Schwarz</string>
+    <string name="theme_link_map">App-Design und Tag/Nacht der Karte verknüpft</string>
     <string name="upd_check">Nach Update suchen</string>
     <string name="upd_checking">Suche…</string>
     <string name="upd_latest">Neueste Version</string>

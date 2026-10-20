@@ -3,7 +3,7 @@
 #   build_region.sh <id> <version> <planet-url>
 # Reads the region from maps/regions.json and writes to out/:
 #   <id>-<version>.pmtiles          roads, places, water... (Protomaps basemap, OpenStreetMap data)
-#   <id>-relevo-<version>.pmtiles   contour lines every 20 m from the Copernicus 30 m DEM (if the region asks for it)
+#   <id>-relevo-<version>.pmtiles   contour lines every 10 m from the Copernicus 30 m DEM (if the region asks for it)
 #   <id>-limites-<version>.pmtiles  speed limits and speed cameras from OpenStreetMap (Geofabrik extract)
 #   <id>-sombra-<version>.pmtiles   terrain heights (raster-dem) for the shaded relief, with the contours
 set -euo pipefail
@@ -42,15 +42,24 @@ for lat in $(seq "$LAT0" "$LAT1"); do
 done
 ls "$DEM"/*.tif >/dev/null
 gdalbuildvrt -q "work/$ID.vrt" "$DEM"/*.tif
-# About 50 m cells: smoother lines and far fewer points than the raw 30 m grid.
-gdalwarp -q -overwrite -te "$W" "$S" "$E" "$N" -tr 0.0005 0.0005 -r bilinear "work/$ID.vrt" "work/$ID-50m.tif"
-gdal_contour -q -a ele -i 20 "work/$ID-50m.tif" "work/$ID-contours.gpkg"
+# The native ~30 m grid (1 arc second): enough detail for 10 m lines off-road.
+gdalwarp -q -overwrite -te "$W" "$S" "$E" "$N" -tr 0.0003 0.0003 -r bilinear "work/$ID.vrt" "work/$ID-30m.tif"
+gdal_contour -q -a ele -i 10 "work/$ID-30m.tif" "work/$ID-contours.gpkg"
+# ele: height in m; idx: 1 on the 100 m lines (older apps draw those bolder);
+# lvl: the coarsest spacing the line belongs to (100, 50, 20 or 10), for the zoom filter below.
 ogr2ogr -f GeoJSONSeq "work/$ID-contours.geojsons" "work/$ID-contours.gpkg" -dialect sqlite \
-  -sql "SELECT CAST(ele AS INTEGER) AS ele, CASE WHEN CAST(ele AS INTEGER) % 100 = 0 THEN 1 ELSE 0 END AS idx, geom FROM contour WHERE ele > 0"
-# Every 100 m from zoom 11, every 20 m from zoom 13.
+  -sql "SELECT CAST(ele AS INTEGER) AS ele,
+          CASE WHEN CAST(ele AS INTEGER) % 100 = 0 THEN 1 ELSE 0 END AS idx,
+          CASE WHEN CAST(ele AS INTEGER) % 100 = 0 THEN 100
+               WHEN CAST(ele AS INTEGER) % 50 = 0 THEN 50
+               WHEN CAST(ele AS INTEGER) % 20 = 0 THEN 20 ELSE 10 END AS lvl,
+          geom FROM contour WHERE ele > 0"
+# Every 100 m from zoom 11, 50 m from 12, 20 m from 13, 10 m from 14 (the app overzooms z14).
+# -j filters cannot do modulo, hence lvl. Simplification 8 is ~4 m at z14: well under the 30 m cells.
 tippecanoe -q -f -o "out/$ID-relevo-$VER.pmtiles" -l contours -n "Curvas de nivel $ID" \
-  -A "Copernicus DEM GLO-30 (c) DLR/Airbus, ESA" -Z11 -z14 --simplification=6 --no-tile-size-limit \
-  -j '{"contours":["any",["==","idx",1],[">=","$zoom",13]]}' "work/$ID-contours.geojsons"
+  -A "Copernicus DEM GLO-30 (c) DLR/Airbus, ESA" -Z11 -z14 --simplification=8 --no-tile-size-limit \
+  -j '{"contours":["any",["==","lvl",100],["all",[">=","lvl",50],[">=","$zoom",12]],["all",[">=","lvl",20],[">=","$zoom",13]],[">=","$zoom",14]]}' \
+  "work/$ID-contours.geojsons"
 pmtiles show "out/$ID-relevo-$VER.pmtiles" | head -12 || true   # head closes the pipe early
 
 # Shaded relief is a bonus too: without it the map and contours still publish.

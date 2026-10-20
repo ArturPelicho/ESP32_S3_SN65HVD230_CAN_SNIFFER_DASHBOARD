@@ -62,4 +62,12 @@
     <string name="layer_contours">Contour lines</string>
     <string name="layer_3d">3D buildings (3D view)</string>
     <string name="layer_cameras">Speed cameras</string>
+    <string name="w_north">North</string>
+    <string name="w_attitude">Lean / pitch</string>
+    <string name="w_save">Save</string>
+    <string name="w_revert">Revert</string>
+    <string name="w_att_lean">Lean</string>
+    <string name="w_att_pitch">Pitch</string>
+    <string name="w_att_max">MAX L %1$d° · R %2$d°</string>
+    <string name="w_att_hint">Long-press it to zero with the bike upright and level.</string>
 </resources>

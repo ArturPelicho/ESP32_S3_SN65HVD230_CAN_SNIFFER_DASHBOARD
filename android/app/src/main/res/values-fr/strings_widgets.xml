@@ -62,4 +62,12 @@
     <string name="layer_contours">Courbes de niveau</string>
     <string name="layer_3d">Bâtiments 3D (vue 3D)</string>
     <string name="layer_cameras">Radars</string>
+    <string name="w_north">Nord</string>
+    <string name="w_attitude">Angle / tangage</string>
+    <string name="w_save">Enregistrer</string>
+    <string name="w_revert">Annuler</string>
+    <string name="w_att_lean">Angle</string>
+    <string name="w_att_pitch">Tangage</string>
+    <string name="w_att_max">MAX G %1$d° · D %2$d°</string>
+    <string name="w_att_hint">Appui long pour remettre à zéro, moto droite et à niveau.</string>
 </resources>

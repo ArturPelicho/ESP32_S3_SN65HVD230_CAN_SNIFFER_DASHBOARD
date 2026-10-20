@@ -9,10 +9,14 @@
     <string name="theme_by_light">Sensore di luce</string>
     <string name="theme_by_phone">Modalità scura del telefono</string>
     <string name="theme_no_light_sensor">Questo telefono non ha un sensore di luce, quindi si usa il tramonto.</string>
+    <string name="theme_day_look">Aspetto diurno</string>
+    <string name="theme_day_sand">Sabbia</string>
+    <string name="theme_day_graphite">Grafite diurno</string>
     <string name="theme_night_look">Aspetto notturno</string>
     <string name="theme_night_desert">Notte nel deserto</string>
     <string name="theme_night_graphite">Grafite</string>
-    <string name="theme_link_map">Il giorno/notte della mappa segue il tema</string>
+    <string name="theme_night_oled">Nero OLED</string>
+    <string name="theme_link_map">Tema dell\'app e giorno/notte della mappa collegati</string>
     <string name="upd_check">Cerca aggiornamento</string>
     <string name="upd_checking">Ricerca…</string>
     <string name="upd_latest">Ultima versione</string>

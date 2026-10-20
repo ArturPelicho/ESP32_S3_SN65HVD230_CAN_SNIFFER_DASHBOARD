@@ -68,6 +68,19 @@ enum class MapLayer(@StringRes val res: Int) {
     val label: String get() = L.s(res)
 }
 
+/**
+ * Auto zoom by speed: [nearZoom] at or below [slowKmh], [farZoom] at or above [fastKmh],
+ * in a straight line between them.
+ */
+data class AutoZoom(val slowKmh: Int = 20, val fastKmh: Int = 110, val nearZoom: Double = 17.0, val farZoom: Double = 14.0)
+
+fun AutoZoom.zoomFor(kmh: Double): Double = when {
+    fastKmh <= slowKmh -> if (kmh <= slowKmh) nearZoom else farZoom
+    kmh <= slowKmh -> nearZoom
+    kmh >= fastKmh -> farZoom
+    else -> nearZoom + (farZoom - nearZoom) * (kmh - slowKmh) / (fastKmh - slowKmh)
+}
+
 /** State of a region's download, for the Mapas list. */
 data class DownloadState(val done: Long, val total: Long, val failed: Boolean = false)
 
@@ -104,6 +117,29 @@ object MapStore {
     fun setFollowMode(ctx: Context, m: FollowMode) = prefs(ctx).edit().putString("follow", m.name).apply()
     fun autoZoom(ctx: Context): Boolean = prefs(ctx).getBoolean("auto_zoom", true)
     fun setAutoZoom(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("auto_zoom", on).apply()
+    private val _autoZoomFlow = MutableStateFlow(AutoZoom())
+    /** The auto zoom settings, for the map to follow while the Mapas panel changes them. */
+    val autoZoomFlow: StateFlow<AutoZoom> = _autoZoomFlow.asStateFlow()
+    fun autoZoomCfg(ctx: Context): AutoZoom {
+        val p = prefs(ctx); val d = AutoZoom()
+        return AutoZoom(p.getInt("az_slow", d.slowKmh), p.getInt("az_fast", d.fastKmh),
+            p.getFloat("az_near", d.nearZoom.toFloat()).toDouble(), p.getFloat("az_far", d.farZoom.toFloat()).toDouble())
+    }
+    fun setAutoZoomCfg(ctx: Context, a: AutoZoom) {
+        prefs(ctx).edit().putInt("az_slow", a.slowKmh).putInt("az_fast", a.fastKmh)
+            .putFloat("az_near", a.nearZoom.toFloat()).putFloat("az_far", a.farZoom.toFloat()).apply()
+        _autoZoomFlow.value = a
+    }
+
+    private val _contourStepFlow = MutableStateFlow(0)
+    /** Contour spacing in metres (10, 20, 50 or 100), or 0 for by zoom; see [MapStyle.build]. */
+    val contourStepFlow: StateFlow<Int> = _contourStepFlow.asStateFlow()
+    fun contourStep(ctx: Context): Int = prefs(ctx).getInt("contour_step", 0)
+    fun setContourStep(ctx: Context, step: Int) {
+        prefs(ctx).edit().putInt("contour_step", step).apply()
+        _contourStepFlow.value = step
+    }
+
     fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
     fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
 
@@ -124,6 +160,8 @@ object MapStore {
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
         prefs(ctx).getString("index", null)?.let { runCatching { _index.value = parseIndex(JSONObject(it), null) } }
+        _autoZoomFlow.value = autoZoomCfg(ctx)
+        _contourStepFlow.value = contourStep(ctx)
         refreshInstalled(ctx)
         pollDownloads(ctx)
     }
