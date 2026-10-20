@@ -46,7 +46,7 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
     fun step(p: TrackProgress, here: LatLon, nowMs: Long): LatLon? {
         if (p.offM <= 40) {
             offSince = 0; doneMax = maxOf(doneMax, p.doneM)
-            route = null; routeFollower = null; routeLeftM = null; failed = false
+            route = null; routeFollower = null; routeLeftM = null; failed = false; guide = null
             return null
         }
         if (offSince == 0L) offSince = nowMs
@@ -61,14 +61,19 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
         return follower.pointAt(targetM)
     }
 
+    /** Turns on the way back, and how far along it the bike is. */
+    var guide: Guidance? = null; private set
+    val routeDoneM: Double? get() = routeFollower?.let { f -> routeLeftM?.let { f.totalM - it } }
+
     /** The answer to the last request: a road route, or null without network or route. */
-    fun routed(r: List<LatLon>?) {
+    fun routed(r: Routed?) {
         asking = false
         failed = r == null
         if (r != null) {
-            route = r
-            routeFollower = TrackFollower(track.copy(lines = listOf(r), plan = emptyList()), false)
+            route = r.pts
+            routeFollower = TrackFollower(track.copy(lines = listOf(r.pts), plan = emptyList(), turns = emptyList()), false)
             routeLeftM = routeFollower?.totalM
+            guide = Guidance(listOf(r.pts), r.turns, arrive = false)
         }
     }
 }

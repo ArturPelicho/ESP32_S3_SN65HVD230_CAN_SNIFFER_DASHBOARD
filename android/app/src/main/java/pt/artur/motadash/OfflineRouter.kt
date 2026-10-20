@@ -140,19 +140,27 @@ object OfflineRouter {
     private val lock = Any()
 
     /** The road route from a to b on the phone's routing data, or null (no data there, or no route). */
-    fun route(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? = synchronized(lock) {
+    fun route(ctx: Context, a: LatLon, b: LatLon): Routed? = synchronized(lock) {
         runCatching {
             val rc = RoutingContext()
             rc.localFunction = profile(ctx).absolutePath
             rc.keyValues = HashMap(RouteOptions.params(ctx))
+            rc.turnInstructionMode = 2
             val wp: List<OsmNodeNamed> = RoutingParamCollector().readPositions(doubleArrayOf(a.lon, b.lon), doubleArrayOf(a.lat, b.lat))
             val re = RoutingEngine(null, null, dir(ctx), wp, rc)
             re.quite = true
             re.doRun(30_000)
             if (re.errorMessage != null) return@runCatching null
-            re.foundTrack?.nodes?.map { n ->
+            val track = re.foundTrack ?: return@runCatching null
+            val pts = track.nodes.map { n ->
                 LatLon(n.iLat / 1e6 - 90, n.iLon / 1e6 - 180, n.elev.toDouble().takeIf { !it.isNaN() && it > -1000 })
-            }?.takeIf { it.size >= 2 }
+            }
+            if (pts.size < 2) return@runCatching null
+            val turns = btools.router.HintAccess.hints(track).mapNotNull { h ->
+                val p = pts.getOrNull(h[0]) ?: return@mapNotNull null
+                TurnKind.ofBrouter(h[1])?.let { TurnPt(p.lat, p.lon, it, h[2]) }
+            }
+            Routed(pts, turns)
         }.getOrNull()
     }
 }

@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satellites</string>
     <string name="map_gps_sats_used">%1$d in use of %2$d</string>
     <string name="map_gps_best">Best signal</string>
+    <string name="turn_in">In %1$s, %2$s</string>
+    <string name="turn_metres">%1$d metres</string>
+    <string name="turn_km">%1$s kilometres</string>
+    <string name="turn_roundabout_exit">at the roundabout, take exit %1$d</string>
+    <string name="turn_roundabout_then">at the roundabout, %1$s</string>
+    <string name="turn_roundabout">at the roundabout, go straight on</string>
+    <string name="turn_straight">continue straight on</string>
+    <string name="turn_slight_left">bear left</string>
+    <string name="turn_left">turn left</string>
+    <string name="turn_sharp_left">turn sharp left</string>
+    <string name="turn_slight_right">bear right</string>
+    <string name="turn_right">turn right</string>
+    <string name="turn_sharp_right">turn sharp right</string>
+    <string name="turn_keep_left">keep left</string>
+    <string name="turn_keep_right">keep right</string>
+    <string name="turn_uturn">make a U-turn</string>
+    <string name="turn_exit_left">take the exit on the left</string>
+    <string name="turn_exit_right">take the exit on the right</string>
+    <string name="turn_arrive">you have arrived</string>
+    <string name="turn_show">Show the next turn on the map</string>
+    <string name="turn_voice">Say the turns aloud</string>
+    <string name="turn_hint">Planned trajetos use the router\'s turns; imported tracks are read from the shape of the line.</string>
 </resources>

@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satélites</string>
     <string name="map_gps_sats_used">%1$d en uso de %2$d</string>
     <string name="map_gps_best">Mejor señal</string>
+    <string name="turn_in">En %1$s, %2$s</string>
+    <string name="turn_metres">%1$d metros</string>
+    <string name="turn_km">%1$s kilómetros</string>
+    <string name="turn_roundabout_exit">en la rotonda, toma la %1$dª salida</string>
+    <string name="turn_roundabout_then">en la rotonda, %1$s</string>
+    <string name="turn_roundabout">en la rotonda, sigue recto</string>
+    <string name="turn_straight">sigue recto</string>
+    <string name="turn_slight_left">gira ligeramente a la izquierda</string>
+    <string name="turn_left">gira a la izquierda</string>
+    <string name="turn_sharp_left">gira cerrado a la izquierda</string>
+    <string name="turn_slight_right">gira ligeramente a la derecha</string>
+    <string name="turn_right">gira a la derecha</string>
+    <string name="turn_sharp_right">gira cerrado a la derecha</string>
+    <string name="turn_keep_left">mantente a la izquierda</string>
+    <string name="turn_keep_right">mantente a la derecha</string>
+    <string name="turn_uturn">da la vuelta</string>
+    <string name="turn_exit_left">toma la salida a la izquierda</string>
+    <string name="turn_exit_right">toma la salida a la derecha</string>
+    <string name="turn_arrive">has llegado</string>
+    <string name="turn_show">Mostrar el próximo giro en el mapa</string>
+    <string name="turn_voice">Decir los giros en voz alta</string>
+    <string name="turn_hint">Los trayectos planificados usan los giros del motor de rutas; los importados se leen por la forma de la línea.</string>
 </resources>

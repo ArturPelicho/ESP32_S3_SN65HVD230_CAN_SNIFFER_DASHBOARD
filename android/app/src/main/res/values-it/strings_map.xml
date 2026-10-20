@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satelliti</string>
     <string name="map_gps_sats_used">%1$d in uso su %2$d</string>
     <string name="map_gps_best">Segnale migliore</string>
+    <string name="turn_in">Tra %1$s, %2$s</string>
+    <string name="turn_metres">%1$d metri</string>
+    <string name="turn_km">%1$s chilometri</string>
+    <string name="turn_roundabout_exit">alla rotonda, prendi l’uscita %1$d</string>
+    <string name="turn_roundabout_then">alla rotonda, %1$s</string>
+    <string name="turn_roundabout">alla rotonda, prosegui dritto</string>
+    <string name="turn_straight">prosegui dritto</string>
+    <string name="turn_slight_left">svolta leggermente a sinistra</string>
+    <string name="turn_left">svolta a sinistra</string>
+    <string name="turn_sharp_left">svolta stretta a sinistra</string>
+    <string name="turn_slight_right">svolta leggermente a destra</string>
+    <string name="turn_right">svolta a destra</string>
+    <string name="turn_sharp_right">svolta stretta a destra</string>
+    <string name="turn_keep_left">tieni la sinistra</string>
+    <string name="turn_keep_right">tieni la destra</string>
+    <string name="turn_uturn">fai inversione</string>
+    <string name="turn_exit_left">prendi l’uscita a sinistra</string>
+    <string name="turn_exit_right">prendi l’uscita a destra</string>
+    <string name="turn_arrive">sei arrivato</string>
+    <string name="turn_show">Mostra la prossima svolta sulla mappa</string>
+    <string name="turn_voice">Annuncia le svolte a voce</string>
+    <string name="turn_hint">I tragitti pianificati usano le svolte del calcolo percorso; le tracce importate vengono lette dalla forma della linea.</string>
 </resources>

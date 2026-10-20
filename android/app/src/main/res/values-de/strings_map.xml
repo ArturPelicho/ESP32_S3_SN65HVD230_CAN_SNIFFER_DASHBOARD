@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satelliten</string>
     <string name="map_gps_sats_used">%1$d von %2$d genutzt</string>
     <string name="map_gps_best">Bestes Signal</string>
+    <string name="turn_in">In %1$s %2$s</string>
+    <string name="turn_metres">%1$d Metern</string>
+    <string name="turn_km">%1$s Kilometern</string>
+    <string name="turn_roundabout_exit">im Kreisverkehr die %1$d. Ausfahrt nehmen</string>
+    <string name="turn_roundabout_then">im Kreisverkehr %1$s</string>
+    <string name="turn_roundabout">im Kreisverkehr geradeaus</string>
+    <string name="turn_straight">geradeaus weiter</string>
+    <string name="turn_slight_left">leicht links abbiegen</string>
+    <string name="turn_left">links abbiegen</string>
+    <string name="turn_sharp_left">scharf links abbiegen</string>
+    <string name="turn_slight_right">leicht rechts abbiegen</string>
+    <string name="turn_right">rechts abbiegen</string>
+    <string name="turn_sharp_right">scharf rechts abbiegen</string>
+    <string name="turn_keep_left">links halten</string>
+    <string name="turn_keep_right">rechts halten</string>
+    <string name="turn_uturn">wenden</string>
+    <string name="turn_exit_left">die Ausfahrt links nehmen</string>
+    <string name="turn_exit_right">die Ausfahrt rechts nehmen</string>
+    <string name="turn_arrive">Sie haben Ihr Ziel erreicht</string>
+    <string name="turn_show">Nächste Abbiegung auf der Karte zeigen</string>
+    <string name="turn_voice">Abbiegungen ansagen</string>
+    <string name="turn_hint">Geplante Strecken nutzen die Abbiegungen des Routers; importierte Tracks werden aus der Form der Linie gelesen.</string>
 </resources>

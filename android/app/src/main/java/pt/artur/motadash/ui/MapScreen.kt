@@ -100,6 +100,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
 import pt.artur.motadash.Router
+import pt.artur.motadash.Guidance
+import pt.artur.motadash.Maneuver
+import pt.artur.motadash.TurnKind
+import pt.artur.motadash.TurnVoice
+import pt.artur.motadash.Turns
 import pt.artur.motadash.TrackMode
 import kotlinx.coroutines.withContext
 import pt.artur.motadash.ElevProfile
@@ -601,6 +606,19 @@ fun MapScreen() {
         }
     }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
+    // Turns along the followed track, and the next one ahead.
+    var guide by remember { mutableStateOf<Guidance?>(null) }
+    LaunchedEffect(activeTrack?.id, activeTrack?.lines, activeTrack?.turns, reversed) {
+        val t = activeTrack
+        guide = if (t == null) null else withContext(Dispatchers.Default) {
+            runCatching {
+                // Reversed, the router's turns point the wrong way: read them from the line instead.
+                Guidance(if (reversed) t.lines.reversed().map { it.reversed() } else t.lines, if (reversed) emptyList() else t.turns)
+            }.getOrNull()
+        }
+    }
+    var nextTurn by remember { mutableStateOf<Pair<Maneuver, Double>?>(null) }
+    val turnVoice = remember { TurnVoice() }
     // Nav mode works out a road route back to the track; Track mode only shows the way to the nearest point.
     var trackMode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
     var rejoinTick by remember { mutableIntStateOf(0) }
@@ -772,7 +790,7 @@ fun MapScreen() {
                 val here = LatLon(f.latitude, f.longitude)
                 rj.step(p, here, SystemClock.elapsedRealtime())?.let { to ->
                     navScope.launch {
-                        val r = withContext(Dispatchers.IO) { Router.road(ctx, here, to) }
+                        val r = withContext(Dispatchers.IO) { Router.route(ctx, here, to) }
                         rj.routed(r)
                         rj.route?.let { holder.setRoute(it) }
                         rejoinTick++
@@ -782,6 +800,16 @@ fun MapScreen() {
                 if (route != null) holder.setRoute(route) else holder.setJoin(p.takeIf { it.offM > 30 }?.nearest)
             } else holder.setJoin(p?.takeIf { it.offM > 30 }?.nearest)
             rejoinTick++
+            val back = rejoin?.takeIf { trackMode == TrackMode.NAV && it.route != null }
+            val backGuide = back?.guide
+            val backDone = back?.routeDoneM
+            nextTurn = when {
+                p == null -> null
+                backGuide != null && backDone != null -> backGuide.next(backDone)
+                p.offM <= 50 -> guide?.next(p.doneM)
+                else -> null
+            }
+            turnVoice.step(ctx, nextTurn, f.speed)
             limit = holder.limit
             val cam = holder.camera
             if (cam != null && cam.key != camera?.key && cameraBeep) beeper?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
@@ -923,6 +951,7 @@ fun MapScreen() {
                 OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
             }
         }
+        if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
         if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick) {
             trackMode = TrackMode.entries[(trackMode.ordinal + 1) % TrackMode.entries.size]
             MapStore.setTrackMode(ctx, trackMode)
@@ -1138,6 +1167,29 @@ private fun shareGpx(ctx: Context, t: Track) {
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         ctx.startActivity(Intent.createChooser(send, ctx.getString(R.string.map_share_title, t.name)))
     }.onFailure { Toast.makeText(ctx, ctx.getString(R.string.map_share_failed), Toast.LENGTH_SHORT).show() }
+}
+
+/** Next turn: big arrow, distance, what to do. */
+@Composable
+private fun TurnBanner(next: Pair<Maneuver, Double>) {
+    val (m, dist) = next
+    val soon = dist < 150
+    Row(
+        Modifier.background(if (soon) Palette.green else Palette.overlay, RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(Turns.arrow(m), color = if (soon) Color.Black else Palette.text, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+            if (m.kind == TurnKind.ROUNDABOUT && m.exit > 0)
+                Text("${m.exit}", color = if (soon) Color.Black else Palette.cyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        Column {
+            Text(Turns.shown(dist), color = if (soon) Color.Black else Palette.text, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Text(Turns.phrase(m), color = if (soon) Color.Black else Palette.label, fontSize = 14.sp, maxLines = 1)
+        }
+    }
 }
 
 /** Followed track: distance left, how far off it the bike is, and the follow mode (tap to switch). */

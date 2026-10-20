@@ -98,6 +98,17 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                 }
             }
             Text(stringResource(R.string.track_mode_hint), color = Palette.label, fontSize = 12.sp)
+            var banner by remember { mutableStateOf(MapStore.turnBanner(ctx)) }
+            var voice by remember { mutableStateOf(MapStore.turnVoice(ctx)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.turn_show), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                Switch(checked = banner, onCheckedChange = { banner = it; MapStore.setTurnBanner(ctx, it) })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.turn_voice), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                Switch(checked = voice, onCheckedChange = { voice = it; MapStore.setTurnVoice(ctx, it) })
+            }
+            Text(stringResource(R.string.turn_hint), color = Palette.label, fontSize = 12.sp)
             message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
             if (tracks.isEmpty()) Text(stringResource(R.string.tracks_empty), color = Palette.label, fontSize = 14.sp)
 

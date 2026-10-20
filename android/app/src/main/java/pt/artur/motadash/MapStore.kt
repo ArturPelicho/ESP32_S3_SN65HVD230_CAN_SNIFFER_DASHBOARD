@@ -157,6 +157,12 @@ object MapStore {
     fun routeRoads(ctx: Context): Boolean = prefs(ctx).getBoolean("route_roads", true)
     fun setRouteRoads(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("route_roads", on).apply()
 
+    /** Next turn shown on the map, and said aloud, while following a track. */
+    fun turnBanner(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_banner", true)
+    fun setTurnBanner(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_banner", on).apply()
+    fun turnVoice(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_voice", true)
+    fun setTurnVoice(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_voice", on).apply()
+
     /** Nav (reroutes back to the track) or Track (the line stays the line). */
     fun trackMode(ctx: Context): TrackMode =
         TrackMode.entries.firstOrNull { it.name == prefs(ctx).getString("track_mode", null) } ?: TrackMode.NAV

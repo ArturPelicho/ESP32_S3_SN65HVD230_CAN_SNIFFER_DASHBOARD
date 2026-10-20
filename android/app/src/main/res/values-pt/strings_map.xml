@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satélites</string>
     <string name="map_gps_sats_used">%1$d em uso de %2$d</string>
     <string name="map_gps_best">Melhor sinal</string>
+    <string name="turn_in">Daqui a %1$s, %2$s</string>
+    <string name="turn_metres">%1$d metros</string>
+    <string name="turn_km">%1$s quilómetros</string>
+    <string name="turn_roundabout_exit">na rotunda, sai na %1$dª saída</string>
+    <string name="turn_roundabout_then">na rotunda, %1$s</string>
+    <string name="turn_roundabout">na rotunda, segue em frente</string>
+    <string name="turn_straight">segue em frente</string>
+    <string name="turn_slight_left">vira ligeiramente à esquerda</string>
+    <string name="turn_left">vira à esquerda</string>
+    <string name="turn_sharp_left">vira apertado à esquerda</string>
+    <string name="turn_slight_right">vira ligeiramente à direita</string>
+    <string name="turn_right">vira à direita</string>
+    <string name="turn_sharp_right">vira apertado à direita</string>
+    <string name="turn_keep_left">mantém-te à esquerda</string>
+    <string name="turn_keep_right">mantém-te à direita</string>
+    <string name="turn_uturn">inverte a marcha</string>
+    <string name="turn_exit_left">sai à esquerda</string>
+    <string name="turn_exit_right">sai à direita</string>
+    <string name="turn_arrive">chegaste ao destino</string>
+    <string name="turn_show">Mostrar a próxima viragem no mapa</string>
+    <string name="turn_voice">Dizer as viragens em voz alta</string>
+    <string name="turn_hint">Os trajetos planeados usam as viragens do motor de rotas; os trajetos importados são lidos pela forma da linha.</string>
 </resources>

@@ -116,10 +116,12 @@ object Planner {
     /** Works out every leg again with the current route options. */
     fun replan(ctx: Context, id: String) {
         TrackStore.change(ctx, id) { t ->
-            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) })
+            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) }, turns = emptyList())
         }
         reroute(ctx, id)
     }
+
+    private fun onLine(l: List<LatLon>, p: LatLon) = (0 until l.size - 1).any { toSegment(p, l[it], l[it + 1]).first < 20 }
 
     /** Swaps straight legs for road routes, one by one, while the trajeto is unchanged around them. */
     fun reroute(ctx: Context, id: String) {
@@ -135,13 +137,18 @@ object Planner {
                     val i = t.lines.indices.firstOrNull { straight(t, it) && (t.plan[it] to t.plan[it + 1]) !in failed } ?: break
                     val a = t.plan[i]
                     val b = t.plan[i + 1]
-                    val road = Router.road(app, a, b)
+                    val road = Router.route(app, a, b)
                     if (road == null) { failed += a to b; continue }
                     TrackStore.change(app, id) { cur ->
                         if (cur.plan.getOrNull(i) == a && cur.plan.getOrNull(i + 1) == b && cur.lines.size == cur.plan.size - 1)
-                            cur.copy(lines = cur.lines.toMutableList().also { it[i] = road })
+                            cur.copy(lines = cur.lines.toMutableList().also { it[i] = road.pts }, turns = cur.turns + road.turns)
                         else cur
                     }
+                }
+                // Turns of legs since moved or deleted no longer lie on the line.
+                TrackStore.change(app, id) { cur ->
+                    val keep = cur.turns.filter { tp -> cur.lines.any { l -> onLine(l, LatLon(tp.lat, tp.lon)) } }
+                    if (keep.size == cur.turns.size) cur else cur.copy(turns = keep)
                 }
             }
         }
@@ -156,26 +163,37 @@ object Router {
     private const val BASE = "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-vario"
 
     /** The road route from a to b, or null without routing data, network or route. */
-    fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? =
+    fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? = route(ctx, a, b)?.pts
+
+    /** The road route with its turns. */
+    fun route(ctx: Context, a: LatLon, b: LatLon): Routed? =
         (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b) else null)
             ?: runCatching { fetch(RouteOptions.params(ctx), a, b) }.getOrNull()
 
-    private fun fetch(params: Map<String, String>, a: LatLon, b: LatLon): List<LatLon>? {
+    private fun fetch(params: Map<String, String>, a: LatLon, b: LatLon): Routed? {
         val q = String.format(Locale.US, "%.6f,%.6f|%.6f,%.6f", a.lon, a.lat, b.lon, b.lat)
         val extra = params.entries.joinToString("") { "&profile:${it.key}=${it.value}" }
-        val c = URL(BASE + extra + "&lonlats=" + q.replace("|", "%7C")).openConnection() as HttpURLConnection
+        val c = URL(BASE + extra + "&timode=2&lonlats=" + q.replace("|", "%7C")).openConnection() as HttpURLConnection
         c.connectTimeout = 8_000
         c.readTimeout = 20_000
         c.setRequestProperty("User-Agent", "NavExpress")
         try {
             if (c.responseCode != 200) return null
-            val coords = JSONObject(c.inputStream.bufferedReader().readText())
-                .getJSONArray("features").getJSONObject(0).getJSONObject("geometry").getJSONArray("coordinates")
+            val f = JSONObject(c.inputStream.bufferedReader().readText()).getJSONArray("features").getJSONObject(0)
+            val coords = f.getJSONObject("geometry").getJSONArray("coordinates")
             val pts = List(coords.length()) { i ->
                 val p = coords.getJSONArray(i)
                 LatLon(p.getDouble(1), p.getDouble(0), if (p.length() > 2) p.optDouble(2).takeIf { !it.isNaN() } else null)
             }
-            return pts.takeIf { it.size >= 2 }
+            if (pts.size < 2) return null
+            // [index in the coordinates, command, roundabout exit, metres to the next, angle]
+            val vh = f.optJSONObject("properties")?.optJSONArray("voicehints")
+            val turns = if (vh == null) emptyList() else (0 until vh.length()).mapNotNull { i ->
+                val h = vh.getJSONArray(i)
+                val p = pts.getOrNull(h.getInt(0)) ?: return@mapNotNull null
+                TurnKind.ofBrouter(h.getInt(1))?.let { TurnPt(p.lat, p.lon, it, h.optInt(2)) }
+            }
+            return Routed(pts, turns)
         } finally {
             c.disconnect()
         }

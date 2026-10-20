@@ -56,4 +56,26 @@
     <string name="map_gps_satellites">Satellites</string>
     <string name="map_gps_sats_used">%1$d utilisés sur %2$d</string>
     <string name="map_gps_best">Meilleur signal</string>
+    <string name="turn_in">Dans %1$s, %2$s</string>
+    <string name="turn_metres">%1$d mètres</string>
+    <string name="turn_km">%1$s kilomètres</string>
+    <string name="turn_roundabout_exit">au rond-point, prenez la sortie %1$d</string>
+    <string name="turn_roundabout_then">au rond-point, %1$s</string>
+    <string name="turn_roundabout">au rond-point, continuez tout droit</string>
+    <string name="turn_straight">continuez tout droit</string>
+    <string name="turn_slight_left">tournez légèrement à gauche</string>
+    <string name="turn_left">tournez à gauche</string>
+    <string name="turn_sharp_left">tournez fortement à gauche</string>
+    <string name="turn_slight_right">tournez légèrement à droite</string>
+    <string name="turn_right">tournez à droite</string>
+    <string name="turn_sharp_right">tournez fortement à droite</string>
+    <string name="turn_keep_left">restez à gauche</string>
+    <string name="turn_keep_right">restez à droite</string>
+    <string name="turn_uturn">faites demi-tour</string>
+    <string name="turn_exit_left">prenez la sortie à gauche</string>
+    <string name="turn_exit_right">prenez la sortie à droite</string>
+    <string name="turn_arrive">vous êtes arrivé</string>
+    <string name="turn_show">Afficher le prochain virage sur la carte</string>
+    <string name="turn_voice">Annoncer les virages à voix haute</string>
+    <string name="turn_hint">Les trajets planifiés utilisent les virages du calcul d’itinéraire ; les traces importées sont lues d’après la forme de la ligne.</string>
 </resources>

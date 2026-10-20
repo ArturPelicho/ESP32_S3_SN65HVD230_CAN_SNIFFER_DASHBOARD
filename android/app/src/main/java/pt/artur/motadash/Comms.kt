@@ -14,7 +14,6 @@ import android.provider.ContactsContract
 import android.provider.Telephony
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.speech.tts.TextToSpeech
 import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
 import androidx.core.app.NotificationManagerCompat
@@ -50,9 +49,6 @@ object Comms {
     val shown: StateFlow<Msg?> = _shown.asStateFlow()
     private val _recent = MutableStateFlow<List<Msg>>(emptyList())
     val recent: StateFlow<List<Msg>> = _recent.asStateFlow()
-
-    private var tts: TextToSpeech? = null
-    private var ttsReady = false
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun showCalls(ctx: Context) = prefs(ctx).getBoolean("calls", true)
@@ -149,18 +145,7 @@ object Comms {
 
     fun dismiss(m: Msg) { if (_shown.value == m) _shown.value = null }
 
-    private fun say(ctx: Context, text: String) {
-        val t = tts
-        if (t != null && ttsReady) { t.speak(text, TextToSpeech.QUEUE_ADD, null, "msg"); return }
-        if (t != null) return
-        tts = TextToSpeech(ctx.applicationContext) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) {
-                tts?.language = AppLocale.tag(ctx).takeIf { it.isNotEmpty() }?.let { java.util.Locale.forLanguageTag(it) } ?: java.util.Locale.getDefault()
-                tts?.speak(text, TextToSpeech.QUEUE_ADD, null, "msg")
-            }
-        }
-    }
+    private fun say(ctx: Context, text: String) = Speech.say(ctx, text)
 }
 
 /** Phone state: ringing (with the number), in a call, idle. */
