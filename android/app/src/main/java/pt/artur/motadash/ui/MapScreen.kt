@@ -49,6 +49,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -295,12 +296,13 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         val fs = mutableListOf<Feature>()
         for (t in list.filter { it.visible }) {
             val active = t.id == activeId
-            for (l in t.lines) {
+            for ((leg, l) in t.lines.withIndex()) {
                 if (l.size < 2) continue
                 val pts = l.map { Point.fromLngLat(it.lon, it.lat) }.let { if (active && reversed) it.reversed() else it }
                 fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
                     addStringProperty("kind", "line"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
                     addNumberProperty("w", t.width); addBooleanProperty("active", active)
+                    if (t.plan.isNotEmpty()) addNumberProperty("leg", leg)
                 }
             }
             t.plan.forEachIndexed { i, p ->
@@ -369,7 +371,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), point = (num(f, "n") ?: 1) - 1)
         }
         near("trk-line", 28f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
-            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"))
+            return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), leg = num(f, "leg"))
         }
         return MapMenu(p.x, p.y, at)
     }
@@ -383,7 +385,12 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
 }
 
 /** Long-press menu: where it opens and what is under the finger (a track, one of its waypoints, or the map). */
-private data class MapMenu(val x: Float, val y: Float, val at: LatLon, val tid: String? = null, val point: Int? = null)
+private data class MapMenu(
+    val x: Float, val y: Float, val at: LatLon,
+    val tid: String? = null,
+    val point: Int? = null,      // a waypoint of a planned trajeto
+    val leg: Int? = null,        // the line between waypoints leg and leg + 1
+)
 
 /** A waypoint being moved: it sits under the pin in the middle of the screen. */
 private data class Moving(val tid: String, val point: Int)
@@ -930,6 +937,7 @@ private fun MapMenuItems(
 ) {
     val ctx = LocalContext.current
     var confirmDelete by remember { mutableStateOf(false) }
+    var looks by remember { mutableStateOf(false) }
     val t = tracks.firstOrNull { it.id == mm.tid }
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         when {
@@ -946,8 +954,31 @@ private fun MapMenuItems(
             }
             t != null -> {
                 Text(t.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                if (mm.leg != null && mm.leg in 0 until t.plan.size - 1) {
+                    MenuItem("Inserir waypoint ${mm.leg + 2} aqui", onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
+                }
                 if (current?.id != t.id) MenuItem("Seguir este trajeto", onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
                 MenuItem("Renomear", onDismiss) { onRename(t) }
+                if (looks) {
+                    // Colour and thickness, right in the menu; the menu stays open to see the change.
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackStore.COLORS.forEach { c ->
+                            Box(
+                                Modifier.size(30.dp).background(parseColor(c), CircleShape)
+                                    .border(3.dp, if (t.color == c) Color.White else Color.Transparent, CircleShape)
+                                    .clickable { TrackStore.change(ctx, t.id) { it.copy(color = c) } }
+                            )
+                        }
+                    }
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackStore.WIDTHS.forEach { (w, label) ->
+                            FilterChip(selected = t.width == w, onClick = { TrackStore.change(ctx, t.id) { it.copy(width = w) } },
+                                label = { Text(label) })
+                        }
+                    }
+                } else {
+                    DropdownMenuItem(text = { Text("Mudar cor e espessura", fontSize = 16.sp) }, onClick = { looks = true })
+                }
                 MenuItem("Gravar GPX no telemóvel", onDismiss) { onSave(t) }
                 MenuItem("Partilhar GPX", onDismiss) { onShare(t) }
                 if (confirmDelete) {

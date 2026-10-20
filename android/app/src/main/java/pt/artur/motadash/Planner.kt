@@ -60,6 +60,20 @@ object Planner {
         reroute(ctx, id)
     }
 
+    /** Puts a new waypoint on leg i, between waypoints i and i + 1. */
+    fun insert(ctx: Context, id: String, i: Int, p: LatLon) {
+        val q = p.copy(ele = null)
+        TrackStore.change(ctx, id) { t ->
+            if (i !in 0 until t.plan.size - 1) return@change t
+            val plan = t.plan.toMutableList().also { it.add(i + 1, q) }
+            val lines = legs(t).toMutableList()
+            lines[i] = listOf(plan[i], q)
+            lines.add(i + 1, listOf(q, plan[i + 2]))
+            t.copy(plan = plan, lines = lines)
+        }
+        reroute(ctx, id)
+    }
+
     /** Deletes waypoint k; the legs either side become one. The last waypoint takes the trajeto with it. */
     fun remove(ctx: Context, id: String, k: Int) {
         val t0 = TrackStore.tracks.value.firstOrNull { it.id == id } ?: return
