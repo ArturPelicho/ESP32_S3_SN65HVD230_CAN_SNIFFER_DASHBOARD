@@ -1,0 +1,29 @@
+name: BRouter probe
+
+# Temporary: shows the BRouter library's layout and API so the app can embed it.
+on:
+  push:
+    paths: [".github/workflows/brouter-probe.yml"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          git clone -q https://github.com/abrensch/brouter.git b && cd b
+          echo "== tags"; git tag --sort=-v:refname | head -5
+          T=$(git tag --sort=-v:refname | head -1); git checkout -q "$T"; echo "using $T"
+          echo "== settings"; cat settings.gradle
+          for m in brouter-core brouter-mapaccess brouter-util brouter-expressions brouter-codec; do echo "== $m/build.gradle"; cat $m/build.gradle; done
+          echo "== java files"; find brouter-core brouter-mapaccess brouter-util brouter-expressions brouter-codec -name '*.java' -path '*main*' | wc -l
+          echo "== external imports"; grep -rhoE '^import [a-z]+\.[a-zA-Z.]+' brouter-core brouter-mapaccess brouter-util brouter-expressions brouter-codec --include=*.java | grep -v 'btools\|java\.' | sort | uniq -c
+          f=$(find . -name RoutingEngine.java | head -1); echo "== $f"; grep -nE 'public |protected ' "$f" | head -60
+          f=$(find . -name RoutingContext.java | head -1); echo "== $f"; grep -nE 'public ' "$f" | head -80
+          f=$(find . -name OsmNodeNamed.java | head -1); echo "== $f"; sed -n 1,60p "$f"
+          f=$(find . -name OsmTrack.java | head -1); echo "== $f"; grep -nE 'public ' "$f" | head -60
+          f=$(find . -name OsmPathElement.java | head -1); echo "== $f"; grep -nE 'public ' "$f" | head -40
+          f=$(find . -name RoutingParamCollector.java | head -1); [ -n "$f" ] && { echo "== $f"; grep -nE 'public ' "$f" | head -30; }
+          echo "== profiles"; ls -la misc/profiles2 | head -40
+          echo "== how the server calls it"; f=$(find . -name RouteServer.java | head -1); grep -nE 'RoutingEngine|RoutingContext|localFunction|profile|segment' "$f" | head -40
+          echo "== segments"; curl -sI https://brouter.de/brouter/segments4/W10_N35.rd5 | grep -i 'content-length'; for t in W10_N35 W10_N40 W5_N35 W5_N40; do curl -sI https://brouter.de/brouter/segments4/$t.rd5 | grep -i 'content-length' | sed "s/^/$t /"; done
