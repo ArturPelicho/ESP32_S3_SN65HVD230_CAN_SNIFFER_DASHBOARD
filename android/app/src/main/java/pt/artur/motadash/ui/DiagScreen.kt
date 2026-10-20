@@ -1,5 +1,10 @@
 package pt.artur.motadash.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,8 +30,24 @@ import pt.artur.motadash.BleProtocol
 import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
 
+/** Diagnóstico: live readings, and the engine fault codes as a section of their own. */
 @Composable
 fun DiagScreen() {
+    val dtc by Link.dtc.collectAsStateWithLifecycle()
+    var faults by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = !faults, onClick = { faults = false }, label = { Text("Leituras") })
+            FilterChip(selected = faults, onClick = { faults = true },
+                label = { Text(if (dtc.total > 0) "Erros (${dtc.total})" else "Erros",
+                    color = if (dtc.total > 0 && !faults) Palette.orange else Color.Unspecified) })
+        }
+        Box(Modifier.weight(1f)) { if (faults) DtcScreen() else DiagReadings() }
+    }
+}
+
+@Composable
+private fun DiagReadings() {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val gps by Link.gps.collectAsStateWithLifecycle()
     val gearLine by Link.gearLine.collectAsStateWithLifecycle()

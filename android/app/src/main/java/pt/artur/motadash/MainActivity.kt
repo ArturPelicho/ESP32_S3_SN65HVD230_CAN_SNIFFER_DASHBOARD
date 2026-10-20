@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import pt.artur.motadash.ui.ControlScreen
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.DiagScreen
-import pt.artur.motadash.ui.DtcScreen
 import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
@@ -142,7 +141,8 @@ private fun App(activity: MainActivity) {
     val openMap by activity.openMap.collectAsStateWithLifecycle()
     LaunchedEffect(openMap) { if (openMap > 0) tab = 0 }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
-    val titles = listOf("Mapa", "Painel", "Controlo", if (dtc.total > 0) "Erros (${dtc.total})" else "Erros", "Diagnóstico")
+    // Map and dashboard first, then diagnostics (with the fault codes), settings at the far end.
+    val titles = listOf("Mapa", "Painel", if (dtc.total > 0) "Diagnóstico (${dtc.total})" else "Diagnóstico", "Definições")
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         if (landscape) {
@@ -152,7 +152,7 @@ private fun App(activity: MainActivity) {
                     Box(Modifier.weight(1f).fillMaxHeight().clickable { tab = i }, contentAlignment = Alignment.Center) {
                         Text(t, fontSize = 13.sp, color = when {
                             tab == i -> Palette.amber
-                            i == 3 && dtc.total > 0 -> Palette.orange
+                            i == 2 && dtc.total > 0 -> Palette.orange
                             else -> Palette.label
                         })
                     }
@@ -162,7 +162,7 @@ private fun App(activity: MainActivity) {
             TabRow(selectedTabIndex = tab, containerColor = Color.Black, contentColor = Palette.amber) {
                 titles.forEachIndexed { i, t ->
                     Tab(selected = tab == i, onClick = { tab = i },
-                        text = { Text(t, maxLines = 1, color = if (i == 3 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
+                        text = { Text(t, maxLines = 1, color = if (i == 2 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
                 }
             }
         }
@@ -170,9 +170,8 @@ private fun App(activity: MainActivity) {
             when (tab) {
                 0 -> MapScreen()
                 1 -> DashboardScreen()
-                2 -> ControlScreen(activity)
-                3 -> DtcScreen()
-                else -> DiagScreen()
+                2 -> DiagScreen()
+                else -> ControlScreen(activity)
             }
         }
     }
