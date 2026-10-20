@@ -131,6 +131,15 @@ object TrackStore {
         return out
     }
 
+    /** Keeps a copy of a track in the app (a version to come back to before changing it). */
+    fun duplicate(ctx: Context, id: String): Track? {
+        val t = _tracks.value.firstOrNull { it.id == id } ?: return null
+        val copy = t.copy(id = System.currentTimeMillis().toString(), name = t.name + " (cópia)",
+            color = COLORS[(COLORS.indexOf(t.color) + 1).mod(COLORS.size)])
+        add(ctx, copy)
+        return copy
+    }
+
     fun delete(ctx: Context, id: String) {
         File(dir(ctx), "$id.json").delete()
         _tracks.update { list -> list.filter { it.id != id } }

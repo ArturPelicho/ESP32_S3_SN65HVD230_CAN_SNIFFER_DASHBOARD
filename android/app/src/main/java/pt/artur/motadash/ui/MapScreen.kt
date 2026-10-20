@@ -979,6 +979,9 @@ private fun MapMenuItems(
                 } else {
                     DropdownMenuItem(text = { Text("Mudar cor e espessura", fontSize = 16.sp) }, onClick = { looks = true })
                 }
+                MenuItem("Guardar cópia na app", onDismiss) {
+                    TrackStore.duplicate(ctx, t.id)?.let { Toast.makeText(ctx, "Guardado: ${it.name}", Toast.LENGTH_SHORT).show() }
+                }
                 MenuItem("Gravar GPX no telemóvel", onDismiss) { onSave(t) }
                 MenuItem("Partilhar GPX", onDismiss) { onShare(t) }
                 if (confirmDelete) {

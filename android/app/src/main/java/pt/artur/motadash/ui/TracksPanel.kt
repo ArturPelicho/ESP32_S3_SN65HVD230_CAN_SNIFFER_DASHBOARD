@@ -58,107 +58,112 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
         if (uris.isNotEmpty()) TrackStore.import(ctx, uris)
     }
 
-    Column(
-        Modifier.fillMaxSize().background(Color(0xF20B0E12)).verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().background(Color(0xF20B0E12))) {
+        // Title and Fechar stay put; only the content below scrolls.
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Trajetos", color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = onClose) { Text("Fechar") }
         }
-        Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text("Abrir ficheiro (GPX, KML, KMZ, GeoJSON, TCX, FIT)") }
-        Text("Também podes abrir um ficheiro com a NavExpress a partir do gestor de ficheiros ou do WhatsApp.",
-            color = Palette.label, fontSize = 12.sp)
-        Text("Para criar um trajeto: toque longo no mapa, \"Começar trajeto novo aqui\", e depois toque longo noutros sítios para " +
-            "juntar waypoints. Toque longo num waypoint para o deslocar ou apagar, e na linha para renomear, gravar ou partilhar.",
-            color = Palette.label, fontSize = 12.sp)
-        var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Trajetos novos seguem as estradas", color = Palette.text, fontSize = 15.sp)
-                Text("Precisa de rede (BRouter, OpenStreetMap). Sem rede liga os waypoints em linha reta.",
-                    color = Palette.label, fontSize = 12.sp)
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text("Abrir ficheiro (GPX, KML, KMZ, GeoJSON, TCX, FIT)") }
+            Text("Também podes abrir um ficheiro com a NavExpress a partir do gestor de ficheiros ou do WhatsApp.",
+                color = Palette.label, fontSize = 12.sp)
+            Text("Para criar um trajeto: toque longo no mapa, \"Começar trajeto novo aqui\", e depois toque longo noutros sítios para " +
+                "juntar waypoints. Toque longo num waypoint para o deslocar ou apagar, e na linha para renomear, gravar ou partilhar.",
+                color = Palette.label, fontSize = 12.sp)
+            var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Trajetos novos seguem as estradas", color = Palette.text, fontSize = 15.sp)
+                    Text("Precisa de rede (BRouter, OpenStreetMap). Sem rede liga os waypoints em linha reta.",
+                        color = Palette.label, fontSize = 12.sp)
+                }
+                Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
             }
-            Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
-        }
-        message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
-        if (tracks.isEmpty()) Text("Ainda não há trajetos.", color = Palette.label, fontSize = 14.sp)
+            message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
+            if (tracks.isEmpty()) Text("Ainda não há trajetos.", color = Palette.label, fontSize = 14.sp)
 
-        for (t in tracks.reversed()) {
-            val following = active == t.id
-            Column(
-                Modifier.fillMaxWidth().background(Palette.panel, RoundedCornerShape(10.dp))
-                    .border(2.dp, if (following) Palette.cyan else Color.Transparent, RoundedCornerShape(10.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(14.dp).background(parseColor(t.color), CircleShape))
-                    Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                        if (renaming == t.id) {
-                            var text by remember { mutableStateOf(t.name) }
-                            OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { TrackStore.update(ctx, t.copy(name = text.trim().ifEmpty { t.name })); renaming = null }) {
-                                    Text("Guardar")
+            for (t in tracks.reversed()) {
+                val following = active == t.id
+                Column(
+                    Modifier.fillMaxWidth().background(Palette.panel, RoundedCornerShape(10.dp))
+                        .border(2.dp, if (following) Palette.cyan else Color.Transparent, RoundedCornerShape(10.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(14.dp).background(parseColor(t.color), CircleShape))
+                        Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                            if (renaming == t.id) {
+                                var text by remember { mutableStateOf(t.name) }
+                                OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(onClick = { TrackStore.update(ctx, t.copy(name = text.trim().ifEmpty { t.name })); renaming = null }) {
+                                        Text("Guardar")
+                                    }
+                                    OutlinedButton(onClick = { renaming = null }) { Text("Cancelar") }
                                 }
-                                OutlinedButton(onClick = { renaming = null }) { Text("Cancelar") }
+                            } else {
+                                Text(t.name, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable { renaming = t.id })
                             }
-                        } else {
-                            Text(t.name, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold,
-                                modifier = Modifier.clickable { renaming = t.id })
+                            val parts = listOfNotNull(
+                                "%.1f km".format(t.lengthM / 1000),
+                                if (t.lines.size > 1 && t.plan.isEmpty()) "${t.lines.size} partes" else null,
+                                if (t.plan.isNotEmpty()) "${t.plan.size} waypoints" else null,
+                                if (t.waypoints.isNotEmpty()) "${t.waypoints.size} pontos" else null,
+                                if (following) "a seguir" + (if (reversed) " (sentido inverso)" else "") else null,
+                            )
+                            Text(parts.joinToString(" · "), color = Palette.label, fontSize = 13.sp)
                         }
-                        val parts = listOfNotNull(
-                            "%.1f km".format(t.lengthM / 1000),
-                            if (t.lines.size > 1 && t.plan.isEmpty()) "${t.lines.size} partes" else null,
-                            if (t.plan.isNotEmpty()) "${t.plan.size} waypoints" else null,
-                            if (t.waypoints.isNotEmpty()) "${t.waypoints.size} pontos" else null,
-                            if (following) "a seguir" + (if (reversed) " (sentido inverso)" else "") else null,
-                        )
-                        Text(parts.joinToString(" · "), color = Palette.label, fontSize = 13.sp)
+                        Switch(checked = t.visible, onCheckedChange = { TrackStore.update(ctx, t.copy(visible = it)) })
                     }
-                    Switch(checked = t.visible, onCheckedChange = { TrackStore.update(ctx, t.copy(visible = it)) })
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (t.lines.isNotEmpty()) {
-                        if (following) {
-                            OutlinedButton(onClick = { TrackStore.setActive(ctx, null) }) { Text("Parar de seguir") }
-                            FilterChip(selected = reversed, onClick = { TrackStore.setReversed(ctx, !reversed) },
-                                label = { Text("Sentido inverso") })
-                        } else {
-                            Button(onClick = { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false); onClose() }) {
-                                Text("Seguir")
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (t.lines.isNotEmpty()) {
+                            if (following) {
+                                OutlinedButton(onClick = { TrackStore.setActive(ctx, null) }) { Text("Parar de seguir") }
+                                FilterChip(selected = reversed, onClick = { TrackStore.setReversed(ctx, !reversed) },
+                                    label = { Text("Sentido inverso") })
+                            } else {
+                                Button(onClick = { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false); onClose() }) {
+                                    Text("Seguir")
+                                }
                             }
                         }
+                        OutlinedButton(onClick = { onShow(t) }) { Text("Ver no mapa") }
+                        if (confirmDelete == t.id) {
+                            Button(onClick = { TrackStore.delete(ctx, t.id); confirmDelete = null }) { Text("Confirmar apagar") }
+                            OutlinedButton(onClick = { confirmDelete = null }) { Text("Não") }
+                        } else {
+                            OutlinedButton(onClick = { TrackStore.duplicate(ctx, t.id) }) { Text("Duplicar") }
+                            OutlinedButton(onClick = { confirmDelete = t.id }) { Text("Apagar") }
+                        }
                     }
-                    OutlinedButton(onClick = { onShow(t) }) { Text("Ver no mapa") }
-                    if (confirmDelete == t.id) {
-                        Button(onClick = { TrackStore.delete(ctx, t.id); confirmDelete = null }) { Text("Confirmar apagar") }
-                        OutlinedButton(onClick = { confirmDelete = null }) { Text("Não") }
-                    } else {
-                        OutlinedButton(onClick = { confirmDelete = t.id }) { Text("Apagar") }
+                    // Appearance: colour and width.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TrackStore.COLORS.forEach { c ->
+                            Box(
+                                Modifier.size(28.dp).background(parseColor(c), CircleShape)
+                                    .border(3.dp, if (t.color == c) Color.White else Color.Transparent, CircleShape)
+                                    .clickable { TrackStore.update(ctx, t.copy(color = c)) }
+                            )
+                        }
                     }
-                }
-                // Appearance: colour and width.
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TrackStore.COLORS.forEach { c ->
-                        Box(
-                            Modifier.size(28.dp).background(parseColor(c), CircleShape)
-                                .border(3.dp, if (t.color == c) Color.White else Color.Transparent, CircleShape)
-                                .clickable { TrackStore.update(ctx, t.copy(color = c)) }
-                        )
-                    }
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TrackStore.WIDTHS.forEach { (w, label) ->
-                        FilterChip(selected = t.width == w, onClick = { TrackStore.update(ctx, t.copy(width = w)) },
-                            label = { Text(label) })
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackStore.WIDTHS.forEach { (w, label) ->
+                            FilterChip(selected = t.width == w, onClick = { TrackStore.update(ctx, t.copy(width = w)) },
+                                label = { Text(label) })
+                        }
                     }
                 }
             }
+            Text("Todos os trajetos ficam guardados dentro da app, também os criados no mapa: não é preciso gravar nem importar. " +
+                "Toca no nome para mudar. \"Duplicar\" guarda uma cópia antes de mexeres num trajeto.", color = Palette.label, fontSize = 12.sp)
         }
-        Text("Toca no nome para mudar. A cor e a espessura ficam guardadas em cada trajeto.", color = Palette.label, fontSize = 12.sp)
     }
 }
 
