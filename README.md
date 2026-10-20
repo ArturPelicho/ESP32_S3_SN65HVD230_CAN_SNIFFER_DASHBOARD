@@ -2,29 +2,34 @@
 
 <img src="docs/img/navexpress-icon.svg" width="96" align="right" alt="NavExpress icon">
 
-- **NavExpress Brain**: the boards on the bike (this firmware, ESP32-S3 + CAN).
-- **NavExpress Mobile**: the phone app, shown on the phone simply as
-  **NavExpress** (`android/`).
+A motorcycle navigator and smart dashboard, in two parts that work alone or together:
 
-The name comes from the Espressif ESP32 at the heart of the CAN reader.
+- **NavExpress Mobile** (`android/`), the phone app, shown on the phone as **NavExpress**. It has offline maps with relief, planned and imported tracks, and a dashboard you lay out yourself. It is built to replace DMD2.
+- **NavExpress Brain** (`main/`), the boards on the bike: ESP32-S3 firmware that reads the bike's CAN bus and works out fuel use, range and gear. It sends all of it to the phone over BLE.
 
-An all-in-one smart dashboard for the **ZongShen Carrera 125 Euro5+**
-(ZS125GY-13-E55), built on an ESP32-S3. It reads the bike's CAN bus,
-shows live engine telemetry on a colour TFT, estimates fuel consumption and
-bridges the data to phone apps over BLE as an ELM327 adapter.
+The name nods to the Espressif ESP32 at the heart of the bike unit. The first bike is a **ZongShen Carrera 125 Euro5+** (ZS125GY-13-E55); sensors, displays and the MCU are meant to be swappable, and the app is designed to work in any country.
 
-## Quick links
+## Get it
 
 | What | Link |
 |---|---|
-| Phone app, newest APK (file name carries the version) | [Releases → latest](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/latest) |
-| Offline maps (Portugal, Madeira, Açores, Espanha; relief, speed limits and cameras) | [Releases "maps-…"](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?q=maps&expanded=true), downloaded by the app itself in Mapa → ☰ |
-| Every app and map build | [All releases](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases) |
-| Sample track to test the GPX screen | [samples/gpx/teste-lisboa-marginal.gpx](samples/gpx/teste-lisboa-marginal.gpx) ([raw download](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/raw/HEAD/samples/gpx/teste-lisboa-marginal.gpx)) |
+| Phone app, newest APK (the file name carries the version; the app also updates itself from Definições → Sobre) | [Latest release](../../releases/latest) |
+| Offline maps: Portugal, Madeira, Açores and Spain, with contours every 10 m, shaded relief, speed limits and cameras | [Releases "maps-…"](../../releases?q=maps&expanded=true), downloaded from inside the app (Mapa → ☰) |
+| Every app and map build | [All releases](../../releases) |
 | How to install and use the app (Portuguese) | [docs/app-telemovel.md](docs/app-telemovel.md) |
-| Wiring and pins | [PINOUT.md](PINOUT.md) |
+| Sample track to try the track screens | [samples/gpx/teste-lisboa-marginal.gpx](samples/gpx/teste-lisboa-marginal.gpx) |
+| Wiring and pins of the bike unit | [PINOUT.md](PINOUT.md) |
 | PID scan procedure (Portuguese) | [docs/pid-scan-protocol.md](docs/pid-scan-protocol.md) |
-| Work in progress | [Pull requests](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/pulls) · [CI runs](https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/actions) |
+| Work in progress | [Pull requests](../../pulls) · [CI runs](../../actions) |
+
+## NavExpress Mobile at a glance
+
+- **Map** (MapLibre, fully offline once downloaded): road colours by class, local or Portuguese names, 3D buildings, shaded relief and contour lines. Contour spacing follows the zoom (100 m far out, down to 10 m close in) or can be fixed. Follows the bike heading-up, in 3D or north-up. Auto zoom works from your own speed and zoom ranges. Shows the speed limit sign and warns of speed cameras with a beep.
+- **Tracks**: opens GPX, KML, KMZ, GeoJSON, TCX and FIT. You can also plan a track on the map with numbered waypoints and road routing, or tap **Go there**. Tracks can be reversed, renamed, recoloured, saved or shared as GPX. While you follow one, the bottom strip shows its height profile and how far along you are.
+- **Your own screens**: the Painel and the Mapa are built from elements you pick, such as speed, gear, RPM, fuel, range, temperatures, clock, coordinates, a north rose that tilts with the 3D view, and a lean/pitch gauge. Each sits in a slot grid with small, medium or large slots and its own opacity, and you can drag elements between slots. The map's button bar can sit on any edge.
+- **Looks**: Sand or Graphite by day; warm desert, Graphite or pure-black OLED by night. It can switch by itself at sunset, from the light sensor or with the phone's dark mode. The interface goes from 85 % to 150 % for reading with a helmet on.
+- **Languages**: English, Portuguese, Spanish, French, Italian and German.
+- **With the Brain**: a full bike dashboard, fault codes read and cleared, fuel and gear settings, and the phone's GPS as a speed source for the bike.
 
 The code is kept modular on purpose: sensors, displays and even the MCU are
 expected to change, so each subsystem sits behind its own module and runs in
@@ -46,7 +51,7 @@ The board-level GPIO matrix is in [ESP32_S3_Pinout](ESP32_S3_Pinout).
 Do not add a 120-ohm terminator to the transceiver unless it is a bus
 endpoint; measure the bike's own termination first.
 
-## What it does today
+## NavExpress Brain: what it does today
 
 **CAN and OBD**
 - Non-blocking OBD-II poller (`main/obd_poller.c`). It reads the ECU's
@@ -151,24 +156,8 @@ endpoint; measure the bike's own termination first.
   changes one and stores it. Other commands: `AVG RESET`, `TANK`, `GEAR`,
   `GEAR RESET`, `SPEED`.
 
-**NavExpress Mobile, the phone app** (`android/`, see [docs/app-telemovel.md](docs/app-telemovel.md))
-- Goal: replace DMD2 for riding. Tabs: Mapa, Painel, Controlo, Erros,
-  Diagnóstico.
-- **Mapa** (MapLibre, works offline): regions downloaded from the "maps-…"
-  releases (map, 20 m contour lines, speed limits and speed cameras from
-  OpenStreetMap), day/night/automatic theme, Portuguese or local names, a
-  colour per road class. Follows the bike in heading-up, 3D or north-up,
-  with zoom and tilt set by speed and the bike low on the screen; compass
-  heading when stopped; speed with the road's limit sign and a camera
-  warning with a beep; GPS panel (satellites, accuracy, altitude).
-- **Tracks**: opens GPX, KML, KMZ, GeoJSON, TCX and FIT (also with "Open
-  with" / "Share"); shows, colours, renames and deletes them; follows one
-  with direction arrows, distance left and an off-track warning.
-- Interface size from 85 % to 150 % for reading with a helmet on.
-- Sends the phone's GPS fixes to the board and shows a full dashboard, the
-  controls above and diagnostics. Binary packets in `main/phone_proto.h`,
-  service `6d6f7461-0001-4b1e-9c3a-5a1e00000000`. The APK is built by the
-  "Android app" GitHub Actions workflow.
+**Link to NavExpress Mobile**
+- Sends telemetry to the app and takes the phone's GPS fixes as a speed source. The binary packets are in `main/phone_proto.h`, service `6d6f7461-0001-4b1e-9c3a-5a1e00000000`. The APK is built by the "Android app" GitHub Actions workflow.
 
 **BLE ELM327 emulator**
 - Advertises as `OBDII` with an ELM327-style GATT profile (service `FFF0`,
@@ -234,7 +223,7 @@ rebuilds the offline maps every month from fresh OpenStreetMap data.
 | `main/phone_proto.*` | BLE packets to and from the phone app |
 | `main/rt_params.*` | Runtime parameters in NVS |
 | `android/` | Phone app (Kotlin, Jetpack Compose, MapLibre) |
-| `maps/` | Offline map builder for the "Map data" workflow (regions, contours, speed limits) |
+| `maps/` | Offline map builder for the "Map data" workflow (regions, contours, shaded relief, speed limits) |
 | `samples/` | Test files (GPX track) |
 | `docs/` | Test procedures |
 | `main/Kconfig.projbuild` | `menuconfig` options for fuel and dashboard thresholds |
@@ -247,7 +236,7 @@ rebuilds the offline maps every month from fresh OpenStreetMap data.
 - **Two 1.5" 360x360 round displays** driven with LVGL, with several pages of
   screens switched by handlebar buttons.
 - **Stock dash signals**: gear position, blinkers, lights and fuel level.
-- **IMU** for lean angle and acceleration.
+- **IMU** on the bike for lean angle and acceleration (the app already shows lean from the phone).
 - **GPS** for speed, position and trip logging.
 - **Alarm** with movement detection.
 - **Independent battery** so the dashboard and alarm keep running with the
