@@ -1,0 +1,46 @@
+name: BRouter probe
+
+# Temporary: how turn instructions come out of the BRouter library and server.
+on:
+  push:
+    paths: [".github/workflows/brouter-probe.yml"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - run: |
+          git clone -q --branch v1.7.10 --depth 1 https://github.com/abrensch/brouter.git b
+          for f in VoiceHint VoiceHintList; do p=$(find b -name $f.java | head -1); echo "===== $p"; grep -nE 'public|static final int|int [a-zA-Z]+;|double [a-zA-Z]+;|float [a-zA-Z]+;' $p | head -80; done
+          grep -nE 'voiceHints|turnInstructionMode' b/brouter-core/src/main/java/btools/router/OsmTrack.java | head -20
+          grep -nE 'turnInstructionMode' b/brouter-core/src/main/java/btools/router/RoutingContext.java | head
+          mkdir -p seg cls
+          curl -sS -o seg/W10_N35.rd5 https://brouter.de/brouter/segments4/W10_N35.rd5
+          cat > Smoke.java <<'J'
+          import btools.router.*; import java.io.File; import java.util.*; import java.lang.reflect.*;
+          public class Smoke { public static void main(String[] a) throws Exception {
+            RoutingContext rc = new RoutingContext();
+            rc.localFunction = new File(a[1], "car-vario.brf").getAbsolutePath();
+            List<OsmNodeNamed> wp = new RoutingParamCollector().readPositions(new double[]{-9.1500, -9.3817}, new double[]{38.7253, 38.7979});
+            RoutingEngine re = new RoutingEngine(null, null, new File(a[0]), wp, rc);
+            re.quite = true; re.doRun(60000);
+            OsmTrack t = re.getFoundTrack();
+            System.out.println("err=" + re.getErrorMessage() + " nodes=" + t.nodes.size() + " mode=" + rc.turnInstructionMode);
+            Field f = OsmTrack.class.getDeclaredField("voiceHints"); f.setAccessible(true);
+            Object vl = f.get(t); System.out.println("vl=" + vl);
+            if (vl != null) for (Field g : vl.getClass().getDeclaredFields()) { g.setAccessible(true); Object v = g.get(vl);
+              if (v instanceof List) { List<?> l = (List<?>) v; System.out.println(g.getName() + " size=" + l.size());
+                for (Object h : l.subList(0, Math.min(8, l.size()))) { StringBuilder sb = new StringBuilder();
+                  for (Field k : h.getClass().getDeclaredFields()) { if (Modifier.isStatic(k.getModifiers())) continue; k.setAccessible(true); Object x = k.get(h); sb.append(k.getName()).append('=').append(x instanceof List ? "list" : x).append(' '); }
+                  for (String m : new String[]{"getCommandString", "getMessageString", "getLocusAction", "getCommand"}) try { Method mm = h.getClass().getMethod(m); sb.append(m).append('=').append(mm.invoke(h)).append(' '); } catch (Exception e) {}
+                  System.out.println("  " + sb); } }
+              else System.out.println(g.getName() + "=" + v); }
+          }}
+          J
+          find b/brouter-core b/brouter-mapaccess b/brouter-util b/brouter-expressions b/brouter-codec -path '*src/main/java*' -name '*.java' > files.txt
+          javac -nowarn -d cls @files.txt Smoke.java 2>&1 | tail -5
+          java -Xmx256m -cp cls Smoke seg b/misc/profiles2
+          echo "== online"; curl -sS "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-vario&timode=2&lonlats=-9.15,38.7253%7C-9.3817,38.7979" | python3 -c "import json,sys; d=json.load(sys.stdin); p=d['features'][0]['properties']; print({k:(v if k!='messages' else len(v)) for k,v in p.items() if k!='messages'}); print(p.get('voicehints',[])[:8])"
