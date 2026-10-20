@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">NavExpress</string>
+    <string name="app_name" translatable="false">NavExpress</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_phone">Phone language</string>
 </resources>

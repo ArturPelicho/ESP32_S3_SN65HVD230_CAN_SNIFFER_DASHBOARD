@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_phone">Idioma do telemóvel</string>
+</resources>

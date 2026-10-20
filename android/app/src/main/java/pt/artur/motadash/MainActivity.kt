@@ -2,6 +2,7 @@ package pt.artur.motadash
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -63,8 +64,13 @@ class MainActivity : ComponentActivity() {
     private val askBackground =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        L.init(this)
         if (Permissions.ready(this)) MotaService.start(this) else askPermissions.launch(Permissions.needed())
         applyScreenOn()
         applyOrientation()

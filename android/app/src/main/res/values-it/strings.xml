@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_language">Lingua</string>
+    <string name="settings_language_phone">Lingua del telefono</string>
+</resources>

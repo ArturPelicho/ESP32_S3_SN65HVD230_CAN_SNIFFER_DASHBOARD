@@ -21,6 +21,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import pt.artur.motadash.R
+import pt.artur.motadash.AppLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,6 +87,16 @@ fun ControlScreen(activity: MainActivity) {
     val ctx = LocalContext.current
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
+        Section(stringResource(R.string.settings_language)) {
+            val current = remember { AppLocale.tag(ctx) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                AppLocale.OPTIONS.forEach { (tag, name) ->
+                    FilterChip(selected = current == tag,
+                        onClick = { if (tag != current) { AppLocale.set(ctx, tag); activity.recreate() } },
+                        label = { Text(name ?: stringResource(R.string.settings_language_phone)) })
+                }
+            }
+        }
         Section("Consumos") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 Button(enabled = connected, onClick = { Link.send("AVG RESET") }) { Text("Reset da média") }
