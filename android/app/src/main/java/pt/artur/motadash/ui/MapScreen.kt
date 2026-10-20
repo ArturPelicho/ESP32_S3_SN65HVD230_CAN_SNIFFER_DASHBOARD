@@ -31,6 +31,14 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.mutableIntStateOf
+import pt.artur.motadash.MapLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -175,9 +183,12 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     }
 
     /** Buildings in volume only in the 3D follow mode. */
+    /** The 3D buildings layer is on (layers button); they show only in the 3D view. */
+    var buildings3d = true
+
     fun show3dBuildings() {
         val s = style ?: return
-        val v = if (mode == FollowMode.THREE_D) Property.VISIBLE else Property.NONE
+        val v = if (mode == FollowMode.THREE_D && buildings3d) Property.VISIBLE else Property.NONE
         for (l in s.layers) if (l.id.startsWith("building-3d-")) l.setProperties(PropertyFactory.visibility(v))
     }
 
@@ -536,6 +547,7 @@ private fun arrowBitmap(): Bitmap {
 }
 
 @SuppressLint("MissingPermission") // location permission is asked for at app start
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MapScreen() {
     val ctx = LocalContext.current
@@ -556,7 +568,9 @@ fun MapScreen() {
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
-    var editingWidgets by remember { mutableStateOf(false) }
+    var showLayers by remember { mutableStateOf(false) }
+    var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
+    var themeTick by remember { mutableIntStateOf(0) }
     var mapBearing by remember { mutableFloatStateOf(0f) }
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
@@ -649,15 +663,17 @@ fun MapScreen() {
     val speed = stillFiltered(telemetry?.displaySpeed) ?: phoneSpeed
     SideEffect { holder.speedKmh = speed ?: 0.0 }
 
-    val night = when (theme) {
+    // Linked to the app theme, the map is dark exactly when the app is; otherwise its own day/night choice.
+    val linked = ThemeStore.linkMap(ctx)
+    val night = if (linked) Palette.dark else when (theme) {
         MapTheme.DAY -> false
         MapTheme.NIGHT -> true
         MapTheme.AUTO -> minute.let { MapStyle.isNight(fix?.latitude ?: 39.5, fix?.longitude ?: -8.0) }
     }
     val enabled = installed.filter { it.enabled }
-    val styleJson = remember(enabled, night, lang) { MapStyle.build(enabled, night, lang) }
+    val styleJson = remember(enabled, night, lang, layers) { MapStyle.build(enabled, night, lang, layers) }
 
-    Box(Modifier.fillMaxSize().background(Palette.bg)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { c ->
@@ -735,59 +751,103 @@ fun MapScreen() {
                 it.altitude.toFloat(), System.currentTimeMillis()).declination }
         }
 
-        // Zoom buttons, bottom left (the speed is an element, below).
-        Column(
-            Modifier.align(Alignment.BottomStart).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            MapButton("+") { holder.zoomBy(1.0) }
-            MapButton("−") { holder.zoomBy(-1.0) }
+        // The button bar along one edge (settings), arranged in as many lines as it needs.
+        val side = LayoutStore.barSide(ctx)
+        val buttons = LayoutStore.buttons(ctx)
+        val vertical = side == BarSide.RIGHT || side == BarSide.LEFT
+        val perLine = ((((if (vertical) maxHeight else maxWidth).value - 12f) / 60f).toInt()).coerceAtLeast(1)
+        val lines = (buttons.size + perLine - 1) / perLine
+        val thick = (lines * 60 + 12).dp
+        val inset = PaddingValues(
+            start = if (side == BarSide.LEFT) thick else 0.dp, end = if (side == BarSide.RIGHT) thick else 0.dp,
+            top = if (side == BarSide.TOP) thick else 0.dp, bottom = if (side == BarSide.BOTTOM) thick else 0.dp,
+        )
+        val barAlign = when (side) {
+            BarSide.RIGHT -> Alignment.CenterEnd
+            BarSide.LEFT -> Alignment.CenterStart
+            BarSide.TOP -> Alignment.TopCenter
+            BarSide.BOTTOM -> Alignment.BottomCenter
         }
 
-        // The rider's elements (speed by default; any Painel element can join it).
+        // The rider's elements (speed by default; any Painel element can join it), clear of the bar.
         WidgetBoard(LayoutStore.MAP,
             widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
                 altM = fix?.takeIf { it.hasAltitude() }?.altitude),
-            editing = editingWidgets, onMap = true, onLock = { editingWidgets = false },
-            modifier = Modifier.fillMaxSize())
+            modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
-        // View buttons, right side: follow mode (▲ / 3D / N), follow, theme, maps.
-        Column(
-            Modifier.align(Alignment.CenterEnd).padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            MapButton(mode.button, active = mode != FollowMode.NORTH) {
+        @Composable
+        fun BarButton(b: MapCtl) = when (b) {
+            MapCtl.SETTINGS -> ScreenSettingsButton(Modifier.size(52.dp)) { showSheet = true }
+            MapCtl.MODE -> MapButton(mode.button, active = mode != FollowMode.NORTH) {
                 mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings()
                 holder.setFollow(true); holder.update(600)
             }
-            MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
-            MapButton(
-                when (theme) { MapTheme.AUTO -> stringResource(R.string.map_theme_auto); MapTheme.DAY -> stringResource(R.string.map_theme_day); MapTheme.NIGHT -> stringResource(R.string.map_theme_night) },
-                small = true,
-            ) {
-                theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme)
+            MapCtl.FOLLOW -> MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
+            MapCtl.ZOOM_IN -> MapButton("+") { holder.zoomBy(1.0) }
+            MapCtl.ZOOM_OUT -> MapButton("−") { holder.zoomBy(-1.0) }
+            MapCtl.COMPASS -> CompassButton(mapBearing) {
+                // North up, or back to heading up.
+                mode = if (mode == FollowMode.NORTH) FollowMode.HEADING else FollowMode.NORTH
+                MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings(); holder.update(600)
             }
-            MapButton("☰") { showMaps = true }
+            MapCtl.GPS -> GpsButton(fix, gnss, active = showGps) { showGps = !showGps }
+            MapCtl.DAYNIGHT -> {
+                themeTick
+                val m = if (linked) when (ThemeStore.mode(ctx)) {
+                    ThemeMode.AUTO -> MapTheme.AUTO; ThemeMode.DAY -> MapTheme.DAY; ThemeMode.NIGHT -> MapTheme.NIGHT
+                } else theme
+                MapButton(when (m) {
+                    MapTheme.AUTO -> stringResource(R.string.map_theme_auto)
+                    MapTheme.DAY -> stringResource(R.string.map_theme_day)
+                    MapTheme.NIGHT -> stringResource(R.string.map_theme_night)
+                }, small = true) {
+                    if (linked) { ThemeStore.cycleMode(ctx); themeTick++ }
+                    else { theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme) }
+                }
+            }
+            MapCtl.LAYERS -> LayersButton(active = showLayers) { showLayers = !showLayers }
+            MapCtl.GPX -> MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+            MapCtl.MAPS -> MapButton("☰") { showMaps = true }
         }
 
-        // GPS quality, top left; tap for the GPS panel.
-        Column(Modifier.align(Alignment.TopStart).padding(10.dp)) {
-            val acc = fix?.takeIf { it.hasAccuracy() }?.accuracy
-            val col = when {
-                fix == null || acc == null -> Palette.red
-                acc <= 10 -> Palette.green
-                acc <= 25 -> Palette.orange
-                else -> Palette.red
+        if (vertical) {
+            FlowColumn(
+                Modifier.align(barAlign).fillMaxHeight().padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachColumn = perLine,
+            ) { buttons.forEach { BarButton(it) } }
+        } else {
+            FlowRow(
+                Modifier.align(barAlign).fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = perLine,
+            ) { buttons.forEach { BarButton(it) } }
+        }
+
+        // GPS details and the layers list open next to the bar.
+        val panelAlign = if (side == BarSide.LEFT) Alignment.TopStart else if (side == BarSide.RIGHT) Alignment.TopEnd else Alignment.TopStart
+        if (showGps) Box(Modifier.align(panelAlign).padding(inset).padding(10.dp)) { GpsPanel(fix, gnss, speed) }
+        if (showLayers) {
+            Column(
+                Modifier.align(barAlign).padding(inset).padding(10.dp)
+                    .background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                MapLayer.entries.forEach { l ->
+                    FilterChip(selected = l in layers, onClick = {
+                        val on = l !in layers
+                        MapStore.setLayer(ctx, l, on)
+                        layers = if (on) layers + l else layers - l
+                        if (l == MapLayer.BUILDINGS_3D) { holder.buildings3d = on; holder.show3dBuildings() }
+                    }, label = { Text(l.label) })
+                }
+                if (enabled.none { it.shade != null || it.contours != null }) {
+                    Text(stringResource(R.string.map_layers_hint), color = Palette.label, fontSize = 12.sp)
+                }
             }
-            Text(
-                if (fix == null) stringResource(R.string.map_gps_no_signal) else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
-                color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.background(Palette.overlaySoft, RoundedCornerShape(8.dp))
-                    .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
-            )
-            if (showGps) GpsPanel(fix, gnss, speed)
-            if (!showGps && abs(wrap180(mapBearing)) > 1f) NorthNeedle(mapBearing)
         }
 
         Column(
@@ -878,11 +938,6 @@ fun MapScreen() {
             )
         }
 
-        // Tracks button and the screen settings, top right.
-        Row(Modifier.align(Alignment.TopEnd).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
-            if (!editingWidgets) ScreenSettingsButton(Modifier.size(52.dp)) { showSheet = true }
-        }
         trackMessage?.takeIf { !showTracks }?.let {
             Text(it, color = Palette.text, fontSize = 14.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
@@ -917,8 +972,8 @@ fun MapScreen() {
         }
 
         if (showSheet) {
-            WidgetSheet(LayoutStore.MAP, stringResource(R.string.w_map_title),
-                onMove = { showSheet = false; editingWidgets = true }, onClose = { showSheet = false }) {
+            WidgetSheet(LayoutStore.MAP, stringResource(R.string.w_map_title), onClose = { showSheet = false }) {
+                BarSettings()
                 OutlinedButton(onClick = { showSheet = false; showMaps = true }) { Text(stringResource(R.string.w_map_settings)) }
             }
         }
@@ -1060,28 +1115,6 @@ private fun TrackBox(t: Track, p: TrackProgress?) {
 
 private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
 
-/** Where north is on the rotated map; not touchable. */
-@Composable
-private fun NorthNeedle(bearing: Float) {
-    Box(
-        Modifier.padding(top = 8.dp).size(44.dp).background(Palette.overlaySoft, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.size(34.dp).rotate(-bearing)) {
-            val w = size.width
-            val h = size.height
-            val north = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.08f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            val south = androidx.compose.ui.graphics.Path().apply {
-                moveTo(w / 2, h * 0.92f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
-            }
-            drawPath(north, Color(0xFFE2463C))
-            drawPath(south, Color(0xFFDDE2E8))
-        }
-    }
-}
-
 /** Round road sign with the speed limit. */
 @Composable
 internal fun LimitSign(kmh: Int, small: Boolean = false, scale: Float = 1f) {
@@ -1150,6 +1183,72 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
         KeyValue(stringResource(R.string.map_gps_satellites), stringResource(R.string.map_gps_sats_used, gnss.used, gnss.visible))
         for ((name, vu) in gnss.byName) KeyValue("  $name", "${vu.second}/${vu.first}")
         if (gnss.bestCn0 > 0) KeyValue(stringResource(R.string.map_gps_best), "%.0f dB-Hz".format(gnss.bestCn0))
+    }
+}
+
+/** Where north is on the rotated map; tap for north up (or back to heading up). */
+@Composable
+private fun CompassButton(bearing: Float, onClick: () -> Unit) {
+    Box(
+        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
+            .border(2.dp, Palette.frame, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(36.dp).rotate(-bearing)) {
+            val w = size.width
+            val h = size.height
+            val north = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, h * 0.08f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
+            }
+            val south = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w / 2, h * 0.92f); lineTo(w * 0.68f, h / 2); lineTo(w * 0.32f, h / 2); close()
+            }
+            drawPath(north, Color(0xFFE2463C))
+            drawPath(south, Palette.label)
+        }
+    }
+}
+
+/** GPS quality at a glance (satellites used, accuracy); tap for the GPS panel. */
+@Composable
+private fun GpsButton(fix: Location?, gnss: Gnss, active: Boolean, onClick: () -> Unit) {
+    val acc = fix?.takeIf { it.hasAccuracy() }?.accuracy
+    val col = when {
+        fix == null || acc == null -> Palette.red
+        acc <= 10 -> Palette.green
+        acc <= 25 -> Palette.orange
+        else -> Palette.red
+    }
+    Column(
+        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
+            .border(2.dp, if (active) Palette.cyan else col, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        Text("GPS", color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(if (fix == null) "--" else acc?.let { "±%.0f".format(it) } ?: "${gnss.used}", color = Palette.label, fontSize = 11.sp)
+    }
+}
+
+/** Three stacked sheets, the usual layers icon. */
+@Composable
+private fun LayersButton(active: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.size(52.dp).background(Palette.overlay, RoundedCornerShape(14.dp))
+            .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        val c = if (active) Palette.cyan else Palette.text
+        Canvas(Modifier.size(30.dp)) {
+            val w = size.width
+            val h = size.height
+            for (k in 0..2) {
+                val y = h * (0.28f + k * 0.22f)
+                val p = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w / 2, y - h * 0.16f); lineTo(w * 0.95f, y); lineTo(w / 2, y + h * 0.16f); lineTo(w * 0.05f, y); close()
+                }
+                if (k == 0) drawPath(p, c) else drawPath(p, c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f))
+            }
+        }
     }
 }
 

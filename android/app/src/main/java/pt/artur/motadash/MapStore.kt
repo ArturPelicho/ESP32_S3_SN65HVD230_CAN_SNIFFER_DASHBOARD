@@ -62,6 +62,12 @@ enum class FollowMode(@StringRes private val res: Int, val button: String) {
     fun next() = entries[(ordinal + 1) % entries.size]
 }
 
+/** Map layers the rider can switch on and off from the map's layers button. */
+enum class MapLayer(@StringRes val res: Int) {
+    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras);
+    val label: String get() = L.s(res)
+}
+
 /** State of a region's download, for the Mapas list. */
 data class DownloadState(val done: Long, val total: Long, val failed: Boolean = false)
 
@@ -100,6 +106,16 @@ object MapStore {
     fun setAutoZoom(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("auto_zoom", on).apply()
     fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
     fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
+
+    fun layers(ctx: Context): Set<MapLayer> {
+        val off = prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()
+        return MapLayer.entries.filter { it.name !in off }.toSet()
+    }
+    fun setLayer(ctx: Context, l: MapLayer, on: Boolean) {
+        val off = (prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()).toMutableSet()
+        if (on) off -= l.name else off += l.name
+        prefs(ctx).edit().putStringSet("layers_off", off).apply()
+    }
 
     /** Trajetos planned on the map follow the roads (BRouter, needs network) instead of straight lines. */
     fun routeRoads(ctx: Context): Boolean = prefs(ctx).getBoolean("route_roads", true)

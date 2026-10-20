@@ -33,12 +33,15 @@ data class Scheme(
     val green: Color, val blue: Color, val orange: Color, val red: Color, val yellow: Color,
 )
 
-/** Day: sand and burnt orange, dark ink; readable in full sun. */
+/**
+ * Day: warm tan sand with lighter sand panels, near-black ink and deep accents,
+ * for full sun (on the panel: text 13:1, label 9:1, accents and status colours >= 4.5:1).
+ */
 val SAND = Scheme(
-    dark = false, bg = Color(0xFFE9DEC7), panel = Color(0xFFF5EDDC), frame = Color(0xFFCDB78F),
-    label = Color(0xFF6E5A41), text = Color(0xFF2A2017), dim = Color(0xFFC2B194),
-    amber = Color(0xFFB45A17), cyan = Color(0xFF1C6F80),
-    green = Color(0xFF2E7D32), blue = Color(0xFF1F5FA6), orange = Color(0xFFC25700), red = Color(0xFFC62828), yellow = Color(0xFF8C6D00),
+    dark = false, bg = Color(0xFFD8BF8E), panel = Color(0xFFEAD7AE), frame = Color(0xFFA88A55),
+    label = Color(0xFF3F2E1A), text = Color(0xFF1A1108), dim = Color(0xFFC2A877),
+    amber = Color(0xFF8C3208), cyan = Color(0xFF0B5560),
+    green = Color(0xFF1E5E22), blue = Color(0xFF17448A), orange = Color(0xFF934700), red = Color(0xFFA01A1A), yellow = Color(0xFF6E5400),
 )
 
 /** Night: the same desert after dark, coffee-black with warm amber; nothing glaring. */

@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,18 +68,29 @@ private const val RPM_MAX = 10500f
 private const val SHIFT_LIGHTS = 12
 private const val SHIFT_LIGHTS_FROM = 6000f
 
-/** The Painel: the chosen elements at their places, and the settings button in the corner. */
+/**
+ * The Painel: a top strip with the shift lights and the settings button, and below it the chosen
+ * elements in their slots.
+ */
 @Composable
 fun DashboardScreen() {
+    val ctx = LocalContext.current
     val d = widgetData()
     var sheet by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf(false) }
+    val shift = Widget.SHIFT in LayoutStore.shown(ctx, LayoutStore.DASH, isLandscape())
     Box(Modifier.fillMaxSize().background(Palette.bg)) {
-        WidgetBoard(LayoutStore.DASH, d, editing, onMap = false, onLock = { editing = false },
-            modifier = Modifier.fillMaxSize().padding(6.dp))
-        if (!editing) ScreenSettingsButton(Modifier.align(Alignment.TopEnd).padding(4.dp)) { sheet = true }
-        if (sheet) WidgetSheet(LayoutStore.DASH, stringResource(R.string.w_dash_title),
-            onMove = { sheet = false; editing = true }, onClose = { sheet = false })
+        Column(Modifier.fillMaxSize().padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth().height(32.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f).height(18.dp)) { if (shift) ShiftLights(d, Modifier.fillMaxSize()) }
+                ScreenSettingsButton(Modifier.size(32.dp)) { sheet = true }
+            }
+            WidgetBoard(LayoutStore.DASH, d, drawShift = false, modifier = Modifier.fillMaxSize())
+        }
+        if (sheet) WidgetSheet(LayoutStore.DASH, stringResource(R.string.w_dash_title), onClose = { sheet = false }) {
+            Text(stringResource(R.string.w_dash_settings), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            DashSettings()
+        }
     }
 }
 

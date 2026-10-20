@@ -14,6 +14,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -47,6 +52,7 @@ import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
 import pt.artur.motadash.ui.ThemeStore
+import pt.artur.motadash.ui.LightSensor
 import androidx.compose.runtime.SideEffect
 import kotlinx.coroutines.delay
 import pt.artur.motadash.ui.UiScale
@@ -91,6 +97,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        LightSensor.start(this)     // listens only when the theme follows the light sensor
+        ThemeStore.apply(this)
+    }
+
+    override fun onPause() {
+        LightSensor.stop()
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -160,27 +177,30 @@ private fun App(activity: MainActivity) {
         stringResource(R.string.tab_settings),
     )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    // AUTO theme follows sunset: look again every minute.
+    // AUTO theme by sunset: look again every minute.
     LaunchedEffect(Unit) { while (true) { ThemeStore.apply(activity); delay(60_000) } }
     Column(Modifier.fillMaxSize().background(Palette.bg)) {
-        if (landscape) {
-            // Slim tabs so the dashboard keeps the height.
-            Row(Modifier.fillMaxWidth().height(30.dp)) {
-                titles.forEachIndexed { i, t ->
-                    Box(Modifier.weight(1f).fillMaxHeight().clickable { tab = i }, contentAlignment = Alignment.Center) {
-                        Text(t, fontSize = 13.sp, color = when {
-                            tab == i -> Palette.amber
+        // Tabs as separate keys, so each one's edges are plain; slimmer in landscape to keep the height.
+        Row(
+            Modifier.fillMaxWidth().height(if (landscape) 34.dp else 46.dp).padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            titles.forEachIndexed { i, t ->
+                val on = tab == i
+                Box(
+                    Modifier.weight(1f).fillMaxHeight()
+                        .background(if (on) Palette.amber else Palette.panel, RoundedCornerShape(8.dp))
+                        .border(1.dp, if (on) Palette.amber else Palette.frame, RoundedCornerShape(8.dp))
+                        .clickable { tab = i },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(t, fontSize = if (landscape) 13.sp else 14.sp, maxLines = 1,
+                        fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                        color = when {
+                            on -> Palette.bg
                             i == 2 && dtc.total > 0 -> Palette.orange
-                            else -> Palette.label
+                            else -> Palette.text
                         })
-                    }
-                }
-            }
-        } else {
-            TabRow(selectedTabIndex = tab, containerColor = Palette.bg, contentColor = Palette.amber) {
-                titles.forEachIndexed { i, t ->
-                    Tab(selected = tab == i, onClick = { tab = i },
-                        text = { Text(t, maxLines = 1, color = if (i == 2 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })
                 }
             }
         }

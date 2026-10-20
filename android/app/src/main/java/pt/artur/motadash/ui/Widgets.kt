@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,21 +31,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -53,9 +63,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -73,33 +83,49 @@ import pt.artur.motadash.R
 import pt.artur.motadash.Telemetry
 
 /**
- * Everything the rider can show on the Painel or on the Mapa. [refW] x [refH] (dp) is the size the
- * element is drawn at scale 1; a bigger or smaller box scales its text with it.
+ * Everything the rider can show on the Painel or on the Mapa. Each takes [cols] x [rows] slots of the
+ * screen's grid ([SHIFT] is a strip along the top instead). [refW] x [refH] (dp) is the box its text is
+ * drawn for at scale 1; a bigger or smaller slot scales it.
  */
-enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float) {
-    CLUSTER(R.string.w_cluster, 320f, 320f),
-    SHIFT(R.string.w_shift, 400f, 16f),
-    SPEED(R.string.w_speed, 160f, 80f),
-    GEAR(R.string.w_gear, 80f, 80f),
-    RPM(R.string.w_rpm, 130f, 60f),
-    FUEL(R.string.w_fuel, 280f, 110f),
-    RANGE(R.string.w_range, 140f, 70f),
-    CHT(R.string.w_cht, 280f, 70f),
-    FUEL_NOW(R.string.w_fuel_now, 140f, 70f),
-    FUEL_AVG(R.string.w_fuel_avg, 140f, 70f),
-    CLOCK(R.string.w_clock, 120f, 50f),
-    LINK(R.string.w_link, 120f, 50f),
-    BATTERY(R.string.w_battery, 120f, 70f),
-    AIR(R.string.w_air, 120f, 70f),
-    THROTTLE(R.string.w_throttle, 220f, 50f),
-    TRIP(R.string.w_trip, 220f, 90f),
-    COORDS(R.string.w_coords, 190f, 50f),
-    ALTITUDE(R.string.w_altitude, 120f, 70f),
-    FAULTS(R.string.w_faults, 280f, 56f),
+enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val cols: Int, val rows: Int) {
+    CLUSTER(R.string.w_cluster, 320f, 320f, 3, 5),
+    SHIFT(R.string.w_shift, 400f, 16f, 0, 0),
+    SPEED(R.string.w_speed, 160f, 64f, 2, 1),
+    GEAR(R.string.w_gear, 80f, 80f, 1, 1),
+    RPM(R.string.w_rpm, 130f, 60f, 1, 1),
+    FUEL(R.string.w_fuel, 280f, 110f, 2, 2),
+    RANGE(R.string.w_range, 140f, 70f, 1, 1),
+    CHT(R.string.w_cht, 280f, 70f, 2, 1),
+    FUEL_NOW(R.string.w_fuel_now, 140f, 70f, 1, 1),
+    FUEL_AVG(R.string.w_fuel_avg, 140f, 70f, 1, 1),
+    CLOCK(R.string.w_clock, 120f, 50f, 1, 1),
+    LINK(R.string.w_link, 120f, 50f, 1, 1),
+    BATTERY(R.string.w_battery, 140f, 70f, 1, 1),
+    AIR(R.string.w_air, 140f, 70f, 1, 1),
+    THROTTLE(R.string.w_throttle, 220f, 50f, 2, 1),
+    TRIP(R.string.w_trip, 220f, 90f, 2, 2),
+    COORDS(R.string.w_coords, 190f, 50f, 2, 1),
+    ALTITUDE(R.string.w_altitude, 140f, 70f, 1, 1),
+    FAULTS(R.string.w_faults, 280f, 56f, 2, 1),
 }
 
-/** Where an element sits, as fractions of its screen (so it fits any phone). */
-data class Place(val x: Float, val y: Float, val w: Float, val h: Float)
+/** Slot size; Medium is 120 x 60 dp. */
+enum class SlotSize(val k: Float, @StringRes val res: Int) {
+    SMALL(0.8f, R.string.w_size_s), MEDIUM(1f, R.string.w_size_m), LARGE(1.3f, R.string.w_size_l)
+}
+
+/** Where the map's buttons sit; they arrange themselves along that edge. */
+enum class BarSide(@StringRes val res: Int) {
+    RIGHT(R.string.w_bar_right), LEFT(R.string.w_bar_left), TOP(R.string.w_bar_top), BOTTOM(R.string.w_bar_bottom)
+}
+
+/** The map's buttons, in bar order. Settings can't be hidden (it is the way back to the others). */
+enum class MapCtl(@StringRes val res: Int, val hideable: Boolean = true) {
+    SETTINGS(R.string.w_btn_settings, hideable = false),
+    MODE(R.string.w_btn_mode), FOLLOW(R.string.w_btn_follow), ZOOM_IN(R.string.w_btn_zoom_in), ZOOM_OUT(R.string.w_btn_zoom_out),
+    COMPASS(R.string.w_btn_compass), GPS(R.string.w_btn_gps), DAYNIGHT(R.string.w_btn_daynight),
+    LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), MAPS(R.string.w_btn_maps),
+}
 
 /** What the elements show; each screen fills it from the board and, on the map, the phone's GPS. */
 class WidgetData(
@@ -130,94 +156,180 @@ fun widgetData(
     )
 }
 
-/** Which elements each screen shows, and where, per orientation. Kept in the app's preferences. */
+/** A rectangle of slots: column, row, width and height in slots. */
+data class Slot(val c: Int, val r: Int, val w: Int, val h: Int) {
+    fun overlaps(o: Slot) = c < o.c + o.w && o.c < c + w && r < o.r + o.h && o.r < r + h
+}
+
+/**
+ * Which elements each screen shows (in order), the slot each one sits in per slot size, the slot size,
+ * the see-through level, and the map's button bar. Kept in the app's preferences, per screen and orientation.
+ */
 object LayoutStore {
     const val DASH = "dash"
     const val MAP = "map"
 
-    private val loaded = HashMap<String, Map<Widget, Place?>>()
-    /** Bumped on every change; reading it in [get] makes composables redraw on changes. */
+    /** Bumped on every change; reading it makes composables redraw on changes. */
     private var version by mutableIntStateOf(0)
+    private val movingState = mutableStateMapOf<String, Boolean>()
+    /** Shown elements the board found no room for, per screen (the settings say so). */
+    val unplaced = mutableStateMapOf<String, Set<Widget>>()
 
-    private fun key(screen: String, land: Boolean) = "layout_${screen}_${if (land) "land" else "port"}"
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("app", Context.MODE_PRIVATE)
+    private fun orient(land: Boolean) = if (land) "land" else "port"
+    private fun changed() { version++ }
 
-    /** Shown elements; a null place means "not placed yet" (the board puts it in the middle). */
-    fun get(ctx: Context, screen: String, land: Boolean): Map<Widget, Place?> {
+    fun moving(screen: String) = movingState[screen] == true
+    fun setMoving(screen: String, on: Boolean) { movingState[screen] = on }
+
+    fun shown(ctx: Context, screen: String, land: Boolean): List<Widget> {
         version
-        return loaded.getOrPut(key(screen, land)) {
-            prefs(ctx).getString(key(screen, land), null)?.let { parse(it) } ?: defaults(screen, land)
-        }
+        val s = prefs(ctx).getString("shown_${screen}_${orient(land)}", null) ?: return defaultShown(screen, land)
+        return s.split(',').mapNotNull { n -> Widget.entries.firstOrNull { it.name == n } }
     }
 
-    fun set(ctx: Context, screen: String, land: Boolean, layout: Map<Widget, Place?>) {
-        val k = key(screen, land)
-        loaded[k] = layout
-        version++
-        val o = JSONObject()
-        layout.forEach { (w, p) ->
-            o.put(w.name, p?.let { JSONArray(listOf(it.x.toDouble(), it.y.toDouble(), it.w.toDouble(), it.h.toDouble())) } ?: JSONObject.NULL)
-        }
-        prefs(ctx).edit().putString(k, o.toString()).apply()
+    private fun setShown(ctx: Context, screen: String, land: Boolean, list: List<Widget>) {
+        prefs(ctx).edit().putString("shown_${screen}_${orient(land)}", list.joinToString(",") { it.name }).apply()
+        changed()
     }
 
-    fun place(ctx: Context, screen: String, land: Boolean, w: Widget, p: Place) =
-        set(ctx, screen, land, get(ctx, screen, land) + (w to p))
-
+    /** On: joins at the end and takes the first free slot. */
     fun toggle(ctx: Context, screen: String, land: Boolean, w: Widget, on: Boolean) {
-        val cur = get(ctx, screen, land)
-        set(ctx, screen, land, if (on) cur + (w to defaults(screen, land)[w]) else cur - w)
+        val cur = shown(ctx, screen, land)
+        setShown(ctx, screen, land, if (on) cur - w + w else cur - w)
     }
 
+    fun size(ctx: Context, screen: String): SlotSize {
+        version
+        return SlotSize.entries.firstOrNull { it.name == prefs(ctx).getString("size_$screen", null) } ?: SlotSize.MEDIUM
+    }
+    fun setSize(ctx: Context, screen: String, s: SlotSize) { prefs(ctx).edit().putString("size_$screen", s.name).apply(); changed() }
+
+    /** Opacity of the elements' backgrounds, 0.2 (almost see-through) to 1. */
+    fun alpha(ctx: Context, screen: String): Float {
+        version
+        return prefs(ctx).getFloat("alpha_$screen", if (screen == MAP) 0.8f else 1f)
+    }
+    fun setAlpha(ctx: Context, screen: String, a: Float) { prefs(ctx).edit().putFloat("alpha_$screen", a).apply(); changed() }
+
+    fun positions(ctx: Context, screen: String, land: Boolean, size: SlotSize): Map<Widget, Pair<Int, Int>> {
+        version
+        val s = prefs(ctx).getString("slots_${screen}_${orient(land)}_${size.name}", null)
+            ?: return if (size == SlotSize.MEDIUM) defaultPositions(screen, land) else emptyMap()
+        return runCatching {
+            val o = JSONObject(s)
+            val out = HashMap<Widget, Pair<Int, Int>>()
+            o.keys().forEach { n ->
+                val w = Widget.entries.firstOrNull { it.name == n } ?: return@forEach
+                val a = o.getJSONArray(n)
+                out[w] = a.getInt(0) to a.getInt(1)
+            }
+            out
+        }.getOrDefault(emptyMap())
+    }
+
+    fun setPositions(ctx: Context, screen: String, land: Boolean, size: SlotSize, p: Map<Widget, Pair<Int, Int>>) {
+        val o = JSONObject()
+        p.forEach { (w, cr) -> o.put(w.name, JSONArray(listOf(cr.first, cr.second))) }
+        prefs(ctx).edit().putString("slots_${screen}_${orient(land)}_${size.name}", o.toString()).apply()
+        changed()
+    }
+
+    /** Back to the original elements and places for this orientation (size and see-through stay). */
     fun reset(ctx: Context, screen: String, land: Boolean) {
-        val k = key(screen, land)
-        loaded[k] = defaults(screen, land)
-        version++
-        prefs(ctx).edit().remove(k).apply()
+        val e = prefs(ctx).edit().remove("shown_${screen}_${orient(land)}")
+        SlotSize.entries.forEach { e.remove("slots_${screen}_${orient(land)}_${it.name}") }
+        e.apply()
+        changed()
     }
 
-    private fun parse(s: String): Map<Widget, Place?>? = runCatching {
-        val o = JSONObject(s)
-        val out = LinkedHashMap<Widget, Place?>()
-        o.keys().forEach { name ->
-            val w = runCatching { Widget.valueOf(name) }.getOrNull() ?: return@forEach
-            val a = o.optJSONArray(name)
-            out[w] = a?.let { Place(it.getDouble(0).toFloat(), it.getDouble(1).toFloat(), it.getDouble(2).toFloat(), it.getDouble(3).toFloat()) }
-        }
-        out
-    }.getOrNull()
+    fun barSide(ctx: Context): BarSide {
+        version
+        return BarSide.entries.firstOrNull { it.name == prefs(ctx).getString("bar_side", null) } ?: BarSide.RIGHT
+    }
+    fun setBarSide(ctx: Context, s: BarSide) { prefs(ctx).edit().putString("bar_side", s.name).apply(); changed() }
 
-    /** The Painel as it was before it could be changed, and the speed alone on the map. */
-    fun defaults(screen: String, land: Boolean): Map<Widget, Place> = when {
-        screen == MAP && land -> mapOf(Widget.SPEED to Place(0.09f, 0.79f, 0.2f, 0.2f))
-        screen == MAP -> mapOf(Widget.SPEED to Place(0.19f, 0.88f, 0.42f, 0.11f))
-        land -> linkedMapOf(
-            Widget.SHIFT to Place(0f, 0f, 0.94f, 0.05f),
-            Widget.CLUSTER to Place(0f, 0.07f, 0.37f, 0.93f),
-            Widget.FUEL to Place(0.38f, 0.07f, 0.35f, 0.3f),
-            Widget.CHT to Place(0.38f, 0.39f, 0.35f, 0.21f),
-            Widget.FUEL_NOW to Place(0.38f, 0.62f, 0.17f, 0.22f),
-            Widget.FUEL_AVG to Place(0.56f, 0.62f, 0.17f, 0.22f),
-            Widget.FAULTS to Place(0.38f, 0.86f, 0.35f, 0.14f),
-            Widget.CLOCK to Place(0.74f, 0.07f, 0.26f, 0.16f),
-            Widget.BATTERY to Place(0.74f, 0.25f, 0.125f, 0.19f),
-            Widget.AIR to Place(0.875f, 0.25f, 0.125f, 0.19f),
-            Widget.THROTTLE to Place(0.74f, 0.46f, 0.26f, 0.16f),
-            Widget.TRIP to Place(0.74f, 0.64f, 0.26f, 0.36f),
+    fun buttons(ctx: Context): List<MapCtl> {
+        version
+        val hidden = prefs(ctx).getStringSet("bar_hidden", emptySet()) ?: emptySet()
+        return MapCtl.entries.filter { !it.hideable || it.name !in hidden }
+    }
+    fun setButton(ctx: Context, b: MapCtl, on: Boolean) {
+        val hidden = (prefs(ctx).getStringSet("bar_hidden", emptySet()) ?: emptySet()).toMutableSet()
+        if (on) hidden -= b.name else hidden += b.name
+        prefs(ctx).edit().putStringSet("bar_hidden", hidden).apply()
+        changed()
+    }
+
+    fun defaultShown(screen: String, land: Boolean): List<Widget> = when {
+        screen == MAP -> listOf(Widget.SPEED)
+        land -> listOf(Widget.SHIFT, Widget.CLUSTER, Widget.FUEL, Widget.CHT, Widget.FUEL_NOW, Widget.FUEL_AVG, Widget.FAULTS,
+            Widget.CLOCK, Widget.LINK, Widget.BATTERY, Widget.AIR, Widget.THROTTLE, Widget.TRIP)
+        else -> listOf(Widget.SHIFT, Widget.CLUSTER, Widget.FUEL, Widget.CLOCK, Widget.BATTERY, Widget.CHT, Widget.AIR,
+            Widget.FUEL_NOW, Widget.FUEL_AVG, Widget.LINK, Widget.TRIP, Widget.FAULTS)
+    }
+
+    /** The original Painel on a medium grid (7 x 5 landscape, 3 wide portrait); anything that doesn't fit flows. */
+    private fun defaultPositions(screen: String, land: Boolean): Map<Widget, Pair<Int, Int>> = when {
+        screen == MAP -> emptyMap()
+        land -> mapOf(
+            Widget.CLUSTER to (0 to 0), Widget.FUEL to (3 to 0), Widget.CHT to (3 to 2), Widget.FUEL_NOW to (3 to 3),
+            Widget.FUEL_AVG to (4 to 3), Widget.FAULTS to (3 to 4), Widget.CLOCK to (5 to 0), Widget.LINK to (6 to 0),
+            Widget.BATTERY to (5 to 1), Widget.AIR to (6 to 1), Widget.THROTTLE to (5 to 2), Widget.TRIP to (5 to 3),
         )
-        else -> linkedMapOf(
-            Widget.SHIFT to Place(0f, 0f, 0.88f, 0.025f),
-            Widget.CLUSTER to Place(0f, 0.035f, 1f, 0.43f),
-            Widget.FAULTS to Place(0f, 0.47f, 1f, 0.07f),
-            Widget.FUEL to Place(0f, 0.55f, 0.5f, 0.16f),
-            Widget.CHT to Place(0.5f, 0.55f, 0.5f, 0.16f),
-            Widget.FUEL_NOW to Place(0f, 0.72f, 0.25f, 0.12f),
-            Widget.FUEL_AVG to Place(0.25f, 0.72f, 0.25f, 0.12f),
-            Widget.CLOCK to Place(0.5f, 0.72f, 0.5f, 0.12f),
-            Widget.BATTERY to Place(0f, 0.85f, 0.25f, 0.15f),
-            Widget.AIR to Place(0.25f, 0.85f, 0.25f, 0.15f),
-            Widget.TRIP to Place(0.5f, 0.85f, 0.5f, 0.15f),
+        else -> mapOf(
+            Widget.CLUSTER to (0 to 0), Widget.FUEL to (0 to 5), Widget.CLOCK to (2 to 5), Widget.BATTERY to (2 to 6),
+            Widget.CHT to (0 to 7), Widget.AIR to (2 to 7), Widget.FUEL_NOW to (0 to 8), Widget.FUEL_AVG to (1 to 8),
+            Widget.LINK to (2 to 8), Widget.TRIP to (0 to 9), Widget.FAULTS to (0 to 11),
         )
+    }
+}
+
+/**
+ * Puts each element in a slot: its saved place if still free and inside the grid, else the first free
+ * one (top-left first, or from the bottom row up on the map so the middle stays clear).
+ */
+fun arrange(order: List<Widget>, saved: Map<Widget, Pair<Int, Int>>, cols: Int, rows: Int, bottomUp: Boolean): Map<Widget, Slot> {
+    val out = LinkedHashMap<Widget, Slot>()
+    fun free(s: Slot) = s.c >= 0 && s.r >= 0 && s.c + s.w <= cols && s.r + s.h <= rows && out.values.none { it.overlaps(s) }
+    val items = order.filter { it.cols > 0 }
+    fun span(w: Widget) = w.cols.coerceAtMost(cols) to w.rows.coerceAtMost(rows)
+    for (w in items) {
+        val (c, r) = saved[w] ?: continue
+        val (sw, sh) = span(w)
+        val s = Slot(c, r, sw, sh)
+        if (free(s)) out[w] = s
+    }
+    for (w in items) {
+        if (w in out) continue
+        val (sw, sh) = span(w)
+        val rowOrder = if (bottomUp) (rows - sh downTo 0) else (0..rows - sh)
+        search@ for (r in rowOrder) for (c in 0..cols - sw) {
+            val s = Slot(c, r, sw, sh)
+            if (free(s)) { out[w] = s; break@search }
+        }
+    }
+    return out
+}
+
+/** Dropping [w] at [to]: onto free slots it moves, onto one other element they swap if both fit; else null. */
+fun dropped(slots: Map<Widget, Slot>, w: Widget, to: Pair<Int, Int>, cols: Int, rows: Int): Map<Widget, Slot>? {
+    val from = slots[w] ?: return null
+    val target = Slot(to.first, to.second, from.w, from.h)
+    if (target.c == from.c && target.r == from.r) return null
+    if (target.c < 0 || target.r < 0 || target.c + target.w > cols || target.r + target.h > rows) return null
+    val hit = slots.filter { (o, s) -> o != w && s.overlaps(target) }
+    return when (hit.size) {
+        0 -> slots + (w to target)
+        1 -> {
+            val (o, os) = hit.entries.first()
+            val back = Slot(from.c, from.r, os.w, os.h)
+            val rest = slots - w - o
+            val ok = back.c + back.w <= cols && back.r + back.h <= rows &&
+                rest.values.none { it.overlaps(target) || it.overlaps(back) } && !back.overlaps(target)
+            if (ok) slots + (w to target) + (o to back) else null
+        }
+        else -> null
     }
 }
 
@@ -225,77 +337,94 @@ object LayoutStore {
 fun isLandscape() = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
 /**
- * The screen's elements at their places. While [editing], each one drags to a new place and its
- * corner handle resizes it; touches elsewhere still reach what is underneath (the map).
+ * The screen's elements in their slots. In move mode the slots show, an element follows the finger
+ * and snaps into the slot it is dropped on (swapping with what was there); touches elsewhere still
+ * reach what is underneath (the map).
  */
 @Composable
-fun WidgetBoard(screen: String, data: WidgetData, editing: Boolean, onMap: Boolean, onLock: () -> Unit, modifier: Modifier = Modifier) {
+fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier, drawShift: Boolean = true) {
     val ctx = LocalContext.current
     val land = isLandscape()
-    val layout = LayoutStore.get(ctx, screen, land)
+    val size = LayoutStore.size(ctx, screen)
+    val alpha = LayoutStore.alpha(ctx, screen)
+    val moving = LayoutStore.moving(screen)
+    val order = LayoutStore.shown(ctx, screen, land)
+    val saved = LayoutStore.positions(ctx, screen, land, size)
+    val bg = Palette.panel.copy(alpha = alpha)
     BoxWithConstraints(modifier) {
         val density = LocalDensity.current
-        val bw = with(density) { maxWidth.toPx() }
-        val bh = with(density) { maxHeight.toPx() }
-        layout.forEach { (w, stored) ->
-            val start = stored ?: with(density) {
-                val pw = (w.refW.dp.toPx() / bw).coerceAtMost(0.9f)
-                val ph = (w.refH.dp.toPx() / bh).coerceAtMost(0.9f)
-                Place((1 - pw) / 2, (1 - ph) / 2, pw, ph)
-            }
-            var p by remember(w, stored, land) { mutableStateOf(start) }
-            fun save() = LayoutStore.place(ctx, screen, land, w, snap(p))
-            Box(
-                Modifier
-                    .offset { IntOffset((p.x * bw).roundToInt(), (p.y * bh).roundToInt()) }
-                    .size(with(density) { (p.w * bw).toDp() }, with(density) { (p.h * bh).toDp() })
-                    .then(if (editing) Modifier
-                        .border(2.dp, Palette.cyan, RoundedCornerShape(10.dp))
-                        .pointerInput(w, land) {
-                            detectDragGestures(onDragEnd = { save() }) { change, d ->
-                                change.consume()
-                                p = p.copy(x = (p.x + d.x / bw).coerceIn(0f, 1f - p.w), y = (p.y + d.y / bh).coerceIn(0f, 1f - p.h))
-                            }
-                        } else Modifier),
-            ) {
-                WidgetCell(w, data, onMap, editing)
-                if (editing) {
-                    Text(stringResource(w.res), color = Palette.cyan, fontSize = 10.sp, maxLines = 1,
-                        modifier = Modifier.align(Alignment.TopStart).background(Palette.overlay, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 4.dp))
-                    // Resize handle.
-                    Box(
-                        Modifier.align(Alignment.BottomEnd).size(30.dp)
-                            .background(Palette.cyan, RoundedCornerShape(topStart = 10.dp, bottomEnd = 10.dp))
-                            .pointerInput(w, land) {
-                                detectDragGestures(onDragEnd = { save() }) { change, d ->
-                                    change.consume()
-                                    p = p.copy(w = (p.w + d.x / bw).coerceIn(0.04f, 1f - p.x), h = (p.h + d.y / bh).coerceIn(0.02f, 1f - p.y))
-                                }
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) { Text("⇲", color = Palette.bg, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        val strip = if (drawShift && Widget.SHIFT in order) 18.dp else 0.dp
+        val top = if (strip > 0.dp) strip + 4.dp else 0.dp
+        val gridH = maxHeight - top
+        val cols = (maxWidth.value / (120 * size.k)).toInt().coerceAtLeast(1)
+        val rows = (gridH.value / (60 * size.k)).toInt().coerceAtLeast(1)
+        val cw = maxWidth / cols
+        val ch = gridH / rows
+        val cwPx = with(density) { cw.toPx() }
+        val chPx = with(density) { ch.toPx() }
+        val slots = remember(order, saved, cols, rows) { arrange(order, saved, cols, rows, bottomUp = screen == LayoutStore.MAP) }
+        SideEffect {
+            val none = order.filter { it.cols > 0 && it !in slots }.toSet()
+            if (LayoutStore.unplaced[screen] != none) LayoutStore.unplaced[screen] = none
+        }
+
+        if (strip > 0.dp) ShiftLights(data, Modifier.fillMaxWidth().height(strip))
+        if (moving) {
+            Canvas(Modifier.offset(y = top).size(maxWidth, gridH)) {
+                for (r in 0 until rows) for (c in 0 until cols) {
+                    drawRoundRect(Palette.frame, Offset(c * cwPx + 4f, r * chPx + 4f), Size(cwPx - 8f, chPx - 8f),
+                        CornerRadius(14f), style = Stroke(2f))
                 }
             }
         }
-        if (editing) {
-            Row(
-                Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
-                    .background(Palette.overlay, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Text(stringResource(R.string.w_move_hint), color = Palette.text, fontSize = 13.sp)
-                Button(onClick = onLock) { Text(stringResource(R.string.w_lock)) }
+        slots.forEach { (w, s) ->
+            key(w) {
+                var drag by remember { mutableStateOf(Offset.Zero) }
+                var dragging by remember { mutableStateOf(false) }
+                Box(
+                    Modifier
+                        .offset(x = cw * s.c, y = top + ch * s.r)
+                        .size(cw * s.w, ch * s.h)
+                        .zIndex(if (dragging) 1f else 0f)
+                        .graphicsLayer {
+                            translationX = drag.x; translationY = drag.y
+                            if (dragging) { scaleX = 1.04f; scaleY = 1.04f }
+                        }
+                        .padding(3.dp)
+                        .then(if (moving) Modifier
+                            .border(2.dp, if (dragging) Palette.amber else Palette.cyan, RoundedCornerShape(10.dp))
+                            .pointerInput(w, s, cols, rows) {
+                                detectDragGestures(
+                                    onDragStart = { dragging = true },
+                                    onDragEnd = {
+                                        val to = (s.c + (drag.x / cwPx).roundToInt()).coerceIn(0, cols - s.w) to
+                                            (s.r + (drag.y / chPx).roundToInt()).coerceIn(0, rows - s.h)
+                                        dropped(slots, w, to, cols, rows)?.let { n ->
+                                            LayoutStore.setPositions(ctx, screen, land, size, n.mapValues { it.value.c to it.value.r })
+                                        }
+                                        drag = Offset.Zero; dragging = false
+                                    },
+                                    onDragCancel = { drag = Offset.Zero; dragging = false },
+                                ) { change, d -> change.consume(); drag += d }
+                            } else Modifier),
+                ) {
+                    WidgetCell(w, data, bg, moving)
+                    if (moving) {
+                        Text(stringResource(w.res), color = Palette.cyan, fontSize = 10.sp, maxLines = 1,
+                            modifier = Modifier.align(Alignment.TopStart).background(Palette.overlay, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 4.dp))
+                    }
+                }
             }
         }
+        if (moving) {
+            Text(stringResource(R.string.w_moving_banner), color = Palette.text, fontSize = 13.sp,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
+                    .background(Palette.overlay, RoundedCornerShape(12.dp))
+                    .clickable { LayoutStore.setMoving(screen, false) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp))
+        }
     }
-}
-
-/** Half a percent grid, so elements line up without pixel hunting. */
-private fun snap(p: Place): Place {
-    fun s(v: Float) = (v * 200).roundToInt() / 200f
-    return Place(s(p.x), s(p.y), s(p.w), s(p.h))
 }
 
 /** The small fixed button in the corner of a tab that opens its screen settings. */
@@ -310,13 +439,17 @@ fun ScreenSettingsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     ) { Text("⚙", color = Palette.text, fontSize = 20.sp) }
 }
 
-/** Toggles for the screen's elements, move mode, reset; [extra] adds the screen's own settings. */
+/**
+ * A screen's settings: its elements, slot size, see-through, move mode and reset; [extra] adds the
+ * screen's own settings below.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WidgetSheet(screen: String, title: String, onMove: () -> Unit, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
+fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
     val ctx = LocalContext.current
     val land = isLandscape()
-    val layout = LayoutStore.get(ctx, screen, land)
+    val shown = LayoutStore.shown(ctx, screen, land)
+    val noRoom = LayoutStore.unplaced[screen] ?: emptySet()
     Column(
         Modifier.fillMaxSize().background(Palette.sheet)
             // Keep touches off whatever is underneath (the map).
@@ -334,18 +467,55 @@ fun WidgetSheet(screen: String, title: String, onMove: () -> Unit, onClose: () -
             Text(stringResource(R.string.w_shown), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Widget.entries.forEach { w ->
-                    val on = w in layout
+                    val on = w in shown
                     FilterChip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
-                        label = { Text(stringResource(w.res)) })
+                        label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
                 }
             }
             Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
                 color = Palette.label, fontSize = 12.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onMove) { Text(stringResource(R.string.w_move)) }
-                OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
+
+            Text(stringResource(R.string.w_size), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            val size = LayoutStore.size(ctx, screen)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SlotSize.entries.forEach { s ->
+                    FilterChip(selected = size == s, onClick = { LayoutStore.setSize(ctx, screen, s) }, label = { Text(stringResource(s.res)) })
+                }
             }
+
+            val alpha = LayoutStore.alpha(ctx, screen)
+            Text(stringResource(R.string.w_alpha, (alpha * 100).roundToInt()), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Slider(value = alpha, onValueChange = { LayoutStore.setAlpha(ctx, screen, (it * 20).roundToInt() / 20f) }, valueRange = 0.2f..1f)
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp)
+                }
+                Switch(checked = LayoutStore.moving(screen), onCheckedChange = { LayoutStore.setMoving(screen, it); if (it) onClose() })
+            }
+            OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
             extra()
+        }
+    }
+}
+
+/** The map's button bar settings: which edge, and which buttons. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun BarSettings() {
+    val ctx = LocalContext.current
+    Text(stringResource(R.string.w_bar), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    val side = LayoutStore.barSide(ctx)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BarSide.entries.forEach { s ->
+            FilterChip(selected = side == s, onClick = { LayoutStore.setBarSide(ctx, s) }, label = { Text(stringResource(s.res)) })
+        }
+    }
+    val on = LayoutStore.buttons(ctx)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        MapCtl.entries.filter { it.hideable }.forEach { b ->
+            FilterChip(selected = b in on, onClick = { LayoutStore.setButton(ctx, b, b !in on) }, label = { Text(stringResource(b.res)) })
         }
     }
 }
@@ -354,8 +524,7 @@ fun WidgetSheet(screen: String, title: String, onMove: () -> Unit, onClose: () -
 
 /** One element in its box, text scaled to the box. */
 @Composable
-private fun WidgetCell(w: Widget, d: WidgetData, onMap: Boolean, editing: Boolean) {
-    val bg = if (onMap) Palette.overlaySoft else Palette.panel
+private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val u = minOf(maxWidth.value / w.refW, maxHeight.value / w.refH).coerceIn(0.4f, 4f)
         when (w) {

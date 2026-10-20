@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Definições: theme and app update (ControlScreen.kt). -->
+<resources>
+    <string name="theme_mode_auto">Auto</string>
+    <string name="theme_mode_day">Day</string>
+    <string name="theme_mode_night">Night</string>
+    <string name="theme_auto_by">Auto follows</string>
+    <string name="theme_by_sun">Sunset</string>
+    <string name="theme_by_light">Light sensor</string>
+    <string name="theme_by_phone">Phone dark mode</string>
+    <string name="theme_no_light_sensor">This phone has no light sensor, so sunset is used.</string>
+    <string name="theme_night_look">Night look</string>
+    <string name="theme_night_desert">Desert night</string>
+    <string name="theme_night_graphite">Graphite</string>
+    <string name="theme_link_map">Map day/night follows the theme</string>
+    <string name="upd_check">Check for update</string>
+    <string name="upd_checking">Checking…</string>
+    <string name="upd_latest">Latest build</string>
+    <string name="upd_up_to_date">Up to date (v%1$s)</string>
+    <string name="upd_available">v%1$s available</string>
+    <string name="upd_install">Download and install</string>
+    <string name="upd_downloading">Downloading… %1$d%%</string>
+    <string name="upd_allow_hint">Allow installs from this app in the page that opened, then tap again.</string>
+    <string name="upd_error">Update failed: %1$s</string>
+    <string name="upd_no_network">No network</string>
+    <string name="upd_no_release">No app release found</string>
+    <string name="set_cat_look">Appearance</string>
+    <string name="set_cat_screen">Screen</string>
+    <string name="set_cat_bike">Bike</string>
+    <string name="set_cat_phone">Phone</string>
+    <string name="set_cat_about">About</string>
+</resources>

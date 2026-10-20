@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Definições: theme and app update (ControlScreen.kt). -->
+<resources>
+    <string name="theme_mode_auto">Auto</string>
+    <string name="theme_mode_day">Tag</string>
+    <string name="theme_mode_night">Nacht</string>
+    <string name="theme_auto_by">Auto folgt</string>
+    <string name="theme_by_sun">Sonnenuntergang</string>
+    <string name="theme_by_light">Lichtsensor</string>
+    <string name="theme_by_phone">Dunkelmodus des Handys</string>
+    <string name="theme_no_light_sensor">Dieses Handy hat keinen Lichtsensor, daher wird der Sonnenuntergang verwendet.</string>
+    <string name="theme_night_look">Nachtansicht</string>
+    <string name="theme_night_desert">Wüstennacht</string>
+    <string name="theme_night_graphite">Graphit</string>
+    <string name="theme_link_map">Tag/Nacht der Karte folgt dem Design</string>
+    <string name="upd_check">Nach Update suchen</string>
+    <string name="upd_checking">Suche…</string>
+    <string name="upd_latest">Neueste Version</string>
+    <string name="upd_up_to_date">Aktuell (v%1$s)</string>
+    <string name="upd_available">v%1$s verfügbar</string>
+    <string name="upd_install">Herunterladen und installieren</string>
+    <string name="upd_downloading">Download… %1$d%%</string>
+    <string name="upd_allow_hint">Installationen aus dieser App auf der geöffneten Seite erlauben, dann erneut tippen.</string>
+    <string name="upd_error">Update fehlgeschlagen: %1$s</string>
+    <string name="upd_no_network">Kein Netz</string>
+    <string name="upd_no_release">Keine App-Version gefunden</string>
+    <string name="set_cat_look">Darstellung</string>
+    <string name="set_cat_screen">Bildschirm</string>
+    <string name="set_cat_bike">Motorrad</string>
+    <string name="set_cat_phone">Telefon</string>
+    <string name="set_cat_about">Über</string>
+</resources>

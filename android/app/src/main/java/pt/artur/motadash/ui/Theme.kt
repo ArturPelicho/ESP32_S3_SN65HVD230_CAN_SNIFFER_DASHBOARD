@@ -2,6 +2,14 @@ package pt.artur.motadash.ui
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -11,9 +19,19 @@ import androidx.core.view.WindowCompat
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.R
 
-/** What the rider picks in Definições; AUTO is sand by day and desert night after sunset. */
-enum class AppTheme(@StringRes val res: Int) {
-    AUTO(R.string.theme_auto), SAND(R.string.theme_sand), NIGHT(R.string.theme_night), GRAPHITE(R.string.theme_graphite)
+/** Day (always Sand), night, or switching by itself. */
+enum class ThemeMode(@StringRes val res: Int) {
+    AUTO(R.string.theme_mode_auto), DAY(R.string.theme_mode_day), NIGHT(R.string.theme_mode_night)
+}
+
+/** What AUTO follows: sunset where the bike is, the phone's light sensor, or the phone's dark mode. */
+enum class AutoBy(@StringRes val res: Int) {
+    SUN(R.string.theme_by_sun), LIGHT(R.string.theme_by_light), PHONE(R.string.theme_by_phone)
+}
+
+/** Which dark scheme night uses. */
+enum class NightScheme(@StringRes val res: Int) {
+    DESERT(R.string.theme_night_desert), GRAPHITE(R.string.theme_night_graphite)
 }
 
 object ThemeStore {
@@ -23,21 +41,77 @@ object ThemeStore {
     @Volatile var lat = 39.5
     @Volatile var lon = -8.0
 
-    fun get(ctx: Context): AppTheme =
-        runCatching { AppTheme.valueOf(prefs(ctx).getString("theme", "AUTO")!!) }.getOrDefault(AppTheme.AUTO)
+    /** The old single choice ("theme": AUTO, SAND, NIGHT, GRAPHITE), read once if nothing newer is saved. */
+    private fun old(ctx: Context): String? = prefs(ctx).getString("theme", null)
 
-    fun set(ctx: Context, t: AppTheme) {
-        prefs(ctx).edit().putString("theme", t.name).apply()
+    fun mode(ctx: Context): ThemeMode {
+        val p = prefs(ctx)
+        val saved = p.getString("theme_mode", null) ?: when (old(ctx)) {
+            "SAND" -> "DAY"
+            "NIGHT", "GRAPHITE" -> "NIGHT"
+            else -> "AUTO"
+        }
+        return runCatching { ThemeMode.valueOf(saved) }.getOrDefault(ThemeMode.AUTO)
+    }
+
+    fun setMode(ctx: Context, m: ThemeMode) {
+        prefs(ctx).edit().putString("theme_mode", m.name).apply()
+        changed(ctx)
+    }
+
+    fun autoBy(ctx: Context): AutoBy =
+        runCatching { AutoBy.valueOf(prefs(ctx).getString("theme_auto_by", "SUN")!!) }.getOrDefault(AutoBy.SUN)
+
+    fun setAutoBy(ctx: Context, a: AutoBy) {
+        prefs(ctx).edit().putString("theme_auto_by", a.name).apply()
+        changed(ctx)
+    }
+
+    fun nightScheme(ctx: Context): NightScheme {
+        val saved = prefs(ctx).getString("theme_night", null) ?: if (old(ctx) == "GRAPHITE") "GRAPHITE" else "DESERT"
+        return runCatching { NightScheme.valueOf(saved) }.getOrDefault(NightScheme.DESERT)
+    }
+
+    fun setNightScheme(ctx: Context, n: NightScheme) {
+        prefs(ctx).edit().putString("theme_night", n.name).apply()
+        changed(ctx)
+    }
+
+    /** True when the map's day/night follows the app theme (its button then calls [cycleMode]). */
+    fun linkMap(ctx: Context): Boolean = prefs(ctx).getBoolean("theme_link_map", true)
+
+    fun setLinkMap(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean("theme_link_map", on).apply()
+    }
+
+    /** AUTO -> DAY -> NIGHT -> AUTO, applied at once. */
+    fun cycleMode(ctx: Context) {
+        val m = mode(ctx)
+        setMode(ctx, ThemeMode.entries[(m.ordinal + 1) % ThemeMode.entries.size])
+    }
+
+    private fun changed(ctx: Context) {
+        LightSensor.sync(ctx)
         apply(ctx)
     }
 
-    /** Picks the scheme for now; call at start, on change, and every minute for AUTO. */
+    /** True when the current settings say night now. */
+    fun isNight(ctx: Context): Boolean = when (mode(ctx)) {
+        ThemeMode.DAY -> false
+        ThemeMode.NIGHT -> true
+        ThemeMode.AUTO -> when (autoBy(ctx)) {
+            AutoBy.SUN -> MapStyle.isNight(lat, lon)
+            AutoBy.LIGHT -> LightSensor.night ?: MapStyle.isNight(lat, lon)
+            AutoBy.PHONE -> (ctx.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+        }
+    }
+
+    /** Picks the scheme for now; call at start, on change, every minute, and when the light sensor decides. */
     fun apply(ctx: Context) {
-        Palette.scheme = when (get(ctx)) {
-            AppTheme.SAND -> SAND
-            AppTheme.NIGHT -> DESERT_NIGHT
-            AppTheme.GRAPHITE -> GRAPHITE
-            AppTheme.AUTO -> if (MapStyle.isNight(lat, lon)) DESERT_NIGHT else SAND
+        Palette.scheme = if (!isNight(ctx)) SAND else when (nightScheme(ctx)) {
+            NightScheme.DESERT -> DESERT_NIGHT
+            NightScheme.GRAPHITE -> GRAPHITE
         }
     }
 
@@ -65,5 +139,96 @@ object ThemeStore {
             isAppearanceLightStatusBars = !s.dark
             isAppearanceLightNavigationBars = !s.dark
         }
+    }
+}
+
+/**
+ * The phone's ambient light sensor, for AUTO by light. Listens only while the activity is
+ * resumed and the setting asks for it. Night below 15 lux, day above 60 lux, each held 5 s.
+ */
+object LightSensor : SensorEventListener {
+    private const val DARK_LUX = 15f
+    private const val BRIGHT_LUX = 60f
+    private const val HOLD_MS = 5_000L
+
+    /** The last decision; null until the first reading (then AUTO uses sunset). */
+    @Volatile var night: Boolean? = null
+        private set
+
+    private var app: Context? = null
+    private var manager: SensorManager? = null
+    private var resumed = false
+    private var lux: Float? = null
+    private var candidate: Boolean? = null
+    private var since = 0L
+    private val handler = Handler(Looper.getMainLooper())
+    private val tick = object : Runnable {
+        override fun run() { decide(); handler.postDelayed(this, 1_000) }
+    }
+
+    /** True when the phone has a light sensor. */
+    fun available(ctx: Context): Boolean =
+        ctx.getSystemService(SensorManager::class.java)?.getDefaultSensor(Sensor.TYPE_LIGHT) != null
+
+    /** From the activity's onResume. */
+    fun start(ctx: Context) {
+        app = ctx.applicationContext
+        resumed = true
+        sync(ctx)
+    }
+
+    /** From the activity's onPause. */
+    fun stop() {
+        resumed = false
+        unregister()
+    }
+
+    /** Listens or not, after a theme setting changed. */
+    fun sync(ctx: Context) {
+        if (app == null) app = ctx.applicationContext
+        val wanted = resumed && ThemeStore.mode(ctx) == ThemeMode.AUTO && ThemeStore.autoBy(ctx) == AutoBy.LIGHT
+        if (!wanted) { unregister(); return }
+        if (manager != null) return
+        val sm = ctx.getSystemService(SensorManager::class.java) ?: return
+        val sensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT) ?: return   // none: AUTO stays on sunset
+        manager = sm
+        sm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        handler.postDelayed(tick, 1_000)
+    }
+
+    private fun unregister() {
+        manager?.unregisterListener(this)
+        manager = null
+        handler.removeCallbacks(tick)
+        lux = null
+        candidate = null
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        lux = event.values.firstOrNull() ?: return
+        decide()
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    /** Hysteresis: a new verdict must hold for [HOLD_MS]; the very first one counts at once. */
+    private fun decide() {
+        val l = lux ?: return
+        val want = when {
+            l < DARK_LUX -> true
+            l > BRIGHT_LUX -> false
+            else -> null
+        }
+        if (want == null || want == night) { candidate = null; return }
+        val now = SystemClock.elapsedRealtime()
+        if (night == null) { decided(want); return }
+        if (candidate != want) { candidate = want; since = now; return }
+        if (now - since >= HOLD_MS) decided(want)
+    }
+
+    private fun decided(v: Boolean) {
+        night = v
+        candidate = null
+        app?.let { ThemeStore.apply(it) }
     }
 }

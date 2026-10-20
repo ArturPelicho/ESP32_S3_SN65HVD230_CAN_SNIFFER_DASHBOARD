@@ -79,7 +79,7 @@ object MapStyle {
      * Full style JSON. [maps] are the enabled regions on the phone; each
      * gets its own vector source, drawn in the same layer order.
      */
-    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage): String {
+    fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage, layers: Set<MapLayer> = MapLayer.entries.toSet()): String {
         val c = if (night) NIGHT else DAY
         val sources = LinkedHashMap<String, Any>()
         val fills = ArrayList<Any>()
@@ -123,7 +123,7 @@ object MapStyle {
                 "fill-opacity" to 0.9,
             ))
             // Shaded relief from the terrain heights, under the water and the roads.
-            m.shade?.let { f ->
+            m.shade?.takeIf { MapLayer.SHADE in layers }?.let { f ->
                 val hs = "hs-${m.id}"
                 sources[hs] = mapOf("type" to "raster-dem", "url" to "pmtiles://file://${f.absolutePath}",
                     "encoding" to "mapbox", "tileSize" to 256, "attribution" to "Copernicus DEM")
@@ -142,7 +142,7 @@ object MapStyle {
                 "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 10, 0.6, 16, 3),
             ), filter = listOf("match", listOf("geometry-type"), listOf("LineString", "MultiLineString"), true, false), minzoom = 10)
 
-            m.contours?.let { f ->
+            m.contours?.takeIf { MapLayer.CONTOURS in layers }?.let { f ->
                 val cs = "ct-${m.id}"
                 sources[cs] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "Copernicus DEM")
@@ -224,7 +224,7 @@ object MapStyle {
                 lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
                     "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,
                 ), minzoom = 12)
-                labels += layer("camera", "symbol", "cameras", source = ls, layout = mapOf(
+                if (MapLayer.CAMERAS in layers) labels += layer("camera", "symbol", "cameras", source = ls, layout = mapOf(
                     "icon-image" to "radar",
                     "icon-size" to listOf("interpolate", listOf("linear"), listOf("zoom"), 12, 0.45, 16, 0.8),
                     "icon-allow-overlap" to true,
