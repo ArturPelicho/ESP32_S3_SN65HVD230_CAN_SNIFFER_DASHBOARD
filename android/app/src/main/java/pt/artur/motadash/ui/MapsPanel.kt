@@ -172,6 +172,7 @@ fun MapsPanel(
                             Text(r?.name ?: id, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                             val size = r?.let {
                                 mb(it.bytes) + (if (it.contoursBytes > 0) " + relevo ${mb(it.contoursBytes)}" else "") +
+                                    (if (it.shadeBytes > 0) " + sombreado ${mb(it.shadeBytes)}" else "") +
                                     if (it.limitsBytes > 0) " + limites ${mb(it.limitsBytes)}" else ""
                             }
                             val state = when {
@@ -197,10 +198,14 @@ fun MapsPanel(
                             r?.url != null && index != null && have != null && have.version < index!!.version ->
                                 Button(onClick = { MapStore.download(ctx, r) }) { Text("Atualizar") }
                         }
-                        // Map already here from before speed limits existed: fetch only those, without the whole map.
-                        if (r != null && r.limitsUrl != null && have != null && have.limits == null && dl == null) {
-                            Button(onClick = { MapStore.download(ctx, r, limitsOnly = true) }) {
-                                Text("Só limites e radares (${mb(r.limitsBytes)})")
+                        // Map already here from before speed limits or relief existed: fetch only those, without the whole map.
+                        val needLimits = r?.limitsUrl != null && have != null && have.limits == null
+                        val needShade = r?.shadeUrl != null && have != null && have.shade == null
+                        if (r != null && dl == null && (needLimits || needShade)) {
+                            val what = listOfNotNull(if (needLimits) "limites e radares" else null, if (needShade) "sombreado" else null)
+                            val bytes = (if (needLimits) r.limitsBytes else 0) + (if (needShade) r.shadeBytes else 0)
+                            Button(onClick = { MapStore.download(ctx, r, extrasOnly = true) }) {
+                                Text("Juntar ${what.joinToString(" e ")} (${mb(bytes)})")
                             }
                         }
                         if (have != null && dl == null) {

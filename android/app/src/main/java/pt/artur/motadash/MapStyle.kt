@@ -122,6 +122,19 @@ object MapStyle {
                     c.earth),
                 "fill-opacity" to 0.9,
             ))
+            // Shaded relief from the terrain heights, under the water and the roads.
+            m.shade?.let { f ->
+                val hs = "hs-${m.id}"
+                sources[hs] = mapOf("type" to "raster-dem", "url" to "pmtiles://file://${f.absolutePath}",
+                    "encoding" to "mapbox", "tileSize" to 256, "attribution" to "Copernicus DEM")
+                fills += mapOf("id" to "hillshade-${m.id}", "type" to "hillshade", "source" to hs, "paint" to mapOf(
+                    "hillshade-exaggeration" to listOf("interpolate", listOf("linear"), listOf("zoom"), 6, 0.45, 14, 0.25),
+                    "hillshade-shadow-color" to if (c === NIGHT) "#000000" else "#5a4a3a",
+                    "hillshade-highlight-color" to if (c === NIGHT) "#2a3038" else "#ffffff",
+                    "hillshade-accent-color" to if (c === NIGHT) "#000000" else "#6b5a48",
+                    "hillshade-illumination-anchor" to "map",
+                ))
+            }
             fills += layer("water", "fill", "water", paint = mapOf("fill-color" to c.water),
                 filter = listOf("match", listOf("geometry-type"), listOf("Polygon", "MultiPolygon"), true, false))
             fills += layer("waterway", "line", "water", paint = mapOf(

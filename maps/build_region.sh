@@ -5,6 +5,7 @@
 #   <id>-<version>.pmtiles          roads, places, water... (Protomaps basemap, OpenStreetMap data)
 #   <id>-relevo-<version>.pmtiles   contour lines every 20 m from the Copernicus 30 m DEM (if the region asks for it)
 #   <id>-limites-<version>.pmtiles  speed limits and speed cameras from OpenStreetMap (Geofabrik extract)
+#   <id>-sombra-<version>.pmtiles   terrain heights (raster-dem) for the shaded relief, with the contours
 set -euo pipefail
 ID="$1"; VER="$2"; PLANET="$3"
 R=$(jq -c --arg id "$ID" '.[] | select(.id == $id)' maps/regions.json)
@@ -51,4 +52,13 @@ tippecanoe -q -f -o "out/$ID-relevo-$VER.pmtiles" -l contours -n "Curvas de nive
   -A "Copernicus DEM GLO-30 (c) DLR/Airbus, ESA" -Z11 -z14 --simplification=6 --no-tile-size-limit \
   -j '{"contours":["any",["==","idx",1],[">=","$zoom",13]]}' "work/$ID-contours.geojsons"
 pmtiles show "out/$ID-relevo-$VER.pmtiles" | head -12 || true   # head closes the pipe early
+
+# Shaded relief is a bonus too: without it the map and contours still publish.
+echo "== $ID: terrain heights for the shaded relief"
+if python3 maps/build_shade.py "work/$ID.vrt" "work/$ID-sombra.mbtiles" "$W" "$S" "$E" "$N" 5 12 &&
+   pmtiles convert "work/$ID-sombra.mbtiles" "out/$ID-sombra-$VER.pmtiles"; then
+  pmtiles show "out/$ID-sombra-$VER.pmtiles" | head -12 || true
+else
+  echo "!! $ID: shaded relief failed, publishing without it"; rm -f "out/$ID-sombra-$VER.pmtiles"
+fi
 rm -rf "$DEM" work/"$ID"*

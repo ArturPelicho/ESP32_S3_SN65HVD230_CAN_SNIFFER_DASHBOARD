@@ -28,6 +28,10 @@ data class MapRegion(
     val limitsFile: String? = null,
     val limitsBytes: Long = 0,
     val limitsUrl: String? = null,
+    /** Terrain heights (raster-dem, Mapbox RGB encoding) for the shaded relief. */
+    val shadeFile: String? = null,
+    val shadeBytes: Long = 0,
+    val shadeUrl: String? = null,
 )
 
 data class MapIndex(val version: String, val regions: List<MapRegion>)
@@ -37,6 +41,8 @@ data class InstalledMap(
     val id: String, val version: String, val enabled: Boolean, val map: File, val contours: File?,
     /** Speed limits and speed cameras (layers "limits" and "cameras"), if downloaded. */
     val limits: File? = null,
+    /** Terrain heights for the shaded relief, if downloaded. */
+    val shade: File? = null,
 )
 
 enum class MapTheme(val label: String) { AUTO("Automático"), DAY("Dia"), NIGHT("Noite") }
@@ -107,7 +113,8 @@ object MapStore {
             if (!map.exists()) return@mapNotNull null
             val contours = p.getString("contours_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
             val limits = p.getString("limits_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
-            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours, limits)
+            val shade = p.getString("shade_$id", null)?.let { File(d, it) }?.takeIf { it.exists() }
+            InstalledMap(id, ver, p.getBoolean("on_$id", true), map, contours, limits, shade)
         }
     }
 
@@ -165,6 +172,7 @@ object MapStore {
             val file = r.getString("file")
             val cf = r.optString("contoursFile").ifEmpty { null }
             val lf = r.optString("limitsFile").ifEmpty { null }
+            val sf = r.optString("shadeFile").ifEmpty { null }
             MapRegion(
                 id = r.getString("id"),
                 name = r.getString("name"),
@@ -178,6 +186,9 @@ object MapStore {
                 limitsFile = lf,
                 limitsBytes = r.optLong("limitsBytes"),
                 limitsUrl = lf?.let { urls?.get(it) } ?: r.optString("limitsUrl").ifEmpty { null },
+                shadeFile = sf,
+                shadeBytes = r.optLong("shadeBytes"),
+                shadeUrl = sf?.let { urls?.get(it) } ?: r.optString("shadeUrl").ifEmpty { null },
             )
         })
     }
@@ -192,6 +203,7 @@ object MapStore {
                 put("contoursUrl", r.contoursUrl ?: "")
                 put("limitsFile", r.limitsFile ?: ""); put("limitsBytes", r.limitsBytes)
                 put("limitsUrl", r.limitsUrl ?: "")
+                put("shadeFile", r.shadeFile ?: ""); put("shadeBytes", r.shadeBytes); put("shadeUrl", r.shadeUrl ?: "")
             }
         }))
     }
@@ -204,20 +216,24 @@ object MapStore {
     private fun dm(ctx: Context) = ctx.getSystemService(DownloadManager::class.java)
 
     /**
-     * Starts (or restarts) the download of a region's map, contour and speed limit files.
-     * With [limitsOnly], fetches just the speed limits for a map already on the phone.
+     * Starts (or restarts) the download of a region's map, contour, speed limit and relief files.
+     * With [extrasOnly], fetches just the speed limits and relief a map already on the phone lacks.
      */
-    fun download(ctx: Context, r: MapRegion, limitsOnly: Boolean = false) {
+    fun download(ctx: Context, r: MapRegion, extrasOnly: Boolean = false) {
         val url = r.url ?: return
         val p = prefs(ctx)
-        if (limitsOnly && (r.limitsFile == null || r.limitsUrl == null || p.getString("file_${r.id}", null) == null)) return
+        if (extrasOnly && p.getString("file_${r.id}", null) == null) return
+        val wantLimits = r.limitsFile != null && r.limitsUrl != null && (!extrasOnly || p.getString("limits_${r.id}", null) == null)
+        val wantShade = r.shadeFile != null && r.shadeUrl != null && (!extrasOnly || p.getString("shade_${r.id}", null) == null)
+        if (extrasOnly && !wantLimits && !wantShade) return
         cancel(ctx, r.id)
         val files = buildList {
-            if (!limitsOnly) {
+            if (!extrasOnly) {
                 add(r.file to url)
                 if (r.contoursFile != null && r.contoursUrl != null) add(r.contoursFile to r.contoursUrl)
             }
-            if (r.limitsFile != null && r.limitsUrl != null) add(r.limitsFile to r.limitsUrl)
+            if (wantLimits) add(r.limitsFile!! to r.limitsUrl!!)
+            if (wantShade) add(r.shadeFile!! to r.shadeUrl!!)
         }
         val ids = files.map { (name, u) ->
             File(dir(ctx), "$name.part").delete()
@@ -230,10 +246,11 @@ object MapStore {
         }
         p.edit()
             .putString("dl_${r.id}", ids.joinToString(","))
-            .putString("dlver_${r.id}", if (limitsOnly) p.getString("ver_${r.id}", "") else available(r.id) ?: "")
-            .putString("dlfile_${r.id}", if (limitsOnly) p.getString("file_${r.id}", "") else r.file)
-            .putString("dlcontours_${r.id}", if (limitsOnly) p.getString("contours_${r.id}", "") else r.contoursFile ?: "")
-            .putString("dllimits_${r.id}", r.limitsFile ?: "")
+            .putString("dlver_${r.id}", if (extrasOnly) p.getString("ver_${r.id}", "") else available(r.id) ?: "")
+            .putString("dlfile_${r.id}", if (extrasOnly) p.getString("file_${r.id}", "") else r.file)
+            .putString("dlcontours_${r.id}", if (extrasOnly) p.getString("contours_${r.id}", "") else r.contoursFile ?: "")
+            .putString("dllimits_${r.id}", if (wantLimits) r.limitsFile else p.getString("limits_${r.id}", "") ?: "")
+            .putString("dlshade_${r.id}", if (wantShade) r.shadeFile else p.getString("shade_${r.id}", "") ?: "")
             .apply()
         pollDownloads(ctx)
     }
@@ -288,14 +305,16 @@ object MapStore {
         val file = p.getString("dlfile_$id", null) ?: return
         val contours = p.getString("dlcontours_$id", "")!!.ifEmpty { null }
         val limits = p.getString("dllimits_$id", "")!!.ifEmpty { null }
-        // A speed-limits-only download leaves the map and contours as they are (no .part for them).
-        for (name in listOfNotNull(file, contours, limits)) {
+        val shade = p.getString("dlshade_$id", "")!!.ifEmpty { null }
+        // An extras-only download leaves the files already here as they are (no .part for them).
+        for (name in listOfNotNull(file, contours, limits, shade)) {
             val part = File(d, "$name.part")
             if (part.exists()) part.renameTo(File(d, name))
         }
         // Old version's files go once the new ones are in place.
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
-            .filter { it != file && it != contours && it != limits }
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null),
+            p.getString("shade_$id", null))
+            .filter { it != file && it != contours && it != limits && it != shade }
             .forEach { File(d, it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) + id)
@@ -304,10 +323,11 @@ object MapStore {
             .apply {
                 if (contours != null) putString("contours_$id", contours) else remove("contours_$id")
                 if (limits != null) putString("limits_$id", limits) else remove("limits_$id")
+                if (shade != null) putString("shade_$id", shade) else remove("shade_$id")
             }
             .putBoolean("on_$id", true)
             .remove("dl_$id").remove("dlver_$id").remove("dlfile_$id").remove("dlcontours_$id")
-            .remove("dllimits_$id")
+            .remove("dllimits_$id").remove("dlshade_$id")
             .apply()
     }
 
@@ -319,11 +339,12 @@ object MapStore {
     fun delete(ctx: Context, id: String) {
         cancel(ctx, id)
         val p = prefs(ctx)
-        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null))
+        listOfNotNull(p.getString("file_$id", null), p.getString("contours_$id", null), p.getString("limits_$id", null),
+            p.getString("shade_$id", null))
             .forEach { File(dir(ctx), it).delete() }
         p.edit()
             .putStringSet("ids", (p.getStringSet("ids", emptySet()) ?: emptySet()) - id)
-            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("limits_$id").remove("on_$id")
+            .remove("ver_$id").remove("file_$id").remove("contours_$id").remove("limits_$id").remove("shade_$id").remove("on_$id")
             .apply()
         refreshInstalled(ctx)
     }
