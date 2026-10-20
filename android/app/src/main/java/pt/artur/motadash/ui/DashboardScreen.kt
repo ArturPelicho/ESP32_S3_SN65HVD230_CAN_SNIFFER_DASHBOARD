@@ -42,11 +42,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.annotation.StringRes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -54,8 +56,10 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 import pt.artur.motadash.DtcState
 import pt.artur.motadash.GpsInfo
+import pt.artur.motadash.L
 import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
+import pt.artur.motadash.R
 import pt.artur.motadash.Telemetry
 
 private const val RPM_MAX = 10500f
@@ -192,7 +196,7 @@ private fun Cluster(s: DashState) {
             Text(if (speed == null) "--" else speed.toInt().toString(),
                 color = if (speed == null) Palette.dim else Palette.text,
                 fontSize = (92 * unit).sp, fontWeight = FontWeight.Bold, lineHeight = (92 * unit).sp)
-            Text("km/h  ${speedSourceTag(t)}", color = Palette.label, fontSize = (13 * unit).sp)
+            Text("km/h  ${speedSourceTag(t)?.let { stringResource(it) } ?: ""}", color = Palette.label, fontSize = (13 * unit).sp)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = (6 * unit).dp)) {
                 Box(
                     Modifier.size((66 * unit).dp).border(3.dp, Palette.cyan, RoundedCornerShape(12.dp)),
@@ -216,27 +220,28 @@ private fun Cluster(s: DashState) {
     }
 }
 
-private fun speedSourceTag(t: Telemetry?): String {
-    if (t == null) return ""
+@StringRes
+private fun speedSourceTag(t: Telemetry?): Int? {
+    if (t == null) return null
     val s = t.speeds
     return when {
-        s.getOrNull(1) != null -> "RODA"
-        s.getOrNull(3) != null -> "MUDANÇA"
-        s.getOrNull(2) != null -> "GPS"
-        s.getOrNull(0) != null -> "GPS TEL."
-        t.fuelSpeed != null -> "MÉDIA"
-        else -> ""
+        s.getOrNull(1) != null -> R.string.dash_src_wheel
+        s.getOrNull(3) != null -> R.string.dash_src_gear
+        s.getOrNull(2) != null -> R.string.dash_src_gps
+        s.getOrNull(0) != null -> R.string.dash_src_phone_gps
+        t.fuelSpeed != null -> R.string.dash_src_average
+        else -> null
     }
 }
 
-fun statusText(s: LinkStatus) = when (s) {
-    LinkStatus.STOPPED -> "Serviço parado"
-    LinkStatus.NO_DEVICE -> "Bluetooth desligado"
-    LinkStatus.SCANNING -> "À procura da mota…"
-    LinkStatus.WAITING -> "À espera da mota (ignição?)"
-    LinkStatus.CONNECTING -> "A ligar…"
-    LinkStatus.CONNECTED -> "Ligado"
-}
+fun statusText(s: LinkStatus): String = L.s(when (s) {
+    LinkStatus.STOPPED -> R.string.dash_status_stopped
+    LinkStatus.NO_DEVICE -> R.string.dash_status_no_device
+    LinkStatus.SCANNING -> R.string.dash_status_scanning
+    LinkStatus.WAITING -> R.string.dash_status_waiting
+    LinkStatus.CONNECTING -> R.string.dash_status_connecting
+    LinkStatus.CONNECTED -> R.string.dash_status_connected
+})
 
 /** Fuel and head temperature as segment bars, and the consumption. */
 @Composable
@@ -265,7 +270,7 @@ private fun ColumnScope.MainGauges(s: DashState) {
                 else -> Palette.green
             }, 26.sp)
         }
-        Text("autonomia a ${fmt(t?.rangeL100, 2)} L/100", color = Palette.label, fontSize = 11.sp)
+        Text(stringResource(R.string.dash_range_at, fmt(t?.rangeL100, 2)), color = Palette.label, fontSize = 11.sp)
     }
     // Head temperature.
     val cht = t?.chtC
@@ -273,7 +278,7 @@ private fun ColumnScope.MainGauges(s: DashState) {
     Panel(if (critical && s.blinkOn) Palette.red else Palette.panel) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-            Text(if (critical) "PARAR MOTOR" else "TEMP. CABEÇA", color = if (critical) Palette.text else Palette.label,
+            Text(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp), color = if (critical) Palette.text else Palette.label,
                 fontSize = 12.sp, fontWeight = FontWeight.Bold)
             BigValue(fmt(cht, 0), "°C", if (critical) Palette.text else chtColor(cht), 24.sp)
         }
@@ -290,9 +295,9 @@ private fun ColumnScope.MainGauges(s: DashState) {
             t.fuelCut -> "0.0"
             else -> fmt(t.instant, 1)
         }
-        Tile(if (t?.fuelCut == true) "CORTE" else "AGORA", inst, instUnit,
+        Tile(stringResource(if (t?.fuelCut == true) R.string.dash_fuel_cut else R.string.dash_now), inst, instUnit,
             if (t?.fuelCut == true) Palette.cyan else Palette.yellow, Modifier.weight(1f))
-        Tile("MÉDIA", fmt(t?.average, 1), if (t?.avgPerKm == true) "L/100" else "L/h", Palette.text,
+        Tile(stringResource(R.string.dash_average), fmt(t?.average, 1), if (t?.avgPerKm == true) "L/100" else "L/h", Palette.text,
             Modifier.weight(1f))
     }
 }
@@ -304,9 +309,10 @@ private fun ColumnScope.SideReadouts(s: DashState) {
     val dtcCount = s.dtc.total
     if (dtcCount > 0 || s.dtc.mil == true) {
         Panel(if (s.blinkOn) Palette.orange else Palette.panel) {
-            Text("AVARIA MOTOR", color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text(if (dtcCount > 0) "$dtcCount erro(s): ${s.dtc.groups.values.flatten().take(3).joinToString(" ")}"
-                else "luz de avaria acesa", color = Palette.text, fontSize = 12.sp)
+            Text(stringResource(R.string.dash_engine_fault), color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(if (dtcCount > 0) stringResource(R.string.dash_fault_codes, dtcCount,
+                    s.dtc.groups.values.flatten().take(3).joinToString(" "))
+                else stringResource(R.string.dash_mil_on), color = Palette.text, fontSize = 12.sp)
         }
     }
     Panel {
@@ -315,7 +321,7 @@ private fun ColumnScope.SideReadouts(s: DashState) {
             Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(s.now)), color = Palette.text,
                 fontSize = 26.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             Column(horizontalAlignment = Alignment.End) {
-                Text(if (s.status == LinkStatus.CONNECTED) "MOTA ●" else "MOTA ○",
+                Text(stringResource(R.string.dash_bike) + if (s.status == LinkStatus.CONNECTED) " ●" else " ○",
                     color = if (s.status == LinkStatus.CONNECTED) Palette.green else Palette.orange, fontSize = 11.sp)
                 Text("GPS ${fmt(s.gps.hz, 0)} Hz", color = if (s.gps.hz >= 1.0) Palette.green else Palette.dim,
                     fontSize = 11.sp)
@@ -323,29 +329,29 @@ private fun ColumnScope.SideReadouts(s: DashState) {
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Tile("BATERIA", fmt(t?.batteryV, 1), "V", batteryColor(t?.batteryV), Modifier.weight(1f))
-        Tile("AR", fmt(t?.iatC, 0), "°C", Palette.text, Modifier.weight(1f))
+        Tile(stringResource(R.string.dash_battery), fmt(t?.batteryV, 1), "V", batteryColor(t?.batteryV), Modifier.weight(1f))
+        Tile(stringResource(R.string.dash_air), fmt(t?.iatC, 0), "°C", Palette.text, Modifier.weight(1f))
     }
     val thr = t?.throttlePct
     Panel {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("ACELERADOR", color = Palette.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.dash_throttle), color = Palette.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Text("${fmt(thr, 0)} %", color = Palette.text, fontSize = 14.sp)
         }
         SegmentBar(thr?.div(100.0), 10, Modifier.fillMaxWidth().height(10.dp).padding(top = 2.dp)) { Palette.green }
     }
     Panel {
-        Text("VIAGEM", color = Palette.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.dash_trip), color = Palette.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom) {
             BigValue(fmt(t?.distKm, 1), "km", Palette.text, 20.sp)
             BigValue(fmt(t?.usedL, 2), "L", Palette.text, 20.sp)
         }
-        Text("desde o abastecimento: ${fmt(t?.fillKm, 0)} km · ${fmt(t?.fillAvg, 2)} L/100",
+        Text(stringResource(R.string.dash_since_refuel, fmt(t?.fillKm, 0), fmt(t?.fillAvg, 2)),
             color = Palette.label, fontSize = 11.sp)
     }
     if (t != null && !t.gearsComplete) {
-        Text("A aprender mudanças: ${t.gearsFound} de 5, ${t.learnS} s", color = Palette.label, fontSize = 11.sp)
+        Text(stringResource(R.string.dash_learning_gears, t.gearsFound, t.learnS), color = Palette.label, fontSize = 11.sp)
     }
 }
 

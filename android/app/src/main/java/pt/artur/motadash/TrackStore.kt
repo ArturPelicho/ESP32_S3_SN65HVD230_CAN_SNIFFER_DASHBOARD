@@ -45,7 +45,8 @@ data class TrackProgress(
 /** Imported GPX/KML/... tracks, kept as small JSON files in the app's storage. */
 object TrackStore {
     val COLORS = listOf("#ff2d95", "#2f9bff", "#34d058", "#ff8a00", "#a259ff", "#00d1c1", "#ffe14d", "#ff3b30")
-    val WIDTHS = listOf(1 to "Fino", 2 to "Normal", 3 to "Grosso")
+    val WIDTHS: List<Pair<Int, String>>
+        get() = listOf(1 to L.s(R.string.tracks_width_thin), 2 to L.s(R.string.tracks_width_normal), 3 to L.s(R.string.tracks_width_thick))
     private const val PREFS = "tracks"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -84,9 +85,9 @@ object TrackStore {
             val done = mutableListOf<String>()
             val failed = mutableListOf<String>()
             for (uri in uris) {
-                val name = displayName(app, uri) ?: uri.lastPathSegment ?: "trajeto"
+                val name = displayName(app, uri) ?: uri.lastPathSegment ?: L.s(R.string.tracks_fallback_name)
                 runCatching {
-                    val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("sem acesso")
+                    val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error(L.s(R.string.tracks_err_no_access))
                     val p = TrackParser.parse(bytes, name)
                     val t = Track(
                         id = System.currentTimeMillis().toString() + done.size,
@@ -100,8 +101,8 @@ object TrackStore {
                 }.onFailure { failed += "$name (${it.message})" }
             }
             _message.value = buildList {
-                if (done.isNotEmpty()) add("Importado: " + done.joinToString(", "))
-                if (failed.isNotEmpty()) add("Não deu para ler: " + failed.joinToString(", "))
+                if (done.isNotEmpty()) add(L.s(R.string.tracks_imported, done.joinToString(", ")))
+                if (failed.isNotEmpty()) add(L.s(R.string.tracks_import_failed, failed.joinToString(", ")))
             }.joinToString("\n")
         }
     }
@@ -134,7 +135,7 @@ object TrackStore {
     /** Keeps a copy of a track in the app (a version to come back to before changing it). */
     fun duplicate(ctx: Context, id: String): Track? {
         val t = _tracks.value.firstOrNull { it.id == id } ?: return null
-        val copy = t.copy(id = System.currentTimeMillis().toString(), name = t.name + " (cópia)",
+        val copy = t.copy(id = System.currentTimeMillis().toString(), name = L.s(R.string.tracks_copy_name, t.name),
             color = COLORS[(COLORS.indexOf(t.color) + 1).mod(COLORS.size)])
         add(ctx, copy)
         return copy

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
@@ -148,7 +149,11 @@ private fun App(activity: MainActivity) {
     LaunchedEffect(openMap) { if (openMap > 0) tab = 0 }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
     // Map and dashboard first, then diagnostics (with the fault codes), settings at the far end.
-    val titles = listOf("Mapa", "Painel", if (dtc.total > 0) "Diagnóstico (${dtc.total})" else "Diagnóstico", "Definições")
+    val titles = listOf(
+        stringResource(R.string.tab_map), stringResource(R.string.tab_dashboard),
+        if (dtc.total > 0) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(R.string.tab_diag),
+        stringResource(R.string.tab_settings),
+    )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         if (landscape) {

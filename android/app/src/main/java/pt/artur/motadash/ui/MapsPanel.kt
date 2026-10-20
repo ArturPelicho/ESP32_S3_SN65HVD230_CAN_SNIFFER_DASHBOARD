@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +43,7 @@ import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapTheme
+import pt.artur.motadash.R
 
 /** Mapas: view options (follow mode, auto zoom, theme, names), then download, update, switch off or delete regions. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -64,16 +66,20 @@ fun MapsPanel(
     val index by MapStore.index.collectAsStateWithLifecycle()
     val installed by MapStore.installed.collectAsStateWithLifecycle()
     val downloads by MapStore.downloads.collectAsStateWithLifecycle()
-    var status by remember { mutableStateOf("A procurar mapas novos…") }
+    val searching = stringResource(R.string.maps_searching)
+    var status by remember { mutableStateOf(searching) }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
     var search by remember { mutableStateOf("") }
 
     fun check() {
-        status = "A procurar mapas novos…"
+        status = searching
         scope.launch {
             MapStore.fetchIndex(ctx)
-                .onSuccess { status = "Mapas de ${pretty(it.version)}" }
-                .onFailure { status = "Sem ligação: ${it.message}" + (index?.let { i -> " · lista de ${pretty(i.version)}" } ?: "") }
+                .onSuccess { status = ctx.getString(R.string.maps_status_version, pretty(it.version)) }
+                .onFailure {
+                    status = index?.let { i -> ctx.getString(R.string.maps_status_offline_list, "${it.message}", pretty(i.version)) }
+                        ?: ctx.getString(R.string.maps_status_offline, "${it.message}")
+                }
         }
     }
     LaunchedEffect(Unit) { check() }
@@ -89,15 +95,15 @@ fun MapsPanel(
     Column(Modifier.fillMaxSize().background(Color(0xF20B0E12))) {
         // Title and Fechar stay put; only the content below scrolls.
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Mapas offline", color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.maps_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onClose) { Text("Fechar") }
+            OutlinedButton(onClick = onClose) { Text(stringResource(R.string.maps_close)) }
         }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Vista", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.maps_view), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FollowMode.entries.forEach { m ->
                     FilterChip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
@@ -105,47 +111,47 @@ fun MapsPanel(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Zoom automático", color = Palette.text, fontSize = 15.sp)
-                    Text("Aproxima na cidade e afasta na estrada, conforme a velocidade.", color = Palette.label, fontSize = 12.sp)
+                    Text(stringResource(R.string.maps_auto_zoom), color = Palette.text, fontSize = 15.sp)
+                    Text(stringResource(R.string.maps_auto_zoom_hint), color = Palette.label, fontSize = 12.sp)
                 }
                 Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Bip ao aproximar de um radar", color = Palette.text, fontSize = 15.sp)
-                    Text("Limites e radares vêm do OpenStreetMap: confirma sempre os sinais na estrada.",
+                    Text(stringResource(R.string.maps_camera_beep), color = Palette.text, fontSize = 15.sp)
+                    Text(stringResource(R.string.maps_camera_beep_hint),
                         color = Palette.label, fontSize = 12.sp)
                 }
                 Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
             }
-            Text("Tema do mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.maps_theme_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 MapTheme.entries.forEach { t ->
                     FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
                 }
             }
-            Text("Automático muda para noite com o pôr do sol onde estás.", color = Palette.label, fontSize = 12.sp)
-            Text("Nomes no mapa", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.maps_theme_hint), color = Palette.label, fontSize = 12.sp)
+            Text(stringResource(R.string.maps_names_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 MapLanguage.entries.forEach { l ->
                     FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
                 }
             }
-            Text("Regiões", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text("$status · livre no telemóvel: ${mb(free)}", color = Palette.label, fontSize = 13.sp)
+            Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { check() }) { Text("Procurar atualizações") }
+                OutlinedButton(onClick = { check() }) { Text(stringResource(R.string.maps_check_updates)) }
                 if (updates.isNotEmpty()) {
-                    Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text("Atualizar tudo (${updates.size})") }
+                    Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text(stringResource(R.string.maps_update_all, updates.size)) }
                 }
             }
 
             if (regions.isEmpty() && installed.isEmpty()) {
-                Text("A lista de mapas aparece aqui quando houver rede.", color = Palette.label, fontSize = 14.sp)
+                Text(stringResource(R.string.maps_list_needs_network), color = Palette.label, fontSize = 14.sp)
             }
             OutlinedTextField(
                 value = search, onValueChange = { search = it }, singleLine = true,
-                label = { Text("Procurar país ou região") }, modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.maps_search_hint)) }, modifier = Modifier.fillMaxWidth(),
                 trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
             )
             // Installed first, then by name; the search narrows it with every letter typed.
@@ -153,7 +159,7 @@ fun MapsPanel(
             val ids = (regions.map { it.id } + installed.map { it.id }).distinct()
                 .sortedWith(compareBy({ id -> installed.none { it.id == id } }, { id -> plain(regions.firstOrNull { it.id == id }?.name ?: id) }))
                 .filter { id -> q.isEmpty() || plain(regions.firstOrNull { it.id == id }?.name ?: id).contains(q) || plain(id).contains(q) }
-            if (ids.isEmpty() && q.isNotEmpty()) Text("Nenhuma região com \"$search\".", color = Palette.label, fontSize = 14.sp)
+            if (ids.isEmpty() && q.isNotEmpty()) Text(stringResource(R.string.maps_no_match, search), color = Palette.label, fontSize = 14.sp)
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -171,17 +177,17 @@ fun MapsPanel(
                         Column(Modifier.weight(1f)) {
                             Text(r?.name ?: id, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                             val size = r?.let {
-                                mb(it.bytes) + (if (it.contoursBytes > 0) " + relevo ${mb(it.contoursBytes)}" else "") +
-                                    (if (it.shadeBytes > 0) " + sombreado ${mb(it.shadeBytes)}" else "") +
-                                    if (it.limitsBytes > 0) " + limites ${mb(it.limitsBytes)}" else ""
+                                mb(it.bytes) + (if (it.contoursBytes > 0) " " + stringResource(R.string.maps_size_contours, mb(it.contoursBytes)) else "") +
+                                    (if (it.shadeBytes > 0) " " + stringResource(R.string.maps_size_shade, mb(it.shadeBytes)) else "") +
+                                    if (it.limitsBytes > 0) " " + stringResource(R.string.maps_size_limits, mb(it.limitsBytes)) else ""
                             }
                             val state = when {
-                                dl != null && dl.failed -> "O download falhou"
-                                dl != null -> "A descarregar " + (if (dl.total > 0) "${dl.done * 100 / dl.total}%" else "…")
+                                dl != null && dl.failed -> stringResource(R.string.maps_state_failed)
+                                dl != null -> stringResource(R.string.maps_state_downloading, if (dl.total > 0) "${dl.done * 100 / dl.total}%" else "…")
                                 have != null && index != null && have.version < index!!.version ->
-                                    "Instalado (${pretty(have.version)}), há versão nova"
-                                have != null -> "Instalado (${pretty(have.version)})"
-                                else -> "Não instalado"
+                                    stringResource(R.string.maps_state_installed_update, pretty(have.version))
+                                have != null -> stringResource(R.string.maps_state_installed, pretty(have.version))
+                                else -> stringResource(R.string.maps_state_not_installed)
                             }
                             Text(listOfNotNull(size, state).joinToString(" · "), color = Palette.label, fontSize = 13.sp)
                         }
@@ -192,28 +198,32 @@ fun MapsPanel(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         when {
                             dl != null && !dl.failed ->
-                                OutlinedButton(onClick = { MapStore.cancel(ctx, id) }) { Text("Cancelar") }
+                                OutlinedButton(onClick = { MapStore.cancel(ctx, id) }) { Text(stringResource(R.string.maps_cancel)) }
                             r?.url != null && (have == null || dl?.failed == true) ->
-                                Button(onClick = { MapStore.download(ctx, r) }) { Text("Descarregar") }
+                                Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
                             r?.url != null && index != null && have != null && have.version < index!!.version ->
-                                Button(onClick = { MapStore.download(ctx, r) }) { Text("Atualizar") }
+                                Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_update)) }
                         }
                         // Map already here from before speed limits or relief existed: fetch only those, without the whole map.
                         val needLimits = r?.limitsUrl != null && have != null && have.limits == null
                         val needShade = r?.shadeUrl != null && have != null && have.shade == null
                         if (r != null && dl == null && (needLimits || needShade)) {
-                            val what = listOfNotNull(if (needLimits) "limites e radares" else null, if (needShade) "sombreado" else null)
+                            val what = when {
+                                needLimits && needShade -> R.string.maps_add_limits_shade
+                                needLimits -> R.string.maps_add_limits
+                                else -> R.string.maps_add_shade
+                            }
                             val bytes = (if (needLimits) r.limitsBytes else 0) + (if (needShade) r.shadeBytes else 0)
                             Button(onClick = { MapStore.download(ctx, r, extrasOnly = true) }) {
-                                Text("Juntar ${what.joinToString(" e ")} (${mb(bytes)})")
+                                Text(stringResource(what, mb(bytes)))
                             }
                         }
                         if (have != null && dl == null) {
                             if (confirmDelete == id) {
-                                Button(onClick = { MapStore.delete(ctx, id); confirmDelete = null }) { Text("Confirmar apagar") }
-                                OutlinedButton(onClick = { confirmDelete = null }) { Text("Não") }
+                                Button(onClick = { MapStore.delete(ctx, id); confirmDelete = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
+                                OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.maps_no)) }
                             } else {
-                                OutlinedButton(onClick = { confirmDelete = id }) { Text("Apagar") }
+                                OutlinedButton(onClick = { confirmDelete = id }) { Text(stringResource(R.string.maps_delete)) }
                             }
                         }
                     }
@@ -221,7 +231,7 @@ fun MapsPanel(
             }
 
             }
-            Text("Dados © OpenStreetMap, mapa base Protomaps, relevo Copernicus DEM.", color = Palette.label, fontSize = 12.sp)
+            Text(stringResource(R.string.maps_attribution), color = Palette.label, fontSize = 12.sp)
         }
     }
 }

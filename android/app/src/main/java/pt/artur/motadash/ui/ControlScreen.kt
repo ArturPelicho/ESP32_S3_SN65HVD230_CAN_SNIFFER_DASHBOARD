@@ -1,5 +1,6 @@
 package pt.artur.motadash.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,24 +49,23 @@ import pt.artur.motadash.Permissions
 /**
  * How the board's runtime parameters (main/rt_params.c) are shown: the
  * board stores integers, the app shows value / scale in a human unit.
+ * Label, hint and a worded unit are string resources (null label = show the parameter name).
  */
-private data class ParamSpec(val label: String, val unit: String, val scale: Int = 1, val decimals: Int = 0,
-                             val order: Int, val hint: String? = null)
+private data class ParamSpec(@StringRes val label: Int?, val unit: String, val scale: Int = 1, val decimals: Int = 0,
+                             val order: Int, @StringRes val hint: Int? = null, @StringRes val unitText: Int? = null)
 
 private val PARAM_SPECS = mapOf(
-    "TANK_DL" to ParamSpec("Capacidade do depósito", "L", 10, 1, 0),
-    "BASE_L100" to ParamSpec("Consumo para a autonomia", "L/100 km", 100, 2, 1,
-        "Aprende sozinho: a autonomia mistura este valor com a média desde o abastecimento, " +
-            "e a cada abastecimento (com 30 km ou mais) passa a ser a média dessa viagem."),
-    "FUEL_K" to ParamSpec("Constante de combustível", "L/h por INJ", 1000, 3, 2,
-        "Corrigida pela bomba: ao atestar duas vezes seguidas aparece a sugestão em baixo."),
-    "RPM_SHIFT" to ParamSpec("Aviso de troca de mudança", "rpm", order = 3),
-    "GEARS" to ParamSpec("Número de mudanças", "", order = 4),
-    "SPD_HOLD_S" to ParamSpec("Manter média sem velocidade", "s", order = 5),
-    "SPD_SRC" to ParamSpec("Fonte de velocidade dos consumos", "", order = 6, hint = "Escolhe em cima."),
+    "TANK_DL" to ParamSpec(R.string.set_param_tank, "L", 10, 1, 0),
+    "BASE_L100" to ParamSpec(R.string.set_param_base_l100, "L/100 km", 100, 2, 1, R.string.set_param_base_l100_hint),
+    "FUEL_K" to ParamSpec(R.string.set_param_fuel_k, "", 1000, 3, 2, R.string.set_param_fuel_k_hint,
+        unitText = R.string.set_unit_fuel_k),
+    "RPM_SHIFT" to ParamSpec(R.string.set_param_rpm_shift, "rpm", order = 3),
+    "GEARS" to ParamSpec(R.string.set_param_gears, "", order = 4),
+    "SPD_HOLD_S" to ParamSpec(R.string.set_param_spd_hold, "s", order = 5),
+    "SPD_SRC" to ParamSpec(R.string.set_param_spd_src, "", order = 6, hint = R.string.set_param_spd_src_hint),
 )
 
-private fun spec(p: ParamInfo) = PARAM_SPECS[p.name] ?: ParamSpec(p.name, p.unit, order = 99)
+private fun spec(p: ParamInfo) = PARAM_SPECS[p.name] ?: ParamSpec(null, p.unit, order = 99)
 
 private fun shown(raw: Int, s: ParamSpec): String =
     if (s.scale == 1) raw.toString()
@@ -97,26 +97,26 @@ fun ControlScreen(activity: MainActivity) {
                 }
             }
         }
-        Section("Consumos") {
+        Section(stringResource(R.string.set_fuel)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                Button(enabled = connected, onClick = { Link.send("AVG RESET") }) { Text("Reset da média") }
-                OutlinedButton(enabled = connected, onClick = { Link.send("TRIP") }) { Text("Ver TRIP") }
+                Button(enabled = connected, onClick = { Link.send("AVG RESET") }) { Text(stringResource(R.string.set_avg_reset)) }
+                OutlinedButton(enabled = connected, onClick = { Link.send("TRIP") }) { Text(stringResource(R.string.set_show_trip)) }
             }
         }
 
-        Section("Abastecimento") {
+        Section(stringResource(R.string.set_refuel)) {
             var litres by remember { mutableStateOf("") }
             var full by remember { mutableStateOf(true) }
             val value = litres.replace(',', '.').toDoubleOrNull()
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 OutlinedTextField(
                     value = litres, onValueChange = { litres = it },
-                    label = { Text("Litros metidos") }, singleLine = true,
+                    label = { Text(stringResource(R.string.set_litres_added)) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.width(170.dp),
                 )
                 Column(Modifier.padding(start = 12.dp)) {
-                    Text("Atestei (cheio)", color = Palette.label, fontSize = 12.sp)
+                    Text(stringResource(R.string.set_filled_up), color = Palette.label, fontSize = 12.sp)
                     Switch(checked = full, onCheckedChange = { full = it })
                 }
             }
@@ -125,40 +125,39 @@ fun ControlScreen(activity: MainActivity) {
                     val l = String.format(java.util.Locale.US, "%.2f", value)
                     Link.send(if (full) "FILL FULL $l" else "FILL ADD $l")
                     litres = ""
-                }) { Text("Registar") }
+                }) { Text(stringResource(R.string.set_record)) }
                 OutlinedButton(enabled = connected && value != null, onClick = {
                     Link.send(String.format(java.util.Locale.US, "TANK SET %.2f", value))
                     litres = ""
-                }) { Text("Definir nível") }
-                OutlinedButton(enabled = connected, onClick = { Link.send("TANK") }) { Text("Estado") }
+                }) { Text(stringResource(R.string.set_set_level)) }
+                OutlinedButton(enabled = connected, onClick = { Link.send("TANK") }) { Text(stringResource(R.string.set_tank_state)) }
             }
             Text(
-                "\"Atestei\": o depósito fica cheio e, desde o último atestar, os litros da bomba " +
-                    "corrigem a constante. Sem atestar: soma ao nível. \"Definir nível\": litros que lá estão agora.",
+                stringResource(R.string.set_refuel_help),
                 color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp),
             )
             if (t != null) {
-                KeyValue("No depósito", "${fmt(t?.tankL, 2)} L")
-                KeyValue("Autonomia", "${fmt(t?.rangeKm, 0)} km a ${fmt(t?.rangeL100, 2)} L/100")
-                KeyValue("Desde o abastecimento", "${fmt(t?.fillKm, 1)} km · ${fmt(t?.fillAvg, 2)} L/100")
+                KeyValue(stringResource(R.string.set_in_tank), "${fmt(t?.tankL, 2)} L")
+                KeyValue(stringResource(R.string.set_range), stringResource(R.string.set_range_value, fmt(t?.rangeKm, 0), fmt(t?.rangeL100, 2)))
+                KeyValue(stringResource(R.string.set_since_refuel), "${fmt(t?.fillKm, 1)} km · ${fmt(t?.fillAvg, 2)} L/100")
             }
             tankLine?.let { Text(it, color = Palette.label, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp)) }
             fillLine?.let { Text(it, color = Palette.text, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp)) }
             suggestedK?.let { k ->
                 val cur = params["FUEL_K"]?.value
                 fun lph(v: Int?) = if (v == null) "?" else String.format(java.util.Locale.US, "%.3f", v / 1000.0)
-                Text("Calibração: a bomba sugere ${lph(k)} L/h por INJ (atual ${lph(cur)})",
+                Text(stringResource(R.string.set_calibration, lph(k), lph(cur)),
                     color = Palette.amber, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(enabled = connected, onClick = {
                         Link.send("PARAM SET FUEL_K $k"); Link.clearSuggestion()
-                    }) { Text("Aplicar ${lph(k)}") }
-                    OutlinedButton(onClick = { Link.clearSuggestion() }) { Text("Ignorar") }
+                    }) { Text(stringResource(R.string.set_apply, lph(k))) }
+                    OutlinedButton(onClick = { Link.clearSuggestion() }) { Text(stringResource(R.string.set_ignore)) }
                 }
             }
         }
 
-        Section("Fonte de velocidade para os consumos") {
+        Section(stringResource(R.string.set_speed_source)) {
             val cur = params["SPD_SRC"]?.value
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
                 BleProtocol.SPEED_SOURCE_LABELS.take(4).forEachIndexed { i, label ->
@@ -167,34 +166,34 @@ fun ControlScreen(activity: MainActivity) {
                         label = { Text(label.removePrefix("Vel_"), fontSize = 12.sp) })
                 }
             }
-            Text("As outras fontes continuam visíveis no Diagnóstico para comparar.",
+            Text(stringResource(R.string.set_speed_source_help),
                 color = Palette.label, fontSize = 12.sp)
         }
 
-        Section("Parâmetros da placa") {
+        Section(stringResource(R.string.set_board_params)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                OutlinedButton(enabled = connected, onClick = { Link.send("PARAM") }) { Text("Ler da placa") }
+                OutlinedButton(enabled = connected, onClick = { Link.send("PARAM") }) { Text(stringResource(R.string.set_read_board)) }
             }
             if (params.isEmpty()) {
-                Text(if (connected) "A ler…" else "Liga à mota para ver os parâmetros.", color = Palette.label)
+                Text(stringResource(if (connected) R.string.set_reading else R.string.set_connect_for_params), color = Palette.label)
             }
             params.values.filter { it.name != "SPD_SRC" }.sortedBy { spec(it).order }
                 .forEach { p -> ParamRow(p, connected, if (p.name == "BASE_L100") t?.rangeL100 else null) }
         }
 
-        Section("Mudanças") {
-            Text("A placa aprende a relação km/h por 1000 rpm de cada mudança enquanto andas com GPS.",
+        Section(stringResource(R.string.set_gears)) {
+            Text(stringResource(R.string.set_gears_help),
                 color = Palette.label, fontSize = 12.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                OutlinedButton(enabled = connected, onClick = { Link.send("GEAR") }) { Text("Ver relações") }
+                OutlinedButton(enabled = connected, onClick = { Link.send("GEAR") }) { Text(stringResource(R.string.set_show_ratios)) }
                 OutlinedButton(enabled = connected, onClick = { Link.send("GEAR RESET") },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.red)) { Text("Reaprender") }
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.red)) { Text(stringResource(R.string.set_relearn)) }
             }
         }
 
-        Section("Ecrã") {
+        Section(stringResource(R.string.set_screen)) {
             var orient by remember { mutableStateOf(Link.orientation(ctx)) }
-            Text("Orientação", color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+            Text(stringResource(R.string.set_orientation), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Orientation.entries.forEach { o ->
                     FilterChip(selected = orient == o, onClick = {
@@ -202,34 +201,36 @@ fun ControlScreen(activity: MainActivity) {
                     }, label = { Text(o.label, fontSize = 12.sp) })
                 }
             }
-            Text("\"Horizontal invertida\" é a do DMD2 com o telemóvel rodado para a direita.",
+            Text(stringResource(R.string.set_orientation_help),
                 color = Palette.label, fontSize = 12.sp)
         }
 
-        Section("Ligação e telemóvel") {
-            KeyValue("Estado", statusText(status), if (connected) Palette.green else Palette.orange)
-            KeyValue("Placa", Link.savedAddress(ctx) ?: "nenhuma (a procurar \"OBDII\")")
-            KeyValue("Versão da app", runCatching {
+        Section(stringResource(R.string.set_link_phone)) {
+            KeyValue(stringResource(R.string.set_status), statusText(status), if (connected) Palette.green else Palette.orange)
+            KeyValue(stringResource(R.string.set_board), Link.savedAddress(ctx) ?: stringResource(R.string.set_board_none))
+            KeyValue(stringResource(R.string.set_app_version), runCatching {
                 ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
             }.getOrNull() ?: "?")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
                 OutlinedButton(onClick = { Link.saveAddress(ctx, null); Link.service?.reconnect() ?: MotaService.start(ctx) }) {
-                    Text("Procurar outra")
+                    Text(stringResource(R.string.set_find_other))
                 }
-                OutlinedButton(onClick = { MotaService.start(ctx) }) { Text("Iniciar") }
-                OutlinedButton(onClick = { MotaService.stop(ctx) }) { Text("Parar") }
+                OutlinedButton(onClick = { MotaService.start(ctx) }) { Text(stringResource(R.string.set_start)) }
+                OutlinedButton(onClick = { MotaService.stop(ctx) }) { Text(stringResource(R.string.set_stop)) }
             }
             val bg = Permissions.background(ctx)
-            KeyValue("Localização \"sempre\"", if (bg) "sim" else "não (necessária p/ arrancar sozinha)",
+            KeyValue(stringResource(R.string.set_location_always),
+                stringResource(if (bg) R.string.set_yes else R.string.set_location_needed),
                 if (bg) Palette.green else Palette.orange)
-            if (!bg) Button(onClick = { activity.requestBackgroundLocation() }) { Text("Permitir sempre") }
+            if (!bg) Button(onClick = { activity.requestBackgroundLocation() }) { Text(stringResource(R.string.set_allow_always)) }
             val opt = activity.batteryOptimised()
-            KeyValue("Otimização de bateria", if (opt) "ativa (pode matar a app)" else "desligada",
+            KeyValue(stringResource(R.string.set_battery_opt),
+                stringResource(if (opt) R.string.set_battery_opt_on else R.string.set_battery_opt_off),
                 if (opt) Palette.orange else Palette.green)
-            if (opt) Button(onClick = { activity.requestNoBatteryOptimisation() }) { Text("Desligar otimização") }
-            OutlinedButton(onClick = { activity.openAppSettings() }) { Text("Definições da app (Xiaomi: Arranque automático)") }
+            if (opt) Button(onClick = { activity.requestNoBatteryOptimisation() }) { Text(stringResource(R.string.set_battery_opt_disable)) }
+            OutlinedButton(onClick = { activity.openAppSettings() }) { Text(stringResource(R.string.set_app_settings)) }
             val scale by UiScale.value.collectAsStateWithLifecycle()
-            Text("Tamanho da interface", color = Palette.text, modifier = Modifier.padding(top = 6.dp))
+            Text(stringResource(R.string.set_ui_size), color = Palette.text, modifier = Modifier.padding(top = 6.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 UiScale.steps.forEach { v ->
                     FilterChip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
@@ -238,7 +239,7 @@ fun ControlScreen(activity: MainActivity) {
             }
             var screenOn by remember { mutableStateOf(Link.keepScreenOn(ctx)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Ecrã sempre ligado com a app aberta", color = Palette.text, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.set_keep_screen_on), color = Palette.text, modifier = Modifier.weight(1f))
                 Switch(checked = screenOn, onCheckedChange = {
                     screenOn = it; Link.setKeepScreenOn(ctx, it); activity.applyScreenOn()
                 })
@@ -250,11 +251,13 @@ fun ControlScreen(activity: MainActivity) {
 @Composable
 private fun ParamRow(p: ParamInfo, connected: Boolean, live: Double?) {
     val ps = spec(p)
+    val label = ps.label?.let { stringResource(it) } ?: p.name
+    val unit = ps.unitText?.let { stringResource(it) } ?: ps.unit
     var text by remember(p.name, p.value) { mutableStateOf(shown(p.value, ps)) }
     val v = parsed(text, ps)
     val valid = v != null && v >= p.min && v <= p.max
     Column(Modifier.fillMaxWidth().padding(top = 10.dp).background(Color.Transparent)) {
-        Text(ps.label + if (ps.unit.isNotEmpty()) " (${ps.unit})" else "", color = Palette.text, fontSize = 14.sp)
+        Text(label + if (unit.isNotEmpty()) " ($unit)" else "", color = Palette.text, fontSize = 14.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = text, onValueChange = { text = it }, singleLine = true, isError = !valid,
@@ -263,16 +266,16 @@ private fun ParamRow(p: ParamInfo, connected: Boolean, live: Double?) {
                 modifier = Modifier.width(130.dp),
             )
             Button(enabled = connected && valid && v != p.value, onClick = { Link.send("PARAM SET ${p.name} $v") },
-                modifier = Modifier.padding(start = 8.dp)) { Text("Guardar") }
+                modifier = Modifier.padding(start = 8.dp)) { Text(stringResource(R.string.set_save)) }
             if (p.def != p.value) {
                 OutlinedButton(enabled = connected, onClick = { Link.send("PARAM SET ${p.name} ${p.def}") },
                     modifier = Modifier.padding(start = 6.dp)) { Text(shown(p.def, ps)) }
             }
         }
         if (live != null) {
-            Text("Agora a autonomia usa ${fmt(live, 2)} ${ps.unit}", color = Palette.amber, fontSize = 12.sp)
+            Text(stringResource(R.string.set_range_uses, fmt(live, 2), unit), color = Palette.amber, fontSize = 12.sp)
         }
-        ps.hint?.let { Text(it, color = Palette.label, fontSize = 11.sp) }
-        Text("${shown(p.min, ps)} a ${shown(p.max, ps)} ${ps.unit}", color = Palette.dim, fontSize = 11.sp)
+        ps.hint?.let { Text(stringResource(it), color = Palette.label, fontSize = 11.sp) }
+        Text(stringResource(R.string.set_param_range, shown(p.min, ps), shown(p.max, ps), unit), color = Palette.dim, fontSize = 11.sp)
     }
 }

@@ -35,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.MapStore
+import pt.artur.motadash.R
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackStore
 
@@ -61,31 +63,30 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Color(0xF20B0E12))) {
         // Title and Fechar stay put; only the content below scrolls.
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Trajetos", color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.tracks_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onClose) { Text("Fechar") }
+            OutlinedButton(onClick = onClose) { Text(stringResource(R.string.tracks_close)) }
         }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text("Abrir ficheiro (GPX, KML, KMZ, GeoJSON, TCX, FIT)") }
-            Text("Também podes abrir um ficheiro com a NavExpress a partir do gestor de ficheiros ou do WhatsApp.",
+            Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.tracks_open_file)) }
+            Text(stringResource(R.string.tracks_open_hint),
                 color = Palette.label, fontSize = 12.sp)
-            Text("Para criar um trajeto: toque longo no mapa, \"Começar trajeto novo aqui\", e depois toque longo noutros sítios para " +
-                "juntar waypoints. Toque longo num waypoint para o deslocar ou apagar, e na linha para renomear, gravar ou partilhar.",
+            Text(stringResource(R.string.tracks_create_hint),
                 color = Palette.label, fontSize = 12.sp)
             var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Trajetos novos seguem as estradas", color = Palette.text, fontSize = 15.sp)
-                    Text("Precisa de rede (BRouter, OpenStreetMap). Sem rede liga os waypoints em linha reta.",
+                    Text(stringResource(R.string.tracks_roads), color = Palette.text, fontSize = 15.sp)
+                    Text(stringResource(R.string.tracks_roads_hint),
                         color = Palette.label, fontSize = 12.sp)
                 }
                 Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
             }
             message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
-            if (tracks.isEmpty()) Text("Ainda não há trajetos.", color = Palette.label, fontSize = 14.sp)
+            if (tracks.isEmpty()) Text(stringResource(R.string.tracks_empty), color = Palette.label, fontSize = 14.sp)
 
             for (t in tracks.reversed()) {
                 val following = active == t.id
@@ -103,9 +104,9 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                                 OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Button(onClick = { TrackStore.update(ctx, t.copy(name = text.trim().ifEmpty { t.name })); renaming = null }) {
-                                        Text("Guardar")
+                                        Text(stringResource(R.string.tracks_save))
                                     }
-                                    OutlinedButton(onClick = { renaming = null }) { Text("Cancelar") }
+                                    OutlinedButton(onClick = { renaming = null }) { Text(stringResource(R.string.tracks_cancel)) }
                                 }
                             } else {
                                 Text(t.name, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold,
@@ -113,10 +114,10 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                             }
                             val parts = listOfNotNull(
                                 "%.1f km".format(t.lengthM / 1000),
-                                if (t.lines.size > 1 && t.plan.isEmpty()) "${t.lines.size} partes" else null,
-                                if (t.plan.isNotEmpty()) "${t.plan.size} waypoints" else null,
-                                if (t.waypoints.isNotEmpty()) "${t.waypoints.size} pontos" else null,
-                                if (following) "a seguir" + (if (reversed) " (sentido inverso)" else "") else null,
+                                if (t.lines.size > 1 && t.plan.isEmpty()) stringResource(R.string.tracks_parts, t.lines.size) else null,
+                                if (t.plan.isNotEmpty()) stringResource(R.string.tracks_waypoints, t.plan.size) else null,
+                                if (t.waypoints.isNotEmpty()) stringResource(R.string.tracks_points, t.waypoints.size) else null,
+                                if (following) stringResource(if (reversed) R.string.tracks_following_reversed else R.string.tracks_following) else null,
                             )
                             Text(parts.joinToString(" · "), color = Palette.label, fontSize = 13.sp)
                         }
@@ -125,22 +126,22 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (t.lines.isNotEmpty()) {
                             if (following) {
-                                OutlinedButton(onClick = { TrackStore.setActive(ctx, null) }) { Text("Parar de seguir") }
+                                OutlinedButton(onClick = { TrackStore.setActive(ctx, null) }) { Text(stringResource(R.string.tracks_stop_following)) }
                                 FilterChip(selected = reversed, onClick = { TrackStore.setReversed(ctx, !reversed) },
-                                    label = { Text("Sentido inverso") })
+                                    label = { Text(stringResource(R.string.tracks_reversed)) })
                             } else {
                                 Button(onClick = { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false); onClose() }) {
-                                    Text("Seguir")
+                                    Text(stringResource(R.string.tracks_follow))
                                 }
                             }
                         }
-                        OutlinedButton(onClick = { onShow(t) }) { Text("Ver no mapa") }
+                        OutlinedButton(onClick = { onShow(t) }) { Text(stringResource(R.string.tracks_show_on_map)) }
                         if (confirmDelete == t.id) {
-                            Button(onClick = { TrackStore.delete(ctx, t.id); confirmDelete = null }) { Text("Confirmar apagar") }
-                            OutlinedButton(onClick = { confirmDelete = null }) { Text("Não") }
+                            Button(onClick = { TrackStore.delete(ctx, t.id); confirmDelete = null }) { Text(stringResource(R.string.tracks_confirm_delete)) }
+                            OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.tracks_no)) }
                         } else {
-                            OutlinedButton(onClick = { TrackStore.duplicate(ctx, t.id) }) { Text("Duplicar") }
-                            OutlinedButton(onClick = { confirmDelete = t.id }) { Text("Apagar") }
+                            OutlinedButton(onClick = { TrackStore.duplicate(ctx, t.id) }) { Text(stringResource(R.string.tracks_duplicate)) }
+                            OutlinedButton(onClick = { confirmDelete = t.id }) { Text(stringResource(R.string.tracks_delete)) }
                         }
                     }
                     // Appearance: colour and width.
@@ -161,8 +162,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                     }
                 }
             }
-            Text("Todos os trajetos ficam guardados dentro da app, também os criados no mapa: não é preciso gravar nem importar. " +
-                "Toca no nome para mudar. \"Duplicar\" guarda uma cópia antes de mexeres num trajeto.", color = Palette.label, fontSize = 12.sp)
+            Text(stringResource(R.string.tracks_footer), color = Palette.label, fontSize = 12.sp)
         }
     }
 }

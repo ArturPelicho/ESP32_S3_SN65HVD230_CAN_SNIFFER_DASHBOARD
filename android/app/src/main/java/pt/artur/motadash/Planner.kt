@@ -27,7 +27,7 @@ object Planner {
     fun start(ctx: Context, p: LatLon): Track {
         val t = Track(
             id = System.currentTimeMillis().toString(),
-            name = "Trajeto " + SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date()),
+            name = L.s(R.string.tracks_default_name, SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date())),
             lines = emptyList(), waypoints = emptyList(),
             color = TrackStore.COLORS[TrackStore.tracks.value.size % TrackStore.COLORS.size],
             width = 2, visible = true, plan = listOf(p.copy(ele = null)),
@@ -162,7 +162,7 @@ object GpxWriter {
         append("<gpx version=\"1.1\" creator=\"NavExpress\" xmlns=\"http://www.topografix.com/GPX/1/1\">\n")
         append("  <metadata><name>").append(esc(t.name)).append("</name></metadata>\n")
         for (w in t.waypoints) wpt(w.lat, w.lon, w.name, null)
-        t.plan.forEachIndexed { i, p -> wpt(p.lat, p.lon, "${i + 1}", "Waypoint do trajeto") }
+        t.plan.forEachIndexed { i, p -> wpt(p.lat, p.lon, "${i + 1}", L.s(R.string.tracks_gpx_waypoint_type)) }
         append("  <trk>\n    <name>").append(esc(t.name)).append("</name>\n")
         val segs = if (t.plan.isNotEmpty()) listOf(t.lines.flatten()) else t.lines
         for (s in segs) {

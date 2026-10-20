@@ -94,9 +94,9 @@ class MotaService : Service() {
         L.init(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Ligação à mota", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL, getString(R.string.svc_channel), NotificationManager.IMPORTANCE_LOW)
         )
-        goForeground("À espera da mota")
+        goForeground(getString(R.string.svc_waiting))
         Link.service = this
         locationManager = getSystemService(LocationManager::class.java)
         connect()
@@ -162,7 +162,7 @@ class MotaService : Service() {
         val adapter = adapter()
         if (adapter == null || !adapter.isEnabled) {
             Link.setStatus(LinkStatus.NO_DEVICE)
-            updateNotification("Bluetooth desligado")
+            updateNotification(getString(R.string.svc_bt_off))
             handler.postDelayed({ connect() }, 10_000)
             return
         }
@@ -172,7 +172,7 @@ class MotaService : Service() {
             return
         }
         Link.setStatus(LinkStatus.WAITING)
-        updateNotification("À espera da mota")
+        updateNotification(getString(R.string.svc_waiting))
         val device = adapter.getRemoteDevice(address)
         // autoConnect = true: the Bluetooth controller connects by itself
         // whenever the board starts advertising, at very low power.
@@ -193,7 +193,7 @@ class MotaService : Service() {
     private fun startScan() {
         val scanner = adapter()?.bluetoothLeScanner ?: return
         Link.setStatus(LinkStatus.SCANNING)
-        updateNotification("À procura da mota")
+        updateNotification(getString(R.string.svc_scanning))
         scanning = true
         val filters = listOf(ScanFilter.Builder().setDeviceName(BleProtocol.DEVICE_NAME).build())
         val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build()
@@ -269,7 +269,7 @@ class MotaService : Service() {
         Link.setTelemetry(null)
         if (stopped) return
         Link.setStatus(LinkStatus.WAITING)
-        updateNotification("À espera da mota")
+        updateNotification(getString(R.string.svc_waiting))
         handler.postDelayed({ if (gatt == null) connect() }, 1000)
     }
 
@@ -291,7 +291,7 @@ class MotaService : Service() {
         sendCommand("TANK")
         Link.readDtc()
         Link.setStatus(LinkStatus.CONNECTED)
-        updateNotification("Ligado à mota")
+        updateNotification(getString(R.string.svc_connected))
         startGps()
     }
 

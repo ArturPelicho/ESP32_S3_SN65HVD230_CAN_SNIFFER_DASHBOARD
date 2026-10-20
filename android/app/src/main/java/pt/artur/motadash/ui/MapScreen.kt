@@ -69,6 +69,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -108,6 +109,7 @@ import org.maplibre.geojson.MultiLineString
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.Point
 import pt.artur.motadash.FollowMode
+import pt.artur.motadash.L
 import pt.artur.motadash.LatLon
 import pt.artur.motadash.Link
 import pt.artur.motadash.GpxWriter
@@ -119,6 +121,7 @@ import pt.artur.motadash.TrackStore
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapStyle
 import pt.artur.motadash.MapTheme
+import pt.artur.motadash.R
 
 /** Keeps the MapLibre objects between recompositions and drives the camera. */
 /** A speed camera ahead on the road. */
@@ -569,7 +572,7 @@ fun MapScreen() {
         saving = null
         if (uri != null && t != null) {
             val ok = runCatching { ctx.contentResolver.openOutputStream(uri)?.use { it.write(GpxWriter.write(t).toByteArray()) } }.isSuccess
-            Toast.makeText(ctx, if (ok) "Gravado: ${t.name}" else "Não deu para gravar", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, if (ok) ctx.getString(R.string.map_file_saved, t.name) else ctx.getString(R.string.map_save_failed), Toast.LENGTH_SHORT).show()
         }
     }
     var minute by remember { mutableLongStateOf(0L) }
@@ -763,7 +766,7 @@ fun MapScreen() {
             }
             MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
             MapButton(
-                when (theme) { MapTheme.AUTO -> "AUTO"; MapTheme.DAY -> "DIA"; MapTheme.NIGHT -> "NOITE" },
+                when (theme) { MapTheme.AUTO -> stringResource(R.string.map_theme_auto); MapTheme.DAY -> stringResource(R.string.map_theme_day); MapTheme.NIGHT -> stringResource(R.string.map_theme_night) },
                 small = true,
             ) {
                 theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme)
@@ -781,7 +784,7 @@ fun MapScreen() {
                 else -> Palette.red
             }
             Text(
-                if (fix == null) "GPS sem sinal" else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
+                if (fix == null) stringResource(R.string.map_gps_no_signal) else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
                 color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(8.dp))
                     .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -802,7 +805,7 @@ fun MapScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("RADAR", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.map_speed_camera), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("${(cam.meters + 25) / 50 * 50} m", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 cam.kmh?.let { LimitSign(it, small = true) }
             }
@@ -813,12 +816,12 @@ fun MapScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("A mover o waypoint ${mv.point + 1}", color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.map_moving_waypoint, mv.point + 1), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Button(onClick = {
                     holder.centre()?.let { Planner.move(ctx, mv.tid, mv.point, it) }
                     moving = null; holder.editing = false
-                }) { Text("Fixar aqui") }
-                OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text("Cancelar") }
+                }) { Text(stringResource(R.string.map_fix_here)) }
+                OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
             }
         }
         if (activeTrack != null && moving == null) TrackBox(activeTrack, progress)
@@ -866,15 +869,15 @@ fun MapScreen() {
             var text by remember(t.id) { mutableStateOf(t.name) }
             AlertDialog(
                 onDismissRequest = { renaming = null },
-                title = { Text("Mudar o nome") },
+                title = { Text(stringResource(R.string.map_rename_title)) },
                 text = { OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true) },
                 confirmButton = {
                     Button(onClick = {
                         TrackStore.change(ctx, t.id) { it.copy(name = text.trim().ifEmpty { it.name }) }
                         renaming = null
-                    }) { Text("Guardar") }
+                    }) { Text(stringResource(R.string.map_save)) }
                 },
-                dismissButton = { OutlinedButton(onClick = { renaming = null }) { Text("Cancelar") } },
+                dismissButton = { OutlinedButton(onClick = { renaming = null }) { Text(stringResource(R.string.map_cancel)) } },
             )
         }
 
@@ -901,10 +904,10 @@ fun MapScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(if (installed.isEmpty()) "Ainda não há mapas no telemóvel" else "Os mapas estão todos desligados",
+                Text(if (installed.isEmpty()) stringResource(R.string.map_no_maps) else stringResource(R.string.map_all_off),
                     color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text("Descarrega Portugal com Wi-Fi e o mapa funciona sem rede.", color = Palette.label, fontSize = 14.sp)
-                Button(onClick = { showMaps = true }) { Text("Mapas") }
+                Text(stringResource(R.string.map_download_hint), color = Palette.label, fontSize = 14.sp)
+                Button(onClick = { showMaps = true }) { Text(stringResource(R.string.map_maps)) }
             }
         }
 
@@ -952,23 +955,23 @@ private fun MapMenuItems(
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         when {
             moving != null -> {
-                MenuItem("Fixar waypoint ${moving.point + 1} aqui?", onDismiss) { onMoveFix(moving) }
-                MenuItem("Cancelar", onDismiss) { onMoveCancel() }
+                MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
+                MenuItem(stringResource(R.string.map_cancel), onDismiss) { onMoveCancel() }
             }
             t != null && mm.point != null && mm.point in t.plan.indices -> {
                 val n = mm.point + 1
-                Text("Waypoint $n · ${t.name}", color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
-                MenuItem("Deslocar waypoint $n", onDismiss) { onMoveStart(t, mm.point) }
-                MenuItem("Apagar waypoint $n", onDismiss) { Planner.remove(ctx, t.id, mm.point) }
-                if (current?.id != t.id) MenuItem("Continuar este trajeto", onDismiss) { TrackStore.setActive(ctx, t.id) }
+                Text(stringResource(R.string.map_waypoint_of, n, t.name), color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                MenuItem(stringResource(R.string.map_move_waypoint, n), onDismiss) { onMoveStart(t, mm.point) }
+                MenuItem(stringResource(R.string.map_delete_waypoint, n), onDismiss) { Planner.remove(ctx, t.id, mm.point) }
+                if (current?.id != t.id) MenuItem(stringResource(R.string.map_continue_route), onDismiss) { TrackStore.setActive(ctx, t.id) }
             }
             t != null -> {
                 Text(t.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
                 if (mm.leg != null && mm.leg in 0 until t.plan.size - 1) {
-                    MenuItem("Inserir waypoint ${mm.leg + 2} aqui", onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
+                    MenuItem(stringResource(R.string.map_insert_waypoint, mm.leg + 2), onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
                 }
-                if (current?.id != t.id) MenuItem("Seguir este trajeto", onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
-                MenuItem("Renomear", onDismiss) { onRename(t) }
+                if (current?.id != t.id) MenuItem(stringResource(R.string.map_follow_route), onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
+                MenuItem(stringResource(R.string.map_rename), onDismiss) { onRename(t) }
                 if (looks) {
                     // Colour and thickness, right in the menu; the menu stays open to see the change.
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -987,25 +990,25 @@ private fun MapMenuItems(
                         }
                     }
                 } else {
-                    DropdownMenuItem(text = { Text("Mudar cor e espessura", fontSize = 16.sp) }, onClick = { looks = true })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.map_change_look), fontSize = 16.sp) }, onClick = { looks = true })
                 }
-                MenuItem("Guardar cópia na app", onDismiss) {
-                    TrackStore.duplicate(ctx, t.id)?.let { Toast.makeText(ctx, "Guardado: ${it.name}", Toast.LENGTH_SHORT).show() }
+                MenuItem(stringResource(R.string.map_save_copy), onDismiss) {
+                    TrackStore.duplicate(ctx, t.id)?.let { Toast.makeText(ctx, ctx.getString(R.string.map_copy_saved, it.name), Toast.LENGTH_SHORT).show() }
                 }
-                MenuItem("Gravar GPX no telemóvel", onDismiss) { onSave(t) }
-                MenuItem("Partilhar GPX", onDismiss) { onShare(t) }
+                MenuItem(stringResource(R.string.map_save_gpx), onDismiss) { onSave(t) }
+                MenuItem(stringResource(R.string.map_share_gpx), onDismiss) { onShare(t) }
                 if (confirmDelete) {
-                    MenuItem("Confirmar: apagar ${t.name}", onDismiss) { TrackStore.delete(ctx, t.id) }
+                    MenuItem(stringResource(R.string.map_confirm_delete, t.name), onDismiss) { TrackStore.delete(ctx, t.id) }
                 } else {
-                    DropdownMenuItem(text = { Text("Apagar trajeto", fontSize = 16.sp, color = Palette.red) },
+                    DropdownMenuItem(text = { Text(stringResource(R.string.map_delete_route), fontSize = 16.sp, color = Palette.red) },
                         onClick = { confirmDelete = true })
                 }
             }
             else -> {
                 if (current != null && current.plan.isNotEmpty()) {
-                    MenuItem("Adicionar waypoint ${current.plan.size + 1} a ${current.name}", onDismiss) { Planner.add(ctx, current.id, mm.at) }
+                    MenuItem(stringResource(R.string.map_add_waypoint, current.plan.size + 1, current.name), onDismiss) { Planner.add(ctx, current.id, mm.at) }
                 }
-                MenuItem("Começar trajeto novo aqui", onDismiss) { Planner.start(ctx, mm.at) }
+                MenuItem(stringResource(R.string.map_new_route), onDismiss) { Planner.start(ctx, mm.at) }
             }
         }
     }
@@ -1025,8 +1028,8 @@ private fun shareGpx(ctx: Context, t: Track) {
         val send = Intent(Intent.ACTION_SEND).setType("application/gpx+xml")
             .putExtra(Intent.EXTRA_STREAM, uri).putExtra(Intent.EXTRA_SUBJECT, t.name)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        ctx.startActivity(Intent.createChooser(send, "Partilhar ${t.name}"))
-    }.onFailure { Toast.makeText(ctx, "Não deu para partilhar", Toast.LENGTH_SHORT).show() }
+        ctx.startActivity(Intent.createChooser(send, ctx.getString(R.string.map_share_title, t.name)))
+    }.onFailure { Toast.makeText(ctx, ctx.getString(R.string.map_share_failed), Toast.LENGTH_SHORT).show() }
 }
 
 /** Followed track: distance left, and how far off it the bike is. */
@@ -1040,11 +1043,11 @@ private fun TrackBox(t: Track, p: TrackProgress?) {
     ) {
         Text(t.name, color = if (off) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
         when {
-            p == null -> Text("À espera do GPS", color = Palette.text, fontSize = 16.sp)
-            p.offM > 1000 -> Text("Trajeto a ${km(p.offM)}", color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            p == null -> Text(stringResource(R.string.map_waiting_gps), color = Palette.text, fontSize = 16.sp)
+            p.offM > 1000 -> Text(stringResource(R.string.map_route_away, km(p.offM)), color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Faltam ${km(p.leftM)}", color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                if (off) Text("fora ${p.offM.toInt()} m", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.map_left, km(p.leftM)), color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1103,7 +1106,7 @@ data class Gnss(val visible: Int = 0, val used: Int = 0, val byName: Map<String,
                     GnssStatus.CONSTELLATION_BEIDOU -> "BeiDou"
                     GnssStatus.CONSTELLATION_QZSS -> "QZSS"
                     GnssStatus.CONSTELLATION_SBAS -> "SBAS"
-                    else -> "Outros"
+                    else -> L.s(R.string.map_gnss_other)
                 }
                 val u = s.usedInFix(i)
                 if (u) used++
@@ -1125,23 +1128,23 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
             .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text("GPS do telemóvel", color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.map_gps_title), color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         if (fix == null) {
-            Text("À espera do primeiro sinal…", color = Palette.label, fontSize = 13.sp)
+            Text(stringResource(R.string.map_gps_waiting_first), color = Palette.label, fontSize = 13.sp)
         } else {
-            KeyValue("Latitude", "%.6f".format(fix.latitude))
-            KeyValue("Longitude", "%.6f".format(fix.longitude))
-            KeyValue("Precisão", if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
-            KeyValue("Altitude", if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
+            KeyValue(stringResource(R.string.map_gps_latitude), "%.6f".format(fix.latitude))
+            KeyValue(stringResource(R.string.map_gps_longitude), "%.6f".format(fix.longitude))
+            KeyValue(stringResource(R.string.map_gps_accuracy), if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
+            KeyValue(stringResource(R.string.map_gps_altitude), if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
                 (if (fix.hasVerticalAccuracy()) " ±%.0f".format(fix.verticalAccuracyMeters) else "") else "--")
-            KeyValue("Velocidade", speed?.let { "%.0f km/h".format(it) } ?: "--")
-            KeyValue("Rumo", if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
-            KeyValue("Idade do sinal", "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
-            KeyValue("Fonte", if (fix.provider == LocationManager.GPS_PROVIDER) "satélites" else "rede")
+            KeyValue(stringResource(R.string.map_gps_speed), speed?.let { "%.0f km/h".format(it) } ?: "--")
+            KeyValue(stringResource(R.string.map_gps_bearing), if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
+            KeyValue(stringResource(R.string.map_gps_age), "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
+            KeyValue(stringResource(R.string.map_gps_source), if (fix.provider == LocationManager.GPS_PROVIDER) stringResource(R.string.map_gps_src_satellites) else stringResource(R.string.map_gps_src_network))
         }
-        KeyValue("Satélites", "${gnss.used} em uso de ${gnss.visible}")
+        KeyValue(stringResource(R.string.map_gps_satellites), stringResource(R.string.map_gps_sats_used, gnss.used, gnss.visible))
         for ((name, vu) in gnss.byName) KeyValue("  $name", "${vu.second}/${vu.first}")
-        if (gnss.bestCn0 > 0) KeyValue("Melhor sinal", "%.0f dB-Hz".format(gnss.bestCn0))
+        if (gnss.bestCn0 > 0) KeyValue(stringResource(R.string.map_gps_best), "%.0f dB-Hz".format(gnss.bestCn0))
     }
 }
 

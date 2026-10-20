@@ -3,6 +3,7 @@ package pt.artur.motadash
 import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.StringRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,12 +46,19 @@ data class InstalledMap(
     val shade: File? = null,
 )
 
-enum class MapTheme(val label: String) { AUTO("Automático"), DAY("Dia"), NIGHT("Noite") }
-enum class MapLanguage(val label: String) { PT("Português"), LOCAL("Língua local") }
+enum class MapTheme(@StringRes private val res: Int) {
+    AUTO(R.string.maps_theme_auto), DAY(R.string.maps_theme_day), NIGHT(R.string.maps_theme_night);
+    val label: String get() = L.s(res)
+}
+enum class MapLanguage(@StringRes private val res: Int) {
+    PT(R.string.maps_lang_pt), LOCAL(R.string.maps_lang_local);
+    val label: String get() = L.s(res)
+}
 
 /** How the map follows the bike: heading up, heading up tilted (3D), or north up. */
-enum class FollowMode(val label: String, val button: String) {
-    HEADING("Direção para cima", "▲"), THREE_D("3D", "3D"), NORTH("Norte para cima", "N");
+enum class FollowMode(@StringRes private val res: Int, val button: String) {
+    HEADING(R.string.maps_follow_heading, "▲"), THREE_D(R.string.maps_follow_3d, "3D"), NORTH(R.string.maps_follow_north, "N");
+    val label: String get() = L.s(res)
     fun next() = entries[(ordinal + 1) % entries.size]
 }
 
@@ -133,14 +141,14 @@ object MapStore {
                 }
                 if (best != null || releases.length() < 100) break
             }
-            val rel = best ?: error("Ainda não há mapas publicados")
+            val rel = best ?: error(L.s(R.string.maps_err_none_published))
             val assets = rel.getJSONArray("assets")
             val urls = HashMap<String, String>()
             for (i in 0 until assets.length()) {
                 val a = assets.getJSONObject(i)
                 urls[a.getString("name")] = a.getString("browser_download_url")
             }
-            val indexName = urls.keys.firstOrNull { it.startsWith("maps-index-") } ?: error("Release sem índice")
+            val indexName = urls.keys.firstOrNull { it.startsWith("maps-index-") } ?: error(L.s(R.string.maps_err_no_index))
             val json = JSONObject(get(urls.getValue(indexName)))
             val idx = parseIndex(json, urls)
             // Keep the urls inside the saved copy so downloads work from it later.
@@ -238,7 +246,7 @@ object MapStore {
         val ids = files.map { (name, u) ->
             File(dir(ctx), "$name.part").delete()
             val req = DownloadManager.Request(Uri.parse(u))
-                .setTitle("Mapa ${r.name}")
+                .setTitle(L.s(R.string.maps_download_title, r.name))
                 .setDescription(name)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                 .setDestinationUri(Uri.fromFile(File(dir(ctx), "$name.part")))
