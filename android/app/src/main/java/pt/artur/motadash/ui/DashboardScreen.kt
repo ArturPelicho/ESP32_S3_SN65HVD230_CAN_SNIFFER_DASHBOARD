@@ -92,7 +92,7 @@ fun DashboardScreen() {
         }
     }
     val s = DashState(t, status, gps, dtc, blink > 0.5f, now, params["TANK_DL"]?.value?.div(10.0) ?: 16.0)
-    BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black).padding(6.dp)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg).padding(6.dp)) {
         val landscape = maxWidth > maxHeight
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             ShiftLights(s, Modifier.fillMaxWidth().height(if (landscape) 14.dp else 18.dp))

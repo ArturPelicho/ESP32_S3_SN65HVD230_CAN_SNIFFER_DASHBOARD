@@ -92,7 +92,7 @@ fun MapsPanel(
     }
     val free = MapStore.dir(ctx).usableSpace
 
-    Column(Modifier.fillMaxSize().background(Color(0xF20B0E12))) {
+    Column(Modifier.fillMaxSize().background(Palette.sheet)) {
         // Title and Fechar stay put; only the content below scrolls.
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.maps_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)

@@ -31,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +46,9 @@ import pt.artur.motadash.ui.DiagScreen
 import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
+import pt.artur.motadash.ui.ThemeStore
+import androidx.compose.runtime.SideEffect
+import kotlinx.coroutines.delay
 import pt.artur.motadash.ui.UiScale
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -76,12 +78,15 @@ class MainActivity : ComponentActivity() {
         applyScreenOn()
         applyOrientation()
         UiScale.load(this)
+        ThemeStore.apply(this)
         handleTrackIntent(intent)
         setContent {
             val scale by UiScale.value.collectAsStateWithLifecycle()
             val d = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(d.density * scale, d.fontScale)) {
-                MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Palette.panel)) {
+                val scheme = Palette.scheme
+                SideEffect { ThemeStore.bars(this, scheme) }
+                MaterialTheme(colorScheme = ThemeStore.material(scheme)) {
                     App(this)
                 }
             }
@@ -155,7 +160,9 @@ private fun App(activity: MainActivity) {
         stringResource(R.string.tab_settings),
     )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    Column(Modifier.fillMaxSize().background(Color.Black)) {
+    // AUTO theme follows sunset: look again every minute.
+    LaunchedEffect(Unit) { while (true) { ThemeStore.apply(activity); delay(60_000) } }
+    Column(Modifier.fillMaxSize().background(Palette.bg)) {
         if (landscape) {
             // Slim tabs so the dashboard keeps the height.
             Row(Modifier.fillMaxWidth().height(30.dp)) {
@@ -170,7 +177,7 @@ private fun App(activity: MainActivity) {
                 }
             }
         } else {
-            TabRow(selectedTabIndex = tab, containerColor = Color.Black, contentColor = Palette.amber) {
+            TabRow(selectedTabIndex = tab, containerColor = Palette.bg, contentColor = Palette.amber) {
                 titles.forEachIndexed { i, t ->
                     Tab(selected = tab == i, onClick = { tab = i },
                         text = { Text(t, maxLines = 1, color = if (i == 2 && dtc.total > 0 && tab != i) Palette.orange else Color.Unspecified) })

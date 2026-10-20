@@ -1,4 +1,9 @@
 <resources>
     <string name="settings_language">Lingua</string>
     <string name="settings_language_phone">Lingua del telefono</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_auto">Automatico (tramonto)</string>
+    <string name="theme_sand">Sabbia</string>
+    <string name="theme_night">Notte nel deserto</string>
+    <string name="theme_graphite">Grafite</string>
 </resources>

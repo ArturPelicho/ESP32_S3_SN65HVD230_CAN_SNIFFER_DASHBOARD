@@ -655,7 +655,7 @@ fun MapScreen() {
     val enabled = installed.filter { it.enabled }
     val styleJson = remember(enabled, night, lang) { MapStyle.build(enabled, night, lang) }
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
+    Box(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { c ->
@@ -717,6 +717,7 @@ fun MapScreen() {
         LaunchedEffect(fix) {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
+            ThemeStore.lat = f.latitude; ThemeStore.lon = f.longitude
             holder.update(900)
             holder.scan()
             progress = follower?.locate(f.latitude, f.longitude)
@@ -740,7 +741,7 @@ fun MapScreen() {
             MapButton("+") { holder.zoomBy(1.0) }
             MapButton("−") { holder.zoomBy(-1.0) }
             Row(
-                Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+                Modifier.background(Palette.overlaySoft, RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -786,7 +787,7 @@ fun MapScreen() {
             Text(
                 if (fix == null) stringResource(R.string.map_gps_no_signal) else "GPS ${gnss.used}/${gnss.visible}" + (acc?.let { " · ±%.0f m".format(it) } ?: ""),
                 color = col, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.background(Color(0xCC0B0E12), RoundedCornerShape(8.dp))
+                modifier = Modifier.background(Palette.overlaySoft, RoundedCornerShape(8.dp))
                     .clickable { showGps = !showGps }.padding(horizontal = 10.dp, vertical = 6.dp),
             )
             if (showGps) GpsPanel(fix, gnss, speed)
@@ -812,7 +813,7 @@ fun MapScreen() {
         }
         moving?.let { mv ->
             Row(
-                Modifier.background(Color(0xE60B0E12), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+                Modifier.background(Palette.overlay, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -888,7 +889,7 @@ fun MapScreen() {
         trackMessage?.takeIf { !showTracks }?.let {
             Text(it, color = Palette.text, fontSize = 14.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
-                    .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp))
+                    .background(Palette.overlay, RoundedCornerShape(10.dp)).padding(12.dp))
         }
 
         Text(
@@ -1037,7 +1038,7 @@ private fun shareGpx(ctx: Context, t: Track) {
 private fun TrackBox(t: Track, p: TrackProgress?) {
     val off = p != null && p.offM > 50
     Column(
-        Modifier.background(if (off) Palette.orange else Color(0xE60B0E12), RoundedCornerShape(12.dp))
+        Modifier.background(if (off) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
             .padding(horizontal = 14.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -1059,7 +1060,7 @@ private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" e
 @Composable
 private fun NorthNeedle(bearing: Float) {
     Box(
-        Modifier.padding(top = 8.dp).size(44.dp).background(Color(0xCC0B0E12), CircleShape),
+        Modifier.padding(top = 8.dp).size(44.dp).background(Palette.overlaySoft, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(34.dp).rotate(-bearing)) {
@@ -1125,7 +1126,7 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
     LaunchedEffect(Unit) { while (true) { delay(1000); now = SystemClock.elapsedRealtimeNanos() } }
     Column(
         Modifier.padding(top = 6.dp).width(250.dp)
-            .background(Color(0xE60B0E12), RoundedCornerShape(10.dp)).padding(12.dp),
+            .background(Palette.overlay, RoundedCornerShape(10.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(stringResource(R.string.map_gps_title), color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -1152,7 +1153,7 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
 private fun MapButton(label: String, active: Boolean = false, small: Boolean = false, onClick: () -> Unit) {
     Box(
         Modifier.size(52.dp)
-            .background(Color(0xE60B0E12), RoundedCornerShape(14.dp))
+            .background(Palette.overlay, RoundedCornerShape(14.dp))
             .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,

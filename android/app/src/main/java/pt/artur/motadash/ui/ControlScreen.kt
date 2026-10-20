@@ -97,6 +97,16 @@ fun ControlScreen(activity: MainActivity) {
                 }
             }
         }
+        Section(stringResource(R.string.settings_theme)) {
+            var theme by remember { mutableStateOf(ThemeStore.get(ctx)) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                AppTheme.entries.forEach { t ->
+                    FilterChip(selected = theme == t,
+                        onClick = { theme = t; ThemeStore.set(ctx, t) },
+                        label = { Text(stringResource(t.res)) })
+                }
+            }
+        }
         Section(stringResource(R.string.set_fuel)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 Button(enabled = connected, onClick = { Link.send("AVG RESET") }) { Text(stringResource(R.string.set_avg_reset)) }
