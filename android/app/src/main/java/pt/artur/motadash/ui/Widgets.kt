@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import pt.artur.motadash.Attitude
+import pt.artur.motadash.ElevProfile
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.RepeatMode
@@ -122,6 +124,8 @@ enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val
     FAULTS(R.string.w_faults, 280f, 56f, 2, 1),
     NORTH(R.string.w_north, 120f, 120f, 1, 2),
     ATTITUDE(R.string.w_attitude, 240f, 120f, 2, 2),
+    /** Map only: the followed track's height profile, a strip along the bottom. */
+    PROFILE(R.string.w_profile, 400f, 64f, 0, 0),
 }
 
 /** Slot size; Medium is 120 x 60 dp. */
@@ -152,13 +156,15 @@ class WidgetData(
     val speed: Double?, val limit: Int?, val lat: Double?, val lon: Double?, val altM: Double?,
     /** The map's rotation and tilt (degrees), for the north element; null off the map (it uses the phone's compass). */
     val bearing: Float? = null, val tilt: Float? = null,
+    /** The followed track's heights and how far along it the bike is, for the profile strip. */
+    val profile: ElevProfile? = null, val doneM: Double? = null,
 )
 
 /** Board data plus a 4 Hz blink and a clock; [speed] null means the board's speed. */
 @Composable
 fun widgetData(
     speed: Double? = null, limit: Int? = null, lat: Double? = null, lon: Double? = null, altM: Double? = null,
-    bearing: Float? = null, tilt: Float? = null,
+    bearing: Float? = null, tilt: Float? = null, profile: ElevProfile? = null, doneM: Double? = null,
 ): WidgetData {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val status by Link.status.collectAsStateWithLifecycle()
@@ -173,7 +179,7 @@ fun widgetData(
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(5_000) } }
     return WidgetData(
         t, status, gps, dtc, blink > 0.5f, now, params["TANK_DL"]?.value?.div(10.0) ?: 16.0,
-        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt,
+        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt, profile, doneM,
     )
 }
 
@@ -229,8 +235,16 @@ object LayoutStore {
 
     fun shown(ctx: Context, screen: String, land: Boolean): List<Widget> {
         version
-        val s = prefs(ctx).getString("shown_${screen}_${orient(land)}", null) ?: return defaultShown(screen, land)
-        return s.split(',').mapNotNull { n -> Widget.entries.firstOrNull { it.name == n } }
+        val key = "shown_${screen}_${orient(land)}"
+        val s = prefs(ctx).getString(key, null) ?: return defaultShown(screen, land)
+        val list = s.split(',').mapNotNull { n -> Widget.entries.firstOrNull { it.name == n } }
+        // The track profile came later: it joins maps set up before it, once.
+        if (screen == MAP && !prefs(ctx).getBoolean("${key}_profile", false)) {
+            val l = list - Widget.PROFILE + Widget.PROFILE
+            prefs(ctx).edit().putBoolean("${key}_profile", true).putString(key, l.joinToString(",") { it.name }).apply()
+            return l
+        }
+        return list
     }
 
     private fun setShown(ctx: Context, screen: String, land: Boolean, list: List<Widget>) {
@@ -307,7 +321,7 @@ object LayoutStore {
     }
 
     fun defaultShown(screen: String, land: Boolean): List<Widget> = when {
-        screen == MAP -> listOf(Widget.SPEED)
+        screen == MAP -> listOf(Widget.SPEED, Widget.PROFILE)
         land -> listOf(Widget.SHIFT, Widget.CLUSTER, Widget.FUEL, Widget.CHT, Widget.FUEL_NOW, Widget.FUEL_AVG, Widget.FAULTS,
             Widget.CLOCK, Widget.LINK, Widget.BATTERY, Widget.AIR, Widget.THROTTLE, Widget.TRIP)
         else -> listOf(Widget.SHIFT, Widget.CLUSTER, Widget.FUEL, Widget.CLOCK, Widget.BATTERY, Widget.CHT, Widget.AIR,
@@ -400,7 +414,9 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
         val density = LocalDensity.current
         val strip = if (drawShift && Widget.SHIFT in order) 18.dp else 0.dp
         val top = if (strip > 0.dp) strip + 4.dp else 0.dp
-        val gridH = maxHeight - top
+        val prof = if (screen == LayoutStore.MAP && Widget.PROFILE in order) data.profile else null
+        val profH = (64 * size.k).dp
+        val gridH = maxHeight - top - if (prof != null) profH + 4.dp else 0.dp
         val cols = (maxWidth.value / (120 * size.k)).toInt().coerceAtLeast(1)
         val rows = (gridH.value / (60 * size.k)).toInt().coerceAtLeast(1)
         val cw = maxWidth / cols
@@ -462,6 +478,10 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
                 }
             }
         }
+        if (prof != null) {
+            ProfileStrip(prof, data.doneM, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(profH))
+        }
         if (moving) {
             Row(
                 Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
@@ -516,7 +536,7 @@ fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Comp
         ) {
             Text(stringResource(R.string.w_shown), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Widget.entries.forEach { w ->
+                Widget.entries.filter { it != Widget.PROFILE || screen == LayoutStore.MAP }.forEach { w ->
                     val on = w in shown
                     FilterChip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
                         label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
@@ -583,6 +603,7 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
         when (w) {
             Widget.CLUSTER -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Cluster(d) }
             Widget.SHIFT -> ShiftLights(d, Modifier.fillMaxSize())
+            Widget.PROFILE -> {}
             Widget.SPEED -> SpeedBox(d, u, bg)
             Widget.GEAR -> Box(Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
                 Box(Modifier.size((66 * u).dp).border(3.dp, Palette.cyan, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
@@ -871,3 +892,58 @@ private fun AttitudeGauge(bg: Color, u: Float) {
 /** A thin outline on the OLED scheme, where panels are as black as the background. */
 private fun Modifier.outline(): Modifier =
     if (Palette.outlined) border(1.dp, Palette.frame, RoundedCornerShape(12.dp)) else this
+
+/**
+ * The followed track's height from start (left) to finish (right), whatever its length: ridden part
+ * in cyan, what is left in amber, a marker where the bike is.
+ */
+@Composable
+private fun ProfileStrip(p: ElevProfile, doneM: Double?, bg: Color, modifier: Modifier) {
+    val frac = ((doneM ?: 0.0) / p.totalM).toFloat().coerceIn(0f, 1f)
+    val here = doneM?.let { p.at(it) }
+    val span = (p.maxE - p.minE).coerceAtLeast(20f)
+    val lo = p.minE - span * 0.08f
+    val hi = lo + span * 1.2f
+    Box(modifier.background(bg, RoundedCornerShape(10.dp)).outline().padding(horizontal = 8.dp, vertical = 4.dp)) {
+        val cyan = Palette.cyan
+        val amber = Palette.amber
+        val text = Palette.text
+        Canvas(Modifier.fillMaxSize().padding(top = 14.dp)) {
+            val w = size.width
+            val h = size.height
+            fun x(i: Int) = p.distM[i] / p.totalM * w
+            fun y(e: Float) = h - (e - lo) / (hi - lo) * h
+            val n = p.eleM.size
+            val area = Path().apply {
+                moveTo(0f, h)
+                for (i in 0 until n) lineTo(x(i), y(p.eleM[i]))
+                lineTo(w, h); close()
+            }
+            val line = Path().apply {
+                moveTo(0f, y(p.eleM[0]))
+                for (i in 1 until n) lineTo(x(i), y(p.eleM[i]))
+            }
+            val cut = frac * w
+            clipRect(right = cut) {
+                drawPath(area, cyan.copy(alpha = 0.35f))
+                drawPath(line, cyan, style = Stroke(3f))
+            }
+            clipRect(left = cut) {
+                drawPath(area, amber.copy(alpha = 0.25f))
+                drawPath(line, amber, style = Stroke(3f))
+            }
+            if (doneM != null && here != null) {
+                drawLine(text, Offset(cut, 0f), Offset(cut, h), strokeWidth = 2f)
+                drawCircle(text, 7f, Offset(cut, y(here)))
+                drawCircle(cyan, 4f, Offset(cut, y(here)))
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("▲ %.0f m  ▼ %.0f m".format(p.maxE, p.minE), color = Palette.label, fontSize = 11.sp, maxLines = 1)
+            if (here != null) Text("%.0f m · %d%%".format(here, (frac * 100).roundToInt()), color = Palette.text,
+                fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(if (p.totalM < 1000) "%.0f m".format(p.totalM) else "%.1f km".format(p.totalM / 1000), color = Palette.label,
+                fontSize = 11.sp, maxLines = 1)
+        }
+    }
+}

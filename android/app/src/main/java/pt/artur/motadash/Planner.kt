@@ -92,6 +92,19 @@ object Planner {
         reroute(ctx, id)
     }
 
+    /** Rides it the other way: start and finish swap, waypoints renumber from the new start. */
+    fun reverse(ctx: Context, id: String) {
+        TrackStore.change(ctx, id) { t ->
+            t.copy(lines = t.lines.reversed().map { it.reversed() }, plan = t.plan.reversed(), waypoints = t.waypoints.reversed())
+        }
+    }
+
+    /** "Go there": a new trajeto from where the bike is to [to], followed at once; edit and save it as usual. */
+    fun goThere(ctx: Context, here: LatLon, to: LatLon) {
+        val t = start(ctx, here)
+        add(ctx, t.id, to)
+    }
+
     /** The legs of a planned track; straight ones if they don't match the waypoints (should not happen). */
     private fun legs(t: Track): List<List<LatLon>> =
         if (t.lines.size == t.plan.size - 1) t.lines

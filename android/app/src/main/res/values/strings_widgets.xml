@@ -70,4 +70,7 @@
     <string name="w_att_pitch">Pitch</string>
     <string name="w_att_max">MAX L %1$d° · R %2$d°</string>
     <string name="w_att_hint">Long-press it to zero with the bike upright and level.</string>
+    <string name="w_profile">Track progress</string>
+    <string name="map_reverse">Reverse direction</string>
+    <string name="map_go_there">Go there</string>
 </resources>

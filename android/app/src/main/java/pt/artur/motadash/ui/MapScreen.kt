@@ -94,7 +94,10 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sqrt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import pt.artur.motadash.ElevProfile
 import java.io.File
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.gestures.RotateGestureDetector
@@ -577,6 +580,14 @@ fun MapScreen() {
     val trackMessage by TrackStore.message.collectAsStateWithLifecycle()
     val activeTrack = tracks.firstOrNull { it.id == activeId }
     val follower = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { TrackFollower(it, reversed) } }
+    // Heights along the followed track (its own, or read from the downloaded relief), for the profile strip.
+    var profile by remember { mutableStateOf<ElevProfile?>(null) }
+    LaunchedEffect(activeTrack?.id, activeTrack?.lines, reversed, installed) {
+        val t = activeTrack
+        profile = if (t == null) null else withContext(Dispatchers.IO) {
+            runCatching { ElevProfile.of(t, reversed, installed.filter { it.enabled }) }.getOrNull()
+        }
+    }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
     var menu by remember { mutableStateOf<MapMenu?>(null) }
     var moving by remember { mutableStateOf<Moving?>(null) }
@@ -772,7 +783,8 @@ fun MapScreen() {
         // The rider's elements (speed by default; any Painel element can join it), clear of the bar.
         WidgetBoard(LayoutStore.MAP,
             widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
-                altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt),
+                altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt,
+                profile = profile, doneM = progress?.doneM),
             modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
         @Composable
@@ -904,7 +916,7 @@ fun MapScreen() {
         menu?.let { mm ->
             Box(Modifier.offset { IntOffset(mm.x.toInt(), mm.y.toInt()) }) {
                 MapMenuItems(
-                    mm, tracks, activeTrack, moving,
+                    mm, tracks, activeTrack, moving, fix?.let { LatLon(it.latitude, it.longitude) },
                     onDismiss = { menu = null },
                     onMoveStart = { t, k ->
                         moving = Moving(t.id, k); holder.editing = true; holder.centreOn(t.plan[k])
@@ -999,6 +1011,7 @@ private fun MapMenuItems(
     tracks: List<Track>,
     current: Track?,
     moving: Moving?,
+    here: LatLon?,
     onDismiss: () -> Unit,
     onMoveStart: (Track, Int) -> Unit,
     onMoveFix: (Moving) -> Unit,
@@ -1030,6 +1043,7 @@ private fun MapMenuItems(
                     MenuItem(stringResource(R.string.map_insert_waypoint, mm.leg + 2), onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
                 }
                 if (current?.id != t.id) MenuItem(stringResource(R.string.map_follow_route), onDismiss) { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false) }
+                MenuItem(stringResource(R.string.map_reverse), onDismiss) { Planner.reverse(ctx, t.id) }
                 MenuItem(stringResource(R.string.map_rename), onDismiss) { onRename(t) }
                 if (looks) {
                     // Colour and thickness, right in the menu; the menu stays open to see the change.
@@ -1067,6 +1081,7 @@ private fun MapMenuItems(
                 if (current != null && current.plan.isNotEmpty()) {
                     MenuItem(stringResource(R.string.map_add_waypoint, current.plan.size + 1, current.name), onDismiss) { Planner.add(ctx, current.id, mm.at) }
                 }
+                if (here != null) MenuItem(stringResource(R.string.map_go_there), onDismiss) { Planner.goThere(ctx, here, mm.at) }
                 MenuItem(stringResource(R.string.map_new_route), onDismiss) { Planner.start(ctx, mm.at) }
             }
         }

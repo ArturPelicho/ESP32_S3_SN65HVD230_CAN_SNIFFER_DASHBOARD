@@ -70,4 +70,7 @@
     <string name="w_att_pitch">Nicken</string>
     <string name="w_att_max">MAX L %1$d° · R %2$d°</string>
     <string name="w_att_hint">Lange drücken zum Nullen, Motorrad aufrecht und waagrecht.</string>
+    <string name="w_profile">Streckenfortschritt</string>
+    <string name="map_reverse">Richtung umkehren</string>
+    <string name="map_go_there">Hierhin fahren</string>
 </resources>
