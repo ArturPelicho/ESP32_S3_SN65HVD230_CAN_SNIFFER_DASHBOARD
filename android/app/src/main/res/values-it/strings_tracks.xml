@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Puoi anche aprire un file con NavExpress dal gestore file o da WhatsApp.</string>
     <string name="tracks_create_hint">Per creare un percorso: tocco lungo sulla mappa, «Inizia un nuovo percorso qui», poi tocco lungo altrove per aggiungere waypoint. Tocco lungo su un waypoint per spostarlo o eliminarlo, e sulla linea per rinominare, salvare o condividere.</string>
     <string name="tracks_roads">I nuovi percorsi seguono le strade</string>
-    <string name="tracks_roads_hint">Serve la rete (BRouter, OpenStreetMap). Senza rete collega i waypoint in linea retta.</string>
+    <string name="tracks_roads_hint">Con i percorsi offline della regione (Mapas) funziona senza rete; altrimenti serve la rete (BRouter, OpenStreetMap). Senza nessuno dei due, unisce i waypoint in linea retta.</string>
     <string name="tracks_empty">Ancora nessun percorso.</string>
     <string name="tracks_save">Salva</string>
     <string name="tracks_cancel">Annulla</string>
@@ -88,4 +88,17 @@
     <string name="tracks_err_kmz_no_kml">Il KMZ non contiene alcun KML</string>
     <string name="tracks_err_not_fit">Non è un file FIT</string>
     <string name="tracks_err_fit_invalid">FIT non valido</string>
+    <string name="route_title">Tipo di percorso</string>
+    <string name="route_fast">Più veloce</string>
+    <string name="route_fast_hint">Strade principali a velocità di crociera (fino a 100 km/h).</string>
+    <string name="route_eco">Economico</string>
+    <string name="route_eco_hint">Strade più tranquille e costanti (fino a 70 km/h): meno benzina.</string>
+    <string name="route_fun">Divertente</string>
+    <string name="route_fun_hint">Strade secondarie: niente autostrade, aggira le città, passa per i boschi; sterrati ammessi se non li eviti.</string>
+    <string name="route_avoid_motorways">Evita autostrade</string>
+    <string name="route_avoid_toll">Evita pedaggi</string>
+    <string name="route_avoid_unpaved">Evita sterrati</string>
+    <string name="route_bypass_towns">Aggira le città</string>
+    <string name="route_options_hint">Vale per i nuovi percorsi e per il rientro sul tracciato in modalità Nav. Tocca Ricalcola su un tragitto pianificato per rifarlo.</string>
+    <string name="route_replan">Ricalcola</string>
 </resources>

@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">También puedes abrir un archivo con NavExpress desde el gestor de archivos o WhatsApp.</string>
     <string name="tracks_create_hint">Para crear una ruta: pulsación larga en el mapa, «Empezar una ruta nueva aquí», y luego pulsación larga en otros sitios para añadir waypoints. Pulsación larga en un waypoint para moverlo o borrarlo, y en la línea para renombrar, guardar o compartir.</string>
     <string name="tracks_roads">Las rutas nuevas siguen las carreteras</string>
-    <string name="tracks_roads_hint">Necesita red (BRouter, OpenStreetMap). Sin red une los waypoints en línea recta.</string>
+    <string name="tracks_roads_hint">Con las rutas offline de la región (Mapas) funciona sin red; si no, necesita red (BRouter, OpenStreetMap). Sin ninguna, une los waypoints en línea recta.</string>
     <string name="tracks_empty">Aún no hay rutas.</string>
     <string name="tracks_save">Guardar</string>
     <string name="tracks_cancel">Cancelar</string>
@@ -88,4 +88,17 @@
     <string name="tracks_err_kmz_no_kml">El KMZ no tiene ningún KML dentro</string>
     <string name="tracks_err_not_fit">No es un archivo FIT</string>
     <string name="tracks_err_fit_invalid">FIT no válido</string>
+    <string name="route_title">Tipo de ruta</string>
+    <string name="route_fast">Más rápida</string>
+    <string name="route_fast_hint">Carreteras principales a velocidad de crucero (hasta 100 km/h).</string>
+    <string name="route_eco">Económica</string>
+    <string name="route_eco_hint">Carreteras más tranquilas y constantes (hasta 70 km/h): menos gasolina.</string>
+    <string name="route_fun">Divertida</string>
+    <string name="route_fun_hint">Carreteras secundarias: sin autopistas, rodea las ciudades, pasa por bosque; acepta pistas y tierra salvo que las evites.</string>
+    <string name="route_avoid_motorways">Evitar autopistas</string>
+    <string name="route_avoid_toll">Evitar peajes</string>
+    <string name="route_avoid_unpaved">Evitar caminos de tierra</string>
+    <string name="route_bypass_towns">Rodear ciudades</string>
+    <string name="route_options_hint">Se aplica a rutas nuevas y al regreso al trayecto en modo Nav. Pulsa Recalcular en un trayecto planificado para rehacerlo.</string>
+    <string name="route_replan">Recalcular</string>
 </resources>

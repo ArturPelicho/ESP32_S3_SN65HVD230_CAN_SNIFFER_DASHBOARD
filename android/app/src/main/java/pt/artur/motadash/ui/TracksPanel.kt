@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.TrackMode
+import pt.artur.motadash.Planner
+import pt.artur.motadash.RouteOptions
+import pt.artur.motadash.RouteStyle
 import pt.artur.motadash.R
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackStore
@@ -86,6 +89,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                 }
                 Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
             }
+            RouteOptionsSection()
             var mode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
             Text(stringResource(R.string.track_mode_title), color = Palette.text, fontSize = 15.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -145,6 +149,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                             }
                         }
                         OutlinedButton(onClick = { onShow(t) }) { Text(stringResource(R.string.tracks_show_on_map)) }
+                        if (t.plan.size >= 2) OutlinedButton(onClick = { Planner.replan(ctx, t.id) }) { Text(stringResource(R.string.route_replan)) }
                         if (confirmDelete == t.id) {
                             Button(onClick = { TrackStore.delete(ctx, t.id); confirmDelete = null }) { Text(stringResource(R.string.tracks_confirm_delete)) }
                             OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.tracks_no)) }
@@ -178,3 +183,32 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
 
 internal fun parseColor(hex: String): Color =
     runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(Palette.cyan)
+
+/** Kind of road route (quick, economical, back roads) and what to avoid; used offline and online. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RouteOptionsSection() {
+    val ctx = LocalContext.current
+    var style by remember { mutableStateOf(RouteOptions.style(ctx)) }
+    Text(stringResource(R.string.route_title), color = Palette.text, fontSize = 15.sp)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        RouteStyle.entries.forEach { s ->
+            FilterChip(selected = style == s, onClick = { style = s; RouteOptions.setStyle(ctx, s) }, label = { Text(s.label) })
+        }
+    }
+    Text(style.hint, color = Palette.label, fontSize = 12.sp)
+    @Composable
+    fun option(@androidx.annotation.StringRes label: Int, get: () -> Boolean, set: (Boolean) -> Unit, enabled: Boolean = true) {
+        var on by remember { mutableStateOf(get()) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(label), color = if (enabled) Palette.text else Palette.label, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            Switch(checked = on, enabled = enabled, onCheckedChange = { on = it; set(it) })
+        }
+    }
+    val fun_ = style == RouteStyle.FUN
+    option(R.string.route_avoid_motorways, { RouteOptions.avoidMotorways(ctx) }, { RouteOptions.setAvoidMotorways(ctx, it) }, enabled = !fun_)
+    option(R.string.route_avoid_toll, { RouteOptions.avoidToll(ctx) }, { RouteOptions.setAvoidToll(ctx, it) })
+    option(R.string.route_avoid_unpaved, { RouteOptions.avoidUnpaved(ctx) }, { RouteOptions.setAvoidUnpaved(ctx, it) })
+    option(R.string.route_bypass_towns, { RouteOptions.bypassTowns(ctx) }, { RouteOptions.setBypassTowns(ctx, it) }, enabled = !fun_)
+    Text(stringResource(R.string.route_options_hint), color = Palette.label, fontSize = 12.sp)
+}

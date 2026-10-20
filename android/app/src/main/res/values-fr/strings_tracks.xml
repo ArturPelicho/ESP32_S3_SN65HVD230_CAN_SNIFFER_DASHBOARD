@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Tu peux aussi ouvrir un fichier avec NavExpress depuis le gestionnaire de fichiers ou WhatsApp.</string>
     <string name="tracks_create_hint">Pour créer un itinéraire : appui long sur la carte, « Commencer un nouvel itinéraire ici », puis appui long ailleurs pour ajouter des waypoints. Appui long sur un waypoint pour le déplacer ou le supprimer, et sur la ligne pour renommer, enregistrer ou partager.</string>
     <string name="tracks_roads">Les nouveaux itinéraires suivent les routes</string>
-    <string name="tracks_roads_hint">Nécessite du réseau (BRouter, OpenStreetMap). Sans réseau, les waypoints sont reliés en ligne droite.</string>
+    <string name="tracks_roads_hint">Avec les itinéraires hors ligne de la région (Mapas), ça marche sans réseau ; sinon il faut du réseau (BRouter, OpenStreetMap). Sans aucun des deux, les waypoints sont reliés en ligne droite.</string>
     <string name="tracks_empty">Aucun itinéraire pour l\'instant.</string>
     <string name="tracks_save">Enregistrer</string>
     <string name="tracks_cancel">Annuler</string>
@@ -88,4 +88,17 @@
     <string name="tracks_err_kmz_no_kml">Le KMZ ne contient aucun KML</string>
     <string name="tracks_err_not_fit">Ce n\'est pas un fichier FIT</string>
     <string name="tracks_err_fit_invalid">FIT invalide</string>
+    <string name="route_title">Type d’itinéraire</string>
+    <string name="route_fast">Le plus rapide</string>
+    <string name="route_fast_hint">Routes principales à vitesse de croisière (jusqu’à 100 km/h).</string>
+    <string name="route_eco">Économique</string>
+    <string name="route_eco_hint">Routes plus calmes et régulières (jusqu’à 70 km/h) : moins d’essence.</string>
+    <string name="route_fun">Plaisir</string>
+    <string name="route_fun_hint">Petites routes : pas d’autoroutes, contourne les villes, passe par la forêt ; pistes et terre acceptées sauf si vous les évitez.</string>
+    <string name="route_avoid_motorways">Éviter les autoroutes</string>
+    <string name="route_avoid_toll">Éviter les péages</string>
+    <string name="route_avoid_unpaved">Éviter les chemins de terre</string>
+    <string name="route_bypass_towns">Contourner les villes</string>
+    <string name="route_options_hint">S’applique aux nouveaux itinéraires et au retour au tracé en mode Nav. Touchez Recalculer sur un trajet planifié pour le refaire.</string>
+    <string name="route_replan">Recalculer</string>
 </resources>

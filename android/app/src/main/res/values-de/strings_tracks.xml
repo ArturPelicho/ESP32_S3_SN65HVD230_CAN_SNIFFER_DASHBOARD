@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Du kannst eine Datei auch aus dem Dateimanager oder WhatsApp mit NavExpress öffnen.</string>
     <string name="tracks_create_hint">So erstellst du eine Route: lange auf die Karte drücken, „Neue Route hier beginnen“, dann lange auf andere Stellen drücken, um Waypoints hinzuzufügen. Lange auf einen Waypoint drücken, um ihn zu verschieben oder zu löschen, und auf die Linie, um sie umzubenennen, zu speichern oder zu teilen.</string>
     <string name="tracks_roads">Neue Routen folgen den Straßen</string>
-    <string name="tracks_roads_hint">Braucht Netz (BRouter, OpenStreetMap). Ohne Netz werden die Waypoints gerade verbunden.</string>
+    <string name="tracks_roads_hint">Mit den Offline-Routen der Region (Mapas) geht es ohne Netz; sonst braucht es Netz (BRouter, OpenStreetMap). Ohne beides werden die Wegpunkte gerade verbunden.</string>
     <string name="tracks_empty">Noch keine Routen.</string>
     <string name="tracks_save">Speichern</string>
     <string name="tracks_cancel">Abbrechen</string>
@@ -88,4 +88,17 @@
     <string name="tracks_err_kmz_no_kml">Die KMZ enthält keine KML</string>
     <string name="tracks_err_not_fit">Keine FIT-Datei</string>
     <string name="tracks_err_fit_invalid">Ungültige FIT-Datei</string>
+    <string name="route_title">Routenart</string>
+    <string name="route_fast">Schnellste</string>
+    <string name="route_fast_hint">Hauptstraßen mit Reisetempo (bis 100 km/h).</string>
+    <string name="route_eco">Sparsam</string>
+    <string name="route_eco_hint">Ruhigere, gleichmäßige Straßen (bis 70 km/h): weniger Benzin.</string>
+    <string name="route_fun">Kurvenspaß</string>
+    <string name="route_fun_hint">Nebenstraßen: keine Autobahnen, um Städte herum, durch Wald; Feldwege und Schotter erlaubt, außer du meidest sie.</string>
+    <string name="route_avoid_motorways">Autobahnen meiden</string>
+    <string name="route_avoid_toll">Maut meiden</string>
+    <string name="route_avoid_unpaved">Schotterwege meiden</string>
+    <string name="route_bypass_towns">Städte umfahren</string>
+    <string name="route_options_hint">Gilt für neue Routen und die Rückkehr zur Strecke im Nav-Modus. Bei einer geplanten Strecke Neu berechnen tippen, um sie neu zu machen.</string>
+    <string name="route_replan">Neu berechnen</string>
 </resources>

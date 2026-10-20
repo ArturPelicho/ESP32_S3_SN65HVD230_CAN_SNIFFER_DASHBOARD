@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">You can also open a file with NavExpress from the file manager or WhatsApp.</string>
     <string name="tracks_create_hint">To create a route: long press on the map, \"Start a new route here\", then long press elsewhere to add waypoints. Long press a waypoint to move or delete it, and the line to rename, save or share.</string>
     <string name="tracks_roads">New routes follow the roads</string>
-    <string name="tracks_roads_hint">Needs network (BRouter, OpenStreetMap). Without network the waypoints are joined in straight lines.</string>
+    <string name="tracks_roads_hint">With the region\'s offline routes (Mapas) it works without network; otherwise it needs network (BRouter, OpenStreetMap). With neither, the waypoints are joined in straight lines.</string>
     <string name="tracks_empty">No routes yet.</string>
     <string name="tracks_save">Save</string>
     <string name="tracks_cancel">Cancel</string>
@@ -88,4 +88,17 @@
     <string name="tracks_err_kmz_no_kml">The KMZ has no KML inside</string>
     <string name="tracks_err_not_fit">Not a FIT file</string>
     <string name="tracks_err_fit_invalid">Invalid FIT</string>
+    <string name="route_title">Route type</string>
+    <string name="route_fast">Fastest</string>
+    <string name="route_fast_hint">Main roads at cruising speed (up to 100 km/h).</string>
+    <string name="route_eco">Economical</string>
+    <string name="route_eco_hint">Steady, slower roads (up to 70 km/h): less fuel.</string>
+    <string name="route_fun">Fun</string>
+    <string name="route_fun_hint">Back roads: no motorways, round the towns, through forest; tracks and dirt allowed unless you avoid them.</string>
+    <string name="route_avoid_motorways">Avoid motorways</string>
+    <string name="route_avoid_toll">Avoid tolls</string>
+    <string name="route_avoid_unpaved">Avoid dirt roads</string>
+    <string name="route_bypass_towns">Go round towns</string>
+    <string name="route_options_hint">Applies to new routes and to Nav rejoining. Tap Recalculate on a planned trajeto to redo it.</string>
+    <string name="route_replan">Recalculate</string>
 </resources>
