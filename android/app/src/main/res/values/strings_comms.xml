@@ -27,5 +27,9 @@
     <string name="track_badge_track">TRACK</string>
     <string name="track_mode_hint">Nav: off the track, a road route back to it is worked out (needs network). Track: the line stays the line, with the way back to its nearest point. Tap the track box on the map to switch.</string>
     <string name="nav_rejoin">%1$s back to the track</string>
-    <string name="nav_no_net">No network: head back along the dashed line</string>
+    <string name="nav_no_net">No route (no network, no offline routes here): head back along the dashed line</string>
+    <string name="routes_none">Offline routes: not on the phone</string>
+    <string name="routes_downloading">Offline routes: downloading %1$s</string>
+    <string name="routes_installed">Offline routes: on the phone (%1$s)</string>
+    <string name="routes_failed">Offline routes: download failed</string>
 </resources>

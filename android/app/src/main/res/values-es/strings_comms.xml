@@ -27,5 +27,9 @@
     <string name="track_badge_track">PISTA</string>
     <string name="track_mode_hint">Nav: fuera de la ruta, calcula una ruta por carretera de vuelta (necesita red). Pista: la línea es la línea, con el camino al punto más cercano. Toca el cuadro de la ruta en el mapa para cambiar.</string>
     <string name="nav_rejoin">%1$s hasta volver a la ruta</string>
-    <string name="nav_no_net">Sin red: vuelve por la línea discontinua</string>
+    <string name="nav_no_net">Sin ruta (sin red ni rutas offline aquí): vuelve por la línea discontinua</string>
+    <string name="routes_none">Rutas offline: no están en el teléfono</string>
+    <string name="routes_downloading">Rutas offline: descargando %1$s</string>
+    <string name="routes_installed">Rutas offline: en el teléfono (%1$s)</string>
+    <string name="routes_failed">Rutas offline: falló la descarga</string>
 </resources>

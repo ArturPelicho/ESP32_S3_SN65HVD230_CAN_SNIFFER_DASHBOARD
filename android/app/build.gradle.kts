@@ -45,6 +45,11 @@ android {
     buildFeatures {
         compose = true
     }
+    // BRouter (offline road routes): its plain Java modules, checked out by CI next to the app.
+    val brouterSrc = rootProject.file("brouter-src")
+    if (brouterSrc.exists()) sourceSets["main"].java.srcDirs(
+        listOf("brouter-core", "brouter-mapaccess", "brouter-util", "brouter-expressions", "brouter-codec")
+            .map { "$brouterSrc/$it/src/main/java" })
 }
 
 dependencies {

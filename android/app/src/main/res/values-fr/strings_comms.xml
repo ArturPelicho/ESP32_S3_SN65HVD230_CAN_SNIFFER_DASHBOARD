@@ -27,5 +27,9 @@
     <string name="track_badge_track">TRACE</string>
     <string name="track_mode_hint">Nav : hors du parcours, une route pour y revenir est calculée (réseau requis). Trace : la ligne reste la ligne, avec le chemin vers son point le plus proche. Touchez le cadre du parcours sur la carte pour changer.</string>
     <string name="nav_rejoin">%1$s pour rejoindre le parcours</string>
-    <string name="nav_no_net">Pas de réseau : revenez par la ligne pointillée</string>
+    <string name="nav_no_net">Pas d\'itinéraire (ni réseau ni itinéraires hors ligne ici) : revenez par la ligne pointillée</string>
+    <string name="routes_none">Itinéraires hors ligne : absents du téléphone</string>
+    <string name="routes_downloading">Itinéraires hors ligne : téléchargement %1$s</string>
+    <string name="routes_installed">Itinéraires hors ligne : sur le téléphone (%1$s)</string>
+    <string name="routes_failed">Itinéraires hors ligne : échec du téléchargement</string>
 </resources>

@@ -25,6 +25,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      # Offline road routes: the BRouter engine's sources and its car profile, built into the app.
+      - name: Fetch BRouter
+        run: |
+          git clone -q --branch v1.7.10 --depth 1 https://github.com/abrensch/brouter.git android/brouter-src
+          mkdir -p android/app/src/main/assets/brouter
+          cp android/brouter-src/misc/profiles2/{car-vario.brf,lookups.dat} android/app/src/main/assets/brouter/
       - name: Build APK
         working-directory: android
         run: gradle --no-daemon assembleDebug

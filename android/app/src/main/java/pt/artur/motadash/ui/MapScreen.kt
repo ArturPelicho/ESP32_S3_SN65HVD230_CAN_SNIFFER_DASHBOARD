@@ -772,7 +772,7 @@ fun MapScreen() {
                 val here = LatLon(f.latitude, f.longitude)
                 rj.step(p, here, SystemClock.elapsedRealtime())?.let { to ->
                     navScope.launch {
-                        val r = withContext(Dispatchers.IO) { Router.road(here, to) }
+                        val r = withContext(Dispatchers.IO) { Router.road(ctx, here, to) }
                         rj.routed(r)
                         rj.route?.let { holder.setRoute(it) }
                         rejoinTick++

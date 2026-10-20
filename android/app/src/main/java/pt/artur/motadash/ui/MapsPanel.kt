@@ -46,6 +46,7 @@ import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.MapTheme
+import pt.artur.motadash.OfflineRouter
 import pt.artur.motadash.R
 import kotlin.math.cos
 import kotlin.math.floor
@@ -74,9 +75,12 @@ fun MapsPanel(
     val index by MapStore.index.collectAsStateWithLifecycle()
     val installed by MapStore.installed.collectAsStateWithLifecycle()
     val downloads by MapStore.downloads.collectAsStateWithLifecycle()
+    val routeDownloads by OfflineRouter.downloads.collectAsStateWithLifecycle()
+    val routeChanged by OfflineRouter.changed.collectAsStateWithLifecycle()
     val searching = stringResource(R.string.maps_searching)
     var status by remember { mutableStateOf(searching) }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
+    var confirmRoutes by remember { mutableStateOf<String?>(null) }
     var search by remember { mutableStateOf("") }
     var contourStep by remember { mutableStateOf(MapStore.contourStep(ctx)) }
 
@@ -242,6 +246,33 @@ fun MapsPanel(
                                 OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.maps_no)) }
                             } else {
                                 OutlinedButton(onClick = { confirmDelete = id }) { Text(stringResource(R.string.maps_delete)) }
+                            }
+                        }
+                    }
+                    // Routing data for road routes without network (Nav rejoin and planned trajetos).
+                    if (r != null && r.bbox.size >= 4) {
+                        val rdl = routeDownloads[id]
+                        val routes = remember(routeChanged, id) { OfflineRouter.installed(ctx, r) to OfflineRouter.bytes(ctx, r) }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                when {
+                                    rdl != null && rdl.failed -> stringResource(R.string.routes_failed)
+                                    rdl != null -> stringResource(R.string.maps_downloading, mb(rdl.done))
+                                    routes.first -> stringResource(R.string.routes_installed, mb(routes.second))
+                                    else -> stringResource(R.string.routes_none)
+                                },
+                                color = Palette.label, fontSize = 13.sp, modifier = Modifier.weight(1f),
+                            )
+                            when {
+                                rdl != null && !rdl.failed ->
+                                    OutlinedButton(onClick = { OfflineRouter.cancel(r) }) { Text(stringResource(R.string.maps_cancel)) }
+                                !routes.first ->
+                                    Button(onClick = { OfflineRouter.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
+                                confirmRoutes == id -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(onClick = { OfflineRouter.delete(ctx, r, regions); confirmRoutes = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
+                                    OutlinedButton(onClick = { confirmRoutes = null }) { Text(stringResource(R.string.maps_no)) }
+                                }
+                                else -> OutlinedButton(onClick = { confirmRoutes = id }) { Text(stringResource(R.string.maps_delete)) }
                             }
                         }
                     }

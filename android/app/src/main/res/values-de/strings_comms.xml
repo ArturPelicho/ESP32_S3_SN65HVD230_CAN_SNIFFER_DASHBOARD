@@ -27,5 +27,9 @@
     <string name="track_badge_track">TRACK</string>
     <string name="track_mode_hint">Nav: abseits der Strecke wird eine Route zurück berechnet (braucht Netz). Track: die Linie bleibt die Linie, mit dem Weg zum nächsten Punkt. Tippe auf das Streckenfeld der Karte zum Wechseln.</string>
     <string name="nav_rejoin">%1$s zurück zur Strecke</string>
-    <string name="nav_no_net">Kein Netz: der gestrichelten Linie zurück folgen</string>
+    <string name="nav_no_net">Keine Route (kein Netz, keine Offline-Routen hier): der gestrichelten Linie zurück folgen</string>
+    <string name="routes_none">Offline-Routen: nicht auf dem Handy</string>
+    <string name="routes_downloading">Offline-Routen: Download %1$s</string>
+    <string name="routes_installed">Offline-Routen: auf dem Handy (%1$s)</string>
+    <string name="routes_failed">Offline-Routen: Download fehlgeschlagen</string>
 </resources>

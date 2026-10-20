@@ -127,7 +127,7 @@ object Planner {
                     val i = t.lines.indices.firstOrNull { straight(t, it) && (t.plan[it] to t.plan[it + 1]) !in failed } ?: break
                     val a = t.plan[i]
                     val b = t.plan[i + 1]
-                    val road = Router.road(a, b)
+                    val road = Router.road(app, a, b)
                     if (road == null) { failed += a to b; continue }
                     TrackStore.change(app, id) { cur ->
                         if (cur.plan.getOrNull(i) == a && cur.plan.getOrNull(i + 1) == b && cur.lines.size == cur.plan.size - 1)
@@ -140,12 +140,17 @@ object Planner {
     }
 }
 
-/** Road routes from the public BRouter server (OpenStreetMap data). Needs network. */
+/**
+ * Road routes (OpenStreetMap data): on the phone when its routing data covers both ends, else from the
+ * public BRouter server (needs network).
+ */
 object Router {
     private const val BASE = "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-fast&lonlats="
 
-    /** The road route from a to b, or null without network or when there is no route. */
-    fun road(a: LatLon, b: LatLon): List<LatLon>? = runCatching { fetch(a, b) }.getOrNull()
+    /** The road route from a to b, or null without routing data, network or route. */
+    fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? =
+        (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b) else null)
+            ?: runCatching { fetch(a, b) }.getOrNull()
 
     private fun fetch(a: LatLon, b: LatLon): List<LatLon>? {
         val q = String.format(Locale.US, "%.6f,%.6f|%.6f,%.6f", a.lon, a.lat, b.lon, b.lat)

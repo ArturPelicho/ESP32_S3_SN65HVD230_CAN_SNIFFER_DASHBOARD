@@ -27,5 +27,9 @@
     <string name="track_badge_track">TRACCIA</string>
     <string name="track_mode_hint">Nav: fuori dal percorso, calcola una strada per tornarci (serve la rete). Traccia: la linea resta la linea, con la via verso il punto più vicino. Tocca il riquadro del percorso sulla mappa per cambiare.</string>
     <string name="nav_rejoin">%1$s per tornare sul percorso</string>
-    <string name="nav_no_net">Nessuna rete: torna lungo la linea tratteggiata</string>
+    <string name="nav_no_net">Nessun percorso (né rete né percorsi offline qui): torna lungo la linea tratteggiata</string>
+    <string name="routes_none">Percorsi offline: non sul telefono</string>
+    <string name="routes_downloading">Percorsi offline: download %1$s</string>
+    <string name="routes_installed">Percorsi offline: sul telefono (%1$s)</string>
+    <string name="routes_failed">Percorsi offline: download non riuscito</string>
 </resources>
