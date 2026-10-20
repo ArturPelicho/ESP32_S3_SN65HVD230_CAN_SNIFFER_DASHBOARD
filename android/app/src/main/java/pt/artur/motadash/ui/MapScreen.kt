@@ -98,6 +98,8 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.VectorSource
 import org.maplibre.geojson.FeatureCollection
@@ -163,9 +165,17 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             s.addImage("radar", radar)
             s.addImage("trk-arrow", trackArrow)
             style = s
+            show3dBuildings()
             drawMarker()
             tracks?.let { s.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(it) }
         }
+    }
+
+    /** Buildings in volume only in the 3D follow mode. */
+    fun show3dBuildings() {
+        val s = style ?: return
+        val v = if (mode == FollowMode.THREE_D) Property.VISIBLE else Property.NONE
+        for (l in s.layers) if (l.id.startsWith("building-3d-")) l.setProperties(PropertyFactory.visibility(v))
     }
 
     fun setFollow(on: Boolean) {
@@ -748,7 +758,7 @@ fun MapScreen() {
             horizontalAlignment = Alignment.End,
         ) {
             MapButton(mode.button, active = mode != FollowMode.NORTH) {
-                mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode
+                mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings()
                 holder.setFollow(true); holder.update(600)
             }
             MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
@@ -910,7 +920,7 @@ fun MapScreen() {
                 theme = theme, lang = lang, mode = mode, autoZoom = autoZoom,
                 onTheme = { theme = it; MapStore.setTheme(ctx, it) },
                 onLang = { lang = it; MapStore.setLanguage(ctx, it) },
-                onMode = { mode = it; MapStore.setFollowMode(ctx, it); holder.mode = it; holder.update(600) },
+                onMode = { mode = it; MapStore.setFollowMode(ctx, it); holder.mode = it; holder.show3dBuildings(); holder.update(600) },
                 onAutoZoom = { autoZoom = it; MapStore.setAutoZoom(ctx, it); holder.autoZoom = it; holder.userZoom = null },
                 cameraBeep = cameraBeep,
                 onCameraBeep = { cameraBeep = it; MapStore.setCameraBeep(ctx, it) },

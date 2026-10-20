@@ -85,6 +85,7 @@ object MapStyle {
         val fills = ArrayList<Any>()
         val lines = ArrayList<Any>()
         val labels = ArrayList<Any>()
+        val extrusions = ArrayList<Any>()
 
         fills += mapOf("id" to "bg", "type" to "background", "paint" to mapOf("background-color" to c.bg))
 
@@ -152,6 +153,13 @@ object MapStyle {
                 "fill-color" to c.building,
                 "fill-opacity" to listOf("interpolate", listOf("linear"), listOf("zoom"), 14, 0, 15.5, 0.85),
             ), minzoom = 14)
+            // Buildings in volume, for the 3D view only (the screen switches them on); height from OSM, else ~2 floors.
+            extrusions += layer("building-3d", "fill-extrusion", "buildings", layout = mapOf("visibility" to "none"), paint = mapOf(
+                "fill-extrusion-color" to c.building,
+                "fill-extrusion-height" to listOf("coalesce", listOf("get", "height"), 7),
+                "fill-extrusion-base" to listOf("coalesce", listOf("get", "min_height"), 0),
+                "fill-extrusion-opacity" to 0.85,
+            ), minzoom = 15)
 
             // Railways fall into the "minor" class; keep them out of the road layers so they stay dashed.
             val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true),
@@ -322,7 +330,7 @@ object MapStyle {
             "name" to "NavExpress",
             "glyphs" to "asset://glyphs/{fontstack}/{range}.pbf",
             "sources" to sources,
-            "layers" to fills + lines + tracks + labels,
+            "layers" to fills + lines + extrusions + tracks + labels,
         )
         return JSONObject(style).toString()
     }

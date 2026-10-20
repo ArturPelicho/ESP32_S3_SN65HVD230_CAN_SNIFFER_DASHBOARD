@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +66,7 @@ fun MapsPanel(
     val downloads by MapStore.downloads.collectAsStateWithLifecycle()
     var status by remember { mutableStateOf("A procurar mapas novos…") }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
+    var search by remember { mutableStateOf("") }
 
     fun check() {
         status = "A procurar mapas novos…"
@@ -139,7 +143,21 @@ fun MapsPanel(
             if (regions.isEmpty() && installed.isEmpty()) {
                 Text("A lista de mapas aparece aqui quando houver rede.", color = Palette.label, fontSize = 14.sp)
             }
+            OutlinedTextField(
+                value = search, onValueChange = { search = it }, singleLine = true,
+                label = { Text("Procurar país ou região") }, modifier = Modifier.fillMaxWidth(),
+                trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
+            )
+            // Installed first, then by name; the search narrows it with every letter typed.
+            val q = plain(search)
             val ids = (regions.map { it.id } + installed.map { it.id }).distinct()
+                .sortedWith(compareBy({ id -> installed.none { it.id == id } }, { id -> plain(regions.firstOrNull { it.id == id }?.name ?: id) }))
+                .filter { id -> q.isEmpty() || plain(regions.firstOrNull { it.id == id }?.name ?: id).contains(q) || plain(id).contains(q) }
+            if (ids.isEmpty() && q.isNotEmpty()) Text("Nenhuma região com \"$search\".", color = Palette.label, fontSize = 14.sp)
+            Column(
+                Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
             for (id in ids) {
                 val r = regions.firstOrNull { it.id == id }
                 val have = installed.firstOrNull { it.id == id }
@@ -197,10 +215,15 @@ fun MapsPanel(
                 }
             }
 
+            }
             Text("Dados © OpenStreetMap, mapa base Protomaps, relevo Copernicus DEM.", color = Palette.label, fontSize = 12.sp)
         }
     }
 }
+
+/** Lower case without accents, for the search ("Açores" matches "acor"). */
+private fun plain(s: String): String =
+    java.text.Normalizer.normalize(s.trim(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
 
 /** 20261019 -> 19/10/2026 */
 private fun pretty(v: String): String =
