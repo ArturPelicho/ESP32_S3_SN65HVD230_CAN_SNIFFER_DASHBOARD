@@ -1,6 +1,7 @@
 package pt.artur.motadash
 
 import android.content.Context
+import btools.router.HintAccess
 import btools.router.OsmNodeNamed
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
@@ -156,7 +157,7 @@ object OfflineRouter {
                 LatLon(n.iLat / 1e6 - 90, n.iLon / 1e6 - 180, n.elev.toDouble().takeIf { !it.isNaN() && it > -1000 })
             }
             if (pts.size < 2) return@runCatching null
-            val turns = btools.router.HintAccess.hints(track).mapNotNull { h ->
+            val turns = HintAccess.hints(track).mapNotNull { h ->
                 val p = pts.getOrNull(h[0]) ?: return@mapNotNull null
                 TurnKind.ofBrouter(h[1])?.let { TurnPt(p.lat, p.lon, it, h[2]) }
             }
