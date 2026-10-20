@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_cluster">Contagiri</string>
+    <string name="w_shift">Luci di cambiata</string>
+    <string name="w_speed">Velocità</string>
+    <string name="w_gear">Marcia</string>
+    <string name="w_rpm">Giri/min</string>
+    <string name="w_fuel">Serbatoio</string>
+    <string name="w_range">Autonomia</string>
+    <string name="w_cht">Temperatura testata</string>
+    <string name="w_fuel_now">Consumo istantaneo</string>
+    <string name="w_fuel_avg">Consumo medio</string>
+    <string name="w_clock">Orologio</string>
+    <string name="w_link">Collegamento moto e GPS</string>
+    <string name="w_battery">Batteria</string>
+    <string name="w_air">Aria aspirata</string>
+    <string name="w_throttle">Acceleratore</string>
+    <string name="w_trip">Viaggio</string>
+    <string name="w_coords">Coordinate</string>
+    <string name="w_altitude">Altitudine</string>
+    <string name="w_faults">Guasti motore</string>
+    <string name="w_faults_hint">Guasti motore (appare solo se presenti)</string>
+    <string name="w_move_hint">Trascina un elemento per spostarlo, l\'angolo lo ridimensiona.</string>
+    <string name="w_lock">Blocca</string>
+    <string name="w_shown">Mostrato in questa schermata</string>
+    <string name="w_orientation_land">Queste scelte valgono in orizzontale; il verticale ha le sue.</string>
+    <string name="w_orientation_port">Queste scelte valgono in verticale; l\'orizzontale ha le sue.</string>
+    <string name="w_move">Sposta</string>
+    <string name="w_reset">Ripristina disposizione</string>
+    <string name="w_dash_title">Cruscotto</string>
+    <string name="w_map_title">Mappa</string>
+    <string name="w_map_settings">Impostazioni mappa</string>
+</resources>

@@ -555,6 +555,8 @@ fun MapScreen() {
     var gnss by remember { mutableStateOf(Gnss()) }
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
+    var editingWidgets by remember { mutableStateOf(false) }
     var mapBearing by remember { mutableFloatStateOf(0f) }
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
@@ -733,27 +735,21 @@ fun MapScreen() {
                 it.altitude.toFloat(), System.currentTimeMillis()).declination }
         }
 
-        // Zoom buttons and speed, bottom left.
+        // Zoom buttons, bottom left (the speed is an element, below).
         Column(
             Modifier.align(Alignment.BottomStart).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             MapButton("+") { holder.zoomBy(1.0) }
             MapButton("−") { holder.zoomBy(-1.0) }
-            Row(
-                Modifier.background(Palette.overlaySoft, RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                val over = limit != null && speed != null && speed > limit!! + 2
-                Column {
-                    Text(speed?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
-                        fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                    Text("km/h", color = Palette.label, fontSize = 12.sp)
-                }
-                limit?.let { LimitSign(it) }
-            }
         }
+
+        // The rider's elements (speed by default; any Painel element can join it).
+        WidgetBoard(LayoutStore.MAP,
+            widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
+                altM = fix?.takeIf { it.hasAltitude() }?.altitude),
+            editing = editingWidgets, onMap = true, onLock = { editingWidgets = false },
+            modifier = Modifier.fillMaxSize())
 
         // View buttons, right side: follow mode (▲ / 3D / N), follow, theme, maps.
         Column(
@@ -882,9 +878,10 @@ fun MapScreen() {
             )
         }
 
-        // Tracks button, top right.
-        Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) {
+        // Tracks button and the screen settings, top right.
+        Row(Modifier.align(Alignment.TopEnd).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+            if (!editingWidgets) ScreenSettingsButton(Modifier.size(52.dp)) { showSheet = true }
         }
         trackMessage?.takeIf { !showTracks }?.let {
             Text(it, color = Palette.text, fontSize = 14.sp,
@@ -917,6 +914,13 @@ fun MapScreen() {
                 onShow = { t -> showTracks = false; holder.showTrack(t) },
                 onClose = { showTracks = false; TrackStore.clearMessage() },
             )
+        }
+
+        if (showSheet) {
+            WidgetSheet(LayoutStore.MAP, stringResource(R.string.w_map_title),
+                onMove = { showSheet = false; editingWidgets = true }, onClose = { showSheet = false }) {
+                OutlinedButton(onClick = { showSheet = false; showMaps = true }) { Text(stringResource(R.string.w_map_settings)) }
+            }
         }
 
         if (showMaps) {
@@ -1080,14 +1084,14 @@ private fun NorthNeedle(bearing: Float) {
 
 /** Round road sign with the speed limit. */
 @Composable
-private fun LimitSign(kmh: Int, small: Boolean = false) {
+internal fun LimitSign(kmh: Int, small: Boolean = false, scale: Float = 1f) {
     Box(
-        Modifier.size(if (small) 40.dp else 54.dp)
+        Modifier.size((if (small) 40 else 54).dp * scale)
             .background(Color.White, CircleShape)
-            .border(if (small) 4.dp else 6.dp, Color(0xFFE2463C), CircleShape),
+            .border((if (small) 4 else 6).dp * scale, Color(0xFFE2463C), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text("$kmh", color = Color.Black, fontSize = if (small) 15.sp else if (kmh >= 100) 18.sp else 22.sp,
+        Text("$kmh", color = Color.Black, fontSize = (if (small) 15 else if (kmh >= 100) 18 else 22).sp * scale,
             fontWeight = FontWeight.Bold)
     }
 }

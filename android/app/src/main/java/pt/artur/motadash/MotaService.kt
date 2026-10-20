@@ -431,7 +431,8 @@ class MotaService : Service() {
         }
         Link.updateGps {
             it.copy(hz = hz, speedKmh = speed, speedAccKmh = speedAcc, hAccM = hAcc,
-                fixes = it.fixes + 1, sent = it.sent + if (sent) 1 else 0)
+                fixes = it.fixes + 1, sent = it.sent + if (sent) 1 else 0,
+                lat = loc.latitude, lon = loc.longitude, altM = if (loc.hasAltitude()) loc.altitude else it.altM)
         }
     }
 }

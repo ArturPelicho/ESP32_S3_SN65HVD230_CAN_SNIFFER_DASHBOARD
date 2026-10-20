@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_cluster">Cuentarrevoluciones</string>
+    <string name="w_shift">Luces de cambio</string>
+    <string name="w_speed">Velocidad</string>
+    <string name="w_gear">Marcha</string>
+    <string name="w_rpm">RPM</string>
+    <string name="w_fuel">Depósito</string>
+    <string name="w_range">Autonomía</string>
+    <string name="w_cht">Temperatura de culata</string>
+    <string name="w_fuel_now">Consumo ahora</string>
+    <string name="w_fuel_avg">Consumo medio</string>
+    <string name="w_clock">Reloj</string>
+    <string name="w_link">Conexión con la moto y GPS</string>
+    <string name="w_battery">Batería</string>
+    <string name="w_air">Aire de admisión</string>
+    <string name="w_throttle">Acelerador</string>
+    <string name="w_trip">Viaje</string>
+    <string name="w_coords">Coordenadas</string>
+    <string name="w_altitude">Altitud</string>
+    <string name="w_faults">Averías del motor</string>
+    <string name="w_faults_hint">Averías del motor (solo aparece si hay)</string>
+    <string name="w_move_hint">Arrastra un elemento para moverlo, la esquina cambia el tamaño.</string>
+    <string name="w_lock">Bloquear</string>
+    <string name="w_shown">Mostrar en esta pantalla</string>
+    <string name="w_orientation_land">Estas opciones son para horizontal; el vertical tiene las suyas.</string>
+    <string name="w_orientation_port">Estas opciones son para vertical; el horizontal tiene las suyas.</string>
+    <string name="w_move">Mover</string>
+    <string name="w_reset">Restablecer disposición</string>
+    <string name="w_dash_title">Panel</string>
+    <string name="w_map_title">Mapa</string>
+    <string name="w_map_settings">Ajustes del mapa</string>
+</resources>

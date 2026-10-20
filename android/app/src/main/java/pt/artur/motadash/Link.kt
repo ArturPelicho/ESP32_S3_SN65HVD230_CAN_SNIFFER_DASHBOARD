@@ -43,6 +43,9 @@ data class GpsInfo(
     val hAccM: Double? = null,
     val fixes: Long = 0,
     val sent: Long = 0,
+    val lat: Double? = null,
+    val lon: Double? = null,
+    val altM: Double? = null,
 )
 
 /** State shared by the service (writer) and the UI (reader). */

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_cluster">Rev counter</string>
+    <string name="w_shift">Shift lights</string>
+    <string name="w_speed">Speed</string>
+    <string name="w_gear">Gear</string>
+    <string name="w_rpm">RPM</string>
+    <string name="w_fuel">Fuel tank</string>
+    <string name="w_range">Range</string>
+    <string name="w_cht">Head temperature</string>
+    <string name="w_fuel_now">Consumption now</string>
+    <string name="w_fuel_avg">Average consumption</string>
+    <string name="w_clock">Clock</string>
+    <string name="w_link">Bike and GPS link</string>
+    <string name="w_battery">Battery</string>
+    <string name="w_air">Intake air</string>
+    <string name="w_throttle">Throttle</string>
+    <string name="w_trip">Trip</string>
+    <string name="w_coords">Coordinates</string>
+    <string name="w_altitude">Altitude</string>
+    <string name="w_faults">Engine faults</string>
+    <string name="w_faults_hint">Engine faults (shows only when there are any)</string>
+    <string name="w_move_hint">Drag an element to move it, the corner resizes it.</string>
+    <string name="w_lock">Lock</string>
+    <string name="w_shown">Shown on this screen</string>
+    <string name="w_orientation_land">These choices are for landscape; portrait has its own.</string>
+    <string name="w_orientation_port">These choices are for portrait; landscape has its own.</string>
+    <string name="w_move">Move</string>
+    <string name="w_reset">Reset layout</string>
+    <string name="w_dash_title">Dashboard</string>
+    <string name="w_map_title">Map</string>
+    <string name="w_map_settings">Map settings</string>
+</resources>

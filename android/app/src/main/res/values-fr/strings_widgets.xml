@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_cluster">Compte-tours</string>
+    <string name="w_shift">Témoins de passage</string>
+    <string name="w_speed">Vitesse</string>
+    <string name="w_gear">Rapport</string>
+    <string name="w_rpm">Tr/min</string>
+    <string name="w_fuel">Réservoir</string>
+    <string name="w_range">Autonomie</string>
+    <string name="w_cht">Température culasse</string>
+    <string name="w_fuel_now">Consommation instantanée</string>
+    <string name="w_fuel_avg">Consommation moyenne</string>
+    <string name="w_clock">Horloge</string>
+    <string name="w_link">Liaison moto et GPS</string>
+    <string name="w_battery">Batterie</string>
+    <string name="w_air">Air d\'admission</string>
+    <string name="w_throttle">Accélérateur</string>
+    <string name="w_trip">Trajet</string>
+    <string name="w_coords">Coordonnées</string>
+    <string name="w_altitude">Altitude</string>
+    <string name="w_faults">Défauts moteur</string>
+    <string name="w_faults_hint">Défauts moteur (visible seulement s\'il y en a)</string>
+    <string name="w_move_hint">Faites glisser un élément pour le déplacer, le coin le redimensionne.</string>
+    <string name="w_lock">Verrouiller</string>
+    <string name="w_shown">Affiché sur cet écran</string>
+    <string name="w_orientation_land">Ces choix valent pour le paysage ; le portrait a les siens.</string>
+    <string name="w_orientation_port">Ces choix valent pour le portrait ; le paysage a les siens.</string>
+    <string name="w_move">Déplacer</string>
+    <string name="w_reset">Réinitialiser la disposition</string>
+    <string name="w_dash_title">Tableau de bord</string>
+    <string name="w_map_title">Carte</string>
+    <string name="w_map_settings">Réglages de la carte</string>
+</resources>

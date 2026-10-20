@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_cluster">Drehzahlmesser</string>
+    <string name="w_shift">Schaltblitz</string>
+    <string name="w_speed">Geschwindigkeit</string>
+    <string name="w_gear">Gang</string>
+    <string name="w_rpm">U/min</string>
+    <string name="w_fuel">Tank</string>
+    <string name="w_range">Reichweite</string>
+    <string name="w_cht">Zylinderkopftemperatur</string>
+    <string name="w_fuel_now">Verbrauch jetzt</string>
+    <string name="w_fuel_avg">Durchschnittsverbrauch</string>
+    <string name="w_clock">Uhr</string>
+    <string name="w_link">Verbindung Motorrad und GPS</string>
+    <string name="w_battery">Batterie</string>
+    <string name="w_air">Ansaugluft</string>
+    <string name="w_throttle">Gasgriff</string>
+    <string name="w_trip">Fahrt</string>
+    <string name="w_coords">Koordinaten</string>
+    <string name="w_altitude">Höhe</string>
+    <string name="w_faults">Motorfehler</string>
+    <string name="w_faults_hint">Motorfehler (nur sichtbar, wenn vorhanden)</string>
+    <string name="w_move_hint">Element ziehen zum Verschieben, die Ecke ändert die Größe.</string>
+    <string name="w_lock">Sperren</string>
+    <string name="w_shown">Auf diesem Bildschirm</string>
+    <string name="w_orientation_land">Diese Auswahl gilt für Querformat; Hochformat hat eine eigene.</string>
+    <string name="w_orientation_port">Diese Auswahl gilt für Hochformat; Querformat hat eine eigene.</string>
+    <string name="w_move">Verschieben</string>
+    <string name="w_reset">Anordnung zurücksetzen</string>
+    <string name="w_dash_title">Cockpit</string>
+    <string name="w_map_title">Karte</string>
+    <string name="w_map_settings">Karteneinstellungen</string>
+</resources>
