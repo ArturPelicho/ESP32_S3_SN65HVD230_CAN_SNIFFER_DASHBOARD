@@ -1,6 +1,6 @@
 name: Map data
 
-# Builds the offline maps for the Mota Dash app and publishes them as a
+# Builds the offline maps for the NavExpress app and publishes them as a
 # release "maps-<date>" (not marked latest, so the APK stays the latest
 # release). The app reads maps-index-<date>.json from the newest one.
 on:
@@ -11,6 +11,11 @@ on:
     paths:
       - "maps/**"
       - ".github/workflows/maps.yml"
+
+# One build at a time: two runs on the same day would replace each other's release mid-upload.
+concurrency:
+  group: map-data
+  cancel-in-progress: false
 
 jobs:
   setup:
