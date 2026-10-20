@@ -1,0 +1,21 @@
+name: BRouter probe
+
+# Temporary: lists the profile parameters the app can offer as route options.
+on:
+  push:
+    paths: [".github/workflows/brouter-probe.yml"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          git clone -q --branch v1.7.10 --depth 1 https://github.com/abrensch/brouter.git b
+          ls b/misc/profiles2
+          for f in car-vario car-fast car-eco moped trekking shortest; do
+            p=b/misc/profiles2/$f.brf; [ -f $p ] || continue
+            echo "===== $f"; grep -nE '^\s*assign\s' $p | head -60
+          done
+          echo "===== keyValues"; grep -rn "keyValues" b/brouter-core/src/main/java | head -20
+          grep -rn "keyValues" b/brouter-expressions/src/main/java | head -10
