@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comms_title">Calls and messages</string>
+    <string name="comms_show_calls">Show calls with answer / reject buttons</string>
+    <string name="comms_phone_perm">Phone access (calls, caller name)</string>
+    <string name="comms_needed">Needed</string>
+    <string name="comms_allow_phone">Allow phone access</string>
+    <string name="comms_show_msgs">Show messages (SMS, WhatsApp...)</string>
+    <string name="comms_show_text">Show the message text</string>
+    <string name="comms_speak">Read messages aloud</string>
+    <string name="comms_notif_perm">Notification access (to read messages)</string>
+    <string name="comms_allow_notif">Allow notification access</string>
+    <string name="comms_apps">Messages from</string>
+    <string name="comms_sms">SMS</string>
+    <string name="comms_missed">Missed call</string>
+    <string name="comms_say">%1$s from %2$s: %3$s</string>
+    <string name="comms_unknown">Unknown number</string>
+    <string name="comms_calling">Incoming call</string>
+    <string name="comms_in_call">In call %1$s</string>
+    <string name="comms_answer">Answer</string>
+    <string name="comms_reject">Reject</string>
+    <string name="comms_hang_up">Hang up</string>
+</resources>

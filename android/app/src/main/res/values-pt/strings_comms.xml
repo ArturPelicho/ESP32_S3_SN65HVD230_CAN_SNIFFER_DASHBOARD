@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comms_title">Chamadas e mensagens</string>
+    <string name="comms_show_calls">Mostrar chamadas com botões atender / rejeitar</string>
+    <string name="comms_phone_perm">Acesso ao telefone (chamadas, nome de quem liga)</string>
+    <string name="comms_needed">Em falta</string>
+    <string name="comms_allow_phone">Permitir acesso ao telefone</string>
+    <string name="comms_show_msgs">Mostrar mensagens (SMS, WhatsApp...)</string>
+    <string name="comms_show_text">Mostrar o texto da mensagem</string>
+    <string name="comms_speak">Ler mensagens em voz alta</string>
+    <string name="comms_notif_perm">Acesso às notificações (para ler mensagens)</string>
+    <string name="comms_allow_notif">Permitir acesso às notificações</string>
+    <string name="comms_apps">Mensagens de</string>
+    <string name="comms_sms">SMS</string>
+    <string name="comms_missed">Chamada perdida</string>
+    <string name="comms_say">%1$s de %2$s: %3$s</string>
+    <string name="comms_unknown">Número desconhecido</string>
+    <string name="comms_calling">A ligar</string>
+    <string name="comms_in_call">Em chamada %1$s</string>
+    <string name="comms_answer">Atender</string>
+    <string name="comms_reject">Rejeitar</string>
+    <string name="comms_hang_up">Desligar</string>
+</resources>

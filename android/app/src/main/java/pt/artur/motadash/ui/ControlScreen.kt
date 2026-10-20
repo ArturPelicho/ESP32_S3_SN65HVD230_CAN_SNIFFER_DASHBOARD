@@ -28,6 +28,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import pt.artur.motadash.R
+import androidx.compose.runtime.LaunchedEffect
+import pt.artur.motadash.Comms
 import pt.artur.motadash.AppLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
@@ -234,6 +236,7 @@ fun ControlScreen(activity: MainActivity) {
                     }
                 }
                 SetCat.PHONE -> {
+                    CommsSettings(activity)
                     Section(stringResource(R.string.set_cat_phone)) {
                         val bg = Permissions.background(ctx)
                         KeyValue(stringResource(R.string.set_location_always),
@@ -348,4 +351,54 @@ private fun UpdateBlock() {
     percent?.let { Text(stringResource(R.string.upd_downloading, it), color = Palette.label, fontSize = 12.sp) }
     if (askAllow) Text(stringResource(R.string.upd_allow_hint), color = Palette.orange, fontSize = 12.sp)
     error?.let { Text(stringResource(R.string.upd_error, it), color = Palette.red, fontSize = 12.sp) }
+}
+
+/** Calls and messages on screen: what shows, read aloud, which apps, and the permissions they need. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CommsSettings(activity: MainActivity) {
+    val ctx = LocalContext.current
+    // Permissions change in other screens; look again every couple of seconds while this is open.
+    var tick by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(2000); tick++ } }
+    tick
+    Section(stringResource(R.string.comms_title)) {
+        @Composable
+        fun Toggle(label: String, get: () -> Boolean, set: (Boolean) -> Unit) {
+            var on by remember { mutableStateOf(get()) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(label, color = Palette.text, modifier = Modifier.weight(1f))
+                Switch(checked = on, onCheckedChange = { on = it; set(it) })
+            }
+        }
+        Toggle(stringResource(R.string.comms_show_calls), { Comms.showCalls(ctx) }) { Comms.setShowCalls(ctx, it) }
+        val phone = Comms.hasPhone(ctx)
+        KeyValue(stringResource(R.string.comms_phone_perm), stringResource(if (phone) R.string.set_yes else R.string.comms_needed),
+            if (phone) Palette.green else Palette.orange)
+        if (!phone) Button(onClick = { activity.requestPhonePermissions() }) { Text(stringResource(R.string.comms_allow_phone)) }
+
+        Toggle(stringResource(R.string.comms_show_msgs), { Comms.showMessages(ctx) }) { Comms.setShowMessages(ctx, it) }
+        Toggle(stringResource(R.string.comms_show_text), { Comms.showText(ctx) }) { Comms.setShowText(ctx, it) }
+        Toggle(stringResource(R.string.comms_speak), { Comms.speak(ctx) }) { Comms.setSpeak(ctx, it) }
+        val listener = Comms.hasListener(ctx)
+        KeyValue(stringResource(R.string.comms_notif_perm), stringResource(if (listener) R.string.set_yes else R.string.comms_needed),
+            if (listener) Palette.green else Palette.orange)
+        if (!listener) Button(onClick = { activity.openNotificationAccess() }) { Text(stringResource(R.string.comms_allow_notif)) }
+
+        Text(stringResource(R.string.comms_apps), color = Palette.label, fontSize = 13.sp)
+        val pm = ctx.packageManager
+        val sms = Comms.smsApp(ctx)
+        val offered = (listOfNotNull(sms) + Comms.KNOWN.keys).distinct().filter { p ->
+            runCatching { pm.getApplicationInfo(p, 0) }.isSuccess
+        }
+        var chosen by remember { mutableStateOf(Comms.apps(ctx)) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            offered.forEach { p ->
+                val name = if (p == sms) stringResource(R.string.comms_sms) else Comms.KNOWN[p] ?: p
+                FilterChip(selected = p in chosen, onClick = {
+                    Comms.setApp(ctx, p, p !in chosen); chosen = Comms.apps(ctx)
+                }, label = { Text(name) })
+            }
+        }
+    }
 }

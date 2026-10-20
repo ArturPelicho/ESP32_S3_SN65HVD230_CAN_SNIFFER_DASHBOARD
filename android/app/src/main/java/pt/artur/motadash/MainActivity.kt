@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import pt.artur.motadash.ui.ControlScreen
+import pt.artur.motadash.ui.CommsOverlay
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.DiagScreen
 import pt.artur.motadash.ui.MapScreen
@@ -69,6 +70,16 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             MotaService.start(this)
         }
+
+    private val askPhone =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+
+    fun requestPhonePermissions() = askPhone.launch(Comms.phonePermissions())
+
+    fun openNotificationAccess() {
+        runCatching { startActivity(Comms.listenerSettings(this)) }
+            .onFailure { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
+    }
 
     private val askBackground =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -213,6 +224,8 @@ private fun App(activity: MainActivity) {
                 2 -> DiagScreen()
                 else -> ControlScreen(activity)
             }
+            // Calls and messages show over any tab.
+            CommsOverlay(Modifier.align(Alignment.TopCenter))
         }
     }
 }
