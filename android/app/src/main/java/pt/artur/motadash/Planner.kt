@@ -113,6 +113,14 @@ object Planner {
     private fun straight(t: Track, i: Int) =
         t.lines[i].size == 2 && t.lines[i][0] == t.plan[i] && t.lines[i][1] == t.plan[i + 1]
 
+    /** Works out every leg again with the current route options. */
+    fun replan(ctx: Context, id: String) {
+        TrackStore.change(ctx, id) { t ->
+            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) })
+        }
+        reroute(ctx, id)
+    }
+
     /** Swaps straight legs for road routes, one by one, while the trajeto is unchanged around them. */
     fun reroute(ctx: Context, id: String) {
         if (!MapStore.routeRoads(ctx)) return
@@ -145,16 +153,17 @@ object Planner {
  * public BRouter server (needs network).
  */
 object Router {
-    private const val BASE = "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-fast&lonlats="
+    private const val BASE = "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-vario"
 
     /** The road route from a to b, or null without routing data, network or route. */
     fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? =
         (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b) else null)
-            ?: runCatching { fetch(a, b) }.getOrNull()
+            ?: runCatching { fetch(RouteOptions.params(ctx), a, b) }.getOrNull()
 
-    private fun fetch(a: LatLon, b: LatLon): List<LatLon>? {
+    private fun fetch(params: Map<String, String>, a: LatLon, b: LatLon): List<LatLon>? {
         val q = String.format(Locale.US, "%.6f,%.6f|%.6f,%.6f", a.lon, a.lat, b.lon, b.lat)
-        val c = URL(BASE + q.replace("|", "%7C")).openConnection() as HttpURLConnection
+        val extra = params.entries.joinToString("") { "&profile:${it.key}=${it.value}" }
+        val c = URL(BASE + extra + "&lonlats=" + q.replace("|", "%7C")).openConnection() as HttpURLConnection
         c.connectTimeout = 8_000
         c.readTimeout = 20_000
         c.setRequestProperty("User-Agent", "NavExpress")

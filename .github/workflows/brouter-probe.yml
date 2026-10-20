@@ -34,7 +34,7 @@ jobs:
               RoutingEngine re = new RoutingEngine(null, null, new File(a[0]), wp, rc);
               re.quite = true; re.doRun(60000);
               OsmTrack t = re.getFoundTrack();
-              System.out.println(Arrays.toString(o) + " err=" + re.getErrorMessage() + " ms=" + (System.currentTimeMillis() - t0) + " dist=" + (t == null ? -1 : t.distance) + " time=" + (t == null ? -1 : t.getTotalSeconds()));
+              System.out.println(Arrays.toString(o) + " err=" + re.getErrorMessage() + " ms=" + (System.currentTimeMillis() - t0) + " dist=" + (t == null ? -1 : t.distance));
             }
           }}
           J

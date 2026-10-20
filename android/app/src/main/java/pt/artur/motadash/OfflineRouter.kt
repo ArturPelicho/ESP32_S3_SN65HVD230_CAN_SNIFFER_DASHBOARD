@@ -25,7 +25,7 @@ import kotlin.math.floor
  */
 object OfflineRouter {
     private const val SEGMENTS = "https://brouter.de/brouter/segments4/"
-    /** Car profile that takes any road the bike can; the moped one avoids main roads too much. */
+    /** Car profile that takes any road the bike can, with options (see [RouteOptions]); the moped one avoids main roads too much. */
     private const val PROFILE = "car-vario"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -144,6 +144,7 @@ object OfflineRouter {
         runCatching {
             val rc = RoutingContext()
             rc.localFunction = profile(ctx).absolutePath
+            rc.keyValues = HashMap(RouteOptions.params(ctx))
             val wp: List<OsmNodeNamed> = RoutingParamCollector().readPositions(doubleArrayOf(a.lon, b.lon), doubleArrayOf(a.lat, b.lat))
             val re = RoutingEngine(null, null, dir(ctx), wp, rc)
             re.quite = true
