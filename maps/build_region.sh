@@ -55,7 +55,8 @@ pmtiles show "out/$ID-relevo-$VER.pmtiles" | head -12 || true   # head closes th
 
 # Shaded relief is a bonus too: without it the map and contours still publish.
 echo "== $ID: terrain heights for the shaded relief"
-if python3 maps/build_shade.py "work/$ID.vrt" "work/$ID-sombra.mbtiles" "$W" "$S" "$E" "$N" 5 12 &&
+# Up to z11 (about 60 m cells): the map overzooms it smoothly, and Portugal stays near 40 MB.
+if python3 maps/build_shade.py "work/$ID.vrt" "work/$ID-sombra.mbtiles" "$W" "$S" "$E" "$N" 5 11 &&
    pmtiles convert "work/$ID-sombra.mbtiles" "out/$ID-sombra-$VER.pmtiles"; then
   pmtiles show "out/$ID-sombra-$VER.pmtiles" | head -12 || true
 else

@@ -69,7 +69,8 @@ def main():
                     h[(h < -500) | ~np.isfinite(h)] = 0
                     if not (h > 0.5).any():
                         continue
-                    val = np.clip(np.round((h + 10000) * 10), 0, 2 ** 24 - 1).astype(np.uint32)
+                    # Whole metres are plenty for shading and compress about a third smaller than 0.1 m.
+                    val = np.clip(np.round(h) * 10 + 100000, 0, 2 ** 24 - 1).astype(np.uint32)
                     rgb = np.dstack([(val >> 16) & 255, (val >> 8) & 255, val & 255]).astype(np.uint8)
                     buf = io.BytesIO()
                     Image.fromarray(rgb, "RGB").save(buf, "WEBP", lossless=True, quality=100, method=4)
