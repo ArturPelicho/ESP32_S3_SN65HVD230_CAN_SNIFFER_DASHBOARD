@@ -20,4 +20,12 @@
     <string name="comms_answer">Atender</string>
     <string name="comms_reject">Rejeitar</string>
     <string name="comms_hang_up">Desligar</string>
+    <string name="track_mode_title">Seguir trajeto</string>
+    <string name="track_mode_nav">Nav (recalcula)</string>
+    <string name="track_mode_track">Pista (não recalcula)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">PISTA</string>
+    <string name="track_mode_hint">Nav: fora do trajeto, calcula uma rota por estrada de volta a ele (precisa de rede). Pista: a linha é a linha, com o caminho de volta ao ponto mais próximo. Toca na caixa do trajeto no mapa para trocar.</string>
+    <string name="nav_rejoin">%1$s até voltar ao trajeto</string>
+    <string name="nav_no_net">Sem rede: volta pela linha tracejada</string>
 </resources>

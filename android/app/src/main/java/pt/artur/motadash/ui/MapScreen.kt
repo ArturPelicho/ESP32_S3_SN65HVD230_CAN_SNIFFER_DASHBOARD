@@ -96,6 +96,11 @@ import kotlin.math.cos
 import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import pt.artur.motadash.Rejoin
+import pt.artur.motadash.Router
+import pt.artur.motadash.TrackMode
 import kotlinx.coroutines.withContext
 import pt.artur.motadash.ElevProfile
 import java.io.File
@@ -362,6 +367,12 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             Point.fromLngLat(loc.longitude, loc.latitude), Point.fromLngLat(to.lon, to.lat)))))
     }
 
+    /** Nav mode's road route back to the track, drawn where the straight join line goes. */
+    fun setRoute(r: List<LatLon>) {
+        val src = style?.getSourceAs<GeoJsonSource>("join") ?: return
+        src.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(r.map { Point.fromLngLat(it.lon, it.lat) })))
+    }
+
     /** Stops following and fits the whole track on screen. */
     fun showTrack(t: Track) {
         val m = map ?: return
@@ -580,6 +591,7 @@ fun MapScreen() {
     val trackMessage by TrackStore.message.collectAsStateWithLifecycle()
     val activeTrack = tracks.firstOrNull { it.id == activeId }
     val follower = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { TrackFollower(it, reversed) } }
+    val rejoin = remember(activeTrack?.id, activeTrack?.lines, reversed) { activeTrack?.let { Rejoin(it, reversed) } }
     // Heights along the followed track (its own, or read from the downloaded relief), for the profile strip.
     var profile by remember { mutableStateOf<ElevProfile?>(null) }
     LaunchedEffect(activeTrack?.id, activeTrack?.lines, reversed, installed) {
@@ -589,6 +601,10 @@ fun MapScreen() {
         }
     }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
+    // Nav mode works out a road route back to the track; Track mode only shows the way to the nearest point.
+    var trackMode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
+    var rejoinTick by remember { mutableIntStateOf(0) }
+    val navScope = rememberCoroutineScope()
     var menu by remember { mutableStateOf<MapMenu?>(null) }
     var moving by remember { mutableStateOf<Moving?>(null) }
     var renaming by remember { mutableStateOf<Track?>(null) }
@@ -750,7 +766,22 @@ fun MapScreen() {
             holder.update(900)
             holder.scan()
             progress = follower?.locate(f.latitude, f.longitude)
-            holder.setJoin(progress?.takeIf { it.offM > 30 }?.nearest)
+            val p = progress
+            val rj = rejoin
+            if (p != null && rj != null && trackMode == TrackMode.NAV) {
+                val here = LatLon(f.latitude, f.longitude)
+                rj.step(p, here, SystemClock.elapsedRealtime())?.let { to ->
+                    navScope.launch {
+                        val r = withContext(Dispatchers.IO) { Router.road(here, to) }
+                        rj.routed(r)
+                        rj.route?.let { holder.setRoute(it) }
+                        rejoinTick++
+                    }
+                }
+                val route = rj.route
+                if (route != null) holder.setRoute(route) else holder.setJoin(p.takeIf { it.offM > 30 }?.nearest)
+            } else holder.setJoin(p?.takeIf { it.offM > 30 }?.nearest)
+            rejoinTick++
             limit = holder.limit
             val cam = holder.camera
             if (cam != null && cam.key != camera?.key && cameraBeep) beeper?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
@@ -892,7 +923,10 @@ fun MapScreen() {
                 OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
             }
         }
-        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress)
+        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick) {
+            trackMode = TrackMode.entries[(trackMode.ordinal + 1) % TrackMode.entries.size]
+            MapStore.setTrackMode(ctx, trackMode)
+        }
         }
 
         // Pin in the middle of the screen while moving a waypoint; the map slides under it.
@@ -1106,23 +1140,39 @@ private fun shareGpx(ctx: Context, t: Track) {
     }.onFailure { Toast.makeText(ctx, ctx.getString(R.string.map_share_failed), Toast.LENGTH_SHORT).show() }
 }
 
-/** Followed track: distance left, and how far off it the bike is. */
+/** Followed track: distance left, how far off it the bike is, and the follow mode (tap to switch). */
 @Composable
-private fun TrackBox(t: Track, p: TrackProgress?) {
+private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, onMode: () -> Unit) {
+    tick
     val off = p != null && p.offM > 50
+    val route = if (mode == TrackMode.NAV) rj?.route else null
+    val warn = off && route == null
     Column(
-        Modifier.background(if (off) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+        Modifier.background(if (warn) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
+            .clickable(onClick = onMode).padding(horizontal = 14.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(t.name, color = if (off) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(mode.badge, color = if (warn) Color.Black else Palette.cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.border(1.dp, if (warn) Color.Black else Palette.cyan, RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
+            Text(t.name, color = if (warn) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
+        }
         when {
             p == null -> Text(stringResource(R.string.map_waiting_gps), color = Palette.text, fontSize = 16.sp)
+            route != null && rj != null -> {
+                val back = rj.routeLeftM ?: 0.0
+                val total = back + (p.doneM + p.leftM - rj.targetM).coerceAtLeast(0.0)
+                Text(stringResource(R.string.map_left, km(total)), color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nav_rejoin, km(back)), color = Palette.cyan, fontSize = 14.sp)
+            }
             p.offM > 1000 -> Text(stringResource(R.string.map_route_away, km(p.offM)), color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.map_left, km(p.leftM)), color = if (off) Color.Black else Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
+        }
+        if (mode == TrackMode.NAV && warn && rj?.failed == true) {
+            Text(stringResource(R.string.nav_no_net), color = Color.Black, fontSize = 12.sp)
         }
     }
 }

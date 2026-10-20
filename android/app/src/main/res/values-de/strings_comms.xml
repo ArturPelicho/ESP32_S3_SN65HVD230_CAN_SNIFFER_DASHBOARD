@@ -20,4 +20,12 @@
     <string name="comms_answer">Annehmen</string>
     <string name="comms_reject">Ablehnen</string>
     <string name="comms_hang_up">Auflegen</string>
+    <string name="track_mode_title">Strecke folgen</string>
+    <string name="track_mode_nav">Nav (berechnet neu)</string>
+    <string name="track_mode_track">Track (feste Linie)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">TRACK</string>
+    <string name="track_mode_hint">Nav: abseits der Strecke wird eine Route zurück berechnet (braucht Netz). Track: die Linie bleibt die Linie, mit dem Weg zum nächsten Punkt. Tippe auf das Streckenfeld der Karte zum Wechseln.</string>
+    <string name="nav_rejoin">%1$s zurück zur Strecke</string>
+    <string name="nav_no_net">Kein Netz: der gestrichelten Linie zurück folgen</string>
 </resources>

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.MapStore
+import pt.artur.motadash.TrackMode
 import pt.artur.motadash.R
 import pt.artur.motadash.Track
 import pt.artur.motadash.TrackStore
@@ -85,6 +86,14 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                 }
                 Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
             }
+            var mode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
+            Text(stringResource(R.string.track_mode_title), color = Palette.text, fontSize = 15.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TrackMode.entries.forEach { m ->
+                    FilterChip(selected = mode == m, onClick = { mode = m; MapStore.setTrackMode(ctx, m) }, label = { Text(m.label) })
+                }
+            }
+            Text(stringResource(R.string.track_mode_hint), color = Palette.label, fontSize = 12.sp)
             message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
             if (tracks.isEmpty()) Text(stringResource(R.string.tracks_empty), color = Palette.label, fontSize = 14.sp)
 

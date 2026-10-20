@@ -20,4 +20,12 @@
     <string name="comms_answer">Répondre</string>
     <string name="comms_reject">Refuser</string>
     <string name="comms_hang_up">Raccrocher</string>
+    <string name="track_mode_title">Suivre un parcours</string>
+    <string name="track_mode_nav">Nav (recalcule)</string>
+    <string name="track_mode_track">Trace (fixe)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">TRACE</string>
+    <string name="track_mode_hint">Nav : hors du parcours, une route pour y revenir est calculée (réseau requis). Trace : la ligne reste la ligne, avec le chemin vers son point le plus proche. Touchez le cadre du parcours sur la carte pour changer.</string>
+    <string name="nav_rejoin">%1$s pour rejoindre le parcours</string>
+    <string name="nav_no_net">Pas de réseau : revenez par la ligne pointillée</string>
 </resources>

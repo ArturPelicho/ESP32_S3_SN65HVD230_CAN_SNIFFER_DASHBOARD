@@ -20,4 +20,12 @@
     <string name="comms_answer">Answer</string>
     <string name="comms_reject">Reject</string>
     <string name="comms_hang_up">Hang up</string>
+    <string name="track_mode_title">Following a track</string>
+    <string name="track_mode_nav">Nav (reroutes)</string>
+    <string name="track_mode_track">Track (fixed line)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">TRACK</string>
+    <string name="track_mode_hint">Nav: off the track, a road route back to it is worked out (needs network). Track: the line stays the line, with the way back to its nearest point. Tap the track box on the map to switch.</string>
+    <string name="nav_rejoin">%1$s back to the track</string>
+    <string name="nav_no_net">No network: head back along the dashed line</string>
 </resources>

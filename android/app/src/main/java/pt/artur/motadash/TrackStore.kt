@@ -204,6 +204,16 @@ class TrackFollower(track: Track, private val reversed: Boolean) {
     val totalM = cum.lastOrNull() ?: 0.0
     private var lastIdx = -1
 
+    /** The point [d] metres along the track (clamped to its ends). */
+    fun pointAt(d: Double): LatLon {
+        if (pts.size < 2) return pts.firstOrNull() ?: LatLon(0.0, 0.0)
+        val i = cum.indexOfFirst { it >= d }.let { if (it <= 0) 1 else it }
+        val seg = (cum[i] - cum[i - 1]).coerceAtLeast(1e-6)
+        val t = ((d - cum[i - 1]) / seg).coerceIn(0.0, 1.0)
+        val a = pts[i - 1]; val b = pts[i]
+        return LatLon(a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t)
+    }
+
     fun locate(lat: Double, lon: Double): TrackProgress? {
         if (pts.size < 2) return null
         val here = LatLon(lat, lon)

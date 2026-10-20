@@ -157,6 +157,11 @@ object MapStore {
     fun routeRoads(ctx: Context): Boolean = prefs(ctx).getBoolean("route_roads", true)
     fun setRouteRoads(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("route_roads", on).apply()
 
+    /** Nav (reroutes back to the track) or Track (the line stays the line). */
+    fun trackMode(ctx: Context): TrackMode =
+        TrackMode.entries.firstOrNull { it.name == prefs(ctx).getString("track_mode", null) } ?: TrackMode.NAV
+    fun setTrackMode(ctx: Context, m: TrackMode) = prefs(ctx).edit().putString("track_mode", m.name).apply()
+
     /** Loads what is on the phone and the last index seen (works offline). */
     fun load(ctx: Context) {
         prefs(ctx).getString("index", null)?.let { runCatching { _index.value = parseIndex(JSONObject(it), null) } }
