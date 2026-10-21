@@ -23,17 +23,24 @@ object RouteOptions {
         RouteStyle.entries.firstOrNull { it.name == prefs(ctx).getString("style", null) } ?: RouteStyle.FAST
     fun setStyle(ctx: Context, s: RouteStyle) = run { prefs(ctx).edit().putString("style", s.name).apply(); changed() }
 
-    fun avoidMotorways(ctx: Context) = prefs(ctx).getBoolean("motorways", false)
-    fun setAvoidMotorways(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("motorways", on).apply(); changed() }
-    fun avoidToll(ctx: Context) = prefs(ctx).getBoolean("toll", false)
-    fun setAvoidToll(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("toll", on).apply(); changed() }
-    fun avoidUnpaved(ctx: Context) = prefs(ctx).getBoolean("unpaved", false)
-    fun setAvoidUnpaved(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("unpaved", on).apply(); changed() }
-    fun bypassTowns(ctx: Context) = prefs(ctx).getBoolean("towns", false)
-    fun setBypassTowns(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("towns", on).apply(); changed() }
+    // Each route type keeps its own toggles: fun avoids motorways and towns unless told otherwise.
+    private fun key(k: String, s: RouteStyle) = "${k}_${s.name}"
+    private fun get(ctx: Context, k: String, s: RouteStyle, def: Boolean) =
+        prefs(ctx).getBoolean(key(k, s), prefs(ctx).getBoolean(k, def))
+    private fun put(ctx: Context, k: String, s: RouteStyle, on: Boolean) =
+        run { prefs(ctx).edit().putBoolean(key(k, s), on).apply(); changed() }
+
+    fun avoidMotorways(ctx: Context, s: RouteStyle = style(ctx)) = get(ctx, "motorways", s, s == RouteStyle.FUN)
+    fun setAvoidMotorways(ctx: Context, on: Boolean, s: RouteStyle = style(ctx)) = put(ctx, "motorways", s, on)
+    fun avoidToll(ctx: Context, s: RouteStyle = style(ctx)) = get(ctx, "toll", s, false)
+    fun setAvoidToll(ctx: Context, on: Boolean, s: RouteStyle = style(ctx)) = put(ctx, "toll", s, on)
+    fun avoidUnpaved(ctx: Context, s: RouteStyle = style(ctx)) = get(ctx, "unpaved", s, false)
+    fun setAvoidUnpaved(ctx: Context, on: Boolean, s: RouteStyle = style(ctx)) = put(ctx, "unpaved", s, on)
+    fun bypassTowns(ctx: Context, s: RouteStyle = style(ctx)) = get(ctx, "towns", s, s == RouteStyle.FUN)
+    fun setBypassTowns(ctx: Context, on: Boolean, s: RouteStyle = style(ctx)) = put(ctx, "towns", s, on)
     /** Stay on the main roads unless a lane, service road or track saves clearly more (see [minorPenalty]). */
-    fun keepMain(ctx: Context) = prefs(ctx).getBoolean("keepMain", true)
-    fun setKeepMain(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("keepMain", on).apply(); changed() }
+    fun keepMain(ctx: Context, s: RouteStyle = style(ctx)) = s != RouteStyle.FUN && get(ctx, "keepMain", s, true)
+    fun setKeepMain(ctx: Context, on: Boolean, s: RouteStyle = style(ctx)) = put(ctx, "keepMain", s, on)
 
     /** Fun mode: how much longer than the fastest route the dirt route may be, in percent. */
     fun funDetour(ctx: Context) = prefs(ctx).getInt("funDetour", 30)
@@ -44,9 +51,11 @@ object RouteOptions {
     /** Speed the fun route assumes on dirt (rough tracks half that). */
     private const val DIRT_KMH = 35
 
-    /** Bumps on every change, so a Nav route worked out with the old choices is asked again. */
-    var version = 0; private set
-    fun changed() { version++ }
+    private val _changes = kotlinx.coroutines.flow.MutableStateFlow(0)
+    /** Bumps on every change: a Nav route back is asked again, a planned trajeto is worked out again. */
+    val changes: kotlinx.coroutines.flow.StateFlow<Int> = _changes
+    val version: Int get() = _changes.value
+    fun changed() { _changes.value++ }
 
     /**
      * Price, in the profile's cost units, of leaving the main roads for a lower level and coming back:
@@ -67,22 +76,26 @@ object RouteOptions {
         }
     }
 
-    /** Route profile parameters (its "# %name%" variables) for the current choices, or style [s]. */
-    fun params(ctx: Context, s: RouteStyle = style(ctx), paved: Double = 0.0): Map<String, String> {
+    /**
+     * Route profile parameters (its "# %name%" variables) for style [s] with the toggles of style [o]
+     * (fun's yardstick is the fastest route with fun's toggles).
+     */
+    fun params(ctx: Context, s: RouteStyle = style(ctx), paved: Double = 0.0, o: RouteStyle = s): Map<String, String> {
         val fun_ = s == RouteStyle.FUN
         fun b(v: Boolean) = if (v) "1" else "0"
         val vmax = when (s) { RouteStyle.FAST -> 100.0; RouteStyle.ECO -> 70.0; RouteStyle.FUN -> 80.0 }
-        val penalty = if (keepMain(ctx)) minorPenalty(s, vmax) else 0.0
+        val penalty = if (keepMain(ctx, o)) minorPenalty(s, vmax) else 0.0
+        val dirt = !avoidUnpaved(ctx, o)
         return mapOf(
             "vmax" to vmax.toInt().toString(),
             "minor_penalty" to penalty.toInt().toString(),
-            "avoid_motorways" to b(fun_ || avoidMotorways(ctx)),
-            "avoid_toll" to b(avoidToll(ctx)),
-            "avoid_unpaved" to b(!fun_ && avoidUnpaved(ctx)),
-            "use_offroad" to b(fun_ && !avoidUnpaved(ctx)),
-            "consider_town" to b(fun_ || bypassTowns(ctx)),
+            "avoid_motorways" to b(avoidMotorways(ctx, o)),
+            "avoid_toll" to b(avoidToll(ctx, o)),
+            "avoid_unpaved" to b(!dirt),
+            "use_offroad" to b(fun_ && dirt),
+            "consider_town" to b(bypassTowns(ctx, o)),
             "consider_forest" to b(fun_),
-            "dirt_kmh" to (if (fun_ && !avoidUnpaved(ctx)) DIRT_KMH else 0).toString(),
+            "dirt_kmh" to (if (fun_ && dirt) DIRT_KMH else 0).toString(),
             "paved_penalty" to String.format(java.util.Locale.US, "%.2f", if (fun_) paved else 0.0),
         )
     }

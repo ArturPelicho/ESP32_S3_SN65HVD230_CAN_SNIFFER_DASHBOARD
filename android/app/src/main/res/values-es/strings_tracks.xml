@@ -99,7 +99,7 @@
     <string name="route_avoid_toll">Evitar peajes</string>
     <string name="route_avoid_unpaved">Evitar caminos de tierra</string>
     <string name="route_bypass_towns">Rodear ciudades</string>
-    <string name="route_options_hint">Se aplica a rutas nuevas y al regreso al trayecto en modo Nav. Pulsa Recalcular en un trayecto planificado para rehacerlo.</string>
+    <string name="route_options_hint">Cada tipo de ruta tiene sus propias opciones. Un cambio recalcula el trayecto planificado que sigues y el camino de vuelta de Nav.</string>
     <string name="route_replan">Recalcular</string>
     <string name="route_keep_main">Seguir por carreteras principales</string>
     <string name="route_keep_main_hint">Solo deja las carreteras principales por calles de pueblo, vías de servicio o caminos si ahorra más de 2 min y 1 km (más rápida) o 2 min (económica).</string>
@@ -127,4 +127,5 @@
     <string name="route_fun_detour">Divertida: desvío máximo</string>
     <string name="route_fun_detour_hint">Hasta un %1$d%% más largo que la más rápida, para ir por tierra.</string>
     <string name="nav_eta">Llegada %1$s</string>
+    <string name="route_recalc">Recalculando la ruta…</string>
 </resources>

@@ -4,7 +4,7 @@
 
 A motorcycle navigator and smart dashboard, in two parts that work alone or together:
 
-- **NavExpress Mobile** (`android/`), the phone app, shown on the phone as **NavExpress**. It has offline maps with relief, planned and imported tracks, and a dashboard you lay out yourself. It is built to replace DMD2.
+- **NavExpress Mobile** (`android/`), the phone app, shown on the phone as **NavExpress**. It has offline maps with relief, planned and imported tracks, and a dashboard you lay out yourself.
 - **NavExpress Brain** (`main/`), the boards on the bike: ESP32-S3 firmware that reads the bike's CAN bus and works out fuel use, range and gear. It sends all of it to the phone over BLE.
 
 The name nods to the Espressif ESP32 at the heart of the bike unit. The first bike is a **ZongShen Carrera 125 Euro5+** (ZS125GY-13-E55); sensors, displays and the MCU are meant to be swappable, and the app is designed to work in any country.

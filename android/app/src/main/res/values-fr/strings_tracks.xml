@@ -99,7 +99,7 @@
     <string name="route_avoid_toll">Éviter les péages</string>
     <string name="route_avoid_unpaved">Éviter les chemins de terre</string>
     <string name="route_bypass_towns">Contourner les villes</string>
-    <string name="route_options_hint">S’applique aux nouveaux itinéraires et au retour au tracé en mode Nav. Touchez Recalculer sur un trajet planifié pour le refaire.</string>
+    <string name="route_options_hint">Chaque type d’itinéraire garde ses propres options. Un changement recalcule le trajet planifié suivi et le retour de Nav.</string>
     <string name="route_replan">Recalculer</string>
     <string name="route_keep_main">Rester sur les routes principales</string>
     <string name="route_keep_main_hint">Ne quitte les routes principales pour des ruelles, voies de service ou chemins que si cela fait gagner plus de 2 min et 1 km (la plus rapide) ou 2 min (économique).</string>
@@ -127,4 +127,5 @@
     <string name="route_fun_detour">Plaisir : détour maximal</string>
     <string name="route_fun_detour_hint">Jusqu’à %1$d%% plus long que le plus rapide, pour rouler sur la terre.</string>
     <string name="nav_eta">Arrivée %1$s</string>
+    <string name="route_recalc">Recalcul de l’itinéraire…</string>
 </resources>

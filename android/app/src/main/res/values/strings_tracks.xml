@@ -99,7 +99,7 @@
     <string name="route_avoid_toll">Avoid tolls</string>
     <string name="route_avoid_unpaved">Avoid dirt roads</string>
     <string name="route_bypass_towns">Go round towns</string>
-    <string name="route_options_hint">Applies to new routes and to Nav rejoining. Tap Recalculate on a planned trajeto to redo it.</string>
+    <string name="route_options_hint">Each route type keeps its own toggles. A change works out the planned trajeto being followed again, and Nav\'s way back.</string>
     <string name="route_replan">Recalculate</string>
     <string name="route_keep_main">Stay on main roads</string>
     <string name="route_keep_main_hint">Leaves the main roads for village lanes, service roads or tracks only when that saves more than 2 min and 1 km (fastest) or 2 min (economical).</string>
@@ -127,4 +127,5 @@
     <string name="route_fun_detour">Fun: longest detour allowed</string>
     <string name="route_fun_detour_hint">Up to %1$d%% longer than the fastest route, to ride on dirt.</string>
     <string name="nav_eta">Arrival %1$s</string>
+    <string name="route_recalc">Recalculating the route…</string>
 </resources>

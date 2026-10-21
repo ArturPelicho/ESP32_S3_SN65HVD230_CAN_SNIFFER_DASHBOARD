@@ -62,6 +62,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -102,6 +103,8 @@ import kotlin.math.cos
 import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
@@ -880,6 +883,14 @@ fun MapScreen() {
             holder.setTracks(tracks, activeId, reversed, places)
             if (follower == null) { progress = null; holder.setJoin(null) }
         }
+        // Route type or toggles changed: the planned trajeto being followed is worked out again.
+        LaunchedEffect(Unit) {
+            RouteOptions.changes.drop(1).collectLatest {
+                delay(1200)
+                val id = TrackStore.active.value ?: return@collectLatest
+                if ((TrackStore.tracks.value.firstOrNull { it.id == id }?.plan?.size ?: 0) >= 2) Planner.replan(ctx, id)
+            }
+        }
         LaunchedEffect(trackMessage) {
             if (trackMessage != null && !showTracks) { delay(6000); TrackStore.clearMessage() }
         }
@@ -1412,8 +1423,13 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
             }
             Text(stringResource(R.string.nav_eta, clock), color = if (warn) Color.Black else Palette.label, fontSize = 14.sp)
         }
-        if (mode == TrackMode.NAV && warn && rj?.busy == true) {
-            Text(stringResource(R.string.nav_recalc), color = Color.Black, fontSize = 12.sp)
+        val planning by Planner.busy.collectAsStateWithLifecycle()
+        if (t.id in planning || (mode == TrackMode.NAV && rj?.busy == true)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(Modifier.size(14.dp), color = if (warn) Color.Black else Palette.cyan, strokeWidth = 2.dp)
+                Text(stringResource(if (t.id in planning) R.string.route_recalc else R.string.nav_recalc),
+                    color = if (warn) Color.Black else Palette.cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
         } else if (mode == TrackMode.NAV && warn && rj?.failed == true) {
             Text(stringResource(R.string.nav_no_net), color = Color.Black, fontSize = 12.sp)
         }
@@ -1443,10 +1459,10 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         HorizontalDivider()
         val fun_ = style == RouteStyle.FUN
         check(stringResource(R.string.route_keep_main), RouteOptions.keepMain(ctx), !fun_) { RouteOptions.setKeepMain(ctx, !RouteOptions.keepMain(ctx)); tick++ }
-        check(stringResource(R.string.route_avoid_motorways), RouteOptions.avoidMotorways(ctx), !fun_) { RouteOptions.setAvoidMotorways(ctx, !RouteOptions.avoidMotorways(ctx)); tick++ }
+        check(stringResource(R.string.route_avoid_motorways), RouteOptions.avoidMotorways(ctx)) { RouteOptions.setAvoidMotorways(ctx, !RouteOptions.avoidMotorways(ctx)); tick++ }
         check(stringResource(R.string.route_avoid_toll), RouteOptions.avoidToll(ctx)) { RouteOptions.setAvoidToll(ctx, !RouteOptions.avoidToll(ctx)); tick++ }
         check(stringResource(R.string.route_avoid_unpaved), RouteOptions.avoidUnpaved(ctx)) { RouteOptions.setAvoidUnpaved(ctx, !RouteOptions.avoidUnpaved(ctx)); tick++ }
-        check(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx), !fun_) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
+        check(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx)) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
         if (fun_) {
             // Each tap: the next allowed detour.
             val d = RouteOptions.funDetour(ctx)

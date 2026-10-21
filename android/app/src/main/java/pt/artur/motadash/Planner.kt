@@ -5,6 +5,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -115,44 +118,55 @@ object Planner {
     private fun straight(t: Track, i: Int) =
         t.lines[i].size == 2 && t.lines[i][0] == t.plan[i] && t.lines[i][1] == t.plan[i + 1]
 
-    /** Works out every leg again with the current route options. */
-    fun replan(ctx: Context, id: String) {
-        TrackStore.change(ctx, id) { t ->
-            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) }, turns = emptyList(), secs = emptyList())
-        }
-        reroute(ctx, id)
-    }
+    /** Works out every leg again with the current route options; each old leg stays until its new one comes. */
+    fun replan(ctx: Context, id: String) = reroute(ctx, id, all = true)
+
+    private val _busy = MutableStateFlow<Set<String>>(emptySet())
+    /** Trajetos whose road legs are being worked out right now. */
+    val busy: StateFlow<Set<String>> = _busy
 
     private fun onLine(l: List<LatLon>, p: LatLon) = (0 until l.size - 1).any { toSegment(p, l[it], l[it + 1]).first < 20 }
 
-    /** Swaps straight legs for road routes, one by one, while the trajeto is unchanged around them. */
-    fun reroute(ctx: Context, id: String) {
+    /**
+     * Swaps straight legs (or, with [all], every leg) for road routes, one by one, while the trajeto is
+     * unchanged around them.
+     */
+    fun reroute(ctx: Context, id: String, all: Boolean = false) {
         if (!MapStore.routeRoads(ctx)) return
         val app = ctx.applicationContext
         synchronized(jobs) {
             jobs[id]?.cancel()
             jobs[id] = scope.launch {
-                val failed = HashSet<Pair<LatLon, LatLon>>()
-                while (true) {
-                    val t = TrackStore.tracks.value.firstOrNull { it.id == id } ?: break
-                    if (t.lines.size != t.plan.size - 1) break
-                    val i = t.lines.indices.firstOrNull { straight(t, it) && (t.plan[it] to t.plan[it + 1]) !in failed } ?: break
-                    val a = t.plan[i]
-                    val b = t.plan[i + 1]
-                    val road = Router.route(app, a, b)
-                    if (road == null) { failed += a to b; continue }
-                    TrackStore.change(app, id) { cur ->
-                        if (cur.plan.getOrNull(i) == a && cur.plan.getOrNull(i + 1) == b && cur.lines.size == cur.plan.size - 1)
-                            cur.relined(cur.lines.toMutableList().also { it[i] = road.pts }).let { n ->
-                                n.copy(turns = cur.turns + road.turns, secs = n.secs.toMutableList().also { it[i] = road.secs })
-                            }
-                        else cur
+                val me = coroutineContext[Job]
+                _busy.update { it + id }
+                try {
+                    val done = HashSet<Pair<LatLon, LatLon>>()
+                    while (true) {
+                        val t = TrackStore.tracks.value.firstOrNull { it.id == id } ?: break
+                        if (t.lines.size != t.plan.size - 1) break
+                        val i = t.lines.indices.firstOrNull { (all || straight(t, it)) && (t.plan[it] to t.plan[it + 1]) !in done } ?: break
+                        val a = t.plan[i]
+                        val b = t.plan[i + 1]
+                        done += a to b
+                        val road = Router.route(app, a, b) ?: continue
+                        TrackStore.change(app, id) { cur ->
+                            if (cur.plan.getOrNull(i) == a && cur.plan.getOrNull(i + 1) == b && cur.lines.size == cur.plan.size - 1)
+                                cur.relined(cur.lines.toMutableList().also { it[i] = road.pts }).let { n ->
+                                    // Turns of the old leg no longer lie on the line.
+                                    val keep = cur.turns.filter { tp -> n.lines.any { l -> onLine(l, LatLon(tp.lat, tp.lon)) } }
+                                    n.copy(turns = keep + road.turns, secs = n.secs.toMutableList().also { it[i] = road.secs })
+                                }
+                            else cur
+                        }
                     }
-                }
-                // Turns of legs since moved or deleted no longer lie on the line.
-                TrackStore.change(app, id) { cur ->
-                    val keep = cur.turns.filter { tp -> cur.lines.any { l -> onLine(l, LatLon(tp.lat, tp.lon)) } }
-                    if (keep.size == cur.turns.size) cur else cur.copy(turns = keep)
+                    // Turns of legs since moved or deleted no longer lie on the line.
+                    TrackStore.change(app, id) { cur ->
+                        val keep = cur.turns.filter { tp -> cur.lines.any { l -> onLine(l, LatLon(tp.lat, tp.lon)) } }
+                        if (keep.size == cur.turns.size) cur else cur.copy(turns = keep)
+                    }
+                } finally {
+                    // A newer job for the same trajeto keeps it busy.
+                    synchronized(jobs) { if (jobs[id] === me) _busy.update { it - id } }
                 }
             }
         }
@@ -185,7 +199,7 @@ object Router {
      * make paved roads ever cheaper, until one is no longer than the yardstick plus the detour.
      */
     private fun dirt(ctx: Context, a: LatLon, b: LatLon): Routed? {
-        val ref = routeWith(ctx, RouteOptions.params(ctx, RouteStyle.FAST), a, b) ?: return routeWith(ctx, RouteOptions.params(ctx), a, b)
+        val ref = routeWith(ctx, RouteOptions.params(ctx, RouteStyle.FAST, o = RouteStyle.FUN), a, b) ?: return routeWith(ctx, RouteOptions.params(ctx), a, b)
         val max = length(ref.pts) * (1 + RouteOptions.funDetour(ctx) / 100.0)
         for (paved in RouteOptions.PAVED_LEVELS) {
             val r = routeWith(ctx, RouteOptions.params(ctx, RouteStyle.FUN, paved), a, b) ?: continue

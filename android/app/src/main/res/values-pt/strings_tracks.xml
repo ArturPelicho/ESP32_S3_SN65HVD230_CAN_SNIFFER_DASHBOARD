@@ -99,7 +99,7 @@
     <string name="route_avoid_toll">Evitar portagens</string>
     <string name="route_avoid_unpaved">Evitar estradas de terra</string>
     <string name="route_bypass_towns">Contornar cidades</string>
-    <string name="route_options_hint">Vale para rotas novas e para o regresso ao trajeto no modo Nav. Carrega em Recalcular num trajeto planeado para o refazer.</string>
+    <string name="route_options_hint">Cada tipo de rota tem as suas opções. Uma mudança recalcula o trajeto planeado que estás a seguir e o caminho de volta do Nav.</string>
     <string name="route_replan">Recalcular</string>
     <string name="route_keep_main">Não sair da estrada principal por pouco</string>
     <string name="route_keep_main_hint">Só deixa as estradas principais por ruas de aldeia, serventias ou caminhos se poupar mais de 2 min e 1 km (mais rápida) ou 2 min (económica).</string>
@@ -127,4 +127,5 @@
     <string name="route_fun_detour">Divertida: desvio máximo</string>
     <string name="route_fun_detour_hint">Até %1$d%% mais longo que o mais rápido, para andar na terra.</string>
     <string name="nav_eta">Chegada %1$s</string>
+    <string name="route_recalc">A recalcular o trajeto…</string>
 </resources>

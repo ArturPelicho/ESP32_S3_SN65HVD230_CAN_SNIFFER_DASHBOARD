@@ -99,7 +99,7 @@
     <string name="route_avoid_toll">Maut meiden</string>
     <string name="route_avoid_unpaved">Schotterwege meiden</string>
     <string name="route_bypass_towns">Städte umfahren</string>
-    <string name="route_options_hint">Gilt für neue Routen und die Rückkehr zur Strecke im Nav-Modus. Bei einer geplanten Strecke Neu berechnen tippen, um sie neu zu machen.</string>
+    <string name="route_options_hint">Jede Routenart hat ihre eigenen Schalter. Eine Änderung berechnet die gefolgte geplante Strecke und den Nav-Rückweg neu.</string>
     <string name="route_replan">Neu berechnen</string>
     <string name="route_keep_main">Auf Hauptstraßen bleiben</string>
     <string name="route_keep_main_hint">Verlässt die Hauptstraßen für Dorfgassen, Zufahrten oder Wege nur, wenn das mehr als 2 min und 1 km (schnellste) oder 2 min (sparsame) spart.</string>
@@ -127,4 +127,5 @@
     <string name="route_fun_detour">Kurvenspaß: maximaler Umweg</string>
     <string name="route_fun_detour_hint">Bis zu %1$d%% länger als die schnellste Route, um auf Schotter zu fahren.</string>
     <string name="nav_eta">Ankunft %1$s</string>
+    <string name="route_recalc">Route wird neu berechnet…</string>
 </resources>

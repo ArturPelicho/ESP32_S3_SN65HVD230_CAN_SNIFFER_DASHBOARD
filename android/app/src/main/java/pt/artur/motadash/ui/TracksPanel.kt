@@ -227,17 +227,18 @@ private fun RouteOptionsSection() {
     }
     @Composable
     fun option(@androidx.annotation.StringRes label: Int, get: () -> Boolean, set: (Boolean) -> Unit, enabled: Boolean = true) {
-        var on by remember { mutableStateOf(get()) }
+        // Each route type has its own toggles: read again when the type changes.
+        var on by remember(style) { mutableStateOf(get()) }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(label), color = if (enabled) Palette.text else Palette.label, fontSize = 14.sp, modifier = Modifier.weight(1f))
             Switch(checked = on, enabled = enabled, onCheckedChange = { on = it; set(it) })
         }
     }
     val fun_ = style == RouteStyle.FUN
-    option(R.string.route_avoid_motorways, { RouteOptions.avoidMotorways(ctx) }, { RouteOptions.setAvoidMotorways(ctx, it) }, enabled = !fun_)
+    option(R.string.route_avoid_motorways, { RouteOptions.avoidMotorways(ctx) }, { RouteOptions.setAvoidMotorways(ctx, it) })
     option(R.string.route_avoid_toll, { RouteOptions.avoidToll(ctx) }, { RouteOptions.setAvoidToll(ctx, it) })
     option(R.string.route_avoid_unpaved, { RouteOptions.avoidUnpaved(ctx) }, { RouteOptions.setAvoidUnpaved(ctx, it) })
-    option(R.string.route_bypass_towns, { RouteOptions.bypassTowns(ctx) }, { RouteOptions.setBypassTowns(ctx, it) }, enabled = !fun_)
+    option(R.string.route_bypass_towns, { RouteOptions.bypassTowns(ctx) }, { RouteOptions.setBypassTowns(ctx, it) })
     option(R.string.route_keep_main, { RouteOptions.keepMain(ctx) }, { RouteOptions.setKeepMain(ctx, it) }, enabled = !fun_)
     Text(stringResource(R.string.route_keep_main_hint), color = Palette.label, fontSize = 12.sp)
     Text(stringResource(R.string.route_options_hint), color = Palette.label, fontSize = 12.sp)
