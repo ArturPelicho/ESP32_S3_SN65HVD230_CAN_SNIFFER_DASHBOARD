@@ -17,8 +17,8 @@ jobs:
           PID=$(echo "$ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['profileid'])")
           FAST="profile:vmax=100&profile:minor_penalty=2752"
           FUN="profile:vmax=80&profile:avoid_motorways=1&profile:use_offroad=1&profile:consider_town=1&profile:consider_forest=1&profile:dirt_kmh=35"
-          for ll in "-7.9135,38.5714%7C-8.0200,38.5310%7C-8.1350,38.5450%7C-8.3570,38.6270%7C-8.4560,38.6770"; do
-            for q in "$FAST" "$FUN&profile:paved_penalty=3" "$FUN&profile:paved_penalty=0"; do
+          for ll in "-7.9135,38.5714%7C-8.4560,38.6770"; do
+            for q in "$FUN&profile:paved_penalty=6" "$FUN&profile:paved_penalty=10" "$FUN&profile:paved_penalty=20" "$FUN&profile:paved_penalty=40"; do
               curl -sS "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=$PID&$q&lonlats=$ll" | python3 -c "
           import json,sys
           d=json.load(sys.stdin); f=d['features'][0]; p=f['properties']; m=p['messages']; h=m[0]; i=h.index('WayTags'); di=h.index('Distance')
