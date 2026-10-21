@@ -132,6 +132,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -290,6 +291,51 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     var camera: CameraAlert? = null
         private set
     private var lastCameraScan = 0L
+
+    /**
+     * The map's road under [p] (within 25 m) going about [bearing], from [p] onward to the end of the
+     * drawn piece; null when there is none. For dead reckoning in tunnels with nothing being followed.
+     */
+    fun roadAhead(p: LatLon, bearing: Double): List<LatLon>? {
+        val m = map ?: return null
+        val st = style ?: return null
+        val ids = st.layers.filter { l ->
+            l is LineLayer && l.sourceLayer == "roads" && (l.id.startsWith("road-") || l.id.startsWith("track-"))
+        }.map { it.id }
+        if (ids.isEmpty()) return null
+        val at = Location("dr").apply { latitude = p.lat; longitude = p.lon }
+        val s = m.projection.toScreenLocation(LatLng(p.lat, p.lon))
+        val r = 48f
+        var best: List<LatLon>? = null
+        var bestScore = Double.MAX_VALUE
+        for (f in m.queryRenderedFeatures(RectF(s.x - r, s.y - r, s.x + r, s.y + r), *ids.toTypedArray())) {
+            val parts: List<List<Point>> = when (val g = f.geometry()) {
+                is LineString -> listOf(g.coordinates())
+                is MultiLineString -> g.coordinates()
+                else -> continue
+            }
+            for (line in parts) for (i in 0 until line.size - 1) {
+                val (d, segBearing) = segment(at, line[i], line[i + 1])
+                if (d > 25) continue
+                for (forward in listOf(true, false)) {
+                    val diff = angleDiff(if (forward) segBearing else segBearing + 180, bearing)
+                    if (diff > 50) continue
+                    val score = d + diff * 0.5
+                    if (score >= bestScore) continue
+                    val a = LatLon(line[i].latitude(), line[i].longitude())
+                    val b = LatLon(line[i + 1].latitude(), line[i + 1].longitude())
+                    val proj = nearestOn(p, a, b)
+                    val rest = if (forward) (i + 1 until line.size).map { line[it] } else (i downTo 0).map { line[it] }
+                    val out = listOf(proj) + rest.map { LatLon(it.latitude(), it.longitude()) }
+                    var len = 0.0
+                    for (k in 1 until out.size) len += metres(out[k - 1], out[k])
+                    if (len < 5) continue // the very end of this piece: the next one carries on
+                    bestScore = score; best = out
+                }
+            }
+        }
+        return best
+    }
 
     /** Looks up the speed limit under the bike and speed cameras ahead; call on each GPS fix. */
     fun scan() {
@@ -488,6 +534,16 @@ private fun segment(loc: Location, a: Point, b: Point): Pair<Double, Double> {
     val cx = ax + t * vx
     val cy = ay + t * vy
     return sqrt(cx * cx + cy * cy) to Math.toDegrees(atan2(vx, vy))
+}
+
+/** The point of segment a-b nearest to p (flat approximation, fine over a few hundred metres). */
+private fun nearestOn(p: LatLon, a: LatLon, b: LatLon): LatLon {
+    val k = cos(Math.toRadians(p.lat))
+    val ax = (a.lon - p.lon) * k; val ay = a.lat - p.lat
+    val vx = (b.lon - a.lon) * k; val vy = b.lat - a.lat
+    val len2 = vx * vx + vy * vy
+    val t = if (len2 == 0.0) 0.0 else (-(ax * vx + ay * vy) / len2).coerceIn(0.0, 1.0)
+    return LatLon(a.lat + t * vy, a.lon + t * (b.lon - a.lon))
 }
 
 /** 0..180 degrees between two bearings. */
@@ -691,7 +747,7 @@ fun MapScreen() {
     LaunchedEffect(resumed) {
         while (resumed) {
             delay(1000)
-            dr.tick(drPath, drKmh)?.let { fix = it }
+            dr.tick(drPath, drKmh) { p, b -> holder.roadAhead(p, b) }?.let { fix = it }
         }
     }
 
@@ -704,7 +760,8 @@ fun MapScreen() {
             // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old
             // (not over a dead-reckoned position: in a tunnel the estimate is better).
             val cur = fix
-            if (loc.provider == LocationManager.GPS_PROVIDER) dr.real(loc)
+            // A fix hundreds of metres from the last one in a second is a glitch: ignored for a while.
+            if (loc.provider == LocationManager.GPS_PROVIDER && !dr.real(loc)) return@LocationListener
             if (loc.provider == LocationManager.GPS_PROVIDER || cur == null ||
                 (cur.provider != LocationManager.GPS_PROVIDER && cur.provider != DeadReckoning.PROVIDER) || ageMs(cur) > 10_000) fix = loc
         }
