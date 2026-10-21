@@ -31,6 +31,11 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import pt.artur.motadash.RouteStyle
+import pt.artur.motadash.RouteOptions
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
@@ -961,9 +966,9 @@ fun MapScreen() {
             }
         }
         if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
-        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick) {
-            trackMode = TrackMode.entries[(trackMode.ordinal + 1) % TrackMode.entries.size]
-            MapStore.setTrackMode(ctx, trackMode)
+        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick) { m ->
+            trackMode = m
+            MapStore.setTrackMode(ctx, m)
         }
         }
 
@@ -1201,16 +1206,24 @@ private fun TurnBanner(next: Pair<Maneuver, Double>) {
     }
 }
 
-/** Followed track: distance left, how far off it the bike is, and the follow mode (tap to switch). */
+/** Followed track: distance left, how far off it the bike is, and the follow mode; long press for the options. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, onMode: () -> Unit) {
+private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, onMode: (TrackMode) -> Unit) {
     tick
+    val ctx = LocalContext.current
     val off = p != null && p.offM > 50
     val route = if (mode == TrackMode.NAV) rj?.route else null
     val warn = off && route == null
+    var menu by remember { mutableStateOf(false) }
+    Box {
+    if (menu) TrackOptionsMenu(t, mode, onMode) { menu = false }
     Column(
         Modifier.background(if (warn) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
-            .clickable(onClick = onMode).padding(horizontal = 14.dp, vertical = 6.dp),
+            .combinedClickable(
+                onClick = { Toast.makeText(ctx, ctx.getString(R.string.track_box_long_press), Toast.LENGTH_SHORT).show() },
+                onLongClick = { menu = true },
+            ).padding(horizontal = 14.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1241,6 +1254,40 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
             Text(stringResource(R.string.nav_recalc), color = Color.Black, fontSize = 12.sp)
         } else if (mode == TrackMode.NAV && warn && rj?.failed == true) {
             Text(stringResource(R.string.nav_no_net), color = Color.Black, fontSize = 12.sp)
+        }
+    }
+    }
+}
+
+/** The track box's long-press menu: follow mode, route type and what to avoid, recalculate. */
+@Composable
+private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> Unit, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    var style by remember { mutableStateOf(RouteOptions.style(ctx)) }
+    var tick by remember { mutableIntStateOf(0) }
+    tick
+    @Composable
+    fun header(@androidx.annotation.StringRes res: Int) =
+        Text(stringResource(res), color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+    @Composable
+    fun check(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
+        DropdownMenuItem(text = { Text((if (on) "✓  " else "     ") + label, fontSize = 16.sp) }, enabled = enabled, onClick = action)
+    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        header(R.string.track_mode_title)
+        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
+        HorizontalDivider()
+        header(R.string.route_title)
+        RouteStyle.entries.forEach { s -> check(s.label, style == s) { style = s; RouteOptions.setStyle(ctx, s) } }
+        HorizontalDivider()
+        val fun_ = style == RouteStyle.FUN
+        check(stringResource(R.string.route_keep_main), RouteOptions.keepMain(ctx), !fun_) { RouteOptions.setKeepMain(ctx, !RouteOptions.keepMain(ctx)); tick++ }
+        check(stringResource(R.string.route_avoid_motorways), RouteOptions.avoidMotorways(ctx), !fun_) { RouteOptions.setAvoidMotorways(ctx, !RouteOptions.avoidMotorways(ctx)); tick++ }
+        check(stringResource(R.string.route_avoid_toll), RouteOptions.avoidToll(ctx)) { RouteOptions.setAvoidToll(ctx, !RouteOptions.avoidToll(ctx)); tick++ }
+        check(stringResource(R.string.route_avoid_unpaved), RouteOptions.avoidUnpaved(ctx)) { RouteOptions.setAvoidUnpaved(ctx, !RouteOptions.avoidUnpaved(ctx)); tick++ }
+        check(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx), !fun_) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
+        if (t.plan.size >= 2) {
+            HorizontalDivider()
+            MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }
         }
     }
 }

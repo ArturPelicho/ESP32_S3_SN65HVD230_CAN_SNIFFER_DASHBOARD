@@ -48,6 +48,7 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
     private var lastAsk = -1_000_000L
     private var doneMax = 0.0
     private var askedAt = 0L
+    private var askedVersion = RouteOptions.version
     /** A route is being worked out. */
     val busy: Boolean get() = askedAt != 0L
 
@@ -75,6 +76,8 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
         }
         onSince = 0
         if (offSince == 0L) offSince = nowMs
+        // Route choices changed (track box menu): the route goes, a new one comes with the new choices.
+        if (askedVersion != RouteOptions.version) { askedVersion = RouteOptions.version; if (route != null || failed) { drop(); lastAsk = -1_000_000L } }
         val rp = routeFollower?.locate(here.lat, here.lon)
         val onRoute = rp != null && rp.offM <= 50
         routeSnap = rp?.takeIf { it.offM <= SNAP_M }

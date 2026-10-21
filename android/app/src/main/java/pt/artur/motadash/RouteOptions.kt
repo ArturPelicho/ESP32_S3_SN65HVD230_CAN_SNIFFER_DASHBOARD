@@ -21,24 +21,53 @@ object RouteOptions {
 
     fun style(ctx: Context): RouteStyle =
         RouteStyle.entries.firstOrNull { it.name == prefs(ctx).getString("style", null) } ?: RouteStyle.FAST
-    fun setStyle(ctx: Context, s: RouteStyle) = prefs(ctx).edit().putString("style", s.name).apply()
+    fun setStyle(ctx: Context, s: RouteStyle) = run { prefs(ctx).edit().putString("style", s.name).apply(); changed() }
 
     fun avoidMotorways(ctx: Context) = prefs(ctx).getBoolean("motorways", false)
-    fun setAvoidMotorways(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("motorways", on).apply()
+    fun setAvoidMotorways(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("motorways", on).apply(); changed() }
     fun avoidToll(ctx: Context) = prefs(ctx).getBoolean("toll", false)
-    fun setAvoidToll(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("toll", on).apply()
+    fun setAvoidToll(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("toll", on).apply(); changed() }
     fun avoidUnpaved(ctx: Context) = prefs(ctx).getBoolean("unpaved", false)
-    fun setAvoidUnpaved(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("unpaved", on).apply()
+    fun setAvoidUnpaved(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("unpaved", on).apply(); changed() }
     fun bypassTowns(ctx: Context) = prefs(ctx).getBoolean("towns", false)
-    fun setBypassTowns(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("towns", on).apply()
+    fun setBypassTowns(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("towns", on).apply(); changed() }
+    /** Stay on the main roads unless a lane, service road or track saves clearly more (see [minorPenalty]). */
+    fun keepMain(ctx: Context) = prefs(ctx).getBoolean("keepMain", true)
+    fun setKeepMain(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("keepMain", on).apply(); changed() }
 
-    /** car-vario profile parameters (its "# %name%" variables) for the current choices. */
+    /** Bumps on every change, so a Nav route worked out with the old choices is asked again. */
+    var version = 0; private set
+    fun changed() { version++ }
+
+    /**
+     * Price, in the profile's cost units, of leaving the main roads for a lower level and coming back:
+     * the route takes the lane only when it saves more than that. Fastest: 2 minutes plus 1 km; economical:
+     * 2 minutes. The profile's cost is energy plus time weighted so a metre at vmax costs about 1 (BRouter's
+     * kinematic model), so one second costs pw / cost0.
+     */
+    fun minorPenalty(s: RouteStyle, vmaxKmh: Double): Double {
+        val v = vmaxKmh / 3.6
+        val fAir = 0.4; val fRoll = 232.0; val pStandby = 250.0
+        val pw = 2 * fAir * v * v * v - pStandby
+        val cost0 = (pw + pStandby) / v + fRoll + fAir * v * v
+        val perSecond = pw / cost0
+        return when (s) {
+            RouteStyle.FAST -> 120 * perSecond + 1000
+            RouteStyle.ECO -> 120 * perSecond
+            RouteStyle.FUN -> 0.0
+        }
+    }
+
+    /** Route profile parameters (its "# %name%" variables) for the current choices. */
     fun params(ctx: Context): Map<String, String> {
         val s = style(ctx)
         val fun_ = s == RouteStyle.FUN
         fun b(v: Boolean) = if (v) "1" else "0"
+        val vmax = when (s) { RouteStyle.FAST -> 100.0; RouteStyle.ECO -> 70.0; RouteStyle.FUN -> 80.0 }
+        val penalty = if (keepMain(ctx)) minorPenalty(s, vmax) else 0.0
         return mapOf(
-            "vmax" to when (s) { RouteStyle.FAST -> "100"; RouteStyle.ECO -> "70"; RouteStyle.FUN -> "80" },
+            "vmax" to vmax.toInt().toString(),
+            "minor_penalty" to penalty.toInt().toString(),
             "avoid_motorways" to b(fun_ || avoidMotorways(ctx)),
             "avoid_toll" to b(avoidToll(ctx)),
             "avoid_unpaved" to b(!fun_ && avoidUnpaved(ctx)),

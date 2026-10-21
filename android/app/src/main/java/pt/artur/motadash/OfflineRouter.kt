@@ -26,8 +26,8 @@ import kotlin.math.floor
  */
 object OfflineRouter {
     private const val SEGMENTS = "https://brouter.de/brouter/segments4/"
-    /** Car profile that takes any road the bike can, with options (see [RouteOptions]); the moped one avoids main roads too much. */
-    private const val PROFILE = "car-vario"
+    /** BRouter's car-vario with the app's main-road rule (assets/navexpress.brf), options from [RouteOptions]. */
+    const val PROFILE = "navexpress"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = HashMap<String, Job>()
@@ -131,10 +131,15 @@ object OfflineRouter {
     /** The profile files, copied out of the app once (BRouter reads them from disk). */
     private fun profile(ctx: Context): File {
         val d = File(ctx.filesDir, "brouter/profiles2").apply { mkdirs() }
-        for (n in listOf("$PROFILE.brf", "lookups.dat")) {
+        // Copied again after an update (the profile can change between versions).
+        val stamp = File(d, "version")
+        val ver = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).lastUpdateTime.toString() }.getOrDefault("")
+        val fresh = stamp.exists() && stamp.readText() == ver
+        for ((n, asset) in listOf("$PROFILE.brf" to "$PROFILE.brf", "lookups.dat" to "brouter/lookups.dat")) {
             val f = File(d, n)
-            if (!f.exists() || f.length() == 0L) ctx.assets.open("brouter/$n").use { i -> f.outputStream().use { i.copyTo(it) } }
+            if (!fresh || !f.exists() || f.length() == 0L) ctx.assets.open(asset).use { i -> f.outputStream().use { i.copyTo(it) } }
         }
+        stamp.writeText(ver)
         return File(d, "$PROFILE.brf")
     }
 

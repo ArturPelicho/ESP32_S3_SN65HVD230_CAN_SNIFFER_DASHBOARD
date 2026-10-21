@@ -101,4 +101,7 @@
     <string name="route_bypass_towns">Rodear ciudades</string>
     <string name="route_options_hint">Se aplica a rutas nuevas y al regreso al trayecto en modo Nav. Pulsa Recalcular en un trayecto planificado para rehacerlo.</string>
     <string name="route_replan">Recalcular</string>
+    <string name="route_keep_main">Seguir por carreteras principales</string>
+    <string name="route_keep_main_hint">Solo deja las carreteras principales por calles de pueblo, vías de servicio o caminos si ahorra más de 2 min y 1 km (más rápida) o 2 min (económica).</string>
+    <string name="route_replan_trip">Recalcular esta ruta</string>
 </resources>

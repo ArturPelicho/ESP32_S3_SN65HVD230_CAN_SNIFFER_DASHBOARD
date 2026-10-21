@@ -160,7 +160,9 @@ object Planner {
  * public BRouter server (needs network).
  */
 object Router {
-    private const val BASE = "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=car-vario"
+    private const val SERVER = "https://brouter.de/brouter"
+    /** The app's profile, uploaded to the server once per run (it keeps custom profiles for a while). */
+    @Volatile private var customId: String? = null
 
     /** The road route from a to b, or null without routing data, network or route. */
     fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? = route(ctx, a, b)?.pts
@@ -168,12 +170,40 @@ object Router {
     /** The road route with its turns. */
     fun route(ctx: Context, a: LatLon, b: LatLon): Routed? =
         (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b) else null)
-            ?: runCatching { fetch(RouteOptions.params(ctx), a, b) }.getOrNull()
+            ?: runCatching { online(ctx, a, b) }.getOrNull()
 
-    private fun fetch(params: Map<String, String>, a: LatLon, b: LatLon): Routed? {
+    private fun online(ctx: Context, a: LatLon, b: LatLon): Routed? {
+        val params = RouteOptions.params(ctx)
+        val id = customId ?: upload(ctx)
+        if (id != null) {
+            fetch(id, params, a, b)?.let { return it }
+            // Gone from the server: upload it again, once.
+            upload(ctx)?.let { nid -> fetch(nid, params, a, b)?.let { return it } }
+        }
+        // Without the app's profile, the stock one (no main-road rule).
+        return fetch("car-vario", params - "minor_penalty", a, b)
+    }
+
+    private fun upload(ctx: Context): String? = runCatching {
+        val text = ctx.assets.open("${OfflineRouter.PROFILE}.brf").bufferedReader().use { it.readText() }
+        val c = URL("$SERVER/profile").openConnection() as HttpURLConnection
+        c.connectTimeout = 8_000; c.readTimeout = 15_000
+        c.requestMethod = "POST"; c.doOutput = true
+        c.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+        c.setRequestProperty("User-Agent", "NavExpress")
+        try {
+            c.outputStream.use { it.write(text.toByteArray()) }
+            if (c.responseCode != 200) return@runCatching null
+            JSONObject(c.inputStream.bufferedReader().readText()).optString("profileid").takeIf { it.startsWith("custom_") }
+        } finally {
+            c.disconnect()
+        }
+    }.getOrNull().also { customId = it }
+
+    private fun fetch(profile: String, params: Map<String, String>, a: LatLon, b: LatLon): Routed? {
         val q = String.format(Locale.US, "%.6f,%.6f|%.6f,%.6f", a.lon, a.lat, b.lon, b.lat)
         val extra = params.entries.joinToString("") { "&profile:${it.key}=${it.value}" }
-        val c = URL(BASE + extra + "&timode=2&lonlats=" + q.replace("|", "%7C")).openConnection() as HttpURLConnection
+        val c = URL("$SERVER?alternativeidx=0&format=geojson&profile=$profile" + extra + "&timode=2&lonlats=" + q.replace("|", "%7C")).openConnection() as HttpURLConnection
         c.connectTimeout = 8_000
         c.readTimeout = 20_000
         c.setRequestProperty("User-Agent", "NavExpress")

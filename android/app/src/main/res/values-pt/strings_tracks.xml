@@ -101,4 +101,7 @@
     <string name="route_bypass_towns">Contornar cidades</string>
     <string name="route_options_hint">Vale para rotas novas e para o regresso ao trajeto no modo Nav. Carrega em Recalcular num trajeto planeado para o refazer.</string>
     <string name="route_replan">Recalcular</string>
+    <string name="route_keep_main">Não sair da estrada principal por pouco</string>
+    <string name="route_keep_main_hint">Só deixa as estradas principais por ruas de aldeia, serventias ou caminhos se poupar mais de 2 min e 1 km (mais rápida) ou 2 min (económica).</string>
+    <string name="route_replan_trip">Recalcular este trajeto</string>
 </resources>

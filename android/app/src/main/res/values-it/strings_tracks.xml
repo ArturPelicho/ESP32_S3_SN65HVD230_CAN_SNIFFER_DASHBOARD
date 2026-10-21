@@ -101,4 +101,7 @@
     <string name="route_bypass_towns">Aggira le città</string>
     <string name="route_options_hint">Vale per i nuovi percorsi e per il rientro sul tracciato in modalità Nav. Tocca Ricalcola su un tragitto pianificato per rifarlo.</string>
     <string name="route_replan">Ricalcola</string>
+    <string name="route_keep_main">Restare sulle strade principali</string>
+    <string name="route_keep_main_hint">Lascia le strade principali per vicoli, strade di servizio o sterrati solo se si risparmiano più di 2 min e 1 km (più veloce) o 2 min (economica).</string>
+    <string name="route_replan_trip">Ricalcola questo percorso</string>
 </resources>

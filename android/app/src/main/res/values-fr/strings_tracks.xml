@@ -101,4 +101,7 @@
     <string name="route_bypass_towns">Contourner les villes</string>
     <string name="route_options_hint">S’applique aux nouveaux itinéraires et au retour au tracé en mode Nav. Touchez Recalculer sur un trajet planifié pour le refaire.</string>
     <string name="route_replan">Recalculer</string>
+    <string name="route_keep_main">Rester sur les routes principales</string>
+    <string name="route_keep_main_hint">Ne quitte les routes principales pour des ruelles, voies de service ou chemins que si cela fait gagner plus de 2 min et 1 km (la plus rapide) ou 2 min (économique).</string>
+    <string name="route_replan_trip">Recalculer ce parcours</string>
 </resources>

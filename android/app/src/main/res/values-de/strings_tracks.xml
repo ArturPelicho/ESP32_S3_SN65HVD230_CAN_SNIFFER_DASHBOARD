@@ -101,4 +101,7 @@
     <string name="route_bypass_towns">Städte umfahren</string>
     <string name="route_options_hint">Gilt für neue Routen und die Rückkehr zur Strecke im Nav-Modus. Bei einer geplanten Strecke Neu berechnen tippen, um sie neu zu machen.</string>
     <string name="route_replan">Neu berechnen</string>
+    <string name="route_keep_main">Auf Hauptstraßen bleiben</string>
+    <string name="route_keep_main_hint">Verlässt die Hauptstraßen für Dorfgassen, Zufahrten oder Wege nur, wenn das mehr als 2 min und 1 km (schnellste) oder 2 min (sparsame) spart.</string>
+    <string name="route_replan_trip">Diese Strecke neu berechnen</string>
 </resources>

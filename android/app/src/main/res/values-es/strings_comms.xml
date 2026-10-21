@@ -25,7 +25,8 @@
     <string name="track_mode_track">Pista (no recalcula)</string>
     <string name="track_badge_nav">NAV</string>
     <string name="track_badge_track">PISTA</string>
-    <string name="track_mode_hint">Nav: fuera de la ruta, calcula una ruta por carretera de vuelta (necesita red). Pista: la línea es la línea, con el camino al punto más cercano. Toca el cuadro de la ruta en el mapa para cambiar.</string>
+    <string name="track_mode_hint">Nav: fuera de la ruta, calcula una ruta por carretera desde donde estás hasta el siguiente punto o el final. Pista: la línea es la línea, con el camino al punto más cercano. Mantén pulsado el cuadro de la ruta en el mapa para esto y las opciones de ruta.</string>
+    <string name="track_box_long_press">Mantén pulsado para las opciones</string>
     <string name="nav_rejoin">%1$s hasta volver a la ruta</string>
     <string name="nav_to_end">%1$s hasta el destino</string>
     <string name="nav_to_waypoint">%1$s hasta el punto %2$d</string>

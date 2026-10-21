@@ -1,0 +1,55 @@
+name: BRouter probe
+
+# Temporary: the app's navexpress profile, offline (library) and online (uploaded to the server).
+on:
+  push:
+    paths: [".github/workflows/brouter-probe.yml", "android/app/src/main/assets/navexpress.brf"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - run: |
+          git clone -q --branch v1.7.10 --depth 1 https://github.com/abrensch/brouter.git b
+          mkdir -p seg cls prof
+          cp android/app/src/main/assets/navexpress.brf b/misc/profiles2/lookups.dat prof/
+          curl -sS -o seg/W10_N35.rd5 https://brouter.de/brouter/segments4/W10_N35.rd5
+          cat > Smoke.java <<'J'
+          import btools.router.*; import java.io.File; import java.util.*;
+          public class Smoke { public static void main(String[] a) throws Exception {
+            double[][] r = {{-9.1500,38.7253,-8.8930,38.5244},{-9.3817,38.7979,-9.4730,38.7930},{-8.6110,41.1500,-8.0300,41.0750},{-7.9300,40.6600,-7.6900,40.5300}};
+            for (double[] q : r) for (String pen : new String[]{"0","2752"}) {
+              RoutingContext rc = new RoutingContext();
+              rc.localFunction = new File(a[1], "navexpress.brf").getAbsolutePath();
+              rc.keyValues = new HashMap<>(); rc.keyValues.put("vmax","100"); rc.keyValues.put("minor_penalty", pen);
+              List<OsmNodeNamed> wp = new RoutingParamCollector().readPositions(new double[]{q[0], q[2]}, new double[]{q[1], q[3]});
+              RoutingEngine re = new RoutingEngine(null, null, new File(a[0]), wp, rc);
+              re.quite = true; re.doRun(60000);
+              OsmTrack t = re.getFoundTrack();
+              System.out.println(Arrays.toString(q) + " pen=" + pen + " err=" + re.getErrorMessage() + (t == null ? "" : " dist=" + t.distance + " cost=" + t.cost));
+            }
+          }}
+          J
+          find b/brouter-core b/brouter-mapaccess b/brouter-util b/brouter-expressions b/brouter-codec -path '*src/main/java*' -name '*.java' > files.txt
+          javac -nowarn -d cls @files.txt Smoke.java 2>&1 | tail -5
+          java -Xmx512m -cp cls Smoke seg prof
+      - run: |
+          ID=$(curl -sS -X POST -H 'Content-Type: text/plain' --data-binary @android/app/src/main/assets/navexpress.brf https://brouter.de/brouter/profile)
+          echo "upload: $ID"
+          PID=$(echo "$ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['profileid'])")
+          for ll in "-9.15,38.7253%7C-8.893,38.5244" "-9.3817,38.7979%7C-9.473,38.793" "-8.611,41.15%7C-8.03,41.075" "-7.93,40.66%7C-7.69,40.53"; do
+            for pen in 0 2752; do
+              curl -sS "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=$PID&profile:vmax=100&profile:minor_penalty=$pen&lonlats=$ll" | python3 -c "
+          import json,sys,collections
+          d=json.load(sys.stdin); p=d['features'][0]['properties']; m=p['messages']; h=m[0]; i=h.index('WayTags'); di=h.index('Distance')
+          c=collections.Counter()
+          for row in m[1:]:
+              hw=[t.split('=')[1] for t in row[i].split() if t.startswith('highway=')]
+              c[hw[0] if hw else '?']+=int(row[di])
+          print('$ll pen=$pen len',p['track-length'],'time',p['total-time'],dict(c.most_common(8)))"
+            done
+          done

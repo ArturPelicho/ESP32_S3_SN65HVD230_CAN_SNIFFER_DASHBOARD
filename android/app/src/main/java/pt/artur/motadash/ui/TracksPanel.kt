@@ -221,5 +221,7 @@ private fun RouteOptionsSection() {
     option(R.string.route_avoid_toll, { RouteOptions.avoidToll(ctx) }, { RouteOptions.setAvoidToll(ctx, it) })
     option(R.string.route_avoid_unpaved, { RouteOptions.avoidUnpaved(ctx) }, { RouteOptions.setAvoidUnpaved(ctx, it) })
     option(R.string.route_bypass_towns, { RouteOptions.bypassTowns(ctx) }, { RouteOptions.setBypassTowns(ctx, it) }, enabled = !fun_)
+    option(R.string.route_keep_main, { RouteOptions.keepMain(ctx) }, { RouteOptions.setKeepMain(ctx, it) }, enabled = !fun_)
+    Text(stringResource(R.string.route_keep_main_hint), color = Palette.label, fontSize = 12.sp)
     Text(stringResource(R.string.route_options_hint), color = Palette.label, fontSize = 12.sp)
 }
