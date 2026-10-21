@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import pt.artur.motadash.Units
 import pt.artur.motadash.Attitude
 import pt.artur.motadash.ElevProfile
 import android.content.res.Configuration
@@ -629,12 +630,12 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                     Text("F", color = Palette.label, fontSize = (14 * u).sp, fontWeight = FontWeight.Bold)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    BigValue(fmt(tank, 1), "L", Palette.text, u, 26f)
-                    BigValue(fmt(t?.rangeKm, 0), "km", rangeColor(d), u, 26f)
+                    BigValue(fmt(Units.vol(tank), 1), Units.volUnit, Palette.text, u, 26f)
+                    BigValue(fmt(Units.dist(t?.rangeKm), 0), Units.distUnit, rangeColor(d), u, 26f)
                 }
-                Text(stringResource(R.string.dash_range_at, fmt(t?.rangeL100, 2)), color = Palette.label, fontSize = (11 * u).sp, maxLines = 1)
+                Text(stringResource(R.string.dash_range_at, fmt(Units.cons(t?.rangeL100), 2), Units.consUnit), color = Palette.label, fontSize = (11 * u).sp, maxLines = 1)
             }
-            Widget.RANGE -> ValueTile(stringResource(R.string.w_range), fmt(d.t?.rangeKm, 0), "km", rangeColor(d), bg, u)
+            Widget.RANGE -> ValueTile(stringResource(R.string.w_range), fmt(Units.dist(d.t?.rangeKm), 0), Units.distUnit, rangeColor(d), bg, u)
             Widget.CHT -> {
                 val cht = d.t?.chtC
                 val critical = d.t?.chtCritical == true
@@ -642,7 +643,7 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp),
                             color = if (critical) Palette.text else Palette.label, fontSize = (12 * u).sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                        BigValue(fmt(cht, 0), "°C", if (critical) Palette.text else chtColor(cht), u, 24f)
+                        BigValue(fmt(Units.temp(cht), 0), Units.tempUnit, if (critical) Palette.text else chtColor(cht), u, 24f)
                     }
                     val frac = cht?.let { ((it - CHT_MIN) / (CHT_MAX - CHT_MIN)).coerceIn(0.0, 1.0) }
                     SegmentBar(frac, 13, Modifier.fillMaxWidth().height((14 * u).dp)) { i ->
@@ -655,13 +656,15 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                 val v = when {
                     t == null || !t.fuelValid -> "--"
                     t.fuelCut -> "0.0"
-                    else -> fmt(t.instant, 1)
+                    t.instPerKm -> fmt(Units.cons(t.instant), 1)
+                    else -> fmt(Units.flow(t.instant), 1)
                 }
                 ValueTile(stringResource(if (t?.fuelCut == true) R.string.dash_fuel_cut else R.string.dash_now), v,
-                    if (t?.instPerKm == true) "L/100" else "L/h", if (t?.fuelCut == true) Palette.cyan else Palette.yellow, bg, u)
+                    if (t?.instPerKm == true) Units.consUnit else Units.flowUnit, if (t?.fuelCut == true) Palette.cyan else Palette.yellow, bg, u)
             }
-            Widget.FUEL_AVG -> ValueTile(stringResource(R.string.dash_average), fmt(d.t?.average, 1),
-                if (d.t?.avgPerKm == true) "L/100" else "L/h", Palette.text, bg, u)
+            Widget.FUEL_AVG -> ValueTile(stringResource(R.string.dash_average),
+                fmt(if (d.t?.avgPerKm == true) Units.cons(d.t.average) else Units.flow(d.t?.average), 1),
+                if (d.t?.avgPerKm == true) Units.consUnit else Units.flowUnit, Palette.text, bg, u)
             Widget.CLOCK -> Cell(bg, u, center = true) {
                 Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(d.now)), color = Palette.text,
                     fontSize = (28 * u).sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
@@ -673,7 +676,7 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                 Text("GPS ${fmt(d.gps.hz, 0)} Hz", color = if (d.gps.hz >= 1.0) Palette.green else Palette.dim, fontSize = (13 * u).sp)
             }
             Widget.BATTERY -> ValueTile(stringResource(R.string.dash_battery), fmt(d.t?.batteryV, 1), "V", batteryColor(d.t?.batteryV), bg, u)
-            Widget.AIR -> ValueTile(stringResource(R.string.dash_air), fmt(d.t?.iatC, 0), "°C", Palette.text, bg, u)
+            Widget.AIR -> ValueTile(stringResource(R.string.dash_air), fmt(Units.temp(d.t?.iatC), 0), Units.tempUnit, Palette.text, bg, u)
             Widget.THROTTLE -> Cell(bg, u) {
                 val thr = d.t?.throttlePct
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -686,10 +689,10 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                 val t = d.t
                 Text(stringResource(R.string.dash_trip), color = Palette.label, fontSize = (12 * u).sp, fontWeight = FontWeight.Bold)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    BigValue(fmt(t?.distKm, 1), "km", Palette.text, u, 20f)
-                    BigValue(fmt(t?.usedL, 2), "L", Palette.text, u, 20f)
+                    BigValue(fmt(Units.dist(t?.distKm), 1), Units.distUnit, Palette.text, u, 20f)
+                    BigValue(fmt(Units.vol(t?.usedL), 2), Units.volUnit, Palette.text, u, 20f)
                 }
-                Text(stringResource(R.string.dash_since_refuel, fmt(t?.fillKm, 0), fmt(t?.fillAvg, 2)),
+                Text(stringResource(R.string.dash_since_refuel, fmt(Units.dist(t?.fillKm), 0), Units.distUnit, fmt(Units.cons(t?.fillAvg), 2), Units.consUnit),
                     color = Palette.label, fontSize = (11 * u).sp, maxLines = 1)
                 if (t != null && !t.gearsComplete) {
                     Text(stringResource(R.string.dash_learning_gears, t.gearsFound, t.learnS), color = Palette.label,
@@ -703,7 +706,7 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                     Text(dms(d.lon, "E", "W"), color = Palette.text, fontSize = (14 * u).sp, fontFamily = FontFamily.Monospace, maxLines = 1)
                 }
             }
-            Widget.ALTITUDE -> ValueTile(stringResource(R.string.w_altitude), fmt(d.altM, 0), "m", Palette.text, bg, u)
+            Widget.ALTITUDE -> ValueTile(stringResource(R.string.w_altitude), fmt(Units.alt(d.altM), 0), Units.altUnit, Palette.text, bg, u)
             Widget.NORTH -> NorthRose(d, bg)
             Widget.ATTITUDE -> AttitudeGauge(bg, u)
             Widget.FAULTS -> {
@@ -767,9 +770,9 @@ private fun SpeedBox(d: WidgetData, u: Float, bg: Color) {
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(speed?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
+            Text(Units.speed(speed)?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
                 fontSize = (40 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (42 * u).sp)
-            Text("km/h", color = Palette.label, fontSize = (12 * u).sp)
+            Text(Units.speedUnit, color = Palette.label, fontSize = (12 * u).sp)
         }
         d.limit?.let { LimitSign(it, scale = u) }
     }
@@ -939,10 +942,10 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, bg: Color, modifier: Mo
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("▲ %.0f m  ▼ %.0f m".format(p.maxE, p.minE), color = Palette.label, fontSize = 11.sp, maxLines = 1)
-            if (here != null) Text("%.0f m · %d%%".format(here, (frac * 100).roundToInt()), color = Palette.text,
+            Text("▲ %.0f %s  ▼ %.0f %s".format(Units.alt(p.maxE), Units.altUnit, Units.alt(p.minE), Units.altUnit), color = Palette.label, fontSize = 11.sp, maxLines = 1)
+            if (here != null) Text("%.0f %s · %d%%".format(Units.alt(here), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(if (p.totalM < 1000) "%.0f m".format(p.totalM) else "%.1f km".format(p.totalM / 1000), color = Palette.label,
+            Text(Units.short(p.totalM, 1), color = Palette.label,
                 fontSize = 11.sp, maxLines = 1)
         }
     }

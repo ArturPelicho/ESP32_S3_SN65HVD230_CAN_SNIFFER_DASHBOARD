@@ -212,10 +212,13 @@ object Turns {
     }
 
     /** Distance on the banner. */
-    fun shown(m: Double): String = if (m < 1000) "${((m + 5) / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
+    fun shown(m: Double): String = Units.short(m)
 
     /** Distance as spoken: rounded to 50 m, or tenths of a kilometre. */
-    fun spoken(m: Double): String =
-        if (m < 950) L.s(R.string.turn_metres, (((m + 25) / 50).toInt() * 50).coerceAtLeast(50))
-        else L.s(R.string.turn_km, "%.1f".format(m / 1000))
+    fun spoken(m: Double): String = when {
+        Units.imperial && m < 160 -> L.s(R.string.turn_feet, (((m * 3.28084 + 25) / 50).toInt() * 50).coerceAtLeast(50))
+        Units.imperial -> L.s(R.string.turn_miles, "%.1f".format(m / 1609.344))
+        m < 950 -> L.s(R.string.turn_metres, (((m + 25) / 50).toInt() * 50).coerceAtLeast(50))
+        else -> L.s(R.string.turn_km, "%.1f".format(m / 1000))
+    }
 }

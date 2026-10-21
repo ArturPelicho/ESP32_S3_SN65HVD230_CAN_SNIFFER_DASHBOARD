@@ -31,6 +31,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import pt.artur.motadash.Units
 import pt.artur.motadash.RouteStyle
 import pt.artur.motadash.RouteOptions
 import pt.artur.motadash.Eta
@@ -1148,7 +1149,7 @@ fun MapScreen() {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(stringResource(R.string.map_speed_camera), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("${(cam.meters + 25) / 50 * 50} m", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(Units.short(cam.meters.toDouble(), 50), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 cam.kmh?.let { LimitSign(it, small = true) }
             }
         }
@@ -1648,7 +1649,7 @@ internal fun tripTime(startedMs: Long): String {
     return "%d:%02d".format(min / 60, min % 60)
 }
 
-private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)
+private fun km(m: Double): String = Units.short(m)
 
 /** Round road sign with the speed limit. */
 @Composable
@@ -1659,7 +1660,8 @@ internal fun LimitSign(kmh: Int, small: Boolean = false, scale: Float = 1f) {
             .border((if (small) 4 else 6).dp * scale, Color(0xFFE2463C), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text("$kmh", color = Color.Black, fontSize = (if (small) 15 else if (kmh >= 100) 18 else 22).sp * scale,
+        val shown = Units.limit(kmh)
+        Text("$shown", color = Color.Black, fontSize = (if (small) 15 else if (shown >= 100) 18 else 22).sp * scale,
             fontWeight = FontWeight.Bold)
     }
 }
@@ -1708,9 +1710,9 @@ private fun GpsPanel(fix: Location?, gnss: Gnss, speed: Double?) {
             KeyValue(stringResource(R.string.map_gps_latitude), "%.6f".format(fix.latitude))
             KeyValue(stringResource(R.string.map_gps_longitude), "%.6f".format(fix.longitude))
             KeyValue(stringResource(R.string.map_gps_accuracy), if (fix.hasAccuracy()) "±%.0f m".format(fix.accuracy) else "--")
-            KeyValue(stringResource(R.string.map_gps_altitude), if (fix.hasAltitude()) "%.0f m".format(fix.altitude) +
+            KeyValue(stringResource(R.string.map_gps_altitude), if (fix.hasAltitude()) "%.0f %s".format(Units.alt(fix.altitude), Units.altUnit) +
                 (if (fix.hasVerticalAccuracy()) " ±%.0f".format(fix.verticalAccuracyMeters) else "") else "--")
-            KeyValue(stringResource(R.string.map_gps_speed), speed?.let { "%.0f km/h".format(it) } ?: "--")
+            KeyValue(stringResource(R.string.map_gps_speed), speed?.let { "%.0f %s".format(Units.speed(it), Units.speedUnit) } ?: "--")
             KeyValue(stringResource(R.string.map_gps_bearing), if (fix.hasBearing()) "%.0f°".format(fix.bearing) else "--")
             KeyValue(stringResource(R.string.map_gps_age), "%.0f s".format((now - fix.elapsedRealtimeNanos) / 1e9).replace("-", ""))
             KeyValue(stringResource(R.string.map_gps_source), if (fix.provider == LocationManager.GPS_PROVIDER) stringResource(R.string.map_gps_src_satellites) else stringResource(R.string.map_gps_src_network))

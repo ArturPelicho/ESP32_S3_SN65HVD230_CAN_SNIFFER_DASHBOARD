@@ -92,6 +92,7 @@ class MotaService : Service() {
     override fun onCreate() {
         super.onCreate()
         L.init(this)
+        Units.load(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.svc_channel), NotificationManager.IMPORTANCE_LOW)

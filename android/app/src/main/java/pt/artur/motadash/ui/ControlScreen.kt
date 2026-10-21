@@ -51,6 +51,10 @@ import pt.artur.motadash.LinkStatus
 import pt.artur.motadash.MainActivity
 import pt.artur.motadash.MotaService
 import pt.artur.motadash.Orientation
+import pt.artur.motadash.Units
+import pt.artur.motadash.DistUnit
+import pt.artur.motadash.TempUnit
+import pt.artur.motadash.FuelUnit
 import pt.artur.motadash.ParamInfo
 import pt.artur.motadash.Permissions
 import pt.artur.motadash.Release
@@ -201,6 +205,31 @@ fun ControlScreen(activity: MainActivity) {
                                 screenOn = it; Link.setKeepScreenOn(ctx, it); activity.applyScreenOn()
                             })
                         }
+                    }
+                    Section(stringResource(R.string.set_units)) {
+                        val units by Units.set.collectAsStateWithLifecycle()
+                        Text(stringResource(R.string.set_units_dist), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            DistUnit.entries.forEach { u ->
+                                FilterChip(selected = units.dist == u, onClick = { Units.change(ctx, units.copy(dist = u)) },
+                                    label = { Text(stringResource(u.res)) })
+                            }
+                        }
+                        Text(stringResource(R.string.set_units_temp), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TempUnit.entries.forEach { u ->
+                                FilterChip(selected = units.temp == u, onClick = { Units.change(ctx, units.copy(temp = u)) },
+                                    label = { Text(stringResource(u.res)) })
+                            }
+                        }
+                        Text(stringResource(R.string.set_units_fuel), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FuelUnit.entries.forEach { u ->
+                                FilterChip(selected = units.fuel == u, onClick = { Units.change(ctx, units.copy(fuel = u)) },
+                                    label = { Text(stringResource(u.res)) })
+                            }
+                        }
+                        Text(stringResource(R.string.set_units_hint), color = Palette.label, fontSize = 12.sp)
                     }
                     Section(stringResource(R.string.set_ui_size)) {
                         val scale by UiScale.value.collectAsStateWithLifecycle()

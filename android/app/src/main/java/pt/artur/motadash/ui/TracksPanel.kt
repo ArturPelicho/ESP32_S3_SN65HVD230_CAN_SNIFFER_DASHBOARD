@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pt.artur.motadash.Units
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.TrackMode
 import androidx.compose.runtime.LaunchedEffect
@@ -144,7 +145,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
                                     modifier = Modifier.clickable { renaming = t.id })
                             }
                             val parts = listOfNotNull(
-                                "%.1f km".format(t.lengthM / 1000),
+                                Units.short(t.lengthM),
                                 if (t.lines.size > 1 && t.plan.isEmpty()) stringResource(R.string.tracks_parts, t.lines.size) else null,
                                 if (t.plan.isNotEmpty()) stringResource(R.string.tracks_waypoints, t.plan.size) else null,
                                 if (t.waypoints.isNotEmpty()) stringResource(R.string.tracks_points, t.waypoints.size) else null,
@@ -254,7 +255,7 @@ private fun TripSection() {
     if (r == null) {
         Button(onClick = { TripRecorder.start(ctx) }) { Text(stringResource(R.string.trip_start)) }
     } else {
-        Text(stringResource(R.string.trip_so_far, "%.1f km".format(r.distanceM / 1000), tripTime(r.startedMs)), color = Palette.cyan, fontSize = 14.sp)
+        Text(stringResource(R.string.trip_so_far, Units.short(r.distanceM), tripTime(r.startedMs)), color = Palette.cyan, fontSize = 14.sp)
         Button(onClick = {
             val t = TripRecorder.stop(ctx)
             Toast.makeText(ctx, if (t != null) ctx.getString(R.string.trip_saved, t.name) else ctx.getString(R.string.trip_too_short), Toast.LENGTH_LONG).show()

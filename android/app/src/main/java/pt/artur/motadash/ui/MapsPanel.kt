@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pt.artur.motadash.Units
 import pt.artur.motadash.AutoZoom
 import pt.artur.motadash.NavCorner
 import pt.artur.motadash.Speech
@@ -311,7 +312,7 @@ private fun AutoZoomSliders() {
         nearZoom = (zoom.endInclusive * 2).roundToInt() / 2.0, farZoom = (zoom.start * 2).roundToInt() / 2.0,
     ))
     Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
-        Text(stringResource(R.string.mapopts_az_speed, speed.start.roundToInt(), speed.endInclusive.roundToInt()),
+        Text(stringResource(R.string.mapopts_az_speed, Units.speed(speed.start.toDouble()).roundToInt(), Units.speed(speed.endInclusive.toDouble()).roundToInt(), Units.speedUnit),
             color = Palette.text, fontSize = 14.sp)
         RangeSlider(value = speed, onValueChange = { speed = it }, valueRange = 0f..160f, steps = 31,
             onValueChangeFinished = { save() })

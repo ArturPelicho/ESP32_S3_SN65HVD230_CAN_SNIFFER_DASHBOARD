@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pt.artur.motadash.Units
 import pt.artur.motadash.BleProtocol
 import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
@@ -84,9 +85,9 @@ fun DashSettings() {
             color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp),
         )
         if (t != null) {
-            KeyValue(stringResource(R.string.set_in_tank), "${fmt(t?.tankL, 2)} L")
-            KeyValue(stringResource(R.string.set_range), stringResource(R.string.set_range_value, fmt(t?.rangeKm, 0), fmt(t?.rangeL100, 2)))
-            KeyValue(stringResource(R.string.set_since_refuel), "${fmt(t?.fillKm, 1)} km · ${fmt(t?.fillAvg, 2)} L/100")
+            KeyValue(stringResource(R.string.set_in_tank), "${fmt(Units.vol(t?.tankL), 2)} ${Units.volUnit}")
+            KeyValue(stringResource(R.string.set_range), stringResource(R.string.set_range_value, fmt(Units.dist(t?.rangeKm), 0), Units.distUnit, fmt(Units.cons(t?.rangeL100), 2), Units.consUnit))
+            KeyValue(stringResource(R.string.set_since_refuel), "${fmt(Units.dist(t?.fillKm), 1)} ${Units.distUnit} · ${fmt(Units.cons(t?.fillAvg), 2)} ${Units.consUnit}")
         }
         tankLine?.let { Text(it, color = Palette.label, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp)) }
         fillLine?.let { Text(it, color = Palette.text, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp)) }

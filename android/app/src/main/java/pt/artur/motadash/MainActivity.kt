@@ -91,6 +91,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         L.init(this)
+        Units.load(this)
         if (Permissions.ready(this)) MotaService.start(this) else askPermissions.launch(Permissions.needed())
         applyScreenOn()
         applyOrientation()

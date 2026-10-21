@@ -56,6 +56,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.delay
+import pt.artur.motadash.Units
 import pt.artur.motadash.DtcState
 import pt.artur.motadash.GpsInfo
 import pt.artur.motadash.L
@@ -172,10 +173,10 @@ internal fun Cluster(s: WidgetData) {
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             val speed = s.speed
-            Text(if (speed == null) "--" else speed.toInt().toString(),
+            Text(if (speed == null) "--" else Units.speed(speed).toInt().toString(),
                 color = if (speed == null) Palette.dim else Palette.text,
                 fontSize = (92 * unit).sp, fontWeight = FontWeight.Bold, lineHeight = (92 * unit).sp)
-            Text("km/h  ${speedSourceTag(t)?.let { stringResource(it) } ?: ""}", color = Palette.label, fontSize = (13 * unit).sp)
+            Text("${Units.speedUnit}  ${speedSourceTag(t)?.let { stringResource(it) } ?: ""}", color = Palette.label, fontSize = (13 * unit).sp)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = (6 * unit).dp)) {
                 Box(
                     Modifier.size((66 * unit).dp).border(3.dp, Palette.cyan, RoundedCornerShape(12.dp)),
