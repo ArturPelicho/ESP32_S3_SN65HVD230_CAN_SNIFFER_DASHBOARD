@@ -104,4 +104,16 @@
     <string name="route_keep_main">Rester sur les routes principales</string>
     <string name="route_keep_main_hint">Ne quitte les routes principales pour des ruelles, voies de service ou chemins que si cela fait gagner plus de 2 min et 1 km (la plus rapide) ou 2 min (économique).</string>
     <string name="route_replan_trip">Recalculer ce parcours</string>
+    <string name="trip_name">Sortie %1$s</string>
+    <string name="trip_started">Enregistrement de la sortie</string>
+    <string name="trip_stop_q">Arrêter l’enregistrement ?</string>
+    <string name="trip_so_far">%1$s en %2$s</string>
+    <string name="trip_stop">Arrêter et garder</string>
+    <string name="trip_keep">Continuer</string>
+    <string name="trip_saved">Gardée dans Trajetos : %1$s</string>
+    <string name="trip_too_short">Trop courte pour être gardée (moins de 100 m)</string>
+    <string name="trip_title">Enregistrer la sortie</string>
+    <string name="trip_start">Commencer l’enregistrement</string>
+    <string name="trip_auto">Commencer quand la moto se connecte</string>
+    <string name="trip_hint">Enregistre le trajet avec les heures, même écran éteint ; partagez-le en GPX comme les autres. Lancé avec la moto, il s’arrête 15 min après l’arrêt de la moto.</string>
 </resources>

@@ -104,6 +104,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
+import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
 import pt.artur.motadash.Guidance
@@ -593,6 +594,8 @@ fun MapScreen() {
     var gnss by remember { mutableStateOf(Gnss()) }
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
+    val trip by TripRecorder.state.collectAsStateWithLifecycle()
+    var stopTrip by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
     var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
@@ -887,6 +890,12 @@ fun MapScreen() {
             }
             MapCtl.LAYERS -> LayersButton(active = showLayers) { showLayers = !showLayers }
             MapCtl.GPX -> MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+            MapCtl.REC -> MapButton(if (trip != null) "● " + km(trip!!.distanceM) else "REC", active = trip != null, small = true) {
+                if (trip == null) {
+                    TripRecorder.start(ctx)
+                    Toast.makeText(ctx, ctx.getString(R.string.trip_started), Toast.LENGTH_SHORT).show()
+                } else stopTrip = true
+            }
             MapCtl.MAPS -> MapButton("☰") { showMaps = true }
         }
 
@@ -1008,6 +1017,22 @@ fun MapScreen() {
                     onShare = { shareGpx(ctx, it) },
                 )
             }
+        }
+
+        if (stopTrip) trip?.let { r ->
+            AlertDialog(
+                onDismissRequest = { stopTrip = false },
+                title = { Text(stringResource(R.string.trip_stop_q)) },
+                text = { Text(stringResource(R.string.trip_so_far, km(r.distanceM), tripTime(r.startedMs))) },
+                confirmButton = {
+                    Button(onClick = {
+                        stopTrip = false
+                        val t = TripRecorder.stop(ctx)
+                        Toast.makeText(ctx, if (t != null) ctx.getString(R.string.trip_saved, t.name) else ctx.getString(R.string.trip_too_short), Toast.LENGTH_LONG).show()
+                    }) { Text(stringResource(R.string.trip_stop)) }
+                },
+                dismissButton = { OutlinedButton(onClick = { stopTrip = false }) { Text(stringResource(R.string.trip_keep)) } },
+            )
         }
 
         renaming?.let { t ->
@@ -1290,6 +1315,12 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
             MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }
         }
     }
+}
+
+/** How long a recording has run, as h:mm. */
+internal fun tripTime(startedMs: Long): String {
+    val min = ((System.currentTimeMillis() - startedMs) / 60_000).coerceAtLeast(0)
+    return "%d:%02d".format(min / 60, min % 60)
 }
 
 private fun km(m: Double): String = if (m < 1000) "${(m / 10).toInt() * 10} m" else "%.1f km".format(m / 1000)

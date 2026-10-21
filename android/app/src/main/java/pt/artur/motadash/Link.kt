@@ -80,7 +80,12 @@ object Link {
 
     @Volatile var service: MotaService? = null
 
-    fun setStatus(s: LinkStatus) { _status.value = s }
+    fun setStatus(s: LinkStatus) {
+        val was = _status.value == LinkStatus.CONNECTED
+        _status.value = s
+        val now = s == LinkStatus.CONNECTED
+        if (was != now) service?.let { TripRecorder.boardConnected(it, now) }
+    }
     fun setTelemetry(t: Telemetry?) { _telemetry.value = t }
     fun updateGps(f: (GpsInfo) -> GpsInfo) = _gps.update(f)
     fun clearSuggestion() { _suggestedK.value = null }

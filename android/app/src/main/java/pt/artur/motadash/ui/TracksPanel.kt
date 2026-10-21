@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.TrackMode
+import android.widget.Toast
+import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.Planner
 import pt.artur.motadash.RouteOptions
 import pt.artur.motadash.RouteStyle
@@ -75,6 +77,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            TripSection()
             Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.tracks_open_file)) }
             Text(stringResource(R.string.tracks_open_hint),
                 color = Palette.label, fontSize = 12.sp)
@@ -224,4 +227,28 @@ private fun RouteOptionsSection() {
     option(R.string.route_keep_main, { RouteOptions.keepMain(ctx) }, { RouteOptions.setKeepMain(ctx, it) }, enabled = !fun_)
     Text(stringResource(R.string.route_keep_main_hint), color = Palette.label, fontSize = 12.sp)
     Text(stringResource(R.string.route_options_hint), color = Palette.label, fontSize = 12.sp)
+}
+
+/** Recording the ride: start/stop, how far and how long so far, and starting with the bike. */
+@Composable
+private fun TripSection() {
+    val ctx = LocalContext.current
+    val trip by TripRecorder.state.collectAsStateWithLifecycle()
+    Text(stringResource(R.string.trip_title), color = Palette.text, fontSize = 15.sp)
+    val r = trip
+    if (r == null) {
+        Button(onClick = { TripRecorder.start(ctx) }) { Text(stringResource(R.string.trip_start)) }
+    } else {
+        Text(stringResource(R.string.trip_so_far, "%.1f km".format(r.distanceM / 1000), tripTime(r.startedMs)), color = Palette.cyan, fontSize = 14.sp)
+        Button(onClick = {
+            val t = TripRecorder.stop(ctx)
+            Toast.makeText(ctx, if (t != null) ctx.getString(R.string.trip_saved, t.name) else ctx.getString(R.string.trip_too_short), Toast.LENGTH_LONG).show()
+        }) { Text(stringResource(R.string.trip_stop)) }
+    }
+    var auto by remember { mutableStateOf(TripRecorder.autoStart(ctx)) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.trip_auto), color = Palette.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Switch(checked = auto, onCheckedChange = { auto = it; TripRecorder.setAutoStart(ctx, it) })
+    }
+    Text(stringResource(R.string.trip_hint), color = Palette.label, fontSize = 12.sp)
 }

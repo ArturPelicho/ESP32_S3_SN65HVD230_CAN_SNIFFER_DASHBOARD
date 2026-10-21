@@ -104,4 +104,16 @@
     <string name="route_keep_main">Stay on main roads</string>
     <string name="route_keep_main_hint">Leaves the main roads for village lanes, service roads or tracks only when that saves more than 2 min and 1 km (fastest) or 2 min (economical).</string>
     <string name="route_replan_trip">Recalculate this trajeto</string>
+    <string name="trip_name">Trip %1$s</string>
+    <string name="trip_started">Recording the trip</string>
+    <string name="trip_stop_q">Stop recording?</string>
+    <string name="trip_so_far">%1$s in %2$s</string>
+    <string name="trip_stop">Stop and save</string>
+    <string name="trip_keep">Keep recording</string>
+    <string name="trip_saved">Saved in Trajetos: %1$s</string>
+    <string name="trip_too_short">Too short to keep (under 100 m)</string>
+    <string name="trip_title">Record the trip</string>
+    <string name="trip_start">Start recording</string>
+    <string name="trip_auto">Start when the bike connects</string>
+    <string name="trip_hint">Records the ride as a trajeto with times, also with the screen off; share it as GPX like any other. Started with the bike, it stops 15 min after the bike goes off.</string>
 </resources>

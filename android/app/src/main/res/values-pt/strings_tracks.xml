@@ -104,4 +104,16 @@
     <string name="route_keep_main">Não sair da estrada principal por pouco</string>
     <string name="route_keep_main_hint">Só deixa as estradas principais por ruas de aldeia, serventias ou caminhos se poupar mais de 2 min e 1 km (mais rápida) ou 2 min (económica).</string>
     <string name="route_replan_trip">Recalcular este trajeto</string>
+    <string name="trip_name">Viagem %1$s</string>
+    <string name="trip_started">A gravar a viagem</string>
+    <string name="trip_stop_q">Parar a gravação?</string>
+    <string name="trip_so_far">%1$s em %2$s</string>
+    <string name="trip_stop">Parar e guardar</string>
+    <string name="trip_keep">Continuar a gravar</string>
+    <string name="trip_saved">Guardada em Trajetos: %1$s</string>
+    <string name="trip_too_short">Demasiado curta para guardar (menos de 100 m)</string>
+    <string name="trip_title">Gravar a viagem</string>
+    <string name="trip_start">Começar a gravar</string>
+    <string name="trip_auto">Começar quando a mota liga</string>
+    <string name="trip_hint">Grava o percurso como um trajeto, com as horas, também com o ecrã desligado; partilha-o em GPX como os outros. Se começou com a mota, pára 15 min depois de a mota desligar.</string>
 </resources>

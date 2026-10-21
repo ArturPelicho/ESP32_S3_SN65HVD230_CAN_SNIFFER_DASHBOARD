@@ -74,4 +74,5 @@
     <string name="w_profile">Progresso do percurso</string>
     <string name="map_reverse">Inverter sentido</string>
     <string name="map_go_there">Ir para aqui</string>
+    <string name="w_btn_rec">Gravar viagem</string>
 </resources>

@@ -74,4 +74,5 @@
     <string name="w_profile">Streckenfortschritt</string>
     <string name="map_reverse">Richtung umkehren</string>
     <string name="map_go_there">Hierhin fahren</string>
+    <string name="w_btn_rec">Fahrt aufzeichnen</string>
 </resources>

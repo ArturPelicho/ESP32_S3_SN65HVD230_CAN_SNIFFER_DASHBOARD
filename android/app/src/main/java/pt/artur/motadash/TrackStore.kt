@@ -31,6 +31,8 @@ data class Track(
     val plan: List<LatLon> = emptyList(),
     /** Turns of the road legs (from the router), wherever they still lie on the line. */
     val turns: List<TurnPt> = emptyList(),
+    /** Recorded trips: the time of each point (epoch ms), line by line like [lines]; empty otherwise. */
+    val times: List<List<Long>> = emptyList(),
 ) {
     val lengthM: Double by lazy { lines.sumOf { l -> (1 until l.size).sumOf { metres(l[it - 1], l[it]) } } }
     val points: Int get() = lines.sumOf { it.size }
@@ -169,6 +171,7 @@ object TrackStore {
         }))
         put("wpts", JSONArray(t.waypoints.map { w -> JSONArray(listOf(w.lat, w.lon, w.name)) }))
         if (t.plan.isNotEmpty()) put("plan", JSONArray(t.plan.map { p -> JSONArray(listOf(p.lat, p.lon)) }))
+        if (t.times.isNotEmpty()) put("times", JSONArray(t.times.map { JSONArray(it) }))
         if (t.turns.isNotEmpty()) put("turns", JSONArray(t.turns.map { p -> JSONArray(listOf(p.lat, p.lon, p.kind.name, p.exit)) }))
     }
 
@@ -177,6 +180,7 @@ object TrackStore {
         val ws = o.optJSONArray("wpts") ?: JSONArray()
         val pl = o.optJSONArray("plan") ?: JSONArray()
         val tu = o.optJSONArray("turns") ?: JSONArray()
+        val tm = o.optJSONArray("times") ?: JSONArray()
         return Track(
             id = o.getString("id"), name = o.getString("name"),
             lines = List(ls.length()) { i ->
@@ -189,6 +193,7 @@ object TrackStore {
             waypoints = List(ws.length()) { i -> ws.getJSONArray(i).let { Waypoint(it.getDouble(0), it.getDouble(1), it.getString(2)) } },
             color = o.optString("color", COLORS[0]), width = o.optInt("width", 2), visible = o.optBoolean("visible", true),
             plan = List(pl.length()) { i -> pl.getJSONArray(i).let { LatLon(it.getDouble(0), it.getDouble(1)) } },
+            times = List(tm.length()) { i -> tm.getJSONArray(i).let { a -> List(a.length()) { a.getLong(it) } } },
             turns = (0 until tu.length()).mapNotNull { i ->
                 val a = tu.getJSONArray(i)
                 TurnKind.entries.firstOrNull { it.name == a.optString(2) }?.let { TurnPt(a.getDouble(0), a.getDouble(1), it, a.optInt(3)) }

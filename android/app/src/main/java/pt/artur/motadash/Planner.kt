@@ -95,7 +95,7 @@ object Planner {
     /** Rides it the other way: start and finish swap, waypoints renumber from the new start. */
     fun reverse(ctx: Context, id: String) {
         TrackStore.change(ctx, id) { t ->
-            t.copy(lines = t.lines.reversed().map { it.reversed() }, plan = t.plan.reversed(), waypoints = t.waypoints.reversed())
+            t.copy(lines = t.lines.reversed().map { it.reversed() }, plan = t.plan.reversed(), waypoints = t.waypoints.reversed(), times = emptyList())
         }
     }
 
@@ -240,15 +240,18 @@ object GpxWriter {
         t.plan.forEachIndexed { i, p -> wpt(p.lat, p.lon, "${i + 1}", L.s(R.string.tracks_gpx_waypoint_type)) }
         append("  <trk>\n    <name>").append(esc(t.name)).append("</name>\n")
         val segs = if (t.plan.isNotEmpty()) listOf(t.lines.flatten()) else t.lines
-        for (s in segs) {
+        val iso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        for ((si, s) in segs.withIndex()) {
             if (s.isEmpty()) continue
+            val ts = t.times.getOrNull(si)?.takeIf { it.size == s.size && t.plan.isEmpty() }
             append("    <trkseg>\n")
             var last: LatLon? = null
-            for (p in s) {
+            for ((pi, p) in s.withIndex()) {
                 if (last != null && last.lat == p.lat && last.lon == p.lon) continue
                 last = p
                 append(String.format(Locale.US, "      <trkpt lat=\"%.6f\" lon=\"%.6f\">", p.lat, p.lon))
                 p.ele?.let { append(String.format(Locale.US, "<ele>%.1f</ele>", it)) }
+                ts?.let { append("<time>").append(iso.format(Date(it[pi]))).append("</time>") }
                 append("</trkpt>\n")
             }
             append("    </trkseg>\n")

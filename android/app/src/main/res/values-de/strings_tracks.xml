@@ -104,4 +104,16 @@
     <string name="route_keep_main">Auf Hauptstraßen bleiben</string>
     <string name="route_keep_main_hint">Verlässt die Hauptstraßen für Dorfgassen, Zufahrten oder Wege nur, wenn das mehr als 2 min und 1 km (schnellste) oder 2 min (sparsame) spart.</string>
     <string name="route_replan_trip">Diese Strecke neu berechnen</string>
+    <string name="trip_name">Fahrt %1$s</string>
+    <string name="trip_started">Fahrt wird aufgezeichnet</string>
+    <string name="trip_stop_q">Aufzeichnung beenden?</string>
+    <string name="trip_so_far">%1$s in %2$s</string>
+    <string name="trip_stop">Beenden und speichern</string>
+    <string name="trip_keep">Weiter aufzeichnen</string>
+    <string name="trip_saved">In Trajetos gespeichert: %1$s</string>
+    <string name="trip_too_short">Zu kurz zum Speichern (unter 100 m)</string>
+    <string name="trip_title">Fahrt aufzeichnen</string>
+    <string name="trip_start">Aufzeichnung starten</string>
+    <string name="trip_auto">Starten, wenn das Motorrad verbunden ist</string>
+    <string name="trip_hint">Zeichnet die Fahrt mit Uhrzeiten auf, auch bei ausgeschaltetem Bildschirm; als GPX teilen wie die anderen. Mit dem Motorrad gestartet, endet sie 15 min nach dem Ausschalten.</string>
 </resources>

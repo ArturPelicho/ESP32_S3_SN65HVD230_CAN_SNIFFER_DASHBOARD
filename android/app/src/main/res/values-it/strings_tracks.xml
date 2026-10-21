@@ -104,4 +104,16 @@
     <string name="route_keep_main">Restare sulle strade principali</string>
     <string name="route_keep_main_hint">Lascia le strade principali per vicoli, strade di servizio o sterrati solo se si risparmiano più di 2 min e 1 km (più veloce) o 2 min (economica).</string>
     <string name="route_replan_trip">Ricalcola questo percorso</string>
+    <string name="trip_name">Viaggio %1$s</string>
+    <string name="trip_started">Registrazione del viaggio</string>
+    <string name="trip_stop_q">Fermare la registrazione?</string>
+    <string name="trip_so_far">%1$s in %2$s</string>
+    <string name="trip_stop">Ferma e salva</string>
+    <string name="trip_keep">Continua</string>
+    <string name="trip_saved">Salvato in Trajetos: %1$s</string>
+    <string name="trip_too_short">Troppo corto da salvare (meno di 100 m)</string>
+    <string name="trip_title">Registra il viaggio</string>
+    <string name="trip_start">Inizia a registrare</string>
+    <string name="trip_auto">Inizia quando la moto si collega</string>
+    <string name="trip_hint">Registra il percorso con gli orari, anche a schermo spento; condividilo in GPX come gli altri. Se è partito con la moto, si ferma 15 min dopo lo spegnimento.</string>
 </resources>

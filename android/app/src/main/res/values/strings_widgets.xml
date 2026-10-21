@@ -74,4 +74,5 @@
     <string name="w_profile">Track progress</string>
     <string name="map_reverse">Reverse direction</string>
     <string name="map_go_there">Go there</string>
+    <string name="w_btn_rec">Record trip</string>
 </resources>

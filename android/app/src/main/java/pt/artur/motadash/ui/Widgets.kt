@@ -146,7 +146,7 @@ enum class MapCtl(@StringRes val res: Int, val hideable: Boolean = true) {
     SETTINGS(R.string.w_btn_settings, hideable = false),
     MODE(R.string.w_btn_mode), FOLLOW(R.string.w_btn_follow), ZOOM_IN(R.string.w_btn_zoom_in), ZOOM_OUT(R.string.w_btn_zoom_out),
     GPS(R.string.w_btn_gps), DAYNIGHT(R.string.w_btn_daynight),
-    LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), MAPS(R.string.w_btn_maps),
+    LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), REC(R.string.w_btn_rec), MAPS(R.string.w_btn_maps),
 }
 
 /** What the elements show; each screen fills it from the board and, on the map, the phone's GPS. */

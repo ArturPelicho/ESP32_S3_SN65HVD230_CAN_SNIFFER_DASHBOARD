@@ -104,4 +104,16 @@
     <string name="route_keep_main">Seguir por carreteras principales</string>
     <string name="route_keep_main_hint">Solo deja las carreteras principales por calles de pueblo, vías de servicio o caminos si ahorra más de 2 min y 1 km (más rápida) o 2 min (económica).</string>
     <string name="route_replan_trip">Recalcular esta ruta</string>
+    <string name="trip_name">Viaje %1$s</string>
+    <string name="trip_started">Grabando el viaje</string>
+    <string name="trip_stop_q">¿Parar la grabación?</string>
+    <string name="trip_so_far">%1$s en %2$s</string>
+    <string name="trip_stop">Parar y guardar</string>
+    <string name="trip_keep">Seguir grabando</string>
+    <string name="trip_saved">Guardado en Trajetos: %1$s</string>
+    <string name="trip_too_short">Demasiado corto para guardar (menos de 100 m)</string>
+    <string name="trip_title">Grabar el viaje</string>
+    <string name="trip_start">Empezar a grabar</string>
+    <string name="trip_auto">Empezar al conectar la moto</string>
+    <string name="trip_hint">Graba el recorrido como una ruta con horas, también con la pantalla apagada; compártelo en GPX como las demás. Si empezó con la moto, para 15 min después de apagarla.</string>
 </resources>

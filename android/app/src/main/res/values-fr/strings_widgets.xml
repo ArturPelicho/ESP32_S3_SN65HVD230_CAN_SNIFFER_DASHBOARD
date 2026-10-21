@@ -74,4 +74,5 @@
     <string name="w_profile">Progression du parcours</string>
     <string name="map_reverse">Inverser le sens</string>
     <string name="map_go_there">Aller ici</string>
+    <string name="w_btn_rec">Enregistrer</string>
 </resources>

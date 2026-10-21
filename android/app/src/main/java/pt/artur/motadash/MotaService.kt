@@ -98,6 +98,7 @@ class MotaService : Service() {
         )
         goForeground(getString(R.string.svc_waiting))
         Link.service = this
+        TripRecorder.resume(this)
         locationManager = getSystemService(LocationManager::class.java)
         connect()
     }
