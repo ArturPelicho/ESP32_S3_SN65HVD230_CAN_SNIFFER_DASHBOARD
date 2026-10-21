@@ -62,6 +62,7 @@
     <string name="layer_contours">Curve di livello</string>
     <string name="layer_3d">Edifici 3D (vista 3D)</string>
     <string name="layer_cameras">Autovelox</string>
+    <string name="layer_dirt">Sterrati per difficoltà</string>
     <string name="w_north">Nord</string>
     <string name="w_attitude">Piega / beccheggio</string>
     <string name="w_save">Salva</string>

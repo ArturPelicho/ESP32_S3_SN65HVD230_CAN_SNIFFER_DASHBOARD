@@ -252,6 +252,12 @@ object MapStyle {
                 val ls = "lm-${m.id}"
                 sources[ls] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "© OpenStreetMap")
+                // Unpaved roads and tracks by how hard they are (DMD2-style): green easy, yellow medium, red hard.
+                if (MapLayer.DIRT in layers) lines += layer("dirt", "line", "dirt", source = ls, layout = mapOf("line-cap" to "butt"), paint = mapOf(
+                    "line-color" to listOf("match", listOf("get", "g"), 1, "#3fae49", 2, "#e0b000", "#e2463c"),
+                    "line-width" to roadWidth(0.6),
+                    "line-dasharray" to listOf(2.2, 1.4),
+                ), minzoom = 12)
                 // Almost invisible: only there so the screen can ask which limit is under the bike.
                 lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
                     "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,

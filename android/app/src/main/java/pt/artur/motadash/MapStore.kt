@@ -64,7 +64,7 @@ enum class FollowMode(@StringRes private val res: Int, val button: String) {
 
 /** Map layers the rider can switch on and off from the map's layers button. */
 enum class MapLayer(@StringRes val res: Int) {
-    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras);
+    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt);
     val label: String get() = L.s(res)
 }
 

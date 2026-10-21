@@ -62,6 +62,7 @@
     <string name="layer_contours">Contour lines</string>
     <string name="layer_3d">3D buildings (3D view)</string>
     <string name="layer_cameras">Speed cameras</string>
+    <string name="layer_dirt">Dirt roads by difficulty</string>
     <string name="w_north">North</string>
     <string name="w_attitude">Lean / pitch</string>
     <string name="w_save">Save</string>

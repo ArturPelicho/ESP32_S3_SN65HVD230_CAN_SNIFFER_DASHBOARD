@@ -4,6 +4,7 @@
 Reads osmium GeoJSONSeq exports and writes compact GeoJSONSeq with only what the app needs:
   limits.py ways <in> <out>     lines: kmh, and kmh_f / kmh_b when they differ by direction
   limits.py cameras <in> <out>  points: kmh (if tagged), dir (degrees, if tagged)
+  limits.py dirt <in> <out>     lines: g = 1 easy, 2 medium, 3 hard (unpaved roads and tracks)
 """
 import json
 import re
@@ -73,6 +74,43 @@ def ways(src, dst):
     print(f"limits: {n} ways", file=sys.stderr)
 
 
+# How hard an unpaved way is: 1 easy, 2 medium, 3 hard (DMD2-style green / yellow / red).
+SMOOTH = {"excellent": 1, "good": 1, "intermediate": 1, "bad": 2, "very_bad": 3, "horrible": 3,
+          "very_horrible": 3, "impassable": 3}
+GRADE = {"grade1": 1, "grade2": 1, "grade3": 2, "grade4": 3, "grade5": 3}
+SURFACE = {"compacted": 1, "fine_gravel": 1, "gravel": 2, "unpaved": 2, "dirt": 2, "earth": 2, "ground": 2,
+           "pebblestone": 2, "grass": 2, "sand": 3, "mud": 3, "rock": 3}
+PAVED = {"asphalt", "paved", "concrete", "concrete:plates", "paving_stones", "sett", "cobblestone", "chipseal"}
+
+
+def dirt(src, dst):
+    """Unpaved ways with a grade: smoothness when tagged, else tracktype, else surface."""
+    n = 0
+    with open(src) as f, open(dst, "w") as o:
+        for line in f:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            ft = json.loads(line)
+            if ft["geometry"]["type"] not in ("LineString", "MultiLineString"):
+                continue
+            t = ft.get("properties") or {}
+            hw = t.get("highway")
+            if not hw or hw in ("footway", "path", "cycleway", "steps", "bridleway", "pedestrian"):
+                continue
+            surface = (t.get("surface") or "").split(";")[0]
+            if surface in PAVED:
+                continue
+            if hw != "track" and surface not in SURFACE:
+                continue
+            g = SMOOTH.get(t.get("smoothness")) or GRADE.get(t.get("tracktype")) or SURFACE.get(surface)
+            if not g:
+                continue
+            o.write(feature(ft["geometry"], {"g": g}) + "\n")
+            n += 1
+    print(f"limits: {n} graded unpaved ways", file=sys.stderr)
+
+
 def cameras(src, dst):
     n = 0
     with open(src) as f, open(dst, "w") as o:
@@ -97,4 +135,4 @@ def cameras(src, dst):
 
 
 if __name__ == "__main__":
-    {"ways": ways, "cameras": cameras}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    {"ways": ways, "cameras": cameras, "dirt": dirt}[sys.argv[1]](sys.argv[2], sys.argv[3])

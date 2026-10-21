@@ -62,6 +62,7 @@
     <string name="layer_contours">Curvas de nível</string>
     <string name="layer_3d">Prédios 3D (vista 3D)</string>
     <string name="layer_cameras">Radares</string>
+    <string name="layer_dirt">Terra por dificuldade</string>
     <string name="w_north">Norte</string>
     <string name="w_attitude">Inclinação</string>
     <string name="w_save">Gravar</string>

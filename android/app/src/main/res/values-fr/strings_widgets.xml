@@ -62,6 +62,7 @@
     <string name="layer_contours">Courbes de niveau</string>
     <string name="layer_3d">Bâtiments 3D (vue 3D)</string>
     <string name="layer_cameras">Radars</string>
+    <string name="layer_dirt">Pistes par difficulté</string>
     <string name="w_north">Nord</string>
     <string name="w_attitude">Angle / tangage</string>
     <string name="w_save">Enregistrer</string>

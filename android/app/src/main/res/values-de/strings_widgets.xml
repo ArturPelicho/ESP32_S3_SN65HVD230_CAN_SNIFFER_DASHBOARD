@@ -62,6 +62,7 @@
     <string name="layer_contours">Höhenlinien</string>
     <string name="layer_3d">3D-Gebäude (3D-Ansicht)</string>
     <string name="layer_cameras">Blitzer</string>
+    <string name="layer_dirt">Schotterwege nach Schwierigkeit</string>
     <string name="w_north">Norden</string>
     <string name="w_attitude">Schräglage / Nicken</string>
     <string name="w_save">Speichern</string>
