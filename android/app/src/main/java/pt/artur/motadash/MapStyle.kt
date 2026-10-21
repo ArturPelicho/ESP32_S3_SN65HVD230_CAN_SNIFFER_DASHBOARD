@@ -356,6 +356,20 @@ object MapStyle {
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
 
+        // Faint arrow on the followed line where the bike is taken to be, when the GPS puts it a little off.
+        labels += mapOf(
+            "id" to "ghost", "type" to "symbol", "source" to "ghost",
+            "layout" to mapOf(
+                "icon-image" to "me-arrow",
+                "icon-rotate" to listOf("get", "bearing"),
+                "icon-rotation-alignment" to "map",
+                "icon-pitch-alignment" to "map",
+                "icon-allow-overlap" to true,
+                "icon-ignore-placement" to true,
+            ),
+            "paint" to mapOf("icon-opacity" to 0.4),
+        )
+        sources["ghost"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         // The bike's position on top of everything (filled by the screen).
         labels += mapOf(
             "id" to "me", "type" to "symbol", "source" to "me",

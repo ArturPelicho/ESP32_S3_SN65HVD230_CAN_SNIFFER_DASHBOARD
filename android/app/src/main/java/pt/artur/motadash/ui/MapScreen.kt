@@ -99,6 +99,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
+import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
 import pt.artur.motadash.Guidance
 import pt.artur.motadash.Maneuver
@@ -215,11 +216,16 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         onFollow(on)
     }
 
+    /** Point on the followed line where the bike is taken to be (a little off it), or null. */
+    var ghost: LatLon? = null
+
     private fun drawMarker() {
         val loc = fix ?: return
         val f = Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude))
         f.addNumberProperty("bearing", heading)
         style?.getSourceAs<GeoJsonSource>("me")?.setGeoJson(f)
+        val g = ghost?.let { Feature.fromGeometry(Point.fromLngLat(it.lon, it.lat)).apply { addNumberProperty("bearing", heading) } }
+        style?.getSourceAs<GeoJsonSource>("ghost")?.setGeoJson(g?.let { FeatureCollection.fromFeature(it) } ?: FeatureCollection.fromFeatures(emptyList()))
     }
 
     /** Heading: GPS course while riding, compass when stopped or slow. */
@@ -781,7 +787,6 @@ fun MapScreen() {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
             ThemeStore.lat = f.latitude; ThemeStore.lon = f.longitude
-            holder.update(900)
             holder.scan()
             progress = follower?.locate(f.latitude, f.longitude)
             val p = progress
@@ -797,10 +802,14 @@ fun MapScreen() {
                     }
                 }
                 val route = rj.route
-                if (route != null) holder.setRoute(route) else holder.setJoin(p.takeIf { it.offM > 30 }?.nearest)
-            } else holder.setJoin(p?.takeIf { it.offM > 30 }?.nearest)
+                if (route != null) holder.setRoute(route) else holder.setJoin(p.takeIf { it.offM > SNAP_M }?.nearest)
+            } else holder.setJoin(p?.takeIf { it.offM > SNAP_M }?.nearest)
             rejoinTick++
             val back = rejoin?.takeIf { trackMode == TrackMode.NAV && it.route != null }
+            // A few metres off the line still counts as on it: a faint arrow shows where.
+            val snap = back?.routeSnap ?: p?.takeIf { it.offM <= SNAP_M }
+            holder.ghost = snap?.takeIf { it.offM > 6 }?.nearest
+            holder.update(900)
             val backGuide = back?.guide
             val backDone = back?.routeDoneM
             nextTurn = when {
@@ -1215,7 +1224,12 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
                 val back = rj.routeLeftM ?: 0.0
                 val total = back + (p.doneM + p.leftM - rj.targetM).coerceAtLeast(0.0)
                 Text(stringResource(R.string.map_left, km(total)), color = Palette.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.nav_rejoin, km(back)), color = Palette.cyan, fontSize = 14.sp)
+                val left = km(back)
+                Text(when (rj.goal) {
+                    Rejoin.Goal.END -> stringResource(R.string.nav_to_end, left)
+                    Rejoin.Goal.WAYPOINT -> stringResource(R.string.nav_to_waypoint, left, rj.goalWp)
+                    Rejoin.Goal.TRACK -> stringResource(R.string.nav_rejoin, left)
+                }, color = Palette.cyan, fontSize = 14.sp)
             }
             p.offM > 1000 -> Text(stringResource(R.string.map_route_away, km(p.offM)), color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1223,7 +1237,9 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
                 if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
-        if (mode == TrackMode.NAV && warn && rj?.failed == true) {
+        if (mode == TrackMode.NAV && warn && rj?.busy == true) {
+            Text(stringResource(R.string.nav_recalc), color = Color.Black, fontSize = 12.sp)
+        } else if (mode == TrackMode.NAV && warn && rj?.failed == true) {
             Text(stringResource(R.string.nav_no_net), color = Color.Black, fontSize = 12.sp)
         }
     }
