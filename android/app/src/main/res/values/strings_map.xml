@@ -78,4 +78,5 @@
     <string name="turn_show">Show the next turn on the map</string>
     <string name="turn_voice">Say the turns aloud</string>
     <string name="turn_hint">Planned trajetos use the router\'s turns; imported tracks are read from the shape of the line.</string>
+    <string name="map_dr">No GPS: estimated position</string>
 </resources>

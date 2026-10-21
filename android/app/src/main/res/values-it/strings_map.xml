@@ -78,4 +78,5 @@
     <string name="turn_show">Mostra la prossima svolta sulla mappa</string>
     <string name="turn_voice">Annuncia le svolte a voce</string>
     <string name="turn_hint">I tragitti pianificati usano le svolte del calcolo percorso; le tracce importate vengono lette dalla forma della linea.</string>
+    <string name="map_dr">Niente GPS: posizione stimata</string>
 </resources>

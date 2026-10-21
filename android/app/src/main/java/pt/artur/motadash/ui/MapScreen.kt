@@ -104,6 +104,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
+import androidx.compose.runtime.rememberUpdatedState
+import pt.artur.motadash.DeadReckoning
 import pt.artur.motadash.Place
 import pt.artur.motadash.Places
 import pt.artur.motadash.TripRecorder
@@ -675,20 +677,36 @@ fun MapScreen() {
         while (true) { delay(60_000); minute++ }
     }
 
+    // No GPS for a moment while riding (tunnel): the position moves on along the followed line.
+    val dr = remember { DeadReckoning() }
+    val drPath by rememberUpdatedState(
+        rejoin?.route?.takeIf { trackMode == TrackMode.NAV }
+            ?: activeTrack?.lines?.let { ls -> if (reversed) ls.reversed().flatMap { it.reversed() } else ls.flatten() }
+    )
+    val drKmh by rememberUpdatedState(telemetry?.displaySpeed)
     // GPS of the phone, while the map is on screen and the app is in front (works without the board).
     // Keyed on resume so a permission granted later, or a trip to the background, re-registers.
     val lifeState by lifecycle.currentStateAsState()
     val resumed = lifeState.isAtLeast(Lifecycle.State.RESUMED)
+    LaunchedEffect(resumed) {
+        while (resumed) {
+            delay(1000)
+            dr.tick(drPath, drKmh)?.let { fix = it }
+        }
+    }
+
     DisposableEffect(resumed) {
         val lm = ctx.getSystemService(LocationManager::class.java)
         val allowed = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
         if (!resumed || lm == null || !allowed) return@DisposableEffect onDispose {}
         val listener = LocationListener { loc ->
-            // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old.
+            // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old
+            // (not over a dead-reckoned position: in a tunnel the estimate is better).
             val cur = fix
+            if (loc.provider == LocationManager.GPS_PROVIDER) dr.real(loc)
             if (loc.provider == LocationManager.GPS_PROVIDER || cur == null ||
-                cur.provider != LocationManager.GPS_PROVIDER || ageMs(cur) > 10_000) fix = loc
+                (cur.provider != LocationManager.GPS_PROVIDER && cur.provider != DeadReckoning.PROVIDER) || ageMs(cur) > 10_000) fix = loc
         }
         try {
             if (fix == null) lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { fix = it }
@@ -1078,6 +1096,12 @@ fun MapScreen() {
                 },
                 dismissButton = { OutlinedButton(onClick = { renaming = null }) { Text(stringResource(R.string.map_cancel)) } },
             )
+        }
+
+        if (fix?.provider == DeadReckoning.PROVIDER) {
+            Text(stringResource(R.string.map_dr), color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                    .background(Palette.orange, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp))
         }
 
         trackMessage?.takeIf { !showTracks }?.let {

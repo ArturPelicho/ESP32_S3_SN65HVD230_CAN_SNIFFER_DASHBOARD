@@ -78,4 +78,5 @@
     <string name="turn_show">Mostrar a próxima viragem no mapa</string>
     <string name="turn_voice">Dizer as viragens em voz alta</string>
     <string name="turn_hint">Os trajetos planeados usam as viragens do motor de rotas; os trajetos importados são lidos pela forma da linha.</string>
+    <string name="map_dr">Sem GPS: posição estimada</string>
 </resources>

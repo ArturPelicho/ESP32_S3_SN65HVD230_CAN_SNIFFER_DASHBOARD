@@ -78,4 +78,5 @@
     <string name="turn_show">Nächste Abbiegung auf der Karte zeigen</string>
     <string name="turn_voice">Abbiegungen ansagen</string>
     <string name="turn_hint">Geplante Strecken nutzen die Abbiegungen des Routers; importierte Tracks werden aus der Form der Linie gelesen.</string>
+    <string name="map_dr">Kein GPS: geschätzte Position</string>
 </resources>

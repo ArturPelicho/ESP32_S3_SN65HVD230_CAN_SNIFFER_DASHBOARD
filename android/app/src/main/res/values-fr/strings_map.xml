@@ -78,4 +78,5 @@
     <string name="turn_show">Afficher le prochain virage sur la carte</string>
     <string name="turn_voice">Annoncer les virages à voix haute</string>
     <string name="turn_hint">Les trajets planifiés utilisent les virages du calcul d’itinéraire ; les traces importées sont lues d’après la forme de la ligne.</string>
+    <string name="map_dr">Pas de GPS : position estimée</string>
 </resources>

@@ -78,4 +78,5 @@
     <string name="turn_show">Mostrar el próximo giro en el mapa</string>
     <string name="turn_voice">Decir los giros en voz alta</string>
     <string name="turn_hint">Los trayectos planificados usan los giros del motor de rutas; los importados se leen por la forma de la línea.</string>
+    <string name="map_dr">Sin GPS: posición estimada</string>
 </resources>
