@@ -17,8 +17,13 @@ class DeadReckoning {
         private const val START_AFTER_MS = 2_500L
         private const val GIVE_UP_MS = 180_000L
         private const val MIN_KMH = 15.0
-        /** Faster than this between two fixes is a GPS glitch, not the bike. */
-        private const val MAX_JUMP_MS = 70.0
+        /**
+         * A jump needing more acceleration than this from the last good speed is a GPS glitch
+         * (about 1.5 g: beyond any road vehicle, a 300 km/h car included).
+         */
+        private const val MAX_ACCEL_MS2 = 15.0
+        /** And never faster than this (m/s, ~500 km/h), however long since the last fix. */
+        private const val MAX_SPEED_MS = 140.0
         /** Glitches refused for this long in a row: the GPS is right after all. */
         private const val REFUSE_FOR_MS = 10_000L
     }
@@ -34,8 +39,8 @@ class DeadReckoning {
     private var refusingSince = 0L
 
     /**
-     * A real GPS fix: true to use it. A fix that would mean an impossible speed since the last good
-     * one (a jump hundreds of metres away) is refused, for up to [REFUSE_FOR_MS].
+     * A real GPS fix: true to use it. A fix that would mean an impossible acceleration from the last
+     * good one's speed (a jump hundreds of metres away) is refused, for up to [REFUSE_FOR_MS].
      */
     fun real(loc: Location): Boolean {
         val prev = lastReal
@@ -43,7 +48,9 @@ class DeadReckoning {
             val dt = (loc.elapsedRealtimeNanos - prev.elapsedRealtimeNanos) / 1e9
             val d = prev.distanceTo(loc).toDouble()
             val now = SystemClock.elapsedRealtime()
-            if (dt > 0 && d > 100 + (if (loc.hasAccuracy()) loc.accuracy else 0f) && d / dt > MAX_JUMP_MS) {
+            val v0 = if (prev.hasSpeed()) prev.speed.toDouble() else 0.0
+            val allowed = minOf(v0 + MAX_ACCEL_MS2 * dt, MAX_SPEED_MS)
+            if (dt > 0 && d > 100 + (if (loc.hasAccuracy()) loc.accuracy else 0f) && d / dt > allowed) {
                 if (refusingSince == 0L) refusingSince = now
                 if (now - refusingSince < REFUSE_FOR_MS) return false
             }
