@@ -94,7 +94,7 @@
     <string name="route_eco">Sparsam</string>
     <string name="route_eco_hint">Ruhigere, gleichmäßige Straßen (bis 70 km/h): weniger Benzin.</string>
     <string name="route_fun">Kurvenspaß</string>
-    <string name="route_fun_hint">Nebenstraßen: keine Autobahnen, um Städte herum, durch Wald; Feldwege und Schotter erlaubt, außer du meidest sie.</string>
+    <string name="route_fun_hint">Schotter: so viele Feldwege und unbefestigte Straßen, wie der erlaubte Umweg zulässt, ohne Autobahnen, um die Orte herum. Asphalt nur, wo der Schotter ein zu großer Umweg wäre.</string>
     <string name="route_avoid_motorways">Autobahnen meiden</string>
     <string name="route_avoid_toll">Maut meiden</string>
     <string name="route_avoid_unpaved">Schotterwege meiden</string>
@@ -124,4 +124,7 @@
     <string name="place_confirm_delete">%1$s löschen?</string>
     <string name="place_home">Zuhause</string>
     <string name="place_default">Favorit %1$d</string>
+    <string name="route_fun_detour">Kurvenspaß: maximaler Umweg</string>
+    <string name="route_fun_detour_hint">Bis zu %1$d%% länger als die schnellste Route, um auf Schotter zu fahren.</string>
+    <string name="nav_eta">Ankunft %1$s</string>
 </resources>

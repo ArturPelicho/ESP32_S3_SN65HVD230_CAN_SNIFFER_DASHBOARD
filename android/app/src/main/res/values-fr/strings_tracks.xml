@@ -94,7 +94,7 @@
     <string name="route_eco">Économique</string>
     <string name="route_eco_hint">Routes plus calmes et régulières (jusqu’à 70 km/h) : moins d’essence.</string>
     <string name="route_fun">Plaisir</string>
-    <string name="route_fun_hint">Petites routes : pas d’autoroutes, contourne les villes, passe par la forêt ; pistes et terre acceptées sauf si vous les évitez.</string>
+    <string name="route_fun_hint">Terre : autant de pistes et chemins non goudronnés que le détour permis le laisse, sans autoroutes, en contournant les villes. Le goudron seulement là où la terre ferait un trop grand détour.</string>
     <string name="route_avoid_motorways">Éviter les autoroutes</string>
     <string name="route_avoid_toll">Éviter les péages</string>
     <string name="route_avoid_unpaved">Éviter les chemins de terre</string>
@@ -124,4 +124,7 @@
     <string name="place_confirm_delete">Supprimer %1$s ?</string>
     <string name="place_home">Maison</string>
     <string name="place_default">Favori %1$d</string>
+    <string name="route_fun_detour">Plaisir : détour maximal</string>
+    <string name="route_fun_detour_hint">Jusqu’à %1$d%% plus long que le plus rapide, pour rouler sur la terre.</string>
+    <string name="nav_eta">Arrivée %1$s</string>
 </resources>

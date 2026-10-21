@@ -707,6 +707,8 @@ fun MapScreen() {
     // Nav mode works out a road route back to the track; Track mode only shows the way to the nearest point.
     var trackMode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
     var rejoinTick by remember { mutableIntStateOf(0) }
+    val eta = remember { Eta() }
+    var arrival by remember { mutableStateOf<Long?>(null) }
     val navScope = rememberCoroutineScope()
     var menu by remember { mutableStateOf<MapMenu?>(null) }
     var moving by remember { mutableStateOf<Moving?>(null) }
@@ -904,6 +906,15 @@ fun MapScreen() {
             } else holder.setJoin(p?.takeIf { it.offM > SNAP_M }?.nearest)
             rejoinTick++
             val back = rejoin?.takeIf { trackMode == TrackMode.NAV && it.route != null }
+            arrival = if (p == null || follower == null || activeTrack == null || (back == null && p.offM > 1000)) null else {
+                // On a route back: what is left of it, then the track from where it meets it.
+                val fromM = back?.targetM ?: p.doneM
+                val routeSecs = back?.routeSecsLeft
+                val timed = follower.timed && (back == null || routeSecs != null)
+                val left = if (timed) (routeSecs ?: 0.0) + (follower.secsLeft(fromM) ?: 0.0)
+                    else (back?.routeLeftM ?: 0.0) + (follower.totalM - fromM).coerceAtLeast(0.0)
+                eta.update(activeTrack.id to reversed, follower to back?.route, timed, left, SystemClock.elapsedRealtime(), System.currentTimeMillis())
+            }
             // A few metres off the line still counts as on it: a faint arrow shows where.
             val snap = back?.routeSnap ?: p?.takeIf { it.offM <= SNAP_M }
             holder.ghost = snap?.takeIf { it.offM > 6 }?.nearest
@@ -1065,7 +1076,7 @@ fun MapScreen() {
             }
         }
         if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
-        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick) { m ->
+        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick, arrival) { m ->
             trackMode = m
             MapStore.setTrackMode(ctx, m)
         }
@@ -1353,7 +1364,7 @@ private fun TurnBanner(next: Pair<Maneuver, Double>) {
 /** Followed track: distance left, how far off it the bike is, and the follow mode; long press for the options. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, onMode: (TrackMode) -> Unit) {
+private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, arrival: Long?, onMode: (TrackMode) -> Unit) {
     tick
     val ctx = LocalContext.current
     val off = p != null && p.offM > 50
@@ -1394,6 +1405,12 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
                 if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
+        if (arrival != null && p != null) {
+            val clock = remember(arrival / 60_000) {
+                java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(arrival))
+            }
+            Text(stringResource(R.string.nav_eta, clock), color = if (warn) Color.Black else Palette.label, fontSize = 14.sp)
+        }
         if (mode == TrackMode.NAV && warn && rj?.busy == true) {
             Text(stringResource(R.string.nav_recalc), color = Color.Black, fontSize = 12.sp)
         } else if (mode == TrackMode.NAV && warn && rj?.failed == true) {
@@ -1429,6 +1446,14 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         check(stringResource(R.string.route_avoid_toll), RouteOptions.avoidToll(ctx)) { RouteOptions.setAvoidToll(ctx, !RouteOptions.avoidToll(ctx)); tick++ }
         check(stringResource(R.string.route_avoid_unpaved), RouteOptions.avoidUnpaved(ctx)) { RouteOptions.setAvoidUnpaved(ctx, !RouteOptions.avoidUnpaved(ctx)); tick++ }
         check(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx), !fun_) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
+        if (fun_) {
+            // Each tap: the next allowed detour.
+            val d = RouteOptions.funDetour(ctx)
+            DropdownMenuItem(text = { Text("     " + stringResource(R.string.route_fun_detour) + ": +$d%", fontSize = 16.sp) }, onClick = {
+                val all = RouteOptions.DETOURS
+                RouteOptions.setFunDetour(ctx, all[(all.indexOf(d) + 1).mod(all.size)]); tick++
+            })
+        }
         if (t.plan.size >= 2) {
             HorizontalDivider()
             MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }

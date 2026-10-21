@@ -146,11 +146,11 @@ object OfflineRouter {
     private val lock = Any()
 
     /** The road route from a to b on the phone's routing data, or null (no data there, or no route). */
-    fun route(ctx: Context, a: LatLon, b: LatLon): Routed? = synchronized(lock) {
+    fun route(ctx: Context, a: LatLon, b: LatLon, params: Map<String, String> = RouteOptions.params(ctx)): Routed? = synchronized(lock) {
         runCatching {
             val rc = RoutingContext()
             rc.localFunction = profile(ctx).absolutePath
-            rc.keyValues = HashMap(RouteOptions.params(ctx))
+            rc.keyValues = HashMap(params)
             rc.turnInstructionMode = 2
             val wp: List<OsmNodeNamed> = RoutingParamCollector().readPositions(doubleArrayOf(a.lon, b.lon), doubleArrayOf(a.lat, b.lat))
             val re = RoutingEngine(null, null, dir(ctx), wp, rc)
@@ -166,7 +166,7 @@ object OfflineRouter {
                 val p = pts.getOrNull(h[0]) ?: return@mapNotNull null
                 TurnKind.ofBrouter(h[1])?.let { TurnPt(p.lat, p.lon, it, h[2]) }
             }
-            Routed(pts, turns)
+            Routed(pts, turns, track.nodes.map { it.time.toDouble() })
         }.getOrNull()
     }
 }

@@ -33,7 +33,20 @@ data class Track(
     val turns: List<TurnPt> = emptyList(),
     /** Recorded trips: the time of each point (epoch ms), line by line like [lines]; empty otherwise. */
     val times: List<List<Long>> = emptyList(),
+    /**
+     * Road legs: the router's expected seconds at each point from the leg's start, line by line like
+     * [lines]; a line without them (straight leg, imported track) has an empty or mismatched list.
+     */
+    val secs: List<List<Double>> = emptyList(),
 ) {
+    /** The router's times for line [i], when they still match it. */
+    fun secsOf(i: Int): List<Double>? = secs.getOrNull(i)?.takeIf { it.size == lines[i].size && it.size >= 2 }
+
+    /** New lines, keeping the router's times of the lines that stay (the same objects). */
+    fun relined(newLines: List<List<LatLon>>): Track = copy(lines = newLines, secs = newLines.map { nl ->
+        lines.indexOfFirst { it === nl }.let { k -> if (k >= 0) secs.getOrNull(k) ?: emptyList() else emptyList() }
+    })
+
     val lengthM: Double by lazy { lines.sumOf { l -> (1 until l.size).sumOf { metres(l[it - 1], l[it]) } } }
     val points: Int get() = lines.sumOf { it.size }
 }
@@ -172,6 +185,7 @@ object TrackStore {
         put("wpts", JSONArray(t.waypoints.map { w -> JSONArray(listOf(w.lat, w.lon, w.name)) }))
         if (t.plan.isNotEmpty()) put("plan", JSONArray(t.plan.map { p -> JSONArray(listOf(p.lat, p.lon)) }))
         if (t.times.isNotEmpty()) put("times", JSONArray(t.times.map { JSONArray(it) }))
+        if (t.secs.any { it.isNotEmpty() }) put("secs", JSONArray(t.secs.map { l -> JSONArray(l.map { Math.round(it * 10) / 10.0 }) }))
         if (t.turns.isNotEmpty()) put("turns", JSONArray(t.turns.map { p -> JSONArray(listOf(p.lat, p.lon, p.kind.name, p.exit)) }))
     }
 
@@ -181,6 +195,7 @@ object TrackStore {
         val pl = o.optJSONArray("plan") ?: JSONArray()
         val tu = o.optJSONArray("turns") ?: JSONArray()
         val tm = o.optJSONArray("times") ?: JSONArray()
+        val sc = o.optJSONArray("secs") ?: JSONArray()
         return Track(
             id = o.getString("id"), name = o.getString("name"),
             lines = List(ls.length()) { i ->
@@ -194,6 +209,7 @@ object TrackStore {
             color = o.optString("color", COLORS[0]), width = o.optInt("width", 2), visible = o.optBoolean("visible", true),
             plan = List(pl.length()) { i -> pl.getJSONArray(i).let { LatLon(it.getDouble(0), it.getDouble(1)) } },
             times = List(tm.length()) { i -> tm.getJSONArray(i).let { a -> List(a.length()) { a.getLong(it) } } },
+            secs = List(sc.length()) { i -> sc.getJSONArray(i).let { a -> List(a.length()) { a.getDouble(it) } } },
             turns = (0 until tu.length()).mapNotNull { i ->
                 val a = tu.getJSONArray(i)
                 TurnKind.entries.firstOrNull { it.name == a.optString(2) }?.let { TurnPt(a.getDouble(0), a.getDouble(1), it, a.optInt(3)) }
@@ -216,6 +232,42 @@ class TrackFollower(track: Track, private val reversed: Boolean) {
     }
     val totalM = cum.lastOrNull() ?: 0.0
     private var lastIdx = -1
+
+    /** The router's times of each line in the riding direction (null for a line without). */
+    private val lineSecs: List<List<Double>?> = track.lines.indices.map { track.secsOf(it) }.let { l ->
+        if (reversed) l.reversed().map { s -> s?.let { x -> x.reversed().map { x.last() - it } } } else l
+    }
+    /** Some of it has the router's expected times. */
+    val timed = lineSecs.any { it != null }
+    /** Expected seconds at each point from the start; lines without router times at [UNTIMED_KMH]. */
+    private val cumT: DoubleArray? = if (!timed) null else DoubleArray(pts.size).also { c ->
+        var k = 0
+        for ((li, l) in lines.withIndex()) {
+            val s = lineSecs[li]
+            for (j in l.indices) {
+                val idx = k + j
+                if (idx == 0) continue
+                c[idx] = c[idx - 1] + when {
+                    j == 0 -> 0.0
+                    s != null -> (s[j] - s[j - 1]).coerceAtLeast(0.0)
+                    else -> metres(l[j - 1], l[j]) / (UNTIMED_KMH / 3.6)
+                }
+            }
+            k += l.size
+        }
+    }
+
+    /** The router's expected seconds from [d] metres along to the end, or null without router times. */
+    fun secsLeft(d: Double): Double? {
+        val c = cumT ?: return null
+        if (pts.size < 2) return 0.0
+        val i = cum.indexOfFirst { it >= d }.let { if (it <= 0) 1 else it }
+        val seg = (cum[i] - cum[i - 1]).coerceAtLeast(1e-6)
+        val t = ((d - cum[i - 1]) / seg).coerceIn(0.0, 1.0)
+        return c.last() - (c[i - 1] + (c[i] - c[i - 1]) * t)
+    }
+
+    private companion object { const val UNTIMED_KMH = 50.0 }
 
     /** The point [d] metres along the track (clamped to its ends). */
     fun pointAt(d: Double): LatLon {

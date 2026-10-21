@@ -42,7 +42,7 @@ object Planner {
         val q = p.copy(ele = null)
         TrackStore.change(ctx, id) { t ->
             if (t.plan.isEmpty()) t.copy(plan = listOf(q))
-            else t.copy(plan = t.plan + q, lines = legs(t) + listOf(listOf(t.plan.last(), q)))
+            else t.relined(legs(t) + listOf(listOf(t.plan.last(), q))).copy(plan = t.plan + q)
         }
         reroute(ctx, id)
     }
@@ -55,7 +55,7 @@ object Planner {
             val lines = legs(t).toMutableList()
             if (k > 0) lines[k - 1] = listOf(plan[k - 1], q)
             if (k < plan.size - 1) lines[k] = listOf(q, plan[k + 1])
-            t.copy(plan = plan, lines = lines)
+            t.relined(lines).copy(plan = plan)
         }
         reroute(ctx, id)
     }
@@ -69,7 +69,7 @@ object Planner {
             val lines = legs(t).toMutableList()
             lines[i] = listOf(plan[i], q)
             lines.add(i + 1, listOf(q, plan[i + 2]))
-            t.copy(plan = plan, lines = lines)
+            t.relined(lines).copy(plan = plan)
         }
         reroute(ctx, id)
     }
@@ -87,7 +87,7 @@ object Planner {
                 t.plan.size - 1 -> lines.removeAt(lines.size - 1)
                 else -> { lines.removeAt(k); lines[k - 1] = listOf(plan[k - 1], plan[k]) }
             }
-            t.copy(plan = plan, lines = lines)
+            t.relined(lines).copy(plan = plan)
         }
         reroute(ctx, id)
     }
@@ -95,7 +95,8 @@ object Planner {
     /** Rides it the other way: start and finish swap, waypoints renumber from the new start. */
     fun reverse(ctx: Context, id: String) {
         TrackStore.change(ctx, id) { t ->
-            t.copy(lines = t.lines.reversed().map { it.reversed() }, plan = t.plan.reversed(), waypoints = t.waypoints.reversed(), times = emptyList())
+            t.copy(lines = t.lines.reversed().map { it.reversed() }, plan = t.plan.reversed(), waypoints = t.waypoints.reversed(), times = emptyList(),
+                secs = t.lines.indices.reversed().map { i -> t.secsOf(i)?.let { s -> s.reversed().map { s.last() - it } } ?: emptyList() })
         }
     }
 
@@ -117,7 +118,7 @@ object Planner {
     /** Works out every leg again with the current route options. */
     fun replan(ctx: Context, id: String) {
         TrackStore.change(ctx, id) { t ->
-            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) }, turns = emptyList())
+            if (t.plan.size < 2) t else t.copy(lines = (0 until t.plan.size - 1).map { listOf(t.plan[it], t.plan[it + 1]) }, turns = emptyList(), secs = emptyList())
         }
         reroute(ctx, id)
     }
@@ -142,7 +143,9 @@ object Planner {
                     if (road == null) { failed += a to b; continue }
                     TrackStore.change(app, id) { cur ->
                         if (cur.plan.getOrNull(i) == a && cur.plan.getOrNull(i + 1) == b && cur.lines.size == cur.plan.size - 1)
-                            cur.copy(lines = cur.lines.toMutableList().also { it[i] = road.pts }, turns = cur.turns + road.turns)
+                            cur.relined(cur.lines.toMutableList().also { it[i] = road.pts }).let { n ->
+                                n.copy(turns = cur.turns + road.turns, secs = n.secs.toMutableList().also { it[i] = road.secs })
+                            }
                         else cur
                     }
                 }
@@ -168,13 +171,32 @@ object Router {
     /** The road route from a to b, or null without routing data, network or route. */
     fun road(ctx: Context, a: LatLon, b: LatLon): List<LatLon>? = route(ctx, a, b)?.pts
 
-    /** The road route with its turns. */
+    /** The road route with its turns, for the current route options. */
     fun route(ctx: Context, a: LatLon, b: LatLon): Routed? =
-        (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b) else null)
-            ?: runCatching { online(ctx, a, b) }.getOrNull()
+        if (RouteOptions.style(ctx) == RouteStyle.FUN && !RouteOptions.avoidUnpaved(ctx)) dirt(ctx, a, b)
+        else routeWith(ctx, RouteOptions.params(ctx), a, b)
 
-    private fun online(ctx: Context, a: LatLon, b: LatLon): Routed? {
-        val params = RouteOptions.params(ctx)
+    private fun routeWith(ctx: Context, params: Map<String, String>, a: LatLon, b: LatLon): Routed? =
+        (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b, params) else null)
+            ?: runCatching { online(ctx, params, a, b) }.getOrNull()
+
+    /**
+     * Fun: as much dirt as the allowed detour lets. The fastest route sets the yardstick; then routes that
+     * make paved roads ever cheaper, until one is no longer than the yardstick plus the detour.
+     */
+    private fun dirt(ctx: Context, a: LatLon, b: LatLon): Routed? {
+        val ref = routeWith(ctx, RouteOptions.params(ctx, RouteStyle.FAST), a, b) ?: return routeWith(ctx, RouteOptions.params(ctx), a, b)
+        val max = length(ref.pts) * (1 + RouteOptions.funDetour(ctx) / 100.0)
+        for (paved in RouteOptions.PAVED_LEVELS) {
+            val r = routeWith(ctx, RouteOptions.params(ctx, RouteStyle.FUN, paved), a, b) ?: continue
+            if (length(r.pts) <= max) return r
+        }
+        return ref
+    }
+
+    private fun length(l: List<LatLon>) = (1 until l.size).sumOf { metres(l[it - 1], l[it]) }
+
+    private fun online(ctx: Context, params: Map<String, String>, a: LatLon, b: LatLon): Routed? {
         val id = customId ?: upload(ctx)
         if (id != null) {
             fetch(id, params, a, b)?.let { return it }
@@ -182,7 +204,7 @@ object Router {
             upload(ctx)?.let { nid -> fetch(nid, params, a, b)?.let { return it } }
         }
         // Without the app's profile, the stock one (no main-road rule).
-        return fetch("car-vario", params - "minor_penalty", a, b)
+        return fetch("car-vario", params - "minor_penalty" - "dirt_kmh" - "paved_penalty", a, b)
     }
 
     private fun upload(ctx: Context): String? = runCatching {
@@ -224,7 +246,9 @@ object Router {
                 val p = pts.getOrNull(h.getInt(0)) ?: return@mapNotNull null
                 TurnKind.ofBrouter(h.getInt(1))?.let { TurnPt(p.lat, p.lon, it, h.optInt(2)) }
             }
-            return Routed(pts, turns)
+            val tm = f.optJSONObject("properties")?.optJSONArray("times")
+            val secs = if (tm == null || tm.length() != pts.size) emptyList() else List(tm.length()) { tm.getDouble(it) }
+            return Routed(pts, turns, secs)
         } finally {
             c.disconnect()
         }

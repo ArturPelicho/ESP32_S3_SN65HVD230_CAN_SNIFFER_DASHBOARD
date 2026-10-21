@@ -94,7 +94,7 @@
     <string name="route_eco">Económica</string>
     <string name="route_eco_hint">Estradas mais calmas e constantes (até 70 km/h): menos gasolina.</string>
     <string name="route_fun">Divertida</string>
-    <string name="route_fun_hint">Estradas secundárias: sem autoestradas, contorna as cidades, passa por floresta; aceita caminhos e terra, a não ser que os evites.</string>
+    <string name="route_fun_hint">Terra: o máximo de estradões e caminhos de terra que o desvio permitido deixar, sem autoestradas, à volta das vilas. Alcatrão só onde a terra daria uma volta grande demais.</string>
     <string name="route_avoid_motorways">Evitar autoestradas</string>
     <string name="route_avoid_toll">Evitar portagens</string>
     <string name="route_avoid_unpaved">Evitar estradas de terra</string>
@@ -124,4 +124,7 @@
     <string name="place_confirm_delete">Apagar %1$s?</string>
     <string name="place_home">Casa</string>
     <string name="place_default">Favorito %1$d</string>
+    <string name="route_fun_detour">Divertida: desvio máximo</string>
+    <string name="route_fun_detour_hint">Até %1$d%% mais longo que o mais rápido, para andar na terra.</string>
+    <string name="nav_eta">Chegada %1$s</string>
 </resources>

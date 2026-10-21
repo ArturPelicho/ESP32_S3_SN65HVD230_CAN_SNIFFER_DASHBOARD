@@ -107,6 +107,8 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
     /** Turns on the route, and how far along it the bike is. */
     var guide: Guidance? = null; private set
     val routeDoneM: Double? get() = routeFollower?.let { f -> routeLeftM?.let { f.totalM - it } }
+    /** The router's expected seconds left on the route, when it gave them. */
+    val routeSecsLeft: Double? get() = routeFollower?.let { f -> routeDoneM?.let { f.secsLeft(it) } }
 
     /** The answer to the last request: a road route, or null without network or route. */
     fun routed(r: Routed?) {
@@ -115,7 +117,7 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
         offRouteSince = 0
         if (r == null) { drop(); return }
         route = r.pts
-        routeFollower = TrackFollower(track.copy(lines = listOf(r.pts), plan = emptyList(), turns = emptyList()), false)
+        routeFollower = TrackFollower(track.copy(lines = listOf(r.pts), plan = emptyList(), turns = emptyList(), secs = listOf(r.secs)), false)
         routeLeftM = routeFollower?.totalM
         guide = Guidance(listOf(r.pts), r.turns, arrive = r.pts.isNotEmpty() && goal == Goal.END)
     }

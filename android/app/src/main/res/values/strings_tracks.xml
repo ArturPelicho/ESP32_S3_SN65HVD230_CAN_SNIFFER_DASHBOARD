@@ -94,7 +94,7 @@
     <string name="route_eco">Economical</string>
     <string name="route_eco_hint">Steady, slower roads (up to 70 km/h): less fuel.</string>
     <string name="route_fun">Fun</string>
-    <string name="route_fun_hint">Back roads: no motorways, round the towns, through forest; tracks and dirt allowed unless you avoid them.</string>
+    <string name="route_fun_hint">Dirt: as many tracks and unpaved roads as the allowed detour lets, no motorways, round the towns. Paved roads only where the dirt would be too long a way round.</string>
     <string name="route_avoid_motorways">Avoid motorways</string>
     <string name="route_avoid_toll">Avoid tolls</string>
     <string name="route_avoid_unpaved">Avoid dirt roads</string>
@@ -124,4 +124,7 @@
     <string name="place_confirm_delete">Delete %1$s?</string>
     <string name="place_home">Home</string>
     <string name="place_default">Favourite %1$d</string>
+    <string name="route_fun_detour">Fun: longest detour allowed</string>
+    <string name="route_fun_detour_hint">Up to %1$d%% longer than the fastest route, to ride on dirt.</string>
+    <string name="nav_eta">Arrival %1$s</string>
 </resources>

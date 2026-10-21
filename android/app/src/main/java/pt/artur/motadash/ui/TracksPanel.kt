@@ -215,6 +215,16 @@ private fun RouteOptionsSection() {
         }
     }
     Text(style.hint, color = Palette.label, fontSize = 12.sp)
+    if (style == RouteStyle.FUN) {
+        var detour by remember { mutableStateOf(RouteOptions.funDetour(ctx)) }
+        Text(stringResource(R.string.route_fun_detour), color = Palette.text, fontSize = 14.sp)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RouteOptions.DETOURS.forEach { d ->
+                FilterChip(selected = detour == d, onClick = { detour = d; RouteOptions.setFunDetour(ctx, d) }, label = { Text("+$d%") })
+            }
+        }
+        Text(stringResource(R.string.route_fun_detour_hint, detour), color = Palette.label, fontSize = 12.sp)
+    }
     @Composable
     fun option(@androidx.annotation.StringRes label: Int, get: () -> Boolean, set: (Boolean) -> Unit, enabled: Boolean = true) {
         var on by remember { mutableStateOf(get()) }

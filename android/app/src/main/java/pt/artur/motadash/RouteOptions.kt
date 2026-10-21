@@ -9,7 +9,7 @@ enum class RouteStyle(@StringRes private val res: Int, @StringRes private val hi
     FAST(R.string.route_fast, R.string.route_fast_hint),
     /** Least fuel: steady, slower roads (the profile's energy model with a lower top speed). */
     ECO(R.string.route_eco, R.string.route_eco_hint),
-    /** Back roads: no motorways, round the towns, through forest, tracks and dirt allowed. */
+    /** Dirt: as many tracks and unpaved roads as the allowed detour lets (see [RouteOptions.funDetour]). */
     FUN(R.string.route_fun, R.string.route_fun_hint);
     val label: String get() = L.s(res)
     val hint: String get() = L.s(hintRes)
@@ -35,6 +35,15 @@ object RouteOptions {
     fun keepMain(ctx: Context) = prefs(ctx).getBoolean("keepMain", true)
     fun setKeepMain(ctx: Context, on: Boolean) = run { prefs(ctx).edit().putBoolean("keepMain", on).apply(); changed() }
 
+    /** Fun mode: how much longer than the fastest route the dirt route may be, in percent. */
+    fun funDetour(ctx: Context) = prefs(ctx).getInt("funDetour", 30)
+    fun setFunDetour(ctx: Context, pct: Int) = run { prefs(ctx).edit().putInt("funDetour", pct).apply(); changed() }
+    val DETOURS = listOf(10, 20, 30, 50, 100)
+    /** Extra cost per metre of paved road tried in turn, most dirt first (1 about doubles a paved metre). */
+    val PAVED_LEVELS = listOf(3.0, 1.5, 0.7, 0.3, 0.0)
+    /** Speed the fun route assumes on dirt (rough tracks half that). */
+    private const val DIRT_KMH = 35
+
     /** Bumps on every change, so a Nav route worked out with the old choices is asked again. */
     var version = 0; private set
     fun changed() { version++ }
@@ -58,9 +67,8 @@ object RouteOptions {
         }
     }
 
-    /** Route profile parameters (its "# %name%" variables) for the current choices. */
-    fun params(ctx: Context): Map<String, String> {
-        val s = style(ctx)
+    /** Route profile parameters (its "# %name%" variables) for the current choices, or style [s]. */
+    fun params(ctx: Context, s: RouteStyle = style(ctx), paved: Double = 0.0): Map<String, String> {
         val fun_ = s == RouteStyle.FUN
         fun b(v: Boolean) = if (v) "1" else "0"
         val vmax = when (s) { RouteStyle.FAST -> 100.0; RouteStyle.ECO -> 70.0; RouteStyle.FUN -> 80.0 }
@@ -74,6 +82,8 @@ object RouteOptions {
             "use_offroad" to b(fun_ && !avoidUnpaved(ctx)),
             "consider_town" to b(fun_ || bypassTowns(ctx)),
             "consider_forest" to b(fun_),
+            "dirt_kmh" to (if (fun_ && !avoidUnpaved(ctx)) DIRT_KMH else 0).toString(),
+            "paved_penalty" to String.format(java.util.Locale.US, "%.2f", if (fun_) paved else 0.0),
         )
     }
 }

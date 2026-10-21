@@ -38,7 +38,8 @@ enum class TurnKind {
 data class TurnPt(val lat: Double, val lon: Double, val kind: TurnKind, val exit: Int = 0)
 
 /** A road route with its turns. */
-class Routed(val pts: List<LatLon>, val turns: List<TurnPt>)
+/** A road route: its points, turns, and the router's expected time at each point (seconds from the start). */
+class Routed(val pts: List<LatLon>, val turns: List<TurnPt>, val secs: List<Double> = emptyList())
 
 /** A turn on the line being followed, [atM] metres along it. [then]: way out of a roundabout when its exit is unknown. */
 data class Maneuver(val atM: Double, val kind: TurnKind, val exit: Int = 0, val then: TurnKind? = null)

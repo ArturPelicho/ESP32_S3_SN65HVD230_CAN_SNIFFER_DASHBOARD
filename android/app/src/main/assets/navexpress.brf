@@ -2,7 +2,9 @@
 # NavExpress: BRouter's car-vario profile (v1.7.10) plus minor_penalty, so the
 # route only drops from the main roads to village lanes, service roads or
 # tracks when that saves more than the penalty (lanes tagged 50 km/h are often
-# steep, one car wide and much slower in practice).
+# steep, one car wide and much slower in practice). Plus dirt_kmh and
+# paved_penalty for the fun mode: tracks and unpaved roads at a dirt bike's
+# pace, and paved roads made dearer so the route looks for the dirt.
 #
 # Car-Routing based on a kinematic model
 #
@@ -30,6 +32,8 @@ assign consider_river      = false  # %consider_river% | Activate to prefer a ro
 assign consider_forest     = false  # %consider_forest% | Activate to prefer a route in forest or parks | boolean
 assign consider_town       = false  # %consider_town% | Activate to bypass cities / big towns as far as possible | boolean
 assign minor_penalty       = 0      # %minor_penalty% | Cost of going down to a lower road level and back up (cost units, about metres at vmax) | number
+assign dirt_kmh            = 0      # %dirt_kmh% | Speed on tracks and unpaved roads, 0 for the stock (very slow) ones | number
+assign paved_penalty       = 0      # %paved_penalty% | Extra cost per metre on paved roads, to look for dirt | number
 
 # Kinematic model parameters
 assign vmax             = 90     # %vmax% | Target speed (in km/h) | number
@@ -211,7 +215,21 @@ assign maxspeed_explicit =
   switch maxspeed=rural 100
   if reversedirection=yes then maxspeed_backward else maxspeed_forward
 
+assign isdirt =
+  or highway=track
+     surface=unpaved|gravel|fine_gravel|dirt|ground|compacted|earth|sand|grass|pebblestone|mud
+
+# Rough tracks (grade4/5, bad smoothness) at half the dirt pace.
+assign dirtspeed =
+  if or tracktype=grade4|grade5 smoothness=bad|very_bad|horrible|very_horrible|impassable
+  then multiply 0.5 dirt_kmh else dirt_kmh
+
 assign maxspeed =
+  if and greater dirt_kmh 0 isdirt then
+    min onewayspeedlimit
+    min accessspeedlimit
+    min maxspeed_explicit dirtspeed
+  else
   min onewayspeedlimit
   min accessspeedlimit
   min maxspeed_explicit
@@ -256,7 +274,7 @@ assign costfactor =
   add town_penalty
   add no_forest_penalty
   add no_river_penalty
-  0
+  if isdirt then 0 else paved_penalty
 
 assign minspeed =
     switch highway=motorway|motorway_link|trunk  75 0
