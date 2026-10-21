@@ -39,8 +39,8 @@ object RouteOptions {
     fun funDetour(ctx: Context) = prefs(ctx).getInt("funDetour", 30)
     fun setFunDetour(ctx: Context, pct: Int) = run { prefs(ctx).edit().putInt("funDetour", pct).apply(); changed() }
     val DETOURS = listOf(10, 20, 30, 50, 100)
-    /** Extra cost per metre of paved road tried in turn, most dirt first (1 about doubles a paved metre). */
-    val PAVED_LEVELS = listOf(3.0, 1.5, 0.7, 0.3, 0.0)
+    /** Extra cost per metre of paved road tried in turn, most dirt first (1 about doubles a paved metre; past ~15 the search goes astray). */
+    val PAVED_LEVELS = listOf(10.0, 6.0, 3.0, 1.5, 0.5, 0.0)
     /** Speed the fun route assumes on dirt (rough tracks half that). */
     private const val DIRT_KMH = 35
 
