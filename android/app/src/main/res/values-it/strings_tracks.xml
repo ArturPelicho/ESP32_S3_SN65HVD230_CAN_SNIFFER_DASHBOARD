@@ -128,4 +128,15 @@
     <string name="route_fun_detour_hint">Fino al %1$d%% più lungo del più veloce, per andare sullo sterrato.</string>
     <string name="nav_eta">Arrivo %1$s</string>
     <string name="route_recalc">Ricalcolo del percorso…</string>
+    <string name="nav_stop">Ferma navigazione</string>
+    <string name="nav_corner_title">Riquadri di navigazione sulla mappa</string>
+    <string name="nav_corner_top_left">In alto a sinistra</string>
+    <string name="nav_corner_top_right">In alto a destra</string>
+    <string name="nav_corner_bottom_left">In basso a sinistra</string>
+    <string name="nav_corner_bottom_right">In basso a destra</string>
+    <string name="nav_corner_top">In alto al centro</string>
+    <string name="sound_off">spento</string>
+    <string name="sound_voice">Volume della voce: %1$s</string>
+    <string name="sound_alert">Volume degli avvisi: %1$s</string>
+    <string name="sound_voice_sample">Voce a questo volume</string>
 </resources>

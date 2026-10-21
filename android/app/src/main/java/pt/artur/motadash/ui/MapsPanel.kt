@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RangeSlider
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +42,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pt.artur.motadash.AutoZoom
+import pt.artur.motadash.NavCorner
+import pt.artur.motadash.Speech
 import pt.artur.motadash.FollowMode
 import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
@@ -68,6 +71,8 @@ fun MapsPanel(
     onAutoZoom: (Boolean) -> Unit,
     cameraBeep: Boolean,
     onCameraBeep: (Boolean) -> Unit,
+    navCorner: NavCorner,
+    onNavCorner: (NavCorner) -> Unit,
     onClose: () -> Unit,
 ) {
     val ctx = LocalContext.current
@@ -137,6 +142,13 @@ fun MapsPanel(
                         color = Palette.label, fontSize = 12.sp)
                 }
                 Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
+            }
+            SoundSliders()
+            Text(stringResource(R.string.nav_corner_title), color = Palette.text, fontSize = 15.sp)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NavCorner.entries.forEach { c ->
+                    FilterChip(selected = navCorner == c, onClick = { onNavCorner(c) }, label = { Text(c.label) })
+                }
             }
             Text(stringResource(R.string.maps_theme_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -310,6 +322,24 @@ private fun AutoZoomSliders() {
             onValueChangeFinished = { save() })
         Text(stringResource(R.string.mapopts_az_zoom_hint), color = Palette.label, fontSize = 12.sp)
     }
+}
+
+/** Voice and warning volumes, 0 silent; each plays a sample when let go. */
+@Composable
+private fun SoundSliders() {
+    val ctx = LocalContext.current
+    var voice by remember { mutableStateOf(MapStore.voiceVolume(ctx).toFloat()) }
+    var alert by remember { mutableStateOf(MapStore.alertVolume(ctx).toFloat()) }
+    fun pct(v: Float) = if (v.roundToInt() == 0) ctx.getString(R.string.sound_off) else "${v.roundToInt()} %"
+    Text(stringResource(R.string.sound_voice, pct(voice)), color = Palette.text, fontSize = 15.sp)
+    Slider(value = voice, onValueChange = { voice = it }, valueRange = 0f..100f, steps = 9, onValueChangeFinished = {
+        MapStore.setVoiceVolume(ctx, voice.roundToInt())
+        if (voice.roundToInt() == 0) Speech.stop() else Speech.say(ctx, ctx.getString(R.string.sound_voice_sample))
+    })
+    Text(stringResource(R.string.sound_alert, pct(alert)), color = Palette.text, fontSize = 15.sp)
+    Slider(value = alert, onValueChange = { alert = it }, valueRange = 0f..100f, steps = 9, onValueChangeFinished = {
+        MapStore.setAlertVolume(ctx, alert.roundToInt()); Speech.beep(ctx)
+    })
 }
 
 /** 14.0 -> "14", 14.5 -> "14.5" (local decimal mark). */

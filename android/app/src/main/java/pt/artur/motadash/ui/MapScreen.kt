@@ -34,6 +34,8 @@ import androidx.compose.foundation.Canvas
 import pt.artur.motadash.RouteStyle
 import pt.artur.motadash.RouteOptions
 import pt.artur.motadash.Eta
+import pt.artur.motadash.Speech
+import pt.artur.motadash.NavCorner
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -399,7 +401,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     private var tracks: FeatureCollection? = null
 
     /** Draws the visible tracks; the followed one gets arrows in the riding direction. */
-    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean, places: List<Place> = emptyList()) {
+    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean, places: List<Place> = emptyList(), dim: Boolean = false) {
         val fs = mutableListOf<Feature>()
         for (pl in places) {
             fs += Feature.fromGeometry(Point.fromLngLat(pl.lon, pl.lat)).apply {
@@ -414,6 +416,8 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
                 fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
                     addStringProperty("kind", "line"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
                     addNumberProperty("w", t.width); addBooleanProperty("active", active)
+                    // Nav is taking another way: the track stays, faint and thin.
+                    if (active && dim) addBooleanProperty("dim", true)
                     if (t.plan.isNotEmpty()) addNumberProperty("leg", leg)
                 }
             }
@@ -443,10 +447,15 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             Point.fromLngLat(loc.longitude, loc.latitude), Point.fromLngLat(to.lon, to.lat)))))
     }
 
-    /** Nav mode's road route back to the track, drawn where the straight join line goes. */
-    fun setRoute(r: List<LatLon>) {
+    /**
+     * The road route back to the track: Nav's new way, thick in the track's colour ([guide] false), or
+     * Track mode's thin dashed guide to the nearest point ([guide] true).
+     */
+    fun setRoute(r: List<LatLon>, guide: Boolean, color: String?) {
         val src = style?.getSourceAs<GeoJsonSource>("join") ?: return
-        src.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(r.map { Point.fromLngLat(it.lon, it.lat) })))
+        src.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(r.map { Point.fromLngLat(it.lon, it.lat) })).apply {
+            if (!guide) { addStringProperty("kind", "route"); addStringProperty("color", color ?: "#2f9bff") }
+        })
     }
 
     /** Stops following and fits the whole track on screen. */
@@ -711,6 +720,8 @@ fun MapScreen() {
     // Nav mode works out a road route back to the track; Track mode only shows the way to the nearest point.
     var trackMode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
     var rejoinTick by remember { mutableIntStateOf(0) }
+    var navDim by remember { mutableStateOf(false) }
+    var navCorner by remember { mutableStateOf(MapStore.navCorner(ctx)) }
     val eta = remember { Eta() }
     var arrival by remember { mutableStateOf<Long?>(null) }
     val navScope = rememberCoroutineScope()
@@ -790,8 +801,6 @@ fun MapScreen() {
     // Map downloads finish in the background; pick them up here too, not only on the maps panel.
     LaunchedEffect(Unit) { while (true) { MapStore.pollDownloads(ctx); delay(3000) } }
 
-    val beeper = remember { runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() }
-    DisposableEffect(Unit) { onDispose { beeper?.release() } }
 
     // Compass, so the arrow and the map turn with the bike when stopped.
     val compass = remember {
@@ -879,8 +888,8 @@ fun MapScreen() {
         )
 
         LaunchedEffect(styleJson) { holder.applyStyle(styleJson) }
-        LaunchedEffect(tracks, activeId, reversed, places) {
-            holder.setTracks(tracks, activeId, reversed, places)
+        LaunchedEffect(tracks, activeId, reversed, places, navDim) {
+            holder.setTracks(tracks, activeId, reversed, places, navDim)
             if (follower == null) { progress = null; holder.setJoin(null) }
         }
         // Route type or toggles changed: the planned trajeto being followed is worked out again.
@@ -903,29 +912,34 @@ fun MapScreen() {
             progress = follower?.locate(f.latitude, f.longitude)
             val p = progress
             val rj = rejoin
-            if (p != null && rj != null && trackMode == TrackMode.NAV) {
+            // Off the track, a road route: in Nav it becomes the way to go (the track fades), in Track
+            // it is a thin dashed guide to the nearest point of the track, which stays the line.
+            val guideOnly = trackMode == TrackMode.TRACK
+            if (p != null && rj != null) {
                 val here = LatLon(f.latitude, f.longitude)
-                rj.step(p, here, SystemClock.elapsedRealtime())?.let { to ->
+                rj.step(p, here, SystemClock.elapsedRealtime(), trackMode)?.let { to ->
                     navScope.launch {
                         val r = withContext(Dispatchers.IO) { Router.route(ctx, here, to) }
                         rj.routed(r)
-                        rj.route?.let { holder.setRoute(it) }
+                        rj.route?.let { holder.setRoute(it, guideOnly, activeTrack?.color) }
                         rejoinTick++
                     }
                 }
                 val route = rj.route
-                if (route != null) holder.setRoute(route) else holder.setJoin(p.takeIf { it.offM > SNAP_M }?.nearest)
+                if (route != null) holder.setRoute(route, guideOnly, activeTrack?.color) else holder.setJoin(p.takeIf { it.offM > SNAP_M }?.nearest)
             } else holder.setJoin(p?.takeIf { it.offM > SNAP_M }?.nearest)
+            navDim = !guideOnly && rj?.route != null
             rejoinTick++
-            val back = rejoin?.takeIf { trackMode == TrackMode.NAV && it.route != null }
-            arrival = if (p == null || follower == null || activeTrack == null || (back == null && p.offM > 1000)) null else {
+            val back = rejoin?.takeIf { it.route != null }
+            val navBack = back?.takeIf { trackMode == TrackMode.NAV }
+            arrival = if (p == null || follower == null || activeTrack == null || (navBack == null && p.offM > 1000)) null else {
                 // On a route back: what is left of it, then the track from where it meets it.
-                val fromM = back?.targetM ?: p.doneM
-                val routeSecs = back?.routeSecsLeft
-                val timed = follower.timed && (back == null || routeSecs != null)
+                val fromM = navBack?.targetM ?: p.doneM
+                val routeSecs = navBack?.routeSecsLeft
+                val timed = follower.timed && (navBack == null || routeSecs != null)
                 val left = if (timed) (routeSecs ?: 0.0) + (follower.secsLeft(fromM) ?: 0.0)
-                    else (back?.routeLeftM ?: 0.0) + (follower.totalM - fromM).coerceAtLeast(0.0)
-                eta.update(activeTrack.id to reversed, follower to back?.route, timed, left, SystemClock.elapsedRealtime(), System.currentTimeMillis())
+                    else (navBack?.routeLeftM ?: 0.0) + (follower.totalM - fromM).coerceAtLeast(0.0)
+                eta.update(activeTrack.id to reversed, follower to navBack?.route, timed, left, SystemClock.elapsedRealtime(), System.currentTimeMillis())
             }
             // A few metres off the line still counts as on it: a faint arrow shows where.
             val snap = back?.routeSnap ?: p?.takeIf { it.offM <= SNAP_M }
@@ -942,7 +956,7 @@ fun MapScreen() {
             turnVoice.step(ctx, nextTurn, f.speed)
             limit = holder.limit
             val cam = holder.camera
-            if (cam != null && cam.key != camera?.key && cameraBeep) beeper?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
+            if (cam != null && cam.key != camera?.key && cameraBeep) Speech.beep(ctx)
             camera = cam
         }
         LaunchedEffect(fix?.latitude?.toInt(), fix?.longitude?.toInt()) {
@@ -1087,11 +1101,30 @@ fun MapScreen() {
                 OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
             }
         }
-        if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
-        if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick, arrival) { m ->
-            trackMode = m
-            MapStore.setTrackMode(ctx, m)
         }
+
+        // Turn banner and track box in a corner (map ⚙), clear of the road ahead in the middle.
+        val corner = navCorner
+        Column(
+            Modifier.align(when (corner) {
+                NavCorner.TOP_LEFT -> Alignment.TopStart
+                NavCorner.TOP_RIGHT -> Alignment.TopEnd
+                NavCorner.BOTTOM_LEFT -> Alignment.BottomStart
+                NavCorner.BOTTOM_RIGHT -> Alignment.BottomEnd
+                NavCorner.TOP -> Alignment.TopCenter
+            }).padding(inset).padding(horizontal = 8.dp, vertical = if (corner == NavCorner.TOP && camera != null) 70.dp else 10.dp),
+            horizontalAlignment = when (corner) {
+                NavCorner.TOP_LEFT, NavCorner.BOTTOM_LEFT -> Alignment.Start
+                NavCorner.TOP_RIGHT, NavCorner.BOTTOM_RIGHT -> Alignment.End
+                NavCorner.TOP -> Alignment.CenterHorizontally
+            },
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
+            if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick, arrival) { m ->
+                trackMode = m
+                MapStore.setTrackMode(ctx, m)
+            }
         }
 
         // Pin in the middle of the screen while moving a waypoint; the map slides under it.
@@ -1233,6 +1266,8 @@ fun MapScreen() {
                 onAutoZoom = { autoZoom = it; MapStore.setAutoZoom(ctx, it); holder.autoZoom = it; holder.userZoom = null },
                 cameraBeep = cameraBeep,
                 onCameraBeep = { cameraBeep = it; MapStore.setCameraBeep(ctx, it) },
+                navCorner = navCorner,
+                onNavCorner = { navCorner = it; MapStore.setNavCorner(ctx, it) },
                 onClose = { showMaps = false },
             )
         }
@@ -1355,20 +1390,23 @@ private fun shareGpx(ctx: Context, t: Track) {
 private fun TurnBanner(next: Pair<Maneuver, Double>) {
     val (m, dist) = next
     val soon = dist < 150
+    // White on near black reads in full sun; the turn close by gets a thick yellow frame, not a fill.
+    val ink = Color.White
     Row(
-        Modifier.background(if (soon) Palette.green else Palette.overlay, RoundedCornerShape(12.dp))
+        Modifier.background(Color(0xF0101010), RoundedCornerShape(12.dp))
+            .border(if (soon) 4.dp else 0.dp, if (soon) Color(0xFFFFD400) else Color.Transparent, RoundedCornerShape(12.dp))
             .padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(Turns.arrow(m), color = if (soon) Color.Black else Palette.text, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+            Text(Turns.arrow(m), color = if (soon) Color(0xFFFFD400) else ink, fontSize = 44.sp, fontWeight = FontWeight.Bold)
             if (m.kind == TurnKind.ROUNDABOUT && m.exit > 0)
-                Text("${m.exit}", color = if (soon) Color.Black else Palette.cyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("${m.exit}", color = Color(0xFFFFD400), fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Column {
-            Text(Turns.shown(dist), color = if (soon) Color.Black else Palette.text, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-            Text(Turns.phrase(m), color = if (soon) Color.Black else Palette.label, fontSize = 14.sp, maxLines = 1)
+            Text(Turns.shown(dist), color = ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(Turns.phrase(m), color = ink, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1)
         }
     }
 }
@@ -1397,6 +1435,11 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
             Text(mode.badge, color = if (warn) Color.Black else Palette.cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.border(1.dp, if (warn) Color.Black else Palette.cyan, RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
             Text(t.name, color = if (warn) Color.Black else Palette.label, fontSize = 12.sp, maxLines = 1)
+            // One tap silences the spoken turns (and what is being said now); again to bring them back.
+            var voice by remember { mutableStateOf(MapStore.turnVoice(ctx)) }
+            Text(if (voice) "🔊" else "🔇", fontSize = 18.sp, modifier = Modifier.clickable {
+                voice = !voice; MapStore.setTurnVoice(ctx, voice); if (!voice) Speech.stop()
+            }.padding(start = 4.dp))
         }
         when {
             p == null -> Text(stringResource(R.string.map_waiting_gps), color = Palette.text, fontSize = 16.sp)
@@ -1451,6 +1494,12 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     fun check(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
         DropdownMenuItem(text = { Text((if (on) "✓  " else "     ") + label, fontSize = 16.sp) }, enabled = enabled, onClick = action)
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+            onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
+        check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
+            val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
+        }
+        HorizontalDivider()
         header(R.string.track_mode_title)
         TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
         HorizontalDivider()

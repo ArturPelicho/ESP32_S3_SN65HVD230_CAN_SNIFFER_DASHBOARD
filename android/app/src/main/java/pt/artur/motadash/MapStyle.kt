@@ -324,11 +324,20 @@ object MapStyle {
             mapOf("id" to "trk-casing", "type" to "line", "source" to "tracks",
                 "filter" to listOf("==", kind, "line"),
                 "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
-                "paint" to mapOf("line-color" to c.halo, "line-opacity" to 0.85, "line-width" to trackWidth(3.0))),
+                "paint" to mapOf("line-color" to c.halo, "line-opacity" to dimmed(0.85, 0.15), "line-width" to trackWidth(3.0))),
             mapOf("id" to "trk-line", "type" to "line", "source" to "tracks",
                 "filter" to listOf("==", kind, "line"),
                 "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
-                "paint" to mapOf("line-color" to listOf("get", "color"), "line-width" to trackWidth(0.0))),
+                "paint" to mapOf("line-color" to listOf("get", "color"), "line-opacity" to dimmed(1.0, 0.4), "line-width" to trackWidth(0.0))),
+            // Nav's way back when off the track: the line to ride now, over the faded track.
+            mapOf("id" to "trk-route-casing", "type" to "line", "source" to "join",
+                "filter" to listOf("==", kind, "route"),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to c.halo, "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 8, 6, 14, 11, 18, 17))),
+            mapOf("id" to "trk-route", "type" to "line", "source" to "join",
+                "filter" to listOf("==", kind, "route"),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to listOf("get", "color"), "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 8, 3.5, 14, 7, 18, 11))),
             // Arrows along the followed track, in the riding direction.
             mapOf("id" to "trk-arrow", "type" to "symbol", "source" to "tracks",
                 "filter" to listOf("all", listOf("==", kind, "line"), listOf("==", listOf("get", "active"), true)),
@@ -337,6 +346,7 @@ object MapStyle {
                 "minzoom" to 11),
             // Dashed line from the bike back to the track when off it.
             mapOf("id" to "trk-join", "type" to "line", "source" to "join",
+                "filter" to listOf("!=", listOf("coalesce", kind, ""), "route"),
                 "paint" to mapOf("line-color" to c.label, "line-width" to 2.5, "line-dasharray" to listOf(1.5, 1.5))),
             mapOf("id" to "trk-wpt", "type" to "circle", "source" to "tracks",
                 "filter" to listOf("==", kind, "wpt"),
@@ -411,12 +421,21 @@ object MapStyle {
     }
 
     /** Track width from its "w" property (1-3), narrower when zoomed out, plus [extra] for the casing. */
-    private fun trackWidth(extra: Double): List<Any> = listOf(
-        "interpolate", listOf("linear"), listOf("zoom"),
-        8, listOf("+", listOf("*", listOf("get", "w"), 1.2), extra * 0.6),
-        14, listOf("+", listOf("*", listOf("get", "w"), 2.5), extra),
-        18, listOf("+", listOf("*", listOf("get", "w"), 4), extra * 1.4),
-    )
+    /** Track width by zoom; a track faded by Nav's way back is drawn thin. */
+    private fun trackWidth(extra: Double): List<Any> {
+        val w = listOf("case", listOf("==", listOf("get", "dim"), true), 0.5, listOf("get", "w"))
+        val e = listOf("case", listOf("==", listOf("get", "dim"), true), 0.0, 1.0)
+        return listOf(
+            "interpolate", listOf("linear"), listOf("zoom"),
+            8, listOf("+", listOf("*", w, 1.2), listOf("*", e, extra * 0.6)),
+            14, listOf("+", listOf("*", w, 2.5), listOf("*", e, extra)),
+            18, listOf("+", listOf("*", w, 4), listOf("*", e, extra * 1.4)),
+        )
+    }
+
+    /** Opacity of the followed track: [normal], or [faded] while Nav takes another way. */
+    private fun dimmed(normal: Double, faded: Double): List<Any> =
+        listOf("case", listOf("==", listOf("get", "dim"), true), faded, normal)
 
     /** True when the sun is below the horizon at this place and time (good enough for day/night maps). */
     fun isNight(lat: Double, lon: Double, millis: Long = System.currentTimeMillis()): Boolean {

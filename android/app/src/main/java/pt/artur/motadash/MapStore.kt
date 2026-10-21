@@ -63,6 +63,14 @@ enum class FollowMode(@StringRes private val res: Int, val button: String) {
 }
 
 /** Map layers the rider can switch on and off from the map's layers button. */
+/** Screen corner for the navigation boxes (turn banner, track box), clear of the road ahead. */
+enum class NavCorner(@StringRes private val res: Int) {
+    TOP_LEFT(R.string.nav_corner_top_left), TOP_RIGHT(R.string.nav_corner_top_right),
+    BOTTOM_LEFT(R.string.nav_corner_bottom_left), BOTTOM_RIGHT(R.string.nav_corner_bottom_right),
+    TOP(R.string.nav_corner_top);
+    val label: String get() = L.s(res)
+}
+
 enum class MapLayer(@StringRes val res: Int) {
     SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt);
     val label: String get() = L.s(res)
@@ -162,6 +170,18 @@ object MapStore {
     fun setTurnBanner(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_banner", on).apply()
     fun turnVoice(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_voice", true)
     fun setTurnVoice(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_voice", on).apply()
+
+    /** Spoken directions and read-aloud messages, 0 (silent) to 100. */
+    fun voiceVolume(ctx: Context): Int = prefs(ctx).getInt("voice_volume", 100)
+    fun setVoiceVolume(ctx: Context, v: Int) = prefs(ctx).edit().putInt("voice_volume", v).apply()
+    /** Warning beeps (speed cameras), 0 (silent) to 100. */
+    fun alertVolume(ctx: Context): Int = prefs(ctx).getInt("alert_volume", 90)
+    fun setAlertVolume(ctx: Context, v: Int) = prefs(ctx).edit().putInt("alert_volume", v).apply()
+
+    /** Where the turn banner and the track box sit on the map. */
+    fun navCorner(ctx: Context): NavCorner =
+        NavCorner.entries.firstOrNull { it.name == prefs(ctx).getString("nav_corner", null) } ?: NavCorner.TOP_RIGHT
+    fun setNavCorner(ctx: Context, c: NavCorner) = prefs(ctx).edit().putString("nav_corner", c.name).apply()
 
     /** Nav (reroutes back to the track) or Track (the line stays the line). */
     fun trackMode(ctx: Context): TrackMode =

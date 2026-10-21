@@ -128,4 +128,15 @@
     <string name="route_fun_detour_hint">Up to %1$d%% longer than the fastest route, to ride on dirt.</string>
     <string name="nav_eta">Arrival %1$s</string>
     <string name="route_recalc">Recalculating the route…</string>
+    <string name="nav_stop">Stop navigation</string>
+    <string name="nav_corner_title">Navigation boxes on the map</string>
+    <string name="nav_corner_top_left">Top left</string>
+    <string name="nav_corner_top_right">Top right</string>
+    <string name="nav_corner_bottom_left">Bottom left</string>
+    <string name="nav_corner_bottom_right">Bottom right</string>
+    <string name="nav_corner_top">Top middle</string>
+    <string name="sound_off">off</string>
+    <string name="sound_voice">Voice volume: %1$s</string>
+    <string name="sound_alert">Warning sound volume: %1$s</string>
+    <string name="sound_voice_sample">Voice at this volume</string>
 </resources>

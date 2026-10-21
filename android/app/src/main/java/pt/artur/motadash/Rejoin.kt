@@ -49,6 +49,7 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
     private var doneMax = 0.0
     private var askedAt = 0L
     private var askedVersion = RouteOptions.version
+    private var lastMode = TrackMode.NAV
     /** A route is being worked out. */
     val busy: Boolean get() = askedAt != 0L
 
@@ -64,7 +65,9 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
      * Called on every fix with the track progress. Returns the point to route to when a new route
      * should be asked for (the caller fetches it from [here] and hands it to [routed]), or null.
      */
-    fun step(p: TrackProgress, here: LatLon, nowMs: Long): LatLon? {
+    fun step(p: TrackProgress, here: LatLon, nowMs: Long, mode: TrackMode = TrackMode.NAV): LatLon? {
+        // Switching mode: the old way back was for the other one.
+        if (mode != lastMode) { lastMode = mode; drop(); lastAsk = -1_000_000L; failed = false }
         // An answer that never came (killed request): ask again.
         if (busy && nowMs - askedAt > 60_000) askedAt = 0L
         if (p.offM <= SNAP_M) {
@@ -90,14 +93,15 @@ class Rejoin(private val track: Track, private val reversed: Boolean) {
         }
         if (busy || nowMs - offSince < 6_000 || nowMs - lastAsk < (if (failed) 15_000 else 8_000)) return null
         val base = maxOf(doneMax, p.doneM)
-        // Planned: the next waypoint ahead (the end being the last). Imported: a kilometre further along (or the end).
-        val wp = planAt.indexOfFirst { it > base + 50 }
+        // Nav, planned: the next waypoint ahead (the end being the last). Nav, imported: a kilometre further
+        // along (or the end). Track: the nearest point of the track, a little ahead, the soonest way back.
+        val wp = if (mode == TrackMode.NAV) planAt.indexOfFirst { it > base + 50 } else -1
         if (wp >= 0) {
             targetM = planAt[wp]
             goal = if (wp == planAt.size - 1) Goal.END else Goal.WAYPOINT
             goalWp = wp + 1
         } else {
-            targetM = minOf(follower.totalM, base + 1000)
+            targetM = minOf(follower.totalM, if (mode == TrackMode.NAV) base + 1000 else p.doneM + 150)
             goal = if (targetM >= follower.totalM - 1) Goal.END else Goal.TRACK
         }
         lastAsk = nowMs; askedAt = nowMs

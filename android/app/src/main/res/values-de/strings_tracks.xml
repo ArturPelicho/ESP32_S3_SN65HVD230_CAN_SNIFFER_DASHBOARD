@@ -128,4 +128,15 @@
     <string name="route_fun_detour_hint">Bis zu %1$d%% länger als die schnellste Route, um auf Schotter zu fahren.</string>
     <string name="nav_eta">Ankunft %1$s</string>
     <string name="route_recalc">Route wird neu berechnet…</string>
+    <string name="nav_stop">Navigation beenden</string>
+    <string name="nav_corner_title">Navigationsfelder auf der Karte</string>
+    <string name="nav_corner_top_left">Oben links</string>
+    <string name="nav_corner_top_right">Oben rechts</string>
+    <string name="nav_corner_bottom_left">Unten links</string>
+    <string name="nav_corner_bottom_right">Unten rechts</string>
+    <string name="nav_corner_top">Oben mittig</string>
+    <string name="sound_off">aus</string>
+    <string name="sound_voice">Lautstärke der Stimme: %1$s</string>
+    <string name="sound_alert">Lautstärke der Warntöne: %1$s</string>
+    <string name="sound_voice_sample">Stimme in dieser Lautstärke</string>
 </resources>

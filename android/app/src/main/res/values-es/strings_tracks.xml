@@ -128,4 +128,15 @@
     <string name="route_fun_detour_hint">Hasta un %1$d%% más largo que la más rápida, para ir por tierra.</string>
     <string name="nav_eta">Llegada %1$s</string>
     <string name="route_recalc">Recalculando la ruta…</string>
+    <string name="nav_stop">Detener navegación</string>
+    <string name="nav_corner_title">Cuadros de navegación en el mapa</string>
+    <string name="nav_corner_top_left">Arriba a la izquierda</string>
+    <string name="nav_corner_top_right">Arriba a la derecha</string>
+    <string name="nav_corner_bottom_left">Abajo a la izquierda</string>
+    <string name="nav_corner_bottom_right">Abajo a la derecha</string>
+    <string name="nav_corner_top">Arriba en el centro</string>
+    <string name="sound_off">apagado</string>
+    <string name="sound_voice">Volumen de la voz: %1$s</string>
+    <string name="sound_alert">Volumen de los avisos: %1$s</string>
+    <string name="sound_voice_sample">Voz a este volumen</string>
 </resources>

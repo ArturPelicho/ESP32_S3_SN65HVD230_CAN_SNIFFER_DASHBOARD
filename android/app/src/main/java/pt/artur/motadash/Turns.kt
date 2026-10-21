@@ -151,9 +151,20 @@ class TurnVoice {
         val far = maxOf(400.0, speedMs * 15.0)
         val near = maxOf(50.0, speedMs * 4.0)
         when {
-            dist <= near && nearFor != m -> { nearFor = m; farFor = m; Speech.say(ctx, Turns.phrase(m).cap()) }
-            m.kind != TurnKind.ARRIVE && dist in (near + 100)..far && farFor != m -> { farFor = m; Speech.say(ctx, L.s(R.string.turn_in, Turns.spoken(dist), Turns.phrase(m))) }
+            dist <= near && nearFor != m -> { nearFor = m; farFor = m; say(ctx, Turns.phrase(m).cap()) }
+            m.kind != TurnKind.ARRIVE && dist in (near + 100)..far && farFor != m -> { farFor = m; say(ctx, L.s(R.string.turn_in, Turns.spoken(dist), Turns.phrase(m))) }
         }
+    }
+
+    private var lastText = ""
+    private var lastAt = 0L
+
+    /** A route worked out again brings "the same" turn back as a new one: it is not said twice in a row. */
+    private fun say(ctx: Context, text: String) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (text == lastText && now - lastAt < 45_000) return
+        lastText = text; lastAt = now
+        Speech.say(ctx, text)
     }
 
     private fun String.cap() = replaceFirstChar { it.uppercase() }
