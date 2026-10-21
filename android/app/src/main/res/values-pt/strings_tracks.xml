@@ -116,4 +116,12 @@
     <string name="trip_start">Começar a gravar</string>
     <string name="trip_auto">Começar quando a mota liga</string>
     <string name="trip_hint">Grava o percurso como um trajeto, com as horas, também com o ecrã desligado; partilha-o em GPX como os outros. Se começou com a mota, pára 15 min depois de a mota desligar.</string>
+    <string name="place_title">Locais favoritos</string>
+    <string name="place_hint">Toque longo no mapa, "Guardar como favorito", para juntar um (casa, trabalho...).</string>
+    <string name="place_add">Guardar como favorito</string>
+    <string name="place_go">Ir para aqui</string>
+    <string name="place_delete">Apagar</string>
+    <string name="place_confirm_delete">Apagar %1$s?</string>
+    <string name="place_home">Casa</string>
+    <string name="place_default">Favorito %1$d</string>
 </resources>

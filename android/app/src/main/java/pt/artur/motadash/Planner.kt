@@ -100,8 +100,9 @@ object Planner {
     }
 
     /** "Go there": a new trajeto from where the bike is to [to], followed at once; edit and save it as usual. */
-    fun goThere(ctx: Context, here: LatLon, to: LatLon) {
+    fun goThere(ctx: Context, here: LatLon, to: LatLon, name: String? = null) {
         val t = start(ctx, here)
+        if (name != null) TrackStore.change(ctx, t.id) { it.copy(name = "→ $name") }
         add(ctx, t.id, to)
     }
 

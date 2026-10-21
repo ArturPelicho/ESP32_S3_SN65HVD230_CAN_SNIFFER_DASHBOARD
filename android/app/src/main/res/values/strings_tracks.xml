@@ -116,4 +116,12 @@
     <string name="trip_start">Start recording</string>
     <string name="trip_auto">Start when the bike connects</string>
     <string name="trip_hint">Records the ride as a trajeto with times, also with the screen off; share it as GPX like any other. Started with the bike, it stops 15 min after the bike goes off.</string>
+    <string name="place_title">Favourite places</string>
+    <string name="place_hint">Long press on the map, "Save as favourite", to add one (home, work...).</string>
+    <string name="place_add">Save as favourite</string>
+    <string name="place_go">Go there</string>
+    <string name="place_delete">Delete</string>
+    <string name="place_confirm_delete">Delete %1$s?</string>
+    <string name="place_home">Home</string>
+    <string name="place_default">Favourite %1$d</string>
 </resources>

@@ -116,4 +116,12 @@
     <string name="trip_start">Inizia a registrare</string>
     <string name="trip_auto">Inizia quando la moto si collega</string>
     <string name="trip_hint">Registra il percorso con gli orari, anche a schermo spento; condividilo in GPX come gli altri. Se è partito con la moto, si ferma 15 min dopo lo spegnimento.</string>
+    <string name="place_title">Luoghi preferiti</string>
+    <string name="place_hint">Tieni premuto sulla mappa, "Salva come preferito", per aggiungerne uno (casa, lavoro...).</string>
+    <string name="place_add">Salva come preferito</string>
+    <string name="place_go">Vai qui</string>
+    <string name="place_delete">Elimina</string>
+    <string name="place_confirm_delete">Eliminare %1$s?</string>
+    <string name="place_home">Casa</string>
+    <string name="place_default">Preferito %1$d</string>
 </resources>

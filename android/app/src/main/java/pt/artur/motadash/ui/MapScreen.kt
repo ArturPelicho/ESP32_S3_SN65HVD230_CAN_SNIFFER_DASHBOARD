@@ -104,6 +104,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import pt.artur.motadash.Rejoin
+import pt.artur.motadash.Place
+import pt.artur.motadash.Places
 import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
@@ -345,8 +347,13 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     private var tracks: FeatureCollection? = null
 
     /** Draws the visible tracks; the followed one gets arrows in the riding direction. */
-    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean) {
+    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean, places: List<Place> = emptyList()) {
         val fs = mutableListOf<Feature>()
+        for (pl in places) {
+            fs += Feature.fromGeometry(Point.fromLngLat(pl.lon, pl.lat)).apply {
+                addStringProperty("kind", "fav"); addStringProperty("pid", pl.id); addStringProperty("name", pl.name)
+            }
+        }
         for (t in list.filter { it.visible }) {
             val active = t.id == activeId
             for ((leg, l) in t.lines.withIndex()) {
@@ -426,6 +433,9 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         fun near(layer: String, r: Float) = if (style?.getLayer(layer) == null) emptyList()
             else m.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), layer)
         val at = LatLon(ll.latitude, ll.longitude)
+        near("fav", 30f).firstOrNull { it.hasNonNullValueForProperty("pid") }?.let { f ->
+            return MapMenu(p.x, p.y, at, place = f.getStringProperty("pid"))
+        }
         near("rte-pt", 36f).firstOrNull { it.hasNonNullValueForProperty("tid") }?.let { f ->
             return MapMenu(p.x, p.y, at, tid = f.getStringProperty("tid"), point = (num(f, "n") ?: 1) - 1)
         }
@@ -449,6 +459,7 @@ private data class MapMenu(
     val tid: String? = null,
     val point: Int? = null,      // a waypoint of a planned trajeto
     val leg: Int? = null,        // the line between waypoints leg and leg + 1
+    val place: String? = null,   // a favourite place
 )
 
 /** A waypoint being moved: it sits under the pin in the middle of the screen. */
@@ -595,6 +606,8 @@ fun MapScreen() {
     var showGps by remember { mutableStateOf(false) }
     var showTracks by remember { mutableStateOf(false) }
     val trip by TripRecorder.state.collectAsStateWithLifecycle()
+    val places by Places.list.collectAsStateWithLifecycle()
+    var newPlace by remember { mutableStateOf<LatLon?>(null) }
     var stopTrip by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
@@ -658,6 +671,7 @@ fun MapScreen() {
     LaunchedEffect(Unit) {
         MapStore.load(ctx)
         TrackStore.load(ctx)
+        Places.load(ctx)
         while (true) { delay(60_000); minute++ }
     }
 
@@ -784,8 +798,8 @@ fun MapScreen() {
         )
 
         LaunchedEffect(styleJson) { holder.applyStyle(styleJson) }
-        LaunchedEffect(tracks, activeId, reversed) {
-            holder.setTracks(tracks, activeId, reversed)
+        LaunchedEffect(tracks, activeId, reversed, places) {
+            holder.setTracks(tracks, activeId, reversed, places)
             if (follower == null) { progress = null; holder.setJoin(null) }
         }
         LaunchedEffect(trackMessage) {
@@ -795,6 +809,7 @@ fun MapScreen() {
             val f = fix ?: return@LaunchedEffect
             holder.fix = f
             ThemeStore.lat = f.latitude; ThemeStore.lon = f.longitude
+            Places.here = LatLon(f.latitude, f.longitude)
             holder.scan()
             progress = follower?.locate(f.latitude, f.longitude)
             val p = progress
@@ -1015,8 +1030,22 @@ fun MapScreen() {
                     onRename = { renaming = it },
                     onSave = { saving = it; save.launch(GpxWriter.fileName(it)) },
                     onShare = { shareGpx(ctx, it) },
+                    onNewPlace = { newPlace = it },
                 )
             }
+        }
+
+        newPlace?.let { at ->
+            var text by remember(at) { mutableStateOf(if (places.isEmpty()) ctx.getString(R.string.place_home) else ctx.getString(R.string.place_default, places.size + 1)) }
+            AlertDialog(
+                onDismissRequest = { newPlace = null },
+                title = { Text(stringResource(R.string.place_add)) },
+                text = { OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true) },
+                confirmButton = {
+                    Button(onClick = { Places.add(ctx, text.trim().ifEmpty { "★" }, at); newPlace = null }) { Text(stringResource(R.string.map_save)) }
+                },
+                dismissButton = { OutlinedButton(onClick = { newPlace = null }) { Text(stringResource(R.string.map_cancel)) } },
+            )
         }
 
         if (stopTrip) trip?.let { r ->
@@ -1121,9 +1150,11 @@ private fun MapMenuItems(
     onRename: (Track) -> Unit,
     onSave: (Track) -> Unit,
     onShare: (Track) -> Unit,
+    onNewPlace: (LatLon) -> Unit,
 ) {
     val ctx = LocalContext.current
     var confirmDelete by remember { mutableStateOf(false) }
+    val place = mm.place?.let { id -> Places.list.value.firstOrNull { it.id == id } }
     var looks by remember { mutableStateOf(false) }
     val t = tracks.firstOrNull { it.id == mm.tid }
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
@@ -1131,6 +1162,12 @@ private fun MapMenuItems(
             moving != null -> {
                 MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
                 MenuItem(stringResource(R.string.map_cancel), onDismiss) { onMoveCancel() }
+            }
+            place != null -> {
+                Text("★ " + place.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                if (here != null) MenuItem(stringResource(R.string.place_go), onDismiss) { Planner.goThere(ctx, here, LatLon(place.lat, place.lon), place.name) }
+                if (confirmDelete) MenuItem(stringResource(R.string.place_confirm_delete, place.name), onDismiss) { Places.delete(ctx, place.id) }
+                else DropdownMenuItem(text = { Text(stringResource(R.string.place_delete), fontSize = 16.sp, color = Palette.red) }, onClick = { confirmDelete = true })
             }
             t != null && mm.point != null && mm.point in t.plan.indices -> {
                 val n = mm.point + 1
@@ -1184,6 +1221,7 @@ private fun MapMenuItems(
                     MenuItem(stringResource(R.string.map_add_waypoint, current.plan.size + 1, current.name), onDismiss) { Planner.add(ctx, current.id, mm.at) }
                 }
                 if (here != null) MenuItem(stringResource(R.string.map_go_there), onDismiss) { Planner.goThere(ctx, here, mm.at) }
+                MenuItem(stringResource(R.string.place_add), onDismiss) { onNewPlace(mm.at) }
                 MenuItem(stringResource(R.string.map_new_route), onDismiss) { Planner.start(ctx, mm.at) }
             }
         }

@@ -116,4 +116,12 @@
     <string name="trip_start">Empezar a grabar</string>
     <string name="trip_auto">Empezar al conectar la moto</string>
     <string name="trip_hint">Graba el recorrido como una ruta con horas, también con la pantalla apagada; compártelo en GPX como las demás. Si empezó con la moto, para 15 min después de apagarla.</string>
+    <string name="place_title">Lugares favoritos</string>
+    <string name="place_hint">Mantén pulsado el mapa, "Guardar como favorito", para añadir uno (casa, trabajo...).</string>
+    <string name="place_add">Guardar como favorito</string>
+    <string name="place_go">Ir allí</string>
+    <string name="place_delete">Borrar</string>
+    <string name="place_confirm_delete">¿Borrar %1$s?</string>
+    <string name="place_home">Casa</string>
+    <string name="place_default">Favorito %1$d</string>
 </resources>

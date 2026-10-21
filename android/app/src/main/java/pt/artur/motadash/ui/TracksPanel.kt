@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.MapStore
 import pt.artur.motadash.TrackMode
+import androidx.compose.runtime.LaunchedEffect
+import pt.artur.motadash.LatLon
+import pt.artur.motadash.Places
 import android.widget.Toast
 import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.Planner
@@ -78,6 +81,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             TripSection()
+            PlacesSection(onGo = onClose)
             Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.tracks_open_file)) }
             Text(stringResource(R.string.tracks_open_hint),
                 color = Palette.label, fontSize = 12.sp)
@@ -251,4 +255,40 @@ private fun TripSection() {
         Switch(checked = auto, onCheckedChange = { auto = it; TripRecorder.setAutoStart(ctx, it) })
     }
     Text(stringResource(R.string.trip_hint), color = Palette.label, fontSize = 12.sp)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+/** Favourite places: go there (a new trajeto from the bike), rename, delete. Added with a long press on the map. */
+@Composable
+private fun PlacesSection(onGo: () -> Unit) {
+    val ctx = LocalContext.current
+    val places by Places.list.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { Places.load(ctx) }
+    Text(stringResource(R.string.place_title), color = Palette.text, fontSize = 15.sp)
+    if (places.isEmpty()) Text(stringResource(R.string.place_hint), color = Palette.label, fontSize = 12.sp)
+    var editing by remember { mutableStateOf<String?>(null) }
+    var deleting by remember { mutableStateOf<String?>(null) }
+    for (p in places) {
+        Column(Modifier.fillMaxWidth().background(Palette.panel, RoundedCornerShape(10.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (editing == p.id) {
+                var text by remember(p.id) { mutableStateOf(p.name) }
+                OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { Places.rename(ctx, p.id, text.trim().ifEmpty { p.name }); editing = null }) { Text(stringResource(R.string.tracks_save)) }
+                    OutlinedButton(onClick = { editing = null }) { Text(stringResource(R.string.tracks_cancel)) }
+                }
+            } else {
+                Text("★ " + p.name, color = Palette.text, fontSize = 15.sp, modifier = Modifier.clickable { editing = p.id })
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val here = Places.here
+                    Button(enabled = here != null, onClick = {
+                        here?.let { Planner.goThere(ctx, it, LatLon(p.lat, p.lon), p.name); onGo() }
+                    }) { Text(stringResource(R.string.place_go)) }
+                    if (deleting == p.id) OutlinedButton(onClick = { Places.delete(ctx, p.id); deleting = null }) {
+                        Text(stringResource(R.string.place_confirm_delete, p.name), color = Palette.red)
+                    } else OutlinedButton(onClick = { deleting = p.id }) { Text(stringResource(R.string.place_delete)) }
+                }
+            }
+        }
+    }
 }

@@ -116,4 +116,12 @@
     <string name="trip_start">Commencer l’enregistrement</string>
     <string name="trip_auto">Commencer quand la moto se connecte</string>
     <string name="trip_hint">Enregistre le trajet avec les heures, même écran éteint ; partagez-le en GPX comme les autres. Lancé avec la moto, il s’arrête 15 min après l’arrêt de la moto.</string>
+    <string name="place_title">Lieux favoris</string>
+    <string name="place_hint">Appui long sur la carte, « Garder en favori », pour en ajouter un (maison, travail...).</string>
+    <string name="place_add">Garder en favori</string>
+    <string name="place_go">Y aller</string>
+    <string name="place_delete">Supprimer</string>
+    <string name="place_confirm_delete">Supprimer %1$s ?</string>
+    <string name="place_home">Maison</string>
+    <string name="place_default">Favori %1$d</string>
 </resources>

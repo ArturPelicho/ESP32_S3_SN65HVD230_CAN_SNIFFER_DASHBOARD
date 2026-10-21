@@ -348,6 +348,16 @@ object MapStyle {
                     "text-offset" to listOf(0, 1.2), "text-anchor" to "top", "text-optional" to true),
                 "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.8),
                 "minzoom" to 11),
+            // Favourite places: a gold star with the name.
+            mapOf("id" to "fav", "type" to "circle", "source" to "tracks",
+                "filter" to listOf("==", kind, "fav"),
+                "paint" to mapOf("circle-radius" to 11, "circle-color" to "#f5b301",
+                    "circle-stroke-color" to "#ffffff", "circle-stroke-width" to 2)),
+            mapOf("id" to "fav-label", "type" to "symbol", "source" to "tracks",
+                "filter" to listOf("==", kind, "fav"),
+                "layout" to mapOf("text-field" to listOf("get", "name"), "text-font" to listOf(MEDIUM),
+                    "text-size" to 13, "text-offset" to listOf(0, 1.1), "text-anchor" to "top", "text-optional" to true),
+                "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.8)),
             // Numbered waypoints of a trajeto planned on the map.
             mapOf("id" to "rte-pt", "type" to "circle", "source" to "tracks",
                 "filter" to listOf("==", kind, "rtept"),

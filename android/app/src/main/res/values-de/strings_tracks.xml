@@ -116,4 +116,12 @@
     <string name="trip_start">Aufzeichnung starten</string>
     <string name="trip_auto">Starten, wenn das Motorrad verbunden ist</string>
     <string name="trip_hint">Zeichnet die Fahrt mit Uhrzeiten auf, auch bei ausgeschaltetem Bildschirm; als GPX teilen wie die anderen. Mit dem Motorrad gestartet, endet sie 15 min nach dem Ausschalten.</string>
+    <string name="place_title">Lieblingsorte</string>
+    <string name="place_hint">Lange auf die Karte drücken, „Als Favorit speichern“, um einen hinzuzufügen (Zuhause, Arbeit...).</string>
+    <string name="place_add">Als Favorit speichern</string>
+    <string name="place_go">Hinfahren</string>
+    <string name="place_delete">Löschen</string>
+    <string name="place_confirm_delete">%1$s löschen?</string>
+    <string name="place_home">Zuhause</string>
+    <string name="place_default">Favorit %1$d</string>
 </resources>
