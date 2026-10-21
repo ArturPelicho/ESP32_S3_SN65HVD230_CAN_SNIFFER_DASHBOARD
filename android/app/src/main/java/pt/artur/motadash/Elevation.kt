@@ -12,7 +12,8 @@ import kotlin.math.ln
 import kotlin.math.tan
 
 /** Height along a track, evenly spaced in distance, for the profile strip on the map. */
-class ElevProfile(val distM: FloatArray, val eleM: FloatArray) {
+/** [ride]: the ride so far (no track), not a track ahead. */
+class ElevProfile(val distM: FloatArray, val eleM: FloatArray, val ride: Boolean = false) {
     val totalM: Float get() = distM.last()
     val minE: Float = eleM.min()
     val maxE: Float = eleM.max()

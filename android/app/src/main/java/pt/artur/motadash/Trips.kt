@@ -103,6 +103,7 @@ object Trips {
         if (prev != null && loc.elapsedRealtimeNanos <= prev.elapsedRealtimeNanos) return
         if (loc.provider != android.location.LocationManager.GPS_PROVIDER) return
         lastFix = loc
+        RideProfile.add(loc)    // every phone fix passes here once, so the ride's height strip is fed too
         if (SystemClock.elapsedRealtime() - lastBoardMs < 5_000) return
         if (prev == null || (loc.hasAccuracy() && loc.accuracy > 30)) return
         val dt = (loc.elapsedRealtimeNanos - prev.elapsedRealtimeNanos) / 1e9

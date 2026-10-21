@@ -972,7 +972,8 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, bg: Color, modifier: Mo
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("▲ %.0f %s  ▼ %.0f %s".format(Units.alt(p.maxE.toDouble()), Units.altUnit, Units.alt(p.minE.toDouble()), Units.altUnit), color = Palette.label, fontSize = 11.sp, maxLines = 1)
-            if (here != null) Text("%.0f %s · %d%%".format(Units.alt(here.toDouble()), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
+            if (here != null) Text(if (p.ride) "%.0f %s".format(Units.alt(here.toDouble()), Units.altUnit)
+                else "%.0f %s · %d%%".format(Units.alt(here.toDouble()), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(Units.short(p.totalM.toDouble(), 1), color = Palette.label,
                 fontSize = 11.sp, maxLines = 1)

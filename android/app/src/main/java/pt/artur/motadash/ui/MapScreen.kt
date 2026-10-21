@@ -119,6 +119,7 @@ import pt.artur.motadash.Place
 import pt.artur.motadash.Places
 import pt.artur.motadash.DirectLines
 import pt.artur.motadash.Trips
+import pt.artur.motadash.RideProfile
 import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
@@ -757,6 +758,12 @@ fun MapScreen() {
             runCatching { ElevProfile.of(t, reversed, installed.filter { it.enabled }) }.getOrNull()
         }
     }
+    // Without a track, the ride so far (height and distance), so the strip is never empty.
+    val ridden by RideProfile.profile.collectAsStateWithLifecycle()
+    LaunchedEffect(installed) {
+        val files = installed.filter { it.enabled }.mapNotNull { it.shade }
+        withContext(Dispatchers.IO) { RideProfile.useRelief(files) }
+    }
     var progress by remember { mutableStateOf<TrackProgress?>(null) }
     // Turns along the followed track, and the next one ahead.
     var guide by remember { mutableStateOf<Guidance?>(null) }
@@ -1055,7 +1062,8 @@ fun MapScreen() {
         WidgetBoard(LayoutStore.MAP,
             widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
                 altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt,
-                profile = profile, doneM = progress?.doneM),
+                profile = if (activeTrack != null) profile else ridden,
+                doneM = if (activeTrack != null) progress?.doneM else ridden?.totalM?.toDouble()),
             modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
         @Composable
