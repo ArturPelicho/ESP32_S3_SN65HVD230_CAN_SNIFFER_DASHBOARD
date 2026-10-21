@@ -1,0 +1,34 @@
+name: BRouter probe
+
+# Temporary: the fun mode's dirt levels against the fastest route (Alentejo).
+on:
+  push:
+    paths: [".github/workflows/brouter-probe.yml"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          ID=$(curl -sS -X POST -H 'Content-Type: text/plain' --data-binary @android/app/src/main/assets/navexpress.brf https://brouter.de/brouter/profile)
+          echo "upload: $ID"
+          PID=$(echo "$ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['profileid'])")
+          FAST="profile:vmax=100&profile:minor_penalty=2752"
+          FUN="profile:vmax=80&profile:avoid_motorways=1&profile:use_offroad=1&profile:consider_town=1&profile:consider_forest=1&profile:dirt_kmh=35"
+          for ll in "-7.9135,38.5714%7C-8.4560,38.6770" "-8.4560,38.6770%7C-8.0100,39.2500"; do
+            for q in "$FAST" "$FUN&profile:paved_penalty=3" "$FUN&profile:paved_penalty=1.5" "$FUN&profile:paved_penalty=0.7" "$FUN&profile:paved_penalty=0.3" "$FUN&profile:paved_penalty=0"; do
+              curl -sS "https://brouter.de/brouter?alternativeidx=0&format=geojson&profile=$PID&$q&lonlats=$ll" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin); f=d['features'][0]; p=f['properties']; m=p['messages']; h=m[0]; i=h.index('WayTags'); di=h.index('Distance')
+          dirt=0; tot=0
+          for row in m[1:]:
+              tags=row[i]; n=int(row[di]); tot+=n
+              if 'highway=track' in tags or any(s in tags for s in ['surface=unpaved','surface=gravel','surface=dirt','surface=ground','surface=compacted','surface=earth','surface=fine_gravel','surface=sand']): dirt+=n
+          c=f['geometry']['coordinates']
+          near=lambda lo,la: min(((x[0]-lo)*87000)**2+((x[1]-la)*111000)**2 for x in c)**0.5
+          print('$ll', '$q'[-20:], 'len', p['track-length'], 'time', p['total-time'], 'dirt%', round(100*dirt/max(tot,1)), 'times', len(p.get('times',[])), '==', len(c),
+                'Valverde', int(near(-8.02,38.531)), 'Escoural', int(near(-8.135,38.545)))"
+            done
+          done
