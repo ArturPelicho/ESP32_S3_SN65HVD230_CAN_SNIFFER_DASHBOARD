@@ -93,6 +93,7 @@ class MotaService : Service() {
         super.onCreate()
         L.init(this)
         Units.load(this)
+        Trips.load(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.svc_channel), NotificationManager.IMPORTANCE_LOW)
@@ -407,6 +408,7 @@ class MotaService : Service() {
     }
 
     private fun onFix(loc: Location) {
+        Trips.onFix(loc)
         val now = SystemClock.elapsedRealtime()
         fixTimes.addLast(now)
         while (fixTimes.isNotEmpty() && now - fixTimes.first() > 5000) fixTimes.removeFirst()

@@ -105,4 +105,10 @@
     <string name="unit_km">Quilómetros (km/h)</string>
     <string name="unit_mi">Milhas (mph)</string>
     <string name="set_units_hint">Litros ou galões seguem o consumo. A placa continua a trabalhar em métrico.</string>
+    <string name="set_trips">Viagens e odómetro</string>
+    <string name="set_trip_since">desde %1$s</string>
+    <string name="set_trip_reset">Pôr a zero</string>
+    <string name="set_odo">Odómetro: %1$s %2$s</string>
+    <string name="set_odo_set">Definir</string>
+    <string name="set_trips_hint">Contadas pelo telemóvel: com a placa ligada, a distância e o combustível dela; sem ela, o GPS do telemóvel. Escreve uma vez o valor do odómetro da mota e continua a contar a partir daí.</string>
 </resources>

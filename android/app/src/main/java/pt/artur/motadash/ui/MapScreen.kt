@@ -118,6 +118,7 @@ import pt.artur.motadash.DeadReckoning
 import pt.artur.motadash.Place
 import pt.artur.motadash.Places
 import pt.artur.motadash.DirectLines
+import pt.artur.motadash.Trips
 import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
@@ -828,6 +829,7 @@ fun MapScreen() {
             PackageManager.PERMISSION_GRANTED
         if (!resumed || lm == null || !allowed) return@DisposableEffect onDispose {}
         val listener = LocationListener { loc ->
+            Trips.onFix(loc)
             // Satellites win, but a network fix takes over once the last satellite fix is ~10 s old
             // (not over a dead-reckoned position: in a tunnel the estimate is better).
             val cur = fix

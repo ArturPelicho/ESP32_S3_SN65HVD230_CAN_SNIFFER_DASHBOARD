@@ -105,4 +105,10 @@
     <string name="unit_km">Chilometri (km/h)</string>
     <string name="unit_mi">Miglia (mph)</string>
     <string name="set_units_hint">Litri o galloni seguono il consumo. La scheda continua a lavorare in metrico.</string>
+    <string name="set_trips">Viaggi e contachilometri</string>
+    <string name="set_trip_since">dal %1$s</string>
+    <string name="set_trip_reset">Azzera</string>
+    <string name="set_odo">Contachilometri: %1$s %2$s</string>
+    <string name="set_odo_set">Imposta</string>
+    <string name="set_trips_hint">Contati dal telefono: con la scheda accesa, la sua distanza e il carburante; senza, il GPS del telefono. Scrivi una volta il contachilometri della moto e continua a contare da lì.</string>
 </resources>

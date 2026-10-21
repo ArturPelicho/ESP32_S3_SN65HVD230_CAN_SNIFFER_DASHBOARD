@@ -75,4 +75,7 @@
     <string name="map_reverse">Inverser le sens</string>
     <string name="map_go_there">Aller ici</string>
     <string name="w_btn_rec">Enregistrer</string>
+    <string name="w_trip_a">Trajet A</string>
+    <string name="w_trip_b">Trajet B</string>
+    <string name="w_odo">Odomètre</string>
 </resources>

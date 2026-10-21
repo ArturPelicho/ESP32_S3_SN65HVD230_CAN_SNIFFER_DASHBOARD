@@ -86,7 +86,7 @@ object Link {
         val now = s == LinkStatus.CONNECTED
         if (was != now) service?.let { TripRecorder.boardConnected(it, now) }
     }
-    fun setTelemetry(t: Telemetry?) { _telemetry.value = t }
+    fun setTelemetry(t: Telemetry?) { _telemetry.value = t; t?.let { Trips.onTelemetry(it) } }
     fun updateGps(f: (GpsInfo) -> GpsInfo) = _gps.update(f)
     fun clearSuggestion() { _suggestedK.value = null }
 

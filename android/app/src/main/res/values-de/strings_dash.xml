@@ -105,4 +105,10 @@
     <string name="unit_km">Kilometer (km/h)</string>
     <string name="unit_mi">Meilen (mph)</string>
     <string name="set_units_hint">Liter oder Gallonen folgen dem Verbrauch. Die Platine rechnet weiter metrisch.</string>
+    <string name="set_trips">Fahrten und Kilometerzähler</string>
+    <string name="set_trip_since">seit %1$s</string>
+    <string name="set_trip_reset">Zurücksetzen</string>
+    <string name="set_odo">Kilometerzähler: %1$s %2$s</string>
+    <string name="set_odo_set">Setzen</string>
+    <string name="set_trips_hint">Vom Handy gezählt: mit der Platine deren Strecke und Kraftstoff, ohne sie das GPS des Handys. Einmal den Kilometerstand des Motorrads eingeben, dann zählt es weiter.</string>
 </resources>

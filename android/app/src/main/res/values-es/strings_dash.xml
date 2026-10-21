@@ -105,4 +105,10 @@
     <string name="unit_km">Kilómetros (km/h)</string>
     <string name="unit_mi">Millas (mph)</string>
     <string name="set_units_hint">Litros o galones siguen al consumo. La placa sigue trabajando en métrico.</string>
+    <string name="set_trips">Viajes y odómetro</string>
+    <string name="set_trip_since">desde %1$s</string>
+    <string name="set_trip_reset">Poner a cero</string>
+    <string name="set_odo">Odómetro: %1$s %2$s</string>
+    <string name="set_odo_set">Fijar</string>
+    <string name="set_trips_hint">Los cuenta el móvil: con la placa encendida, su distancia y combustible; sin ella, el GPS del móvil. Escribe una vez el odómetro de la moto y sigue contando desde ahí.</string>
 </resources>

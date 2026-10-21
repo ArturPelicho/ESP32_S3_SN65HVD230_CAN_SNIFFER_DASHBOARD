@@ -111,4 +111,10 @@
     <string name="unit_kml" translatable="false">km/L</string>
     <string name="unit_mpg_uk" translatable="false">mpg (UK)</string>
     <string name="unit_mpg_us" translatable="false">mpg (US)</string>
+    <string name="set_trips">Trips and odometer</string>
+    <string name="set_trip_since">since %1$s</string>
+    <string name="set_trip_reset">Reset</string>
+    <string name="set_odo">Odometer: %1$s %2$s</string>
+    <string name="set_odo_set">Set</string>
+    <string name="set_trips_hint">Counted by the phone: with the board on, its distance and fuel; without it, the phone\'s GPS. Type the bike\'s odometer reading once and it counts on from there.</string>
 </resources>

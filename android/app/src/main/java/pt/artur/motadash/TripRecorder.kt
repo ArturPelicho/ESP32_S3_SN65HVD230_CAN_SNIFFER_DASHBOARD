@@ -118,6 +118,7 @@ object TripRecorder {
     }
 
     private fun onFix(loc: Location) {
+        Trips.onFix(loc)
         val c = app ?: return
         val rec = _state.value ?: return
         if (auto && boardGoneAt != 0L && System.currentTimeMillis() - boardGoneAt > AUTO_STOP_MS) { stop(c); return }

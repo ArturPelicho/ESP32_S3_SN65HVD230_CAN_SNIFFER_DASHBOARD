@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.Units
+import pt.artur.motadash.Trips
+import androidx.compose.ui.platform.LocalContext
 import pt.artur.motadash.BleProtocol
 import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
@@ -50,6 +52,37 @@ fun DashSettings() {
             Button(enabled = connected, onClick = { Link.send("AVG RESET") }) { Text(stringResource(R.string.set_avg_reset)) }
             OutlinedButton(enabled = connected, onClick = { Link.send("TRIP") }) { Text(stringResource(R.string.set_show_trip)) }
         }
+    }
+
+    Section(stringResource(R.string.set_trips)) {
+        val ctx = LocalContext.current
+        val trips by Trips.set.collectAsStateWithLifecycle()
+        val day = remember { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT) }
+        listOf(false to trips.a, true to trips.b).forEach { (isB, trip) ->
+            val name = stringResource(if (isB) R.string.w_trip_b else R.string.w_trip_a)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text("$name: ${fmt(Units.dist(trip.distM / 1000), 1)} ${Units.distUnit}", color = Palette.text, fontSize = 15.sp)
+                    Text(stringResource(R.string.set_trip_since, day.format(java.util.Date(trip.sinceMs))), color = Palette.label, fontSize = 12.sp)
+                }
+                OutlinedButton(onClick = { Trips.reset(ctx, isB) }) { Text(stringResource(R.string.set_trip_reset)) }
+            }
+        }
+        var odo by remember { mutableStateOf("") }
+        val odoValue = odo.replace(',', '.').toDoubleOrNull()
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+            OutlinedTextField(
+                value = odo, onValueChange = { odo = it },
+                label = { Text(stringResource(R.string.set_odo, fmt(Units.dist(trips.odoM / 1000), 0), Units.distUnit)) },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.width(220.dp),
+            )
+            Button(enabled = odoValue != null && odoValue >= 0, modifier = Modifier.padding(start = 8.dp), onClick = {
+                // Typed in the units shown: back to km.
+                Trips.setOdo(ctx, odoValue!! / Units.dist(1.0)); odo = ""
+            }) { Text(stringResource(R.string.set_odo_set)) }
+        }
+        Text(stringResource(R.string.set_trips_hint), color = Palette.label, fontSize = 12.sp)
     }
 
     Section(stringResource(R.string.set_refuel)) {

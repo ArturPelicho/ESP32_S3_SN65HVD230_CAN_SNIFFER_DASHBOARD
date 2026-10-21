@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import pt.artur.motadash.Units
+import pt.artur.motadash.Trip
+import pt.artur.motadash.Trips
 import pt.artur.motadash.Attitude
 import pt.artur.motadash.ElevProfile
 import android.content.res.Configuration
@@ -120,6 +122,9 @@ enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val
     AIR(R.string.w_air, 140f, 70f, 1, 1),
     THROTTLE(R.string.w_throttle, 220f, 50f, 2, 1),
     TRIP(R.string.w_trip, 220f, 90f, 2, 2),
+    TRIP_A(R.string.w_trip_a, 220f, 90f, 2, 2),
+    TRIP_B(R.string.w_trip_b, 220f, 90f, 2, 2),
+    ODO(R.string.w_odo, 160f, 70f, 1, 1),
     COORDS(R.string.w_coords, 190f, 50f, 2, 1),
     ALTITUDE(R.string.w_altitude, 140f, 70f, 1, 1),
     FAULTS(R.string.w_faults, 280f, 56f, 2, 1),
@@ -699,6 +704,14 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
                         fontSize = (10 * u).sp, maxLines = 1)
                 }
             }
+            Widget.TRIP_A, Widget.TRIP_B -> {
+                val trips by Trips.set.collectAsStateWithLifecycle()
+                TripCell(stringResource(w.res), if (w == Widget.TRIP_A) trips.a else trips.b, bg, u)
+            }
+            Widget.ODO -> {
+                val trips by Trips.set.collectAsStateWithLifecycle()
+                ValueTile(stringResource(R.string.w_odo), fmt(Units.dist(trips.odoM / 1000), 0), Units.distUnit, Palette.text, bg, u)
+            }
             Widget.COORDS -> Cell(bg, u, center = true) {
                 if (d.lat == null || d.lon == null) Text("--", color = Palette.dim, fontSize = (16 * u).sp)
                 else {
@@ -721,6 +734,22 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
             }
         }
     }
+}
+
+/** A trip counter: distance, then time moving, average speed, fuel use and top speed. */
+@Composable
+private fun TripCell(label: String, t: Trip, bg: Color, u: Float) = Cell(bg, u) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+        Text(label, color = Palette.label, fontSize = (12 * u).sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        BigValue(fmt(Units.dist(t.distM / 1000), 1), Units.distUnit, Palette.text, u, 22f)
+    }
+    val mins = (t.movingS / 60).toInt()
+    Text("⏱ %d:%02d   ⌀ %s %s".format(mins / 60, mins % 60, fmt(Units.speed(t.avgKmh), 0), Units.speedUnit),
+        color = Palette.text, fontSize = (12 * u).sp, maxLines = 1)
+    Text(listOfNotNull(
+        t.l100?.let { "⛽ ${fmt(Units.cons(it), 1)} ${Units.consUnit}" },
+        "▲ ${fmt(Units.speed(t.maxKmh), 0)} ${Units.speedUnit}",
+    ).joinToString("   "), color = Palette.label, fontSize = (11 * u).sp, maxLines = 1)
 }
 
 private const val CHT_MIN = 40.0

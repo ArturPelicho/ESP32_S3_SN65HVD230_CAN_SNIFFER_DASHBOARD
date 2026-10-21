@@ -105,4 +105,10 @@
     <string name="unit_km">Kilomètres (km/h)</string>
     <string name="unit_mi">Miles (mph)</string>
     <string name="set_units_hint">Litres ou gallons suivent la consommation. Le boîtier reste en métrique.</string>
+    <string name="set_trips">Trajets et odomètre</string>
+    <string name="set_trip_since">depuis %1$s</string>
+    <string name="set_trip_reset">Remettre à zéro</string>
+    <string name="set_odo">Odomètre : %1$s %2$s</string>
+    <string name="set_odo_set">Définir</string>
+    <string name="set_trips_hint">Comptés par le téléphone : boîtier allumé, sa distance et son carburant ; sans lui, le GPS du téléphone. Saisis une fois le compteur de la moto et il continue à partir de là.</string>
 </resources>

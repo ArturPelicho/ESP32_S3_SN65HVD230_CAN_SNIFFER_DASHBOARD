@@ -92,6 +92,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         L.init(this)
         Units.load(this)
+        Trips.load(this)
         if (Permissions.ready(this)) MotaService.start(this) else askPermissions.launch(Permissions.needed())
         applyScreenOn()
         applyOrientation()
