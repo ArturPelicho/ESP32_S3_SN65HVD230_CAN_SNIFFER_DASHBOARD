@@ -139,4 +139,10 @@
     <string name="sound_voice">Voice volume: %1$s</string>
     <string name="sound_alert">Warning sound volume: %1$s</string>
     <string name="sound_voice_sample">Voice at this volume</string>
+    <string name="measure_from_here">Measure distance from here</string>
+    <string name="measure_point">Point</string>
+    <string name="measure_hint">Long-press the map to add a point there</string>
+    <string name="dline_add">Direct line to here</string>
+    <string name="dline_remove">Remove this direct line</string>
+    <string name="dline_remove_all">Remove all direct lines</string>
 </resources>

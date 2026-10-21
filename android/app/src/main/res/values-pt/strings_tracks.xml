@@ -139,4 +139,10 @@
     <string name="sound_voice">Volume da voz: %1$s</string>
     <string name="sound_alert">Volume dos avisos sonoros: %1$s</string>
     <string name="sound_voice_sample">Voz com este volume</string>
+    <string name="measure_from_here">Medir distância daqui</string>
+    <string name="measure_point">Ponto</string>
+    <string name="measure_hint">Pressão longa no mapa para juntar um ponto aí</string>
+    <string name="dline_add">Linha direta para aqui</string>
+    <string name="dline_remove">Remover esta linha direta</string>
+    <string name="dline_remove_all">Remover todas as linhas diretas</string>
 </resources>

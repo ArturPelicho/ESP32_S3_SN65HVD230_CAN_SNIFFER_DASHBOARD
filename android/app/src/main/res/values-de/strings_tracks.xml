@@ -139,4 +139,10 @@
     <string name="sound_voice">Lautstärke der Stimme: %1$s</string>
     <string name="sound_alert">Lautstärke der Warntöne: %1$s</string>
     <string name="sound_voice_sample">Stimme in dieser Lautstärke</string>
+    <string name="measure_from_here">Entfernung von hier messen</string>
+    <string name="measure_point">Punkt</string>
+    <string name="measure_hint">Lange auf die Karte drücken, um dort einen Punkt hinzuzufügen</string>
+    <string name="dline_add">Direkte Linie hierher</string>
+    <string name="dline_remove">Diese direkte Linie entfernen</string>
+    <string name="dline_remove_all">Alle direkten Linien entfernen</string>
 </resources>

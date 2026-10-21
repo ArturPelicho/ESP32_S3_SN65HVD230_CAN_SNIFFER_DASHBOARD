@@ -378,7 +378,28 @@ object MapStyle {
                 "layout" to mapOf("text-field" to listOf("to-string", listOf("get", "n")), "text-font" to listOf(MEDIUM),
                     "text-size" to 13, "text-allow-overlap" to true, "text-ignore-placement" to true),
                 "paint" to mapOf("text-color" to "#ffffff", "text-halo-color" to "#000000", "text-halo-width" to 1.2)),
+            // Direct lines from the bike (magenta) and the distance being measured (orange), with their labels.
+            mapOf("id" to "tool-casing", "type" to "line", "source" to "tools",
+                "filter" to listOf("in", kind, listOf("literal", listOf("dline", "measure"))),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to c.halo, "line-width" to 6)),
+            mapOf("id" to "tool-line", "type" to "line", "source" to "tools",
+                "filter" to listOf("in", kind, listOf("literal", listOf("dline", "measure"))),
+                "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
+                "paint" to mapOf("line-color" to listOf("match", kind, "measure", MEASURE, DLINE), "line-width" to 3)),
+            mapOf("id" to "tool-pt", "type" to "circle", "source" to "tools",
+                "filter" to listOf("in", kind, listOf("literal", listOf("dend", "mpt"))),
+                "paint" to mapOf("circle-radius" to listOf("match", kind, "dend", 8, 5),
+                    "circle-color" to listOf("match", kind, "mpt", MEASURE, DLINE),
+                    "circle-stroke-color" to "#ffffff", "circle-stroke-width" to 2)),
+            mapOf("id" to "tool-label", "type" to "symbol", "source" to "tools",
+                "filter" to listOf("has", "label"),
+                "layout" to mapOf("text-field" to listOf("get", "label"), "text-font" to listOf(MEDIUM), "text-size" to 15,
+                    "text-offset" to listOf(0, 1.0), "text-anchor" to "top", "text-allow-overlap" to true),
+                "paint" to mapOf("text-color" to listOf("match", kind, "mpt", MEASURE, DLINE),
+                    "text-halo-color" to c.halo, "text-halo-width" to 2)),
         )
+        sources["tools"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
 
@@ -422,6 +443,9 @@ object MapStyle {
 
     /** Track width from its "w" property (1-3), narrower when zoomed out, plus [extra] for the casing. */
     /** Track width by zoom; a track faded by Nav's way back is drawn thin. */
+    private const val MEASURE = "#ff9100"
+    private const val DLINE = "#e040fb"
+
     private fun trackWidth(extra: Double): List<Any> {
         val w = listOf("case", listOf("==", listOf("get", "dim"), true), 0.5, listOf("get", "w"))
         val e = listOf("case", listOf("==", listOf("get", "dim"), true), 0.0, 1.0)

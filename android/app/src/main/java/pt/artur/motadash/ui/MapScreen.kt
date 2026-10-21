@@ -76,6 +76,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -102,6 +103,7 @@ import androidx.lifecycle.compose.currentStateAsState
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -114,6 +116,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import pt.artur.motadash.DeadReckoning
 import pt.artur.motadash.Place
 import pt.artur.motadash.Places
+import pt.artur.motadash.DirectLines
 import pt.artur.motadash.TripRecorder
 import pt.artur.motadash.SNAP_M
 import pt.artur.motadash.Router
@@ -243,6 +246,48 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         style?.getSourceAs<GeoJsonSource>("me")?.setGeoJson(f)
         val g = ghost?.let { Feature.fromGeometry(Point.fromLngLat(it.lon, it.lat)).apply { addNumberProperty("bearing", heading) } }
         style?.getSourceAs<GeoJsonSource>("ghost")?.setGeoJson(g?.let { FeatureCollection.fromFeature(it) } ?: FeatureCollection.fromFeatures(emptyList()))
+        drawTools()
+    }
+
+    /** Straight lines from the bike to these points ([DirectLines]). */
+    var directLines: List<Place> = emptyList()
+    /** Points of a distance being measured, the last leg running to the middle of the screen; null when not measuring. */
+    var measure: List<LatLon>? = null
+    /** Measured so far, up to the middle of the screen (shown in the measuring bar). */
+    val measured = mutableDoubleStateOf(0.0)
+
+    /** Direct lines and the distance being measured, with their labels. */
+    fun drawTools() {
+        val src = style?.getSourceAs<GeoJsonSource>("tools") ?: return
+        val fs = ArrayList<Feature>()
+        val loc = fix
+        if (loc != null) {
+            val here = LatLon(loc.latitude, loc.longitude)
+            for (d in directLines) {
+                val to = LatLon(d.lat, d.lon)
+                fs += Feature.fromGeometry(LineString.fromLngLats(listOf(Point.fromLngLat(here.lon, here.lat), Point.fromLngLat(to.lon, to.lat))))
+                    .apply { addStringProperty("kind", "dline") }
+                val label = km(pt.artur.motadash.metres(here, to)) + " · " + pt.artur.motadash.bearing(here, to).let { ((it % 360 + 360) % 360).roundToInt() % 360 } + "°"
+                fs += Feature.fromGeometry(Point.fromLngLat(to.lon, to.lat)).apply {
+                    addStringProperty("kind", "dend"); addStringProperty("did", d.id)
+                    addStringProperty("label", if (d.name.isEmpty()) label else d.name + "\n" + label)
+                }
+            }
+        }
+        measure?.let { pts ->
+            val all = centre()?.let { pts + it } ?: pts
+            if (all.size >= 2) fs += Feature.fromGeometry(LineString.fromLngLats(all.map { Point.fromLngLat(it.lon, it.lat) }))
+                .apply { addStringProperty("kind", "measure") }
+            var sum = 0.0
+            all.forEachIndexed { i, p ->
+                if (i > 0) sum += pt.artur.motadash.metres(all[i - 1], p)
+                if (i < pts.size) fs += Feature.fromGeometry(Point.fromLngLat(p.lon, p.lat)).apply {
+                    addStringProperty("kind", "mpt"); if (i > 0) addStringProperty("label", km(sum))
+                }
+            }
+            measured.doubleValue = sum
+        }
+        src.setGeoJson(FeatureCollection.fromFeatures(fs))
     }
 
     /** Heading: GPS course while riding, compass when stopped or slow. */
@@ -494,6 +539,9 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         fun near(layer: String, r: Float) = if (style?.getLayer(layer) == null) emptyList()
             else m.queryRenderedFeatures(RectF(p.x - r, p.y - r, p.x + r, p.y + r), layer)
         val at = LatLon(ll.latitude, ll.longitude)
+        near("tool-pt", 30f).firstOrNull { it.hasNonNullValueForProperty("did") }?.let { f ->
+            return MapMenu(p.x, p.y, at, line = f.getStringProperty("did"))
+        }
         near("fav", 30f).firstOrNull { it.hasNonNullValueForProperty("pid") }?.let { f ->
             return MapMenu(p.x, p.y, at, place = f.getStringProperty("pid"))
         }
@@ -521,6 +569,7 @@ private data class MapMenu(
     val point: Int? = null,      // a waypoint of a planned trajeto
     val leg: Int? = null,        // the line between waypoints leg and leg + 1
     val place: String? = null,   // a favourite place
+    val line: String? = null,    // a direct line's end
 )
 
 /** A waypoint being moved: it sits under the pin in the middle of the screen. */
@@ -679,6 +728,9 @@ fun MapScreen() {
     val trip by TripRecorder.state.collectAsStateWithLifecycle()
     val places by Places.list.collectAsStateWithLifecycle()
     var newPlace by remember { mutableStateOf<LatLon?>(null) }
+    val directLines by DirectLines.list.collectAsStateWithLifecycle()
+    /** Points of the distance being measured (the last leg runs to the cross in the middle), or null. */
+    var measuring by remember { mutableStateOf<List<LatLon>?>(null) }
     var stopTrip by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
@@ -747,6 +799,7 @@ fun MapScreen() {
         MapStore.load(ctx)
         TrackStore.load(ctx)
         Places.load(ctx)
+        DirectLines.load(ctx)
         while (true) { delay(60_000); minute++ }
     }
 
@@ -850,7 +903,10 @@ fun MapScreen() {
                         m.uiSettings.isAttributionEnabled = false
                         // Our own north needle (below) only shows the direction; MapLibre's one reset the map on touch.
                         m.uiSettings.isCompassEnabled = false
-                        m.addOnCameraMoveListener { mapBearing = m.cameraPosition.bearing.toFloat(); mapTilt = m.cameraPosition.tilt.toFloat() }
+                        m.addOnCameraMoveListener {
+                            mapBearing = m.cameraPosition.bearing.toFloat(); mapTilt = m.cameraPosition.tilt.toFloat()
+                            if (holder.measure != null) holder.drawTools()
+                        }
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
                         fun touched() { holder.gestureAt = SystemClock.elapsedRealtime() }
                         // Dragging or turning the map stops following; pinching only overrides the zoom.
@@ -874,8 +930,11 @@ fun MapScreen() {
                             }
                         })
                         // Long press: waypoint menu (add, move, delete) or the trajeto's menu.
+                        // While measuring, a long press adds the point pressed instead.
                         m.addOnMapLongClickListener { ll ->
                             holder.setFollow(false); touched()
+                            val ms = measuring
+                            if (ms != null) { measuring = ms + LatLon(ll.latitude, ll.longitude); return@addOnMapLongClickListener true }
                             menu = holder.pick(ll)
                             true
                         }
@@ -888,6 +947,12 @@ fun MapScreen() {
         )
 
         LaunchedEffect(styleJson) { holder.applyStyle(styleJson) }
+        LaunchedEffect(directLines) { holder.directLines = directLines; holder.drawTools() }
+        LaunchedEffect(measuring) {
+            holder.measure = measuring
+            holder.editing = measuring != null || moving != null
+            holder.drawTools()
+        }
         LaunchedEffect(tracks, activeId, reversed, places, navDim) {
             holder.setTracks(tracks, activeId, reversed, places, navDim)
             if (follower == null) { progress = null; holder.setJoin(null) }
@@ -997,7 +1062,7 @@ fun MapScreen() {
                 mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings()
                 holder.setFollow(true); holder.update(600)
             }
-            MapCtl.FOLLOW -> MapButton("◎", active = follow) { moving = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
+            MapCtl.FOLLOW -> MapButton("◎", active = follow) { moving = null; measuring = null; holder.editing = false; holder.setFollow(true); holder.update(600) }
             MapCtl.ZOOM_IN -> MapButton("+") { holder.zoomBy(1.0) }
             MapCtl.ZOOM_OUT -> MapButton("−") { holder.zoomBy(-1.0) }
             MapCtl.GPS -> GpsButton(fix, gnss, active = showGps) { showGps = !showGps }
@@ -1101,6 +1166,12 @@ fun MapScreen() {
                 OutlinedButton(onClick = { moving = null; holder.editing = false }) { Text(stringResource(R.string.map_cancel)) }
             }
         }
+        measuring?.let { pts ->
+            MeasureBar(holder,
+                onAdd = { holder.centre()?.let { measuring = pts + it } },
+                onUndo = { measuring = if (pts.size > 1) pts.dropLast(1) else null },
+                onClose = { measuring = null })
+        }
         }
 
         // Turn banner and track box in a corner (map ⚙), clear of the road ahead in the middle.
@@ -1124,6 +1195,17 @@ fun MapScreen() {
             if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick, arrival) { m ->
                 trackMode = m
                 MapStore.setTrackMode(ctx, m)
+            }
+        }
+
+        // Cross in the middle while measuring: the last leg runs to it as the map slides under.
+        if (measuring != null) {
+            Canvas(Modifier.align(Alignment.Center).size(56.dp)) {
+                val c = center
+                drawLine(Color.Black, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 5f)
+                drawLine(Color.Black, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 5f)
+                drawLine(MEASURE_COLOR, c.copy(x = 0f), c.copy(x = size.width), strokeWidth = 2.5f)
+                drawLine(MEASURE_COLOR, c.copy(y = 0f), c.copy(y = size.height), strokeWidth = 2.5f)
             }
         }
 
@@ -1162,6 +1244,7 @@ fun MapScreen() {
                     onSave = { saving = it; save.launch(GpxWriter.fileName(it)) },
                     onShare = { shareGpx(ctx, it) },
                     onNewPlace = { newPlace = it },
+                    onMeasure = { at -> measuring = listOf(at); holder.drawTools() },
                 )
             }
         }
@@ -1290,10 +1373,12 @@ private fun MapMenuItems(
     onSave: (Track) -> Unit,
     onShare: (Track) -> Unit,
     onNewPlace: (LatLon) -> Unit,
+    onMeasure: (LatLon) -> Unit,
 ) {
     val ctx = LocalContext.current
     var confirmDelete by remember { mutableStateOf(false) }
     val place = mm.place?.let { id -> Places.list.value.firstOrNull { it.id == id } }
+    val line = mm.line?.let { id -> DirectLines.list.value.firstOrNull { it.id == id } }
     var looks by remember { mutableStateOf(false) }
     val t = tracks.firstOrNull { it.id == mm.tid }
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
@@ -1302,9 +1387,18 @@ private fun MapMenuItems(
                 MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
                 MenuItem(stringResource(R.string.map_cancel), onDismiss) { onMoveCancel() }
             }
+            line != null -> {
+                val to = LatLon(line.lat, line.lon)
+                if (here != null) MenuItem(stringResource(R.string.map_go_there), onDismiss) { Planner.goThere(ctx, here, to, line.name.ifEmpty { null }) }
+                MenuItem(stringResource(R.string.measure_from_here), onDismiss) { onMeasure(to) }
+                MenuItem(stringResource(R.string.dline_remove), onDismiss) { DirectLines.delete(ctx, line.id) }
+                if (DirectLines.list.value.size > 1) MenuItem(stringResource(R.string.dline_remove_all), onDismiss) { DirectLines.clear(ctx) }
+            }
             place != null -> {
                 Text("★ " + place.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
                 if (here != null) MenuItem(stringResource(R.string.place_go), onDismiss) { Planner.goThere(ctx, here, LatLon(place.lat, place.lon), place.name) }
+                MenuItem(stringResource(R.string.dline_add), onDismiss) { DirectLines.add(ctx, LatLon(place.lat, place.lon), place.name) }
+                MenuItem(stringResource(R.string.measure_from_here), onDismiss) { onMeasure(LatLon(place.lat, place.lon)) }
                 if (confirmDelete) MenuItem(stringResource(R.string.place_confirm_delete, place.name), onDismiss) { Places.delete(ctx, place.id) }
                 else DropdownMenuItem(text = { Text(stringResource(R.string.place_delete), fontSize = 16.sp, color = Palette.red) }, onClick = { confirmDelete = true })
             }
@@ -1362,8 +1456,29 @@ private fun MapMenuItems(
                 if (here != null) MenuItem(stringResource(R.string.map_go_there), onDismiss) { Planner.goThere(ctx, here, mm.at) }
                 MenuItem(stringResource(R.string.place_add), onDismiss) { onNewPlace(mm.at) }
                 MenuItem(stringResource(R.string.map_new_route), onDismiss) { Planner.start(ctx, mm.at) }
+                MenuItem(stringResource(R.string.measure_from_here), onDismiss) { onMeasure(mm.at) }
+                MenuItem(stringResource(R.string.dline_add), onDismiss) { DirectLines.add(ctx, mm.at) }
             }
         }
+    }
+}
+
+private val MEASURE_COLOR = Color(0xFFFF9100)
+
+/** Distance measured so far (to the cross in the middle), with add, undo and close. */
+@Composable
+private fun MeasureBar(holder: MapHolder, onAdd: () -> Unit, onUndo: () -> Unit, onClose: () -> Unit) {
+    Column(
+        Modifier.background(Palette.overlay, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("📏 " + km(holder.measured.doubleValue), color = MEASURE_COLOR, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Button(onClick = onAdd) { Text("+ " + stringResource(R.string.measure_point)) }
+            OutlinedButton(onClick = onUndo) { Text("↶") }
+            OutlinedButton(onClick = onClose) { Text("✕") }
+        }
+        Text(stringResource(R.string.measure_hint), color = Palette.label, fontSize = 12.sp)
     }
 }
 
