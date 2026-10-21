@@ -328,7 +328,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
                     val rest = if (forward) (i + 1 until line.size).map { line[it] } else (i downTo 0).map { line[it] }
                     val out = listOf(proj) + rest.map { LatLon(it.latitude(), it.longitude()) }
                     var len = 0.0
-                    for (k in 1 until out.size) len += metres(out[k - 1], out[k])
+                    for (k in 1 until out.size) len += pt.artur.motadash.metres(out[k - 1], out[k])
                     if (len < 5) continue // the very end of this piece: the next one carries on
                     bestScore = score; best = out
                 }
