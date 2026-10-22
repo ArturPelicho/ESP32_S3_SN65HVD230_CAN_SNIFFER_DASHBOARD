@@ -78,6 +78,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -206,6 +207,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     var azCfg = AutoZoom()
     private var zoomInSince = 0L
     private var first = true
+    private var wasFollowing = false
 
     fun applyStyle(json: String) {
         val m = map ?: run { styleJson = null; pending = json; return }
@@ -244,12 +246,88 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
 
     private fun drawMarker() {
         val loc = fix ?: return
-        val f = Feature.fromGeometry(Point.fromLngLat(loc.longitude, loc.latitude))
-        f.addNumberProperty("bearing", heading)
-        style?.getSourceAs<GeoJsonSource>("me")?.setGeoJson(f)
+        drawMe()
         val g = ghost?.let { Feature.fromGeometry(Point.fromLngLat(it.lon, it.lat)).apply { addNumberProperty("bearing", heading) } }
         style?.getSourceAs<GeoJsonSource>("ghost")?.setGeoJson(g?.let { FeatureCollection.fromFeature(it) } ?: FeatureCollection.fromFeatures(emptyList()))
         drawTools()
+    }
+
+    // ---- Smooth movement between GPS fixes ----
+    // The arrow (and the camera following it) runs at frame rate towards where the bike should be now:
+    // from the last fix, at its speed, along the line ahead (the followed route or track, or the road),
+    // else straight on. Each new fix pulls it back quickly but smoothly (a first-order follower, no jumps).
+
+    /** The line ahead of the bike from about where it is (route, track or road), for the prediction; null: straight on. */
+    var ahead: List<LatLon>? = null
+        set(v) { field = v; aheadCum = v?.let { l -> DoubleArray(l.size).also { c -> for (i in 1 until l.size) c[i] = c[i - 1] + pt.artur.motadash.metres(l[i - 1], l[i]) } } }
+    private var aheadCum: DoubleArray? = null
+    private var shown: LatLon? = null
+    private var shownHeading = 0f
+    private var lastFrameNs = 0L
+    private var camZoom = Double.NaN
+    private var camTilt = 0.0
+    private var targetZoom = 15.0
+    private var targetTilt = 0.0
+    private var targetPad = 0.0
+    private var cameraFreeAt = 0L
+    private var lastCam: CameraPosition? = null
+
+    /** Where the bike should be now, from the last fix. */
+    private fun predicted(loc: Location, nowNs: Long): LatLon {
+        val here = LatLon(loc.latitude, loc.longitude)
+        val v = if (loc.hasSpeed() && loc.speed > 1.5f) loc.speed.toDouble() else return here
+        val age = ((nowNs - loc.elapsedRealtimeNanos) / 1e9).coerceIn(0.0, 2.5)
+        val go = v * age
+        val l = ahead; val c = aheadCum
+        if (l != null && c != null && l.size >= 2 && c.last() > 1) {
+            val d = go.coerceAtMost(c.last())
+            val i = c.indexOfFirst { it >= d }.let { if (it <= 0) 1 else it }
+            val t = ((d - c[i - 1]) / (c[i] - c[i - 1]).coerceAtLeast(1e-6)).coerceIn(0.0, 1.0)
+            return LatLon(l[i - 1].lat + (l[i].lat - l[i - 1].lat) * t, l[i - 1].lon + (l[i].lon - l[i - 1].lon) * t)
+        }
+        val b = Math.toRadians(if (loc.hasBearing()) loc.bearing.toDouble() else heading.toDouble())
+        return LatLon(here.lat + go * cos(b) / 110_540.0, here.lon + go * kotlin.math.sin(b) / (111_320.0 * cos(Math.toRadians(here.lat))))
+    }
+
+    private fun drawMe() {
+        val p = shown ?: fix?.let { LatLon(it.latitude, it.longitude) } ?: return
+        val f = Feature.fromGeometry(Point.fromLngLat(p.lon, p.lat))
+        f.addNumberProperty("bearing", shownHeading)
+        style?.getSourceAs<GeoJsonSource>("me")?.setGeoJson(f)
+    }
+
+    /** One display frame: move the arrow, and the camera when following. */
+    fun frame() {
+        val loc = fix ?: return
+        val now = SystemClock.elapsedRealtimeNanos()
+        val dt = if (lastFrameNs == 0L) 0.0 else ((now - lastFrameNs) / 1e9).coerceIn(0.0, 0.5)
+        lastFrameNs = now
+        val target = predicted(loc, now)
+        val cur = shown
+        shown = if (cur == null || pt.artur.motadash.metres(cur, target) > 250) target else {
+            val a = 1 - kotlin.math.exp(-dt / 0.3)
+            LatLon(cur.lat + (target.lat - cur.lat) * a, cur.lon + (target.lon - cur.lon) * a)
+        }
+        val ah = 1 - kotlin.math.exp(-dt / 0.35)
+        shownHeading = ((shownHeading + (((heading - shownHeading + 540f) % 360f) - 180f) * ah.toFloat()) + 360f) % 360f
+        drawMe()
+
+        val m = map ?: return
+        if (!follow || gesturing || SystemClock.elapsedRealtime() < cameraFreeAt || camZoom.isNaN()) return
+        val az = 1 - kotlin.math.exp(-dt / 0.6)
+        camZoom += (targetZoom - camZoom) * az
+        camTilt += (targetTilt - camTilt) * az
+        val s = shown ?: return
+        val pos = CameraPosition.Builder()
+            .target(LatLng(s.lat, s.lon)).zoom(camZoom)
+            .bearing(if (mode == FollowMode.NORTH) 0.0 else shownHeading.toDouble())
+            .tilt(camTilt).padding(0.0, targetPad, 0.0, 0.0).build()
+        // Standing still nothing changes: no need to redraw the map.
+        val last = lastCam
+        if (last != null && abs(last.target!!.latitude - s.lat) < 1e-7 && abs(last.target!!.longitude - s.lon) < 1e-7 &&
+            abs(last.zoom - camZoom) < 0.002 && abs(last.bearing - pos.bearing) < 0.05 && abs(last.tilt - camTilt) < 0.05) return
+        lastCam = pos
+        m.moveCamera(CameraUpdateFactory.newCameraPosition(pos))
     }
 
     /** Straight lines from the bike to these points ([DirectLines]). */
@@ -322,19 +400,26 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             else -> zoomInSince = 0
         }
         if (autoZoom && userZoom != null && now > manualUntil) userZoom = null
-        if (!follow || gesturing) return
+        if (!follow || gesturing) { wasFollowing = false; return }
 
-        val zoom = userZoom ?: if (autoZoom) autoLevel else if (first) 15.0 else m.cameraPosition.zoom
+        val zoom = userZoom ?: if (autoZoom) autoLevel else if (first || camZoom.isNaN()) 15.0 else camZoom
         val h = view?.height ?: 0
-        val pos = CameraPosition.Builder()
-            .target(LatLng(loc.latitude, loc.longitude))
-            .zoom(zoom)
-            .bearing(if (mode == FollowMode.NORTH) 0.0 else heading.toDouble())
-            .tilt(if (mode == FollowMode.THREE_D) tiltFor(speedKmh) else 0.0)
-            // Marker in the lower part of the screen so more road ahead is visible.
-            .padding(0.0, if (mode == FollowMode.NORTH) 0.0 else h * 0.4, 0.0, 0.0)
-            .build()
-        m.easeCamera(CameraUpdateFactory.newCameraPosition(pos), if (first) 1200 else durationMs, false)
+        targetZoom = zoom
+        targetTilt = if (mode == FollowMode.THREE_D) tiltFor(speedKmh) else 0.0
+        // Marker in the lower part of the screen so more road ahead is visible.
+        targetPad = if (mode == FollowMode.NORTH) 0.0 else h * 0.4
+        // The frames move the camera from here on; a first or a re-follow glides there once.
+        if (first || camZoom.isNaN() || !wasFollowing) {
+            val pos = CameraPosition.Builder()
+                .target(LatLng(loc.latitude, loc.longitude)).zoom(zoom)
+                .bearing(if (mode == FollowMode.NORTH) 0.0 else heading.toDouble())
+                .tilt(targetTilt).padding(0.0, targetPad, 0.0, 0.0).build()
+            val ms = if (first) 1200 else maxOf(durationMs, 400)
+            m.easeCamera(CameraUpdateFactory.newCameraPosition(pos), ms, false)
+            camZoom = zoom; camTilt = targetTilt; shownHeading = heading; lastCam = null
+            cameraFreeAt = now + ms + 50
+        }
+        wasFollowing = true
         first = false
     }
 
@@ -924,7 +1009,10 @@ fun MapScreen() {
                         // Our own north needle (below) only shows the direction; MapLibre's one reset the map on touch.
                         m.uiSettings.isCompassEnabled = false
                         m.addOnCameraMoveListener {
-                            mapBearing = m.cameraPosition.bearing.toFloat(); mapTilt = m.cameraPosition.tilt.toFloat()
+                            // The camera moves every frame while following: only real changes redraw the screen.
+                            val b = m.cameraPosition.bearing.toFloat(); val tl = m.cameraPosition.tilt.toFloat()
+                            if (abs(((b - mapBearing + 540f) % 360f) - 180f) > 1f) mapBearing = b
+                            if (abs(tl - mapTilt) > 1f) mapTilt = tl
                             if (holder.measure != null) holder.drawTools()
                         }
                         m.cameraPosition = CameraPosition.Builder().target(LatLng(39.6, -8.0)).zoom(6.0).build()
@@ -967,6 +1055,13 @@ fun MapScreen() {
         )
 
         LaunchedEffect(styleJson) { holder.applyStyle(styleJson) }
+        // The smooth arrow: ~30 frames a second while the map is on screen.
+        LaunchedEffect(holder) {
+            var last = 0L
+            while (true) {
+                withFrameMillis { t -> if (t - last >= 30) { last = t; holder.frame() } }
+            }
+        }
         LaunchedEffect(directLines) { holder.directLines = directLines; holder.drawTools() }
         LaunchedEffect(measuring) {
             holder.measure = measuring
@@ -1044,6 +1139,14 @@ fun MapScreen() {
             // A few metres off the line still counts as on it: a faint arrow shows where.
             val snap = back?.routeSnap ?: p?.takeIf { it.offM <= SNAP_M }
             holder.ghost = snap?.takeIf { it.offM > 6 }?.nearest
+            // What lies ahead, for the smooth arrow between fixes: the next 300 m of the followed line,
+            // or with nothing followed the road under the bike.
+            holder.ahead = when {
+                back != null -> null
+                p != null && follower != null && p.offM <= 15 -> (0..30).map { follower.pointAt(p.doneM + it * 10.0) }
+                activeTrack == null && f.hasBearing() && f.speed * 3.6 > 15 -> holder.roadAhead(LatLon(f.latitude, f.longitude), f.bearing.toDouble())
+                else -> null
+            }
             holder.update(900)
             val backGuide = back?.guide
             val backDone = back?.routeDoneM
