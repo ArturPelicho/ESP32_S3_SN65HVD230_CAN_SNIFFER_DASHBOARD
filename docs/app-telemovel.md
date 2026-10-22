@@ -7,7 +7,7 @@ está ligado enquanto a placa estiver ligada: fora da mota o gasto é quase zero
 ## Instalar
 
 1. No telemóvel, abrir
-   <https://github.com/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases/latest>
+   <https://github.com/ArturPelicho/NavExpress/releases/latest>
    e tocar em `navexpress-v0.1.N-xxxxxxx.apk` (até à v0.1.20 chamava-se `mota-dash-…`) (é o APK direto, sem zip; o nome traz a versão).
 2. Abrir o ficheiro descarregado e instalar (permitir "instalar apps
    desconhecidas" para o browser ou para o gestor de ficheiros).

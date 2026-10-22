@@ -140,7 +140,7 @@ object MapStore {
     /** Asks the map to show one track (by id), from the app's settings. */
     val showTrack = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private const val RELEASES =
-        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100&page="
+        "https://api.github.com/repos/ArturPelicho/NavExpress/releases?per_page=100&page="
     private const val PREFS = "maps"
 
     private val _index = MutableStateFlow<MapIndex?>(null)
@@ -344,7 +344,7 @@ object MapStore {
         c.connectTimeout = 10_000
         c.readTimeout = 20_000
         c.setRequestProperty("Accept", "application/json")
-        c.setRequestProperty("User-Agent", "MotaDash")
+        c.setRequestProperty("User-Agent", "NavExpress")
         try {
             if (c.responseCode !in 200..299) error("HTTP ${c.responseCode}")
             return c.inputStream.bufferedReader().use { it.readText() }

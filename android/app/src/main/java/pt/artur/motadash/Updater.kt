@@ -20,7 +20,7 @@ data class Release(val tag: String, val build: Int, val apkName: String, val apk
 /** In-app update from the GitHub releases: find the newest build, download its APK, hand it to the installer. */
 object Updater {
     private const val RELEASES =
-        "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100"
+        "https://api.github.com/repos/ArturPelicho/NavExpress/releases?per_page=100"
     private const val TIMEOUT_MS = 15_000
 
     /** The installed build number: versionName is "0.1.<N>" (and versionCode is N). */

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Speed limits and speed cameras for the Mota Dash map.
+"""Speed limits and speed cameras for the NavExpress map.
 
 Reads osmium GeoJSONSeq exports and writes compact GeoJSONSeq with only what the app needs:
   limits.py ways <in> <out>     lines: kmh, and kmh_f / kmh_b when they differ by direction
