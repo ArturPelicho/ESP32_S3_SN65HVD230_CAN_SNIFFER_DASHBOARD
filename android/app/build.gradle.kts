@@ -5,10 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "pt.artur.motadash"
+    namespace = "pt.artur.navexpress"
     compileSdk = 34
 
     defaultConfig {
+        // Kept from the first builds: changing it would install a separate app next to the old one.
         applicationId = "pt.artur.motadash"
         minSdk = 26
         targetSdk = 34

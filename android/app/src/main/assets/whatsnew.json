@@ -29,6 +29,15 @@
    "pt": [
     "As estradas até às terciárias (ER, EM, N) aparecem agora com o mapa afastado, desde o zoom 5 (Definições do mapa → Detalhe). Atualiza a região em Definições do mapa → Regiões para as ter."
    ]
+  },
+  {
+   "id": 3,
+   "en": [
+    "The app's code now lives under the NavExpress name. If calls and messages stop showing on the map, allow notification access again in Settings → Phone."
+   ],
+   "pt": [
+    "O código da app passou para o nome NavExpress. Se as chamadas e mensagens deixarem de aparecer no mapa, volta a dar acesso às notificações em Definições → Telemóvel."
+   ]
   }
  ]
 }

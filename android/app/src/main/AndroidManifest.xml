@@ -41,10 +41,6 @@
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- "Abrir com" / "Partilhar" for track files (GPX, KML, KMZ, GeoJSON, TCX, FIT). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -74,6 +70,19 @@
                 <data android:mimeType="application/json" />
             </intent-filter>
         </activity>
+
+        <!-- The launcher entry keeps the component name of the first builds, so the home screen icon survives
+             the code moving to pt.artur.navexpress. -->
+        <activity-alias
+            android:name="pt.artur.motadash.MainActivity"
+            android:targetActivity=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
 
         <!-- GPX files shared from the map (long press on a trajeto, Partilhar), and app updates for the installer. -->
         <provider
