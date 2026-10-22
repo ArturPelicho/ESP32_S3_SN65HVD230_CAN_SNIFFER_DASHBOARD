@@ -1308,9 +1308,8 @@ fun MapScreen() {
                     zoom = holder.map?.cameraPosition?.zoom ?: 14.0,
                     onShadeLive = { v -> holder.style?.layers?.filter { it.id.startsWith("hillshade-") }?.forEach {
                         val k = v / 100f
-                        val e = org.maplibre.android.style.expressions.Expression
-                        it.setProperties(PropertyFactory.hillshadeExaggeration(e.interpolate(e.linear(), e.zoom(),
-                            e.stop(6, (0.95f * k).coerceAtMost(1f)), e.stop(14, 0.7f * k))))
+                        it.setProperties(PropertyFactory.hillshadeExaggeration(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                            Expression.stop(6, (0.95f * k).coerceAtMost(1f)), Expression.stop(14, 0.7f * k))))
                     } },
                     onBack = { layerDetail = null })
                 else {
