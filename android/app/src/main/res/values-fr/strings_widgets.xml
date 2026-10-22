@@ -112,7 +112,7 @@
     <string name="detail_water_names">Noms des eaux</string>
     <string name="detail_street_names">Noms de rues</string>
     <string name="detail_road_refs">Numéros de routes</string>
-    <string name="detail_hint">Plus haut = n\'apparaît que plus près. Les routes jusqu\'aux tertiaires apparaissent dès le zoom 5 dans les régions avec le pack d\'extras (Portugal, Madère, Açores, Espagne). Les rues ne sont dans les fichiers de carte qu\'à partir du zoom 12, donc plus bas n\'affiche rien de plus.</string>
+    <string name="detail_hint">À partir de quelle distance chaque type de détail apparaît. Les très nombreux (secondaires et petites routes, rues, rivières) s\'arrêtent à Intermédiaire pour que la carte reste lisible ; chaque choix n\'est proposé que là où les fichiers de carte ont ce détail.</string>
     <string name="w_btn_search">Rechercher</string>
     <string name="search_hint">Adresse ou lieu</string>
     <string name="search_busy">Recherche…</string>
@@ -138,4 +138,15 @@
     <string name="ms_look">Apparence</string>
     <string name="ms_detail">Détail</string>
     <string name="ms_sound">Son</string>
+    <string name="zl_very_close">Très près</string>
+    <string name="zl_close">Près</string>
+    <string name="zl_middle">Intermédiaire</string>
+    <string name="zl_far">Loin</string>
+    <string name="zl_very_far">Très loin</string>
+    <string name="tg_tracks">Itinéraires</string>
+    <string name="tg_nav">Navigation</string>
+    <string name="tg_rec">Enregistrement</string>
+    <string name="tg_places">Lieux</string>
+    <string name="tg_import">Importer</string>
+    <string name="turn_title">Virage par virage</string>
 </resources>

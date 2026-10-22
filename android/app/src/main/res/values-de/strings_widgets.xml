@@ -112,7 +112,7 @@
     <string name="detail_water_names">Gewässernamen</string>
     <string name="detail_street_names">Straßennamen</string>
     <string name="detail_road_refs">Straßennummern</string>
-    <string name="detail_hint">Höher = erst näher sichtbar. Straßen bis zu Tertiärstraßen erscheinen ab Zoom 5 in Regionen mit dem Extrapaket (Portugal, Madeira, Azoren, Spanien). Straßen im Ort sind erst ab Zoom 12 in den Kartendateien, tiefer zeigt also nicht mehr.</string>
+    <string name="detail_hint">Ab welcher Entfernung jede Art von Detail erscheint. Die sehr zahlreichen (Neben- und kleinere Straßen, Straßen im Ort, Flüsse) gehen nur bis Mittel, damit die Karte lesbar bleibt; jede Wahl gibt es nur, wo die Kartendateien dieses Detail enthalten.</string>
     <string name="w_btn_search">Suchen</string>
     <string name="search_hint">Adresse oder Ort</string>
     <string name="search_busy">Suche…</string>
@@ -138,4 +138,15 @@
     <string name="ms_look">Aussehen</string>
     <string name="ms_detail">Details</string>
     <string name="ms_sound">Ton</string>
+    <string name="zl_very_close">Sehr nah</string>
+    <string name="zl_close">Nah</string>
+    <string name="zl_middle">Mittel</string>
+    <string name="zl_far">Weit</string>
+    <string name="zl_very_far">Sehr weit</string>
+    <string name="tg_tracks">Routen</string>
+    <string name="tg_nav">Navigation</string>
+    <string name="tg_rec">Aufzeichnung</string>
+    <string name="tg_places">Orte</string>
+    <string name="tg_import">Importieren</string>
+    <string name="turn_title">Abbiegung für Abbiegung</string>
 </resources>

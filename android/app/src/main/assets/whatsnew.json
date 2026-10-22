@@ -47,6 +47,25 @@
    "pt": [
     "Identificador novo (app.navexpress): instala-se como uma app nova. Carrega a cópia em Definições → Sobre → Cópia de segurança, volta a descarregar os mapas e depois desinstala o NavExpress antigo."
    ]
+  },
+  {
+   "id": 5,
+   "en": [
+    "Every option in the app now looks like the Layers ones: a frame with ✓, filled when on.",
+    "The nav card menu is one window with pages: lists to pick from, and it keeps its scroll position while you change things.",
+    "Map settings, Routes, Diagnostics and the Dashboard settings use the same groups: tabs on top inside Settings, a menu on the left when opened from the map; every group in its own frame.",
+    "Detail by zoom in words: Very close, Close, Middle, Far, Very far. The many small details stop at Middle.",
+    "The warning sound sample plays on the media volume, like the voice.",
+    "On a new install the button bar starts on the left."
+   ],
+   "pt": [
+    "Todas as opções da app têm agora o aspeto das Layers: moldura com ✓, preenchida quando ativa.",
+    "O menu do cartão de navegação é uma janela com páginas: listas para escolher, e mantém a posição do scroll enquanto mudas coisas.",
+    "Definições do mapa, Trajetos, Diagnóstico e Definições do Painel usam os mesmos grupos: sub-tabs em cima dentro das Definições, menu à esquerda quando abertas do mapa; cada grupo na sua moldura.",
+    "Detalhe por zoom em palavras: Muito perto, Perto, Intermédio, Distante, Muito distante. Os detalhes muito numerosos ficam até Intermédio.",
+    "O som de amostra do aviso toca no volume de multimédia, como a voz.",
+    "Numa instalação nova a barra de botões começa à esquerda."
+   ]
   }
  ]
 }

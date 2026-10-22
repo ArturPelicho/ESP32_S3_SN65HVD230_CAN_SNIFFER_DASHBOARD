@@ -89,7 +89,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -726,6 +725,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
 
     /** What is under a long press: a planned waypoint first, then a track line, else the map. */
     fun pick(ll: LatLng): MapMenu {
+        MenuScroll.reset("map")
         val m = map ?: return MapMenu(0f, 0f, LatLon(ll.latitude, ll.longitude))
         val p = m.projection.toScreenLocation(ll)
         fun near(layer: String, r: Float) = if (style?.getLayer(layer) == null) emptyList()
@@ -1495,7 +1495,7 @@ fun MapScreen() {
                 else {
                     Text(stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     MapLayer.entries.forEach { l ->
-                        LayerChip(l.label, l in layers, l.hasOptions, onClick = {
+                        OptionChip(l.label, l in layers, more = l.hasOptions, onClick = {
                             val on = l !in layers
                             MapStore.setLayer(ctx, l, on)
                             layers = if (on) layers + l else layers - l
@@ -1786,7 +1786,7 @@ private fun MapMenuItems(
     val line = mm.line?.let { id -> DirectLines.list.value.firstOrNull { it.id == id } }
     var looks by remember { mutableStateOf(false) }
     val t = tracks.firstOrNull { it.id == mm.tid }
-    ScrollMenu(onDismiss) {
+    ScrollMenu("map", onDismiss) {
         when {
             moving != null -> {
                 MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
@@ -1842,7 +1842,7 @@ private fun MapMenuItems(
                     }
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TrackStore.WIDTHS.forEach { (w, label) ->
-                            FilterChip(selected = t.width == w, onClick = { TrackStore.change(ctx, t.id) { it.copy(width = w) } },
+                            Chip(selected = t.width == w, onClick = { TrackStore.change(ctx, t.id) { it.copy(width = w) } },
                                 label = { Text(label) })
                         }
                     }
@@ -1957,21 +1957,9 @@ private fun FoundCard(f: Found, here: LatLon?, onGo: (LatLon) -> Unit, onSave: (
 }
 
 /** A menu that always fits the screen and scrolls when its options don't. */
-@Composable
-private fun ScrollMenu(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    val h = LocalConfiguration.current.screenHeightDp
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
-            Column(Modifier.widthIn(min = 260.dp, max = 440.dp).heightIn(max = (h * 0.85f).dp)
-                .verticalScroll(rememberScrollState()).padding(vertical = 8.dp), content = content)
-        }
-    }
-}
 
 @Composable
-private fun MenuItem(label: String, onDismiss: () -> Unit, action: () -> Unit) {
-    DropdownMenuItem(text = { Text(label, fontSize = 16.sp) }, onClick = { onDismiss(); action() })
-}
+private fun MenuItem(label: String, onDismiss: () -> Unit, action: () -> Unit) = ActionItem(label) { onDismiss(); action() }
 
 /** Sends the track as a GPX file to another app (WhatsApp, e-mail, Drive...). */
 private fun shareGpx(ctx: Context, t: Track) {
@@ -2051,7 +2039,7 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
         Modifier.background(if (warn) Palette.orange else Palette.overlay, RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = { Toast.makeText(ctx, ctx.getString(R.string.track_box_long_press), Toast.LENGTH_SHORT).show() },
-                onLongClick = { menu = true },
+                onLongClick = { MenuScroll.reset("track"); menu = true },
             ).padding(horizontal = 14.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -2104,17 +2092,8 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
     }
 }
 
-/** A list of values to pick one from: [onPick] gets the index; the current one is ticked. */
-private class Picker(val title: String, val options: List<String>, val current: Int, val onPick: (Int) -> Unit)
-
-@Composable
-private fun PickerMenu(p: Picker, onDismiss: () -> Unit) = ScrollMenu(onDismiss) {
-    Text(p.title, color = Palette.amber, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-    HorizontalDivider()
-    p.options.forEachIndexed { i, o ->
-        DropdownMenuItem(text = { Text((if (i == p.current) "✓  " else "     ") + o, fontSize = 16.sp) }, onClick = { p.onPick(i); onDismiss() })
-    }
-}
+/** The pages of the track box's menu: one window, the page changes inside it. */
+private enum class TrackPage { MAIN, ROUTE, DETOUR, LEAD }
 
 /** The track box's long-press menu: follow mode, route type and what to avoid, recalculate. */
 @Composable
@@ -2122,72 +2101,58 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     val ctx = LocalContext.current
     var style by remember { mutableStateOf(RouteOptions.style(ctx)) }
     var tick by remember { mutableIntStateOf(0) }
-    // The route options are a page of their own, so the first page stays short enough to read.
-    var routePage by remember { mutableStateOf(false) }
+    // Route options, and each list of values, are pages of their own, so the first page stays short enough to read.
+    var page by remember { mutableStateOf(TrackPage.MAIN) }
     tick
     @Composable
-    fun header(@androidx.annotation.StringRes res: Int) =
-        Text(stringResource(res), color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-    @Composable
-    fun check(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
-        DropdownMenuItem(text = { Text((if (on) "✓  " else "     ") + label, fontSize = 16.sp) }, enabled = enabled, onClick = action)
-    // A setting with several values opens the list to pick from (no cycling through them, which moved the menu).
-    var picker by remember { mutableStateOf<Picker?>(null) }
-    @Composable
-    fun choice(label: String, value: String, open: () -> Unit) =
-        DropdownMenuItem(text = { Text("     $label: $value  ›", fontSize = 16.sp) }, onClick = open)
-    picker?.let { p -> PickerMenu(p, onDismiss = { picker = null }); return }
-    if (routePage) ScrollMenu(onDismiss) {
-        DropdownMenuItem(text = { Text("‹  " + stringResource(R.string.route_title), color = Palette.amber, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
-            onClick = { routePage = false })
-        HorizontalDivider()
-        RouteStyle.entries.forEach { s -> check(s.label, style == s) { style = s; RouteOptions.setStyle(ctx, s) } }
-        HorizontalDivider()
-        val fun_ = style == RouteStyle.FUN
-        check(stringResource(R.string.route_keep_main), RouteOptions.keepMain(ctx), !fun_) { RouteOptions.setKeepMain(ctx, !RouteOptions.keepMain(ctx)); tick++ }
-        check(stringResource(R.string.route_avoid_motorways), RouteOptions.avoidMotorways(ctx)) { RouteOptions.setAvoidMotorways(ctx, !RouteOptions.avoidMotorways(ctx)); tick++ }
-        check(stringResource(R.string.route_avoid_toll), RouteOptions.avoidToll(ctx)) { RouteOptions.setAvoidToll(ctx, !RouteOptions.avoidToll(ctx)); tick++ }
-        check(stringResource(R.string.route_avoid_unpaved), RouteOptions.avoidUnpaved(ctx)) { RouteOptions.setAvoidUnpaved(ctx, !RouteOptions.avoidUnpaved(ctx)); tick++ }
-        check(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx)) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
-        if (fun_) {
-            val d = RouteOptions.funDetour(ctx)
-            choice(stringResource(R.string.route_fun_detour), "+$d%") {
-                picker = Picker(ctx.getString(R.string.route_fun_detour), RouteOptions.DETOURS.map { "+$it%" }, RouteOptions.DETOURS.indexOf(d)) {
-                    RouteOptions.setFunDetour(ctx, RouteOptions.DETOURS[it]); tick++
+    fun toggle(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
+        OptionChip(label, on, Modifier.fillMaxWidth(), enabled = enabled, onClick = action)
+    ScrollMenu("track/${page.name}", onDismiss) {
+        when (page) {
+            TrackPage.ROUTE -> {
+                MenuTitle(stringResource(R.string.route_title)) { page = TrackPage.MAIN }
+                RouteStyle.entries.forEach { s -> toggle(s.label, style == s) { style = s; RouteOptions.setStyle(ctx, s) } }
+                HorizontalDivider()
+                val fun_ = style == RouteStyle.FUN
+                toggle(stringResource(R.string.route_keep_main), RouteOptions.keepMain(ctx), !fun_) { RouteOptions.setKeepMain(ctx, !RouteOptions.keepMain(ctx)); tick++ }
+                toggle(stringResource(R.string.route_avoid_motorways), RouteOptions.avoidMotorways(ctx)) { RouteOptions.setAvoidMotorways(ctx, !RouteOptions.avoidMotorways(ctx)); tick++ }
+                toggle(stringResource(R.string.route_avoid_toll), RouteOptions.avoidToll(ctx)) { RouteOptions.setAvoidToll(ctx, !RouteOptions.avoidToll(ctx)); tick++ }
+                toggle(stringResource(R.string.route_avoid_unpaved), RouteOptions.avoidUnpaved(ctx)) { RouteOptions.setAvoidUnpaved(ctx, !RouteOptions.avoidUnpaved(ctx)); tick++ }
+                toggle(stringResource(R.string.route_bypass_towns), RouteOptions.bypassTowns(ctx)) { RouteOptions.setBypassTowns(ctx, !RouteOptions.bypassTowns(ctx)); tick++ }
+                if (fun_) ValueChip(stringResource(R.string.route_fun_detour), "+${RouteOptions.funDetour(ctx)}%", Modifier.fillMaxWidth()) { page = TrackPage.DETOUR }
+                if (t.plan.size >= 2) {
+                    HorizontalDivider()
+                    ActionItem(stringResource(R.string.route_replan_trip)) { onDismiss(); Planner.replan(ctx, t.id) }
                 }
             }
-        }
-        if (t.plan.size >= 2) {
-            HorizontalDivider()
-            MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }
-        }
-    } else ScrollMenu(onDismiss) {
-        DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
-            onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
-        // Nav or Track first: it is the choice that changes most.
-        header(R.string.track_mode_title)
-        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
-        HorizontalDivider()
-        check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
-            val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
-        }
-        check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
-        check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
-        check(stringResource(R.string.wx_on_bar), MapStore.wxOnBar(ctx)) { MapStore.setWxOnBar(ctx, !MapStore.wxOnBar(ctx)); tick++ }
-        check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
-        check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
-        if (MapStore.pacenotes(ctx)) {
-            val l = MapStore.pacenoteLead(ctx)
-            choice(stringResource(R.string.pacenote_lead), "$l s") {
-                picker = Picker(ctx.getString(R.string.pacenote_lead), MapStore.PACENOTE_LEADS.map { "$it s" }, MapStore.PACENOTE_LEADS.indexOf(l)) {
-                    MapStore.setPacenoteLead(ctx, MapStore.PACENOTE_LEADS[it]); tick++
+            TrackPage.DETOUR -> PickList(stringResource(R.string.route_fun_detour), RouteOptions.DETOURS.map { "+$it%" },
+                RouteOptions.DETOURS.indexOf(RouteOptions.funDetour(ctx)), onBack = { page = TrackPage.ROUTE }) {
+                RouteOptions.setFunDetour(ctx, RouteOptions.DETOURS[it]); tick++
+            }
+            TrackPage.LEAD -> PickList(stringResource(R.string.pacenote_lead), MapStore.PACENOTE_LEADS.map { "$it s" },
+                MapStore.PACENOTE_LEADS.indexOf(MapStore.pacenoteLead(ctx)), onBack = { page = TrackPage.MAIN }) {
+                MapStore.setPacenoteLead(ctx, MapStore.PACENOTE_LEADS[it]); tick++
+            }
+            TrackPage.MAIN -> {
+                ActionItem("■  " + stringResource(R.string.nav_stop), Palette.red, bold = true) { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) }
+                // Nav or Track first: it is the choice that changes most.
+                MenuHeader(stringResource(R.string.track_mode_title))
+                TrackMode.entries.forEach { m -> toggle(m.label, mode == m) { onMode(m); onDismiss() } }
+                HorizontalDivider()
+                toggle(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
+                    val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
                 }
+                toggle(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
+                toggle(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
+                toggle(stringResource(R.string.wx_on_bar), MapStore.wxOnBar(ctx)) { MapStore.setWxOnBar(ctx, !MapStore.wxOnBar(ctx)); tick++ }
+                toggle(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
+                toggle(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
+                if (MapStore.pacenotes(ctx)) ValueChip(stringResource(R.string.pacenote_lead), "${MapStore.pacenoteLead(ctx)} s", Modifier.fillMaxWidth()) { page = TrackPage.LEAD }
+                toggle(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
+                HorizontalDivider()
+                ValueChip(stringResource(R.string.route_title), style.label, Modifier.fillMaxWidth()) { page = TrackPage.ROUTE }
             }
         }
-        check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
-        HorizontalDivider()
-        DropdownMenuItem(text = { Text("     " + stringResource(R.string.route_title) + ": " + style.label + "  ›", fontSize = 16.sp) },
-            onClick = { routePage = true })
     }
 }
 
@@ -2365,23 +2330,6 @@ private fun ageMs(loc: Location): Long =
     (SystemClock.elapsedRealtimeNanos() - loc.elapsedRealtimeNanos) / 1_000_000
 
 /** A layer in the layers list: tap switches it, long press opens its options (⋯ when it has some). */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun LayerChip(label: String, on: Boolean, options: Boolean, onClick: () -> Unit, onLong: () -> Unit) {
-    Row(
-        Modifier.clip(RoundedCornerShape(8.dp))
-            .background(if (on) Palette.amber.copy(alpha = 0.25f) else Color.Transparent)
-            .border(1.dp, if (on) Palette.amber else Palette.label, RoundedCornerShape(8.dp))
-            .combinedClickable(onClick = onClick, onLongClick = onLong)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(if (on) "✓" else " ", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = Palette.text, fontSize = 15.sp)
-        if (options) Text("⋯", color = Palette.label, fontSize = 15.sp)
-    }
-}
 
 /** A layer's own options, in place of the layers list. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -2407,7 +2355,7 @@ private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Doub
                 Text(stringResource(R.string.layer_contour_at_zoom, z), color = Palette.text, fontSize = 14.sp)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(-1, 10, 20, 50, 100).forEach { st ->
-                        FilterChip(selected = cur == st, onClick = { set(o.copy(contourAt = o.contourAt + (z to st))) },
+                        Chip(selected = cur == st, onClick = { set(o.copy(contourAt = o.contourAt + (z to st))) },
                             label = { Text(if (st < 0) stringResource(R.string.layer_contour_none) else stringResource(R.string.mapopts_contour_m, st)) })
                     }
                 }
@@ -2418,14 +2366,14 @@ private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Doub
             }
             MapLayer.ROADS -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 RoadClass.entries.forEach { r ->
-                    FilterChip(selected = r !in o.roadsOff, onClick = {
+                    Chip(selected = r !in o.roadsOff, onClick = {
                         set(o.copy(roadsOff = if (r in o.roadsOff) o.roadsOff - r else o.roadsOff + r))
                     }, label = { Text(r.label) })
                 }
             }
             MapLayer.DIRT -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 DirtKind.entries.forEach { d ->
-                    FilterChip(selected = d !in o.dirtOff, onClick = {
+                    Chip(selected = d !in o.dirtOff, onClick = {
                         set(o.copy(dirtOff = if (d in o.dirtOff) o.dirtOff - d else o.dirtOff + d))
                     }, label = { Text(d.label) }, leadingIcon = {
                         Box(Modifier.size(width = 18.dp, height = 4.dp).background(Color(d.color)))
@@ -2435,7 +2383,7 @@ private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Doub
             MapLayer.WEATHER -> {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     WxKind.entries.forEach { k ->
-                        FilterChip(selected = k !in o.wxOff, onClick = {
+                        Chip(selected = k !in o.wxOff, onClick = {
                             set(o.copy(wxOff = if (k in o.wxOff) o.wxOff - k else o.wxOff + k))
                         }, label = { Text(k.label) })
                     }

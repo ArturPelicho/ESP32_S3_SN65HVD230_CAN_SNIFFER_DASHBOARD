@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Slider
@@ -131,90 +130,90 @@ fun MapsPanel(
             MapSec.SCREEN -> {
                 WidgetOptions(LayoutStore.MAP, onMoveStart)
                 BarSettings()
-                Text(stringResource(R.string.nav_corner_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NavCorner.entries.forEach { c ->
-                        FilterChip(selected = navCorner == c, onClick = { onNavCorner(c) }, label = { Text(c.label) })
+                Section(stringResource(R.string.nav_corner_title)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NavCorner.entries.forEach { c ->
+                            Chip(selected = navCorner == c, onClick = { onNavCorner(c) }, label = { Text(c.label) })
+                        }
                     }
                 }
             }
             MapSec.VIEW -> {
-                Text(stringResource(R.string.maps_view), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FollowMode.entries.forEach { m ->
-                        FilterChip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
+                Section(stringResource(R.string.maps_view)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FollowMode.entries.forEach { m ->
+                            Chip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
+                        }
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.maps_auto_zoom), color = Palette.text, fontSize = 15.sp)
-                        Text(stringResource(R.string.maps_auto_zoom_hint), color = Palette.label, fontSize = 12.sp)
+                Section(stringResource(R.string.maps_auto_zoom)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.maps_auto_zoom_hint), color = Palette.label, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
                     }
-                    Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
+                    if (autoZoom) AutoZoomSliders()
                 }
-                if (autoZoom) AutoZoomSliders()
             }
             MapSec.LOOK -> {
-                Text(stringResource(R.string.maps_theme_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MapTheme.entries.forEach { t ->
-                        FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
+                Section(stringResource(R.string.maps_theme_title)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MapTheme.entries.forEach { t ->
+                            Chip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
+                        }
+                    }
+                    Text(stringResource(R.string.maps_theme_hint), color = Palette.label, fontSize = 12.sp)
+                }
+                Section(stringResource(R.string.maps_names_title)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MapLanguage.entries.forEach { l ->
+                            Chip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
+                        }
                     }
                 }
-                Text(stringResource(R.string.maps_theme_hint), color = Palette.label, fontSize = 12.sp)
-                Text(stringResource(R.string.maps_names_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MapLanguage.entries.forEach { l ->
-                        FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
+                Section(stringResource(R.string.mapopts_contour_title)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(0, 10, 20, 50, 100).forEach { step ->
+                            Chip(selected = contourStep == step, onClick = { contourStep = step; MapStore.setContourStep(ctx, step) },
+                                label = { Text(if (step == 0) stringResource(R.string.mapopts_contour_auto) else stringResource(R.string.mapopts_contour_m, step)) })
+                        }
                     }
+                    Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
                 }
-                Text(stringResource(R.string.mapopts_contour_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(0, 10, 20, 50, 100).forEach { step ->
-                        FilterChip(selected = contourStep == step, onClick = { contourStep = step; MapStore.setContourStep(ctx, step) },
-                            label = { Text(if (step == 0) stringResource(R.string.mapopts_contour_auto) else stringResource(R.string.mapopts_contour_m, step)) })
-                    }
-                }
-                Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
             }
-            MapSec.DETAIL -> {
-                Text(stringResource(R.string.detail_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                DetailSliders()
-            }
+            MapSec.DETAIL -> DetailLevels()
             MapSec.SOUND -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.maps_camera_beep), color = Palette.text, fontSize = 15.sp)
-                        Text(stringResource(R.string.maps_camera_beep_hint),
-                            color = Palette.label, fontSize = 12.sp)
+                Section(stringResource(R.string.maps_camera_beep)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.maps_camera_beep_hint), color = Palette.label, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
                     }
-                    Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
                 }
-                SoundSliders()
+                Section(stringResource(R.string.ms_sound)) { SoundSliders() }
             }
             MapSec.REGIONS -> {
-                Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { check() }) { Text(stringResource(R.string.maps_check_updates)) }
-                    if (updates.isNotEmpty()) {
-                        Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text(stringResource(R.string.maps_update_all, updates.size)) }
+                Section(stringResource(R.string.maps_regions)) {
+                    Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { check() }) { Text(stringResource(R.string.maps_check_updates)) }
+                        if (updates.isNotEmpty()) {
+                            Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text(stringResource(R.string.maps_update_all, updates.size)) }
+                        }
                     }
+                    if (regions.isEmpty() && installed.isEmpty()) {
+                        Text(stringResource(R.string.maps_list_needs_network), color = Palette.label, fontSize = 14.sp)
+                    }
+                    OutlinedTextField(
+                        value = search, onValueChange = { search = it }, singleLine = true,
+                        label = { Text(stringResource(R.string.maps_search_hint)) }, modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
+                    )
                 }
-
-                if (regions.isEmpty() && installed.isEmpty()) {
-                    Text(stringResource(R.string.maps_list_needs_network), color = Palette.label, fontSize = 14.sp)
-                }
-                OutlinedTextField(
-                    value = search, onValueChange = { search = it }, singleLine = true,
-                    label = { Text(stringResource(R.string.maps_search_hint)) }, modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
-                )
                 // Installed first, then by name; the search narrows it with every letter typed.
                 val q = plain(search)
                 val ids = (regions.map { it.id } + installed.map { it.id }).distinct()
                     .sortedWith(compareBy({ id -> installed.none { it.id == id } }, { id -> plain(regions.firstOrNull { it.id == id }?.name ?: id) }))
                     .filter { id -> q.isEmpty() || plain(regions.firstOrNull { it.id == id }?.name ?: id).contains(q) || plain(id).contains(q) }
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (ids.isEmpty() && q.isNotEmpty()) Text(stringResource(R.string.maps_no_match, search), color = Palette.label, fontSize = 14.sp)
                 for (id in ids) {
                     val r = regions.firstOrNull { it.id == id }
@@ -309,34 +308,14 @@ fun MapsPanel(
                     }
                 }
                 Text(stringResource(R.string.maps_attribution), color = Palette.label, fontSize = 12.sp)
+                }
             }
         }
     }
 
     var sec by rememberSaveable { mutableStateOf(MapSec.SCREEN) }
-    Column(Modifier.fillMaxSize().background(Palette.sheet)
-        // Keep touches off whatever is underneath (the map).
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}) {
-        // Title and Fechar stay put; only the content scrolls.
-        if (!embedded) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.w_map_settings), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onClose) { Text(stringResource(R.string.maps_close)) }
-        }
-        // Inside Definições (which has its own menu on the left) the groups are chips on top, as in Diagnóstico;
-        // opened from the map, the same menu on the left as Definições.
-        if (embedded) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapSec.entries.forEach { c -> FilterChip(selected = sec == c, onClick = { sec = c }, label = { Text(stringResource(c.res)) }) }
-        }
-        Row(Modifier.weight(1f)) {
-            if (!embedded) SideMenu(MapSec.entries.map { stringResource(it.res) }, sec.ordinal, { sec = MapSec.entries[it] })
-            Column(
-                Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) { Body(sec) }
-        }
-    }
+    GroupedPanel("maps", stringResource(R.string.w_map_settings), MapSec.entries.map { stringResource(it.res) }, sec.ordinal,
+        { sec = MapSec.entries[it] }, embedded, onClose) { Body(sec) }
 }
 
 /** The groups of the map's settings. */
@@ -376,25 +355,29 @@ private fun AutoZoomSliders() {
     }
 }
 
-/** From which zoom each kind of detail shows: road classes, rivers, water names, street names, road numbers. */
+/** From which level each kind of detail shows, as words (very close ... very far), each in its own frame. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailSliders() {
+private fun DetailLevels() {
     val ctx = LocalContext.current
     val o by MapStore.layerOptsFlow.collectAsStateWithLifecycle()
-    Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
-        Detail.entries.forEach { d ->
-            var v by remember(o.detailAt[d]) { mutableStateOf(o.from(d).toFloat()) }
-            Text(stringResource(R.string.detail_from, d.label, v.roundToInt()), color = Palette.text, fontSize = 14.sp)
-            Slider(value = v, onValueChange = { v = it }, valueRange = d.floor.toFloat()..18f, steps = (18 - d.floor - 1).coerceAtLeast(0),
-                onValueChangeFinished = {
-                    val z = v.roundToInt()
-                    MapStore.setLayerOpts(ctx, o.copy(detailAt = if (z == d.def) o.detailAt - d else o.detailAt + (d to z)))
-                })
-        }
+    Section(stringResource(R.string.detail_title)) {
+        Text(stringResource(R.string.detail_hint), color = Palette.label, fontSize = 12.sp)
         if (o.detailAt.isNotEmpty()) TextButton(onClick = { MapStore.setLayerOpts(ctx, o.copy(detailAt = emptyMap())) }) {
             Text(stringResource(R.string.detail_reset), color = Palette.amber)
         }
-        Text(stringResource(R.string.detail_hint), color = Palette.label, fontSize = 12.sp)
+    }
+    Detail.entries.forEach { d ->
+        Section(d.label) {
+            val cur = d.levelOf(o.detailAt[d])
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                d.levels.forEach { l ->
+                    Chip(selected = cur == l, onClick = {
+                        MapStore.setLayerOpts(ctx, o.copy(detailAt = if (l == d.def) o.detailAt - d else o.detailAt + (d to d.zoomOf(l))))
+                    }, label = { Text(l.label) })
+                }
+            }
+        }
     }
 }
 

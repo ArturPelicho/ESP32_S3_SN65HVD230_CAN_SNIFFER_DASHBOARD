@@ -42,12 +42,12 @@ object Speech {
         tts?.stop()
     }
 
-    /** A warning beep at the warning volume (silent at 0). */
+    /** A warning beep at the warning volume (silent at 0), on the media volume like the voice. */
     fun beep(ctx: Context) {
         val v = MapStore.alertVolume(ctx)
         if (v <= 0) return
         runCatching {
-            val g = ToneGenerator(AudioManager.STREAM_NOTIFICATION, v.coerceIn(1, 100))
+            val g = ToneGenerator(AudioManager.STREAM_MUSIC, v.coerceIn(1, 100))
             g.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
             Handler(Looper.getMainLooper()).postDelayed({ g.release() }, 800)
         }

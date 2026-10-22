@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -147,7 +146,7 @@ fun ControlScreen(activity: MainActivity) {
                         val current = remember { AppLocale.tag(ctx) }
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                             AppLocale.OPTIONS.forEach { (tag, name) ->
-                                FilterChip(selected = current == tag,
+                                Chip(selected = current == tag,
                                     onClick = { if (tag != current) { AppLocale.set(ctx, tag); activity.recreate() } },
                                     label = { Text(name ?: stringResource(R.string.settings_language_phone)) })
                             }
@@ -162,7 +161,7 @@ fun ControlScreen(activity: MainActivity) {
                         val hasLight = remember { LightSensor.available(ctx) }
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                             ThemeMode.entries.forEach { m ->
-                                FilterChip(selected = mode == m,
+                                Chip(selected = mode == m,
                                     onClick = { mode = m; ThemeStore.setMode(ctx, m) },
                                     label = { Text(stringResource(m.res)) })
                             }
@@ -171,7 +170,7 @@ fun ControlScreen(activity: MainActivity) {
                             Text(stringResource(R.string.theme_auto_by), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 AutoBy.entries.forEach { a ->
-                                    FilterChip(selected = autoBy == a,
+                                    Chip(selected = autoBy == a,
                                         onClick = { autoBy = a; ThemeStore.setAutoBy(ctx, a) },
                                         label = { Text(stringResource(a.res)) })
                                 }
@@ -183,7 +182,7 @@ fun ControlScreen(activity: MainActivity) {
                         Text(stringResource(R.string.theme_day_look), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             DayScheme.entries.forEach { d ->
-                                FilterChip(selected = day == d,
+                                Chip(selected = day == d,
                                     onClick = { day = d; ThemeStore.setDayScheme(ctx, d) },
                                     label = { Text(stringResource(d.res)) })
                             }
@@ -191,7 +190,7 @@ fun ControlScreen(activity: MainActivity) {
                         Text(stringResource(R.string.theme_night_look), color = Palette.label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             NightScheme.entries.forEach { n ->
-                                FilterChip(selected = night == n,
+                                Chip(selected = night == n,
                                     onClick = { night = n; ThemeStore.setNightScheme(ctx, n) },
                                     label = { Text(stringResource(n.res)) })
                             }
@@ -206,7 +205,7 @@ fun ControlScreen(activity: MainActivity) {
                         Text(stringResource(R.string.set_orientation), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Orientation.entries.forEach { o ->
-                                FilterChip(selected = orient == o, onClick = {
+                                Chip(selected = orient == o, onClick = {
                                     orient = o; Link.setOrientation(ctx, o); activity.applyOrientation()
                                 }, label = { Text(o.label, fontSize = 12.sp) })
                             }
@@ -226,21 +225,21 @@ fun ControlScreen(activity: MainActivity) {
                         Text(stringResource(R.string.set_units_dist), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             DistUnit.entries.forEach { u ->
-                                FilterChip(selected = units.dist == u, onClick = { Units.change(ctx, units.copy(dist = u)) },
+                                Chip(selected = units.dist == u, onClick = { Units.change(ctx, units.copy(dist = u)) },
                                     label = { Text(stringResource(u.res)) })
                             }
                         }
                         Text(stringResource(R.string.set_units_temp), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TempUnit.entries.forEach { u ->
-                                FilterChip(selected = units.temp == u, onClick = { Units.change(ctx, units.copy(temp = u)) },
+                                Chip(selected = units.temp == u, onClick = { Units.change(ctx, units.copy(temp = u)) },
                                     label = { Text(stringResource(u.res)) })
                             }
                         }
                         Text(stringResource(R.string.set_units_fuel), color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             FuelUnit.entries.forEach { u ->
-                                FilterChip(selected = units.fuel == u, onClick = { Units.change(ctx, units.copy(fuel = u)) },
+                                Chip(selected = units.fuel == u, onClick = { Units.change(ctx, units.copy(fuel = u)) },
                                     label = { Text(stringResource(u.res)) })
                             }
                         }
@@ -250,7 +249,7 @@ fun ControlScreen(activity: MainActivity) {
                         val scale by UiScale.value.collectAsStateWithLifecycle()
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             UiScale.steps.forEach { v ->
-                                FilterChip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
+                                Chip(selected = scale == v, onClick = { UiScale.set(ctx, v) },
                                     label = { Text("${(v * 100).toInt()}%") })
                             }
                         }
@@ -453,7 +452,7 @@ private fun CommsSettings(activity: MainActivity) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             offered.forEach { p ->
                 val name = if (p == sms) stringResource(R.string.comms_sms) else Comms.KNOWN[p] ?: p
-                FilterChip(selected = p in chosen, onClick = {
+                Chip(selected = p in chosen, onClick = {
                     Comms.setApp(ctx, p, p !in chosen); chosen = Comms.apps(ctx)
                 }, label = { Text(name) })
             }

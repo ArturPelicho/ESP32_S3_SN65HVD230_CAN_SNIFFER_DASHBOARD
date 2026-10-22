@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -30,6 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,56 +71,54 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit, embedded: Boolean 
         if (uris.isNotEmpty()) TrackStore.import(ctx, uris)
     }
 
-    Column(Modifier.fillMaxSize().background(Palette.sheet)) {
-        // Title and Fechar stay put; only the content below scrolls.
-        if (!embedded) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.tracks_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onClose) { Text(stringResource(R.string.tracks_close)) }
-        }
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            TripSection()
-            PlacesSection(onGo = onClose)
-            Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.tracks_open_file)) }
-            Text(stringResource(R.string.tracks_open_hint),
-                color = Palette.label, fontSize = 12.sp)
-            Text(stringResource(R.string.tracks_create_hint),
-                color = Palette.label, fontSize = 12.sp)
-            var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.tracks_roads), color = Palette.text, fontSize = 15.sp)
-                    Text(stringResource(R.string.tracks_roads_hint),
-                        color = Palette.label, fontSize = 12.sp)
+    var group by rememberSaveable { mutableIntStateOf(0) }
+    GroupedPanel("tracks", stringResource(R.string.tracks_title),
+        listOf(stringResource(R.string.tg_tracks), stringResource(R.string.tg_nav), stringResource(R.string.tg_rec), stringResource(R.string.tg_places)),
+        group, { group = it }, embedded, onClose) {
+        when (group) {
+            1 -> {
+                Section(stringResource(R.string.tracks_roads)) {
+                    var roads by remember { mutableStateOf(MapStore.routeRoads(ctx)) }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.tracks_roads_hint), color = Palette.label, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
+                    }
                 }
-                Switch(checked = roads, onCheckedChange = { roads = it; MapStore.setRouteRoads(ctx, it) })
-            }
-            RouteOptionsSection()
-            var mode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
-            Text(stringResource(R.string.track_mode_title), color = Palette.text, fontSize = 15.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TrackMode.entries.forEach { m ->
-                    FilterChip(selected = mode == m, onClick = { mode = m; MapStore.setTrackMode(ctx, m) }, label = { Text(m.label) })
+                Section(stringResource(R.string.route_title)) { RouteOptionsSection() }
+                Section(stringResource(R.string.track_mode_title)) {
+                    var mode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TrackMode.entries.forEach { m ->
+                            Chip(selected = mode == m, onClick = { mode = m; MapStore.setTrackMode(ctx, m) }, label = { Text(m.label) })
+                        }
+                    }
+                    Text(stringResource(R.string.track_mode_hint), color = Palette.label, fontSize = 12.sp)
+                }
+                Section(stringResource(R.string.turn_title)) {
+                    var banner by remember { mutableStateOf(MapStore.turnBanner(ctx)) }
+                    var voice by remember { mutableStateOf(MapStore.turnVoice(ctx)) }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.turn_show), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = banner, onCheckedChange = { banner = it; MapStore.setTurnBanner(ctx, it) })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.turn_voice), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                        Switch(checked = voice, onCheckedChange = { voice = it; MapStore.setTurnVoice(ctx, it) })
+                    }
+                    Text(stringResource(R.string.turn_hint), color = Palette.label, fontSize = 12.sp)
                 }
             }
-            Text(stringResource(R.string.track_mode_hint), color = Palette.label, fontSize = 12.sp)
-            var banner by remember { mutableStateOf(MapStore.turnBanner(ctx)) }
-            var voice by remember { mutableStateOf(MapStore.turnVoice(ctx)) }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.turn_show), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Switch(checked = banner, onCheckedChange = { banner = it; MapStore.setTurnBanner(ctx, it) })
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.turn_voice), color = Palette.text, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Switch(checked = voice, onCheckedChange = { voice = it; MapStore.setTurnVoice(ctx, it) })
-            }
-            Text(stringResource(R.string.turn_hint), color = Palette.label, fontSize = 12.sp)
-            message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
+            2 -> Section(stringResource(R.string.trip_title)) { TripSection() }
+            3 -> Section(stringResource(R.string.place_title)) { PlacesSection(onGo = onClose) }
+            else -> {
+                Section(stringResource(R.string.tg_import)) {
+                    Button(onClick = { pick.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.tracks_open_file)) }
+                    Text(stringResource(R.string.tracks_open_hint), color = Palette.label, fontSize = 12.sp)
+                    Text(stringResource(R.string.tracks_create_hint), color = Palette.label, fontSize = 12.sp)
+                    message?.let { Text(it, color = Palette.cyan, fontSize = 13.sp) }
+                }
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (tracks.isEmpty()) Text(stringResource(R.string.tracks_empty), color = Palette.label, fontSize = 14.sp)
-
             for (t in tracks.reversed()) {
                 val following = active == t.id
                 Column(
@@ -159,7 +158,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit, embedded: Boolean 
                         if (t.lines.isNotEmpty()) {
                             if (following) {
                                 OutlinedButton(onClick = { TrackStore.setActive(ctx, null) }) { Text(stringResource(R.string.tracks_stop_following)) }
-                                FilterChip(selected = reversed, onClick = { TrackStore.setReversed(ctx, !reversed) },
+                                Chip(selected = reversed, onClick = { TrackStore.setReversed(ctx, !reversed) },
                                     label = { Text(stringResource(R.string.tracks_reversed)) })
                             } else {
                                 Button(onClick = { TrackStore.setActive(ctx, t.id); TrackStore.setReversed(ctx, false); onClose() }) {
@@ -189,13 +188,15 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit, embedded: Boolean 
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TrackStore.WIDTHS.forEach { (w, label) ->
-                            FilterChip(selected = t.width == w, onClick = { TrackStore.update(ctx, t.copy(width = w)) },
+                            Chip(selected = t.width == w, onClick = { TrackStore.update(ctx, t.copy(width = w)) },
                                 label = { Text(label) })
                         }
                     }
                 }
             }
             Text(stringResource(R.string.tracks_footer), color = Palette.label, fontSize = 12.sp)
+                }
+            }
         }
     }
 }
@@ -209,10 +210,9 @@ internal fun parseColor(hex: String): Color =
 private fun RouteOptionsSection() {
     val ctx = LocalContext.current
     var style by remember { mutableStateOf(RouteOptions.style(ctx)) }
-    Text(stringResource(R.string.route_title), color = Palette.text, fontSize = 15.sp)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         RouteStyle.entries.forEach { s ->
-            FilterChip(selected = style == s, onClick = { style = s; RouteOptions.setStyle(ctx, s) }, label = { Text(s.label) })
+            Chip(selected = style == s, onClick = { style = s; RouteOptions.setStyle(ctx, s) }, label = { Text(s.label) })
         }
     }
     Text(style.hint, color = Palette.label, fontSize = 12.sp)
@@ -221,7 +221,7 @@ private fun RouteOptionsSection() {
         Text(stringResource(R.string.route_fun_detour), color = Palette.text, fontSize = 14.sp)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RouteOptions.DETOURS.forEach { d ->
-                FilterChip(selected = detour == d, onClick = { detour = d; RouteOptions.setFunDetour(ctx, d) }, label = { Text("+$d%") })
+                Chip(selected = detour == d, onClick = { detour = d; RouteOptions.setFunDetour(ctx, d) }, label = { Text("+$d%") })
             }
         }
         Text(stringResource(R.string.route_fun_detour_hint, detour), color = Palette.label, fontSize = 12.sp)
@@ -250,7 +250,6 @@ private fun RouteOptionsSection() {
 private fun TripSection() {
     val ctx = LocalContext.current
     val trip by TripRecorder.state.collectAsStateWithLifecycle()
-    Text(stringResource(R.string.trip_title), color = Palette.text, fontSize = 15.sp)
     val r = trip
     if (r == null) {
         Button(onClick = { TripRecorder.start(ctx) }) { Text(stringResource(R.string.trip_start)) }
@@ -276,7 +275,6 @@ private fun PlacesSection(onGo: () -> Unit) {
     val ctx = LocalContext.current
     val places by Places.list.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { Places.load(ctx) }
-    Text(stringResource(R.string.place_title), color = Palette.text, fontSize = 15.sp)
     if (places.isEmpty()) Text(stringResource(R.string.place_hint), color = Palette.label, fontSize = 12.sp)
     var editing by remember { mutableStateOf<String?>(null) }
     var deleting by remember { mutableStateOf<String?>(null) }

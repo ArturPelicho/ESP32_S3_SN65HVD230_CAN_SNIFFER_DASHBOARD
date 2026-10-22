@@ -112,7 +112,7 @@
     <string name="detail_water_names">Nomi delle acque</string>
     <string name="detail_street_names">Nomi delle vie</string>
     <string name="detail_road_refs">Numeri delle strade</string>
-    <string name="detail_hint">Più alto = appare solo più vicino. Le strade fino alle terziarie appaiono dallo zoom 5 nelle regioni con il pacchetto extra (Portogallo, Madeira, Azzorre, Spagna). Le vie sono nei file della mappa solo dallo zoom 12, quindi più in basso non mostra di più.</string>
+    <string name="detail_hint">Da quale distanza appare ogni tipo di dettaglio. Quelli molto numerosi (secondarie e strade minori, vie, fiumi) arrivano fino a Intermedio perché la mappa resti leggibile; ogni scelta è offerta solo dove i file della mappa hanno quel dettaglio.</string>
     <string name="w_btn_search">Cerca</string>
     <string name="search_hint">Indirizzo o luogo</string>
     <string name="search_busy">Ricerca…</string>
@@ -138,4 +138,15 @@
     <string name="ms_look">Aspetto</string>
     <string name="ms_detail">Dettaglio</string>
     <string name="ms_sound">Suono</string>
+    <string name="zl_very_close">Molto vicino</string>
+    <string name="zl_close">Vicino</string>
+    <string name="zl_middle">Intermedio</string>
+    <string name="zl_far">Lontano</string>
+    <string name="zl_very_far">Molto lontano</string>
+    <string name="tg_tracks">Percorsi</string>
+    <string name="tg_nav">Navigazione</string>
+    <string name="tg_rec">Registrazione</string>
+    <string name="tg_places">Luoghi</string>
+    <string name="tg_import">Importa</string>
+    <string name="turn_title">Svolta per svolta</string>
 </resources>

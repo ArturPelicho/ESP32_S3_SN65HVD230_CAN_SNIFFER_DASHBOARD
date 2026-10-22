@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -142,7 +141,7 @@ fun DashSettings() {
         val cur = params["SPD_SRC"]?.value
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
             BleProtocol.SPEED_SOURCE_LABELS.take(4).forEachIndexed { i, label ->
-                FilterChip(selected = cur == i, enabled = connected,
+                Chip(selected = cur == i, enabled = connected,
                     onClick = { Link.send("PARAM SET SPD_SRC $i") },
                     label = { Text(label.removePrefix("Vel_"), fontSize = 12.sp) })
             }

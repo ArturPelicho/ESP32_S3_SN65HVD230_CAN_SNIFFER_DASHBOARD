@@ -88,10 +88,8 @@ fun DashboardScreen() {
             }
             WidgetBoard(LayoutStore.DASH, d, drawShift = false, modifier = Modifier.fillMaxSize())
         }
-        if (sheet) WidgetSheet(LayoutStore.DASH, stringResource(R.string.w_dash_title), onClose = { sheet = false }) {
-            Text(stringResource(R.string.w_dash_settings), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            DashSettings()
-        }
+        if (sheet) WidgetSheet(LayoutStore.DASH, stringResource(R.string.w_dash_title), onClose = { sheet = false },
+            extraTitle = stringResource(R.string.w_dash_settings)) { DashSettings() }
     }
 }
 

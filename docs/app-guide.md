@@ -65,9 +65,15 @@ Settings → **Maps** (or the Maps button on the map).
 - **Map view**: follow mode (heading up, 3D, north up), auto zoom by speed with your own
   speed and zoom ranges, day/night map theme, names in the app's language or as written
   locally, the corner for the navigation boxes, the speed camera beep, contour spacing.
-- **Detail by zoom**: a slider per road class, rivers and streams, water names, street names and
-  road numbers for the zoom they start at. The map files hold some classes only from a certain
-  zoom (secondary roads about 9, streets about 12), so lower than that shows nothing more.
+- **Detail by zoom**: for each road class, rivers and streams, water names, street names and road
+  numbers, from how close it shows: Very close, Close, Middle, Far or Very far (map zooms 14, 12,
+  10, 8 and 6). The many small details (secondary and smaller roads, streets, rivers) stop at
+  Middle, and a level is only offered where the map files hold that detail.
+
+Every option in the app looks the same (a frame with ✓, filled when on); a setting with several
+values opens a list to pick from. Panels with groups (Map settings, Routes, Diagnostics, Dashboard
+settings) show them as tabs on top inside Settings and as a menu on the left when opened from the
+map. Menus keep their scroll position while options change.
 
 Map data © OpenStreetMap contributors, base map Protomaps, relief Copernicus DEM.
 

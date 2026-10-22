@@ -183,9 +183,10 @@ fun Section(title: String, content: @Composable () -> Unit) {
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .background(Palette.panel, shape)
             .then(if (Palette.outlined) Modifier.border(1.dp, Palette.frame, shape) else Modifier)
-            .padding(12.dp)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(title, color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(title, color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         content()
     }
 }

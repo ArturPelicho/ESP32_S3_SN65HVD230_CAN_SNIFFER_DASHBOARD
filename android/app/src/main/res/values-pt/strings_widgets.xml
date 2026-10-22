@@ -112,7 +112,7 @@
     <string name="detail_water_names">Nomes de água</string>
     <string name="detail_street_names">Nomes de ruas</string>
     <string name="detail_road_refs">Números das estradas</string>
-    <string name="detail_hint">Mais alto = só aparece mais perto. As estradas até às terciárias (ER, EM, N) aparecem desde o zoom 5 nas regiões com o pacote de extras (Portugal, Madeira, Açores, Espanha). As ruas só existem nos ficheiros do mapa a partir do zoom 12, por isso mais baixo não mostra mais.</string>
+    <string name="detail_hint">A partir de que distância cada tipo de detalhe aparece. Os muito numerosos (secundárias e estradas menores, ruas, rios) ficam até Intermédio para o mapa continuar legível; cada opção só aparece onde os ficheiros do mapa têm esse detalhe.</string>
     <string name="w_btn_search">Pesquisar</string>
     <string name="search_hint">Morada ou local</string>
     <string name="search_busy">A procurar…</string>
@@ -138,4 +138,15 @@
     <string name="ms_look">Aspeto</string>
     <string name="ms_detail">Detalhe</string>
     <string name="ms_sound">Som</string>
+    <string name="zl_very_close">Muito perto</string>
+    <string name="zl_close">Perto</string>
+    <string name="zl_middle">Intermédio</string>
+    <string name="zl_far">Distante</string>
+    <string name="zl_very_far">Muito distante</string>
+    <string name="tg_tracks">Trajetos</string>
+    <string name="tg_nav">Navegação</string>
+    <string name="tg_rec">Gravação</string>
+    <string name="tg_places">Locais</string>
+    <string name="tg_import">Importar</string>
+    <string name="turn_title">Curva a curva</string>
 </resources>

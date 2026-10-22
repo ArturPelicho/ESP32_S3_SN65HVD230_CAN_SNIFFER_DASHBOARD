@@ -57,7 +57,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -72,6 +71,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -347,7 +347,7 @@ object LayoutStore {
 
     fun barSide(ctx: Context): BarSide {
         version
-        return BarSide.entries.firstOrNull { it.name == prefs(ctx).getString("bar_side", null) } ?: BarSide.RIGHT
+        return BarSide.entries.firstOrNull { it.name == prefs(ctx).getString("bar_side", null) } ?: BarSide.LEFT
     }
     fun setBarSide(ctx: Context, s: BarSide) { prefs(ctx).edit().putString("bar_side", s.name).apply(); changed() }
 
@@ -562,24 +562,12 @@ fun ScreenSettingsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
-    Column(
-        Modifier.fillMaxSize().background(Palette.sheet)
-            // Keep touches off whatever is underneath (the map).
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
-    ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onClose) { Text(stringResource(R.string.maps_close)) }
-        }
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            WidgetOptions(screen, onMoveStart = onClose)
-            extra()
-        }
+fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extraTitle: String? = null, extra: @Composable () -> Unit = {}) {
+    // Same layout as the map's settings: groups on the left, the chosen one on the right.
+    var group by rememberSaveable { mutableIntStateOf(0) }
+    val groups = listOfNotNull(stringResource(R.string.ms_screen), extraTitle)
+    GroupedPanel("sheet-$screen", title, groups, group, { group = it }, embedded = false, onClose = onClose) {
+        if (group == 0) WidgetOptions(screen, onMoveStart = onClose) else extra()
     }
 }
 
@@ -591,40 +579,38 @@ fun WidgetOptions(screen: String, onMoveStart: () -> Unit) {
     val land = isLandscape()
     val shown = LayoutStore.shown(ctx, screen, land)
     val noRoom = LayoutStore.unplaced[screen] ?: emptySet()
-    Text(stringResource(R.string.w_shown), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Widget.entries.filter { it != Widget.PROFILE || screen == LayoutStore.MAP }.forEach { w ->
-            val on = w in shown
-            FilterChip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
-                label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
+    Section(stringResource(R.string.w_shown)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Widget.entries.filter { it != Widget.PROFILE || screen == LayoutStore.MAP }.forEach { w ->
+                val on = w in shown
+                Chip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
+                    label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
+            }
         }
+        Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
+            color = Palette.label, fontSize = 12.sp)
+        if (Widget.ATTITUDE in shown) Text(stringResource(R.string.w_att_hint), color = Palette.label, fontSize = 12.sp)
     }
-    Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
-        color = Palette.label, fontSize = 12.sp)
-    if (Widget.ATTITUDE in shown) Text(stringResource(R.string.w_att_hint), color = Palette.label, fontSize = 12.sp)
-
-    Text(stringResource(R.string.w_size), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    val size = LayoutStore.size(ctx, screen)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SlotSize.entries.forEach { s ->
-            FilterChip(selected = size == s, onClick = { LayoutStore.setSize(ctx, screen, s) }, label = { Text(stringResource(s.res)) })
+    Section(stringResource(R.string.w_size)) {
+        val size = LayoutStore.size(ctx, screen)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SlotSize.entries.forEach { s ->
+                Chip(selected = size == s, onClick = { LayoutStore.setSize(ctx, screen, s) }, label = { Text(stringResource(s.res)) })
+            }
         }
+        val alpha = LayoutStore.alpha(ctx, screen)
+        Text(stringResource(R.string.w_alpha, (alpha * 100).roundToInt()), color = Palette.text, fontSize = 14.sp)
+        Slider(value = alpha, onValueChange = { LayoutStore.setAlpha(ctx, screen, (it * 20).roundToInt() / 20f) }, valueRange = 0.2f..1f)
     }
-
-    val alpha = LayoutStore.alpha(ctx, screen)
-    Text(stringResource(R.string.w_alpha, (alpha * 100).roundToInt()), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    Slider(value = alpha, onValueChange = { LayoutStore.setAlpha(ctx, screen, (it * 20).roundToInt() / 20f) }, valueRange = 0.2f..1f)
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp)
+    Section(stringResource(R.string.w_move_mode)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Switch(checked = LayoutStore.moving(screen), onCheckedChange = {
+                if (it) { LayoutStore.startMoving(ctx, screen); onMoveStart() } else LayoutStore.saveMoving(screen)
+            })
         }
-        Switch(checked = LayoutStore.moving(screen), onCheckedChange = {
-            if (it) { LayoutStore.startMoving(ctx, screen); onMoveStart() } else LayoutStore.saveMoving(screen)
-        })
+        OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
     }
-    OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
 }
 
 /** The map's button bar settings: which edge, and which buttons. */
@@ -632,17 +618,18 @@ fun WidgetOptions(screen: String, onMoveStart: () -> Unit) {
 @Composable
 fun BarSettings() {
     val ctx = LocalContext.current
-    Text(stringResource(R.string.w_bar), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    val side = LayoutStore.barSide(ctx)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        BarSide.entries.forEach { s ->
-            FilterChip(selected = side == s, onClick = { LayoutStore.setBarSide(ctx, s) }, label = { Text(stringResource(s.res)) })
+    Section(stringResource(R.string.w_bar)) {
+        val side = LayoutStore.barSide(ctx)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BarSide.entries.forEach { s ->
+                Chip(selected = side == s, onClick = { LayoutStore.setBarSide(ctx, s) }, label = { Text(stringResource(s.res)) })
+            }
         }
-    }
-    val on = LayoutStore.buttons(ctx)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        MapCtl.entries.filter { it.hideable }.forEach { b ->
-            FilterChip(selected = b in on, onClick = { LayoutStore.setButton(ctx, b, b !in on) }, label = { Text(stringResource(b.res)) })
+        val on = LayoutStore.buttons(ctx)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapCtl.entries.filter { it.hideable }.forEach { b ->
+                Chip(selected = b in on, onClick = { LayoutStore.setButton(ctx, b, b !in on) }, label = { Text(stringResource(b.res)) })
+            }
         }
     }
 }

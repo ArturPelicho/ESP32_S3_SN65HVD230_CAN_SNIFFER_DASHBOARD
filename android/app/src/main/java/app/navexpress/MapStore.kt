@@ -92,16 +92,40 @@ enum class RoadClass(val code: String, @StringRes private val res: Int) {
 }
 
 /**
- * Map detail that can start at a zoom of the rider's choosing: road classes, rivers and streams, water names,
- * street names and road numbers. [def] is the usual start; below [floor] the map files hold nothing of it.
+ * How close the map must be for a kind of detail to show, in words instead of zoom numbers; each level is a
+ * map zoom (the transfer table). Closest first, as the choices are laid out.
  */
-enum class Detail(val code: String, @StringRes private val res: Int, val def: Int, val floor: Int) {
-    // Floors below the base map's own (trunk 6, primary 7, secondary/tertiary 9) need the region's extras pack.
-    MOTORWAY("mw", R.string.road_motorway, 5, 3), TRUNK("tr", R.string.road_trunk, 6, 5), PRIMARY("pr", R.string.road_primary, 7, 5),
-    SECONDARY("se", R.string.road_secondary, 7, 5), TERTIARY("te", R.string.road_tertiary, 8, 5), MINOR("mi", R.string.road_minor, 12, 12),
-    SERVICE("sv", R.string.road_service, 13, 13), WATERWAY("water", R.string.detail_waterways, 10, 9), WATER_NAMES("wlabel", R.string.detail_water_names, 9, 5),
-    STREET_NAMES("names", R.string.detail_street_names, 13, 11), ROAD_REFS("refs", R.string.detail_road_refs, 8, 6);
+enum class ZoomLevel(@StringRes private val res: Int, val z: Int) {
+    VERY_CLOSE(R.string.zl_very_close, 14), CLOSE(R.string.zl_close, 12), MIDDLE(R.string.zl_middle, 10),
+    FAR(R.string.zl_far, 8), VERY_FAR(R.string.zl_very_far, 6);
     val label: String get() = L.s(res)
+}
+
+/**
+ * Map detail that can start at a level of the rider's choosing: road classes, rivers and streams, water names,
+ * street names and road numbers. Below [floor] the map files hold nothing of it, so a level never maps to a zoom
+ * under it; [widest] keeps the very numerous details (secondary and smaller roads, streets, rivers) to the
+ * closer levels, so the map stays readable zoomed out. [def] is the usual level.
+ */
+enum class Detail(val code: String, @StringRes private val res: Int, val def: ZoomLevel, val floor: Int, val widest: ZoomLevel) {
+    // Floors below the base map's own (trunk 6, primary 7, secondary/tertiary 9) come from the region's extras pack.
+    MOTORWAY("mw", R.string.road_motorway, ZoomLevel.VERY_FAR, 3, ZoomLevel.VERY_FAR),
+    TRUNK("tr", R.string.road_trunk, ZoomLevel.VERY_FAR, 5, ZoomLevel.VERY_FAR),
+    PRIMARY("pr", R.string.road_primary, ZoomLevel.VERY_FAR, 5, ZoomLevel.VERY_FAR),
+    SECONDARY("se", R.string.road_secondary, ZoomLevel.MIDDLE, 5, ZoomLevel.MIDDLE),
+    TERTIARY("te", R.string.road_tertiary, ZoomLevel.MIDDLE, 5, ZoomLevel.MIDDLE),
+    MINOR("mi", R.string.road_minor, ZoomLevel.CLOSE, 12, ZoomLevel.CLOSE),
+    SERVICE("sv", R.string.road_service, ZoomLevel.VERY_CLOSE, 13, ZoomLevel.CLOSE),
+    WATERWAY("water", R.string.detail_waterways, ZoomLevel.MIDDLE, 9, ZoomLevel.MIDDLE),
+    WATER_NAMES("wlabel", R.string.detail_water_names, ZoomLevel.FAR, 5, ZoomLevel.VERY_FAR),
+    STREET_NAMES("names", R.string.detail_street_names, ZoomLevel.VERY_CLOSE, 11, ZoomLevel.CLOSE),
+    ROAD_REFS("refs", R.string.detail_road_refs, ZoomLevel.FAR, 6, ZoomLevel.VERY_FAR);
+    val label: String get() = L.s(res)
+    /** The levels offered, closest first. */
+    val levels: List<ZoomLevel> get() = ZoomLevel.entries.filter { it.ordinal <= widest.ordinal }
+    fun zoomOf(l: ZoomLevel): Int = maxOf(l.z, floor)
+    /** The offered level nearest to a stored zoom (also for zooms saved before the levels existed). */
+    fun levelOf(zoom: Int?): ZoomLevel = if (zoom == null) def else levels.minBy { kotlin.math.abs(zoomOf(it) - zoom) }
 }
 
 /** What the weather layer shows, each on or off. */
@@ -127,10 +151,10 @@ data class LayerOpts(
     val roadsOff: Set<RoadClass> = emptySet(),
     val dirtOff: Set<DirtKind> = emptySet(),
     val wxOff: Set<WxKind> = setOf(WxKind.UV),
-    /** Zoom from which each kind of detail shows, where the rider changed it. */
+    /** Zoom from which each kind of detail shows (a level's zoom), where the rider changed it. */
     val detailAt: Map<Detail, Int> = emptyMap(),
 ) {
-    fun from(d: Detail): Int = detailAt[d] ?: d.def
+    fun from(d: Detail): Int = d.zoomOf(d.levelOf(detailAt[d]))
 }
 
 /**

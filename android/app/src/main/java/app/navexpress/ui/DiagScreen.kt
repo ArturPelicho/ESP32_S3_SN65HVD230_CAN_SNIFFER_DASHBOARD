@@ -2,7 +2,6 @@ package app.navexpress.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
@@ -38,12 +37,12 @@ fun DiagScreen() {
     val dtc by Link.dtc.collectAsStateWithLifecycle()
     var faults by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = !faults, onClick = { faults = false }, label = { Text(stringResource(R.string.diag_tab_readings)) })
-            FilterChip(selected = faults, onClick = { faults = true },
-                label = { Text(if (dtc.total > 0) stringResource(R.string.diag_tab_faults_count, dtc.total) else stringResource(R.string.diag_tab_faults),
-                    color = if (dtc.total > 0 && !faults) Palette.orange else Color.Unspecified) })
-        }
+        SubTabs(
+            listOf(stringResource(R.string.diag_tab_readings),
+                if (dtc.total > 0) stringResource(R.string.diag_tab_faults_count, dtc.total) else stringResource(R.string.diag_tab_faults)),
+            if (faults) 1 else 0, { faults = it == 1 },
+            listOf(null, if (dtc.total > 0) Palette.orange else null),
+        )
         Box(Modifier.weight(1f)) { if (faults) DtcScreen() else DiagReadings() }
     }
 }
