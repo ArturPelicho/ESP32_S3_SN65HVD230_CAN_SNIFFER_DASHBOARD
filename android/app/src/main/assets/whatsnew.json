@@ -38,6 +38,15 @@
    "pt": [
     "Definições → Sobre → Cópia de segurança: guarda as definições, trajetos e sítios num ficheiro. A próxima versão muda de identificador e instala-se como uma app nova; carrega lá o ficheiro."
    ]
+  },
+  {
+   "id": 4,
+   "en": [
+    "New app id (app.navexpress): this installs as a new app. Load your backup in Settings → About → Backup, download your maps again, then uninstall the old NavExpress."
+   ],
+   "pt": [
+    "Identificador novo (app.navexpress): instala-se como uma app nova. Carrega a cópia em Definições → Sobre → Cópia de segurança, volta a descarregar os mapas e depois desinstala o NavExpress antigo."
+   ]
   }
  ]
 }

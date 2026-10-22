@@ -9,8 +9,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        // One last build under the first id, so the installed app can save a backup before the move.
-        applicationId = "pt.artur.motadash"
+        applicationId = "app.navexpress"
         minSdk = 26
         targetSdk = 34
         // CI sets the build number so every APK installs over the last one.
