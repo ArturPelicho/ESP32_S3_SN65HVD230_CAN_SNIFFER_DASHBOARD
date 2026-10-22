@@ -112,7 +112,7 @@
     <string name="detail_water_names">Nombres de agua</string>
     <string name="detail_street_names">Nombres de calles</string>
     <string name="detail_road_refs">Números de carretera</string>
-    <string name="detail_hint">Más alto = solo aparece más cerca. Por debajo de cierto zoom los archivos del mapa no tienen esa clase (secundarias unos 9, calles unos 12), así que más bajo no muestra más.</string>
+    <string name="detail_hint">Más alto = solo aparece más cerca. Las carreteras hasta las terciarias aparecen desde el zoom 5 en las regiones con el paquete de extras (Portugal, Madeira, Azores, España). Las calles solo están en los archivos del mapa desde el zoom 12, así que más bajo no muestra más.</string>
     <string name="w_btn_search">Buscar</string>
     <string name="search_hint">Dirección o lugar</string>
     <string name="search_busy">Buscando…</string>

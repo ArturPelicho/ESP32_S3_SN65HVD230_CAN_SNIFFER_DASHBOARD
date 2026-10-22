@@ -6,6 +6,8 @@ Reads osmium GeoJSONSeq exports and writes compact GeoJSONSeq with only what the
   limits.py cameras <in> <out>  points: kmh (if tagged), dir (degrees, if tagged)
   limits.py dirt <in> <out>     lines: g = 1 easy, 2 medium, 3 hard, 0 ungraded track (unpaved roads and tracks);
                                 p = 1 where closed to the public or to motor vehicles (gates may be shut)
+  limits.py lowroads <in> <out> lines: k = tr/pr/se/te (trunk to tertiary), r = road number; for the zooms where
+                                the base map has no such roads yet (secondary and tertiary below about 9)
 """
 import json
 import re
@@ -150,5 +152,31 @@ def cameras(src, dst):
     print(f"limits: {n} speed cameras", file=sys.stderr)
 
 
+LOW = {"trunk": "tr", "primary": "pr", "secondary": "se", "tertiary": "te"}
+
+
+def lowroads(src, dst):
+    n = 0
+    with open(src) as f, open(dst, "w") as o:
+        for line in f:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            ft = json.loads(line)
+            if ft["geometry"]["type"] not in ("LineString", "MultiLineString"):
+                continue
+            t = ft.get("properties") or {}
+            k = LOW.get(t.get("highway"))
+            if not k:
+                continue
+            props = {"k": k}
+            ref = (t.get("ref") or "").split(";")[0].strip()
+            if ref:
+                props["r"] = ref
+            o.write(feature(ft["geometry"], props) + "\n")
+            n += 1
+    print(f"lowroads: {n}")
+
+
 if __name__ == "__main__":
-    {"ways": ways, "cameras": cameras, "dirt": dirt}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    {"ways": ways, "cameras": cameras, "dirt": dirt, "lowroads": lowroads}[sys.argv[1]](sys.argv[2], sys.argv[3])

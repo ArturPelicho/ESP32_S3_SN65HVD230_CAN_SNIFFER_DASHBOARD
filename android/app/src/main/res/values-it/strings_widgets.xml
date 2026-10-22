@@ -112,7 +112,7 @@
     <string name="detail_water_names">Nomi delle acque</string>
     <string name="detail_street_names">Nomi delle vie</string>
     <string name="detail_road_refs">Numeri delle strade</string>
-    <string name="detail_hint">Più alto = appare solo più vicino. Sotto un certo zoom i file della mappa non hanno quella classe (secondarie circa 9, vie circa 12), quindi più in basso non mostra di più.</string>
+    <string name="detail_hint">Più alto = appare solo più vicino. Le strade fino alle terziarie appaiono dallo zoom 5 nelle regioni con il pacchetto extra (Portogallo, Madeira, Azzorre, Spagna). Le vie sono nei file della mappa solo dallo zoom 12, quindi più in basso non mostra di più.</string>
     <string name="w_btn_search">Cerca</string>
     <string name="search_hint">Indirizzo o luogo</string>
     <string name="search_busy">Ricerca…</string>

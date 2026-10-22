@@ -295,6 +295,34 @@ object MapStyle {
                     "line-width" to roadWidth(0.6),
                     "line-dasharray" to listOf(2.2, 1.4),
                 ), filter = dirtShown, minzoom = 12)
+                // Roads zoomed out, from zoom 5 to where the base map starts having them (trunk 6, primary 7,
+                // secondary and tertiary 9), each from the zoom the rider chose.
+                val k = listOf("get", "k")
+                val lowShown = listOf("all",
+                    listOf(">=", listOf("zoom"), listOf("match", k, "tr", opts.from(Detail.TRUNK), "pr", opts.from(Detail.PRIMARY),
+                        "se", opts.from(Detail.SECONDARY), opts.from(Detail.TERTIARY))),
+                    listOf("<", listOf("zoom"), listOf("match", k, "tr", 6, "pr", 7, 9)),
+                    if (roadsOff.isEmpty()) true else listOf("match", k, roadsOff, false, true))
+                if (roadsOn) lines += layer("lowroad", "line", "lowroads", source = ls, layout = mapOf(
+                    "line-cap" to "round", "line-join" to "round",
+                ), paint = mapOf(
+                    "line-color" to listOf("match", k, "tr", c.trunk, "pr", c.primary, "se", c.secondary, c.tertiary),
+                    "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 5,
+                        listOf("match", k, "tr", 1.2, "pr", 1.0, "se", 0.8, 0.6), 9,
+                        listOf("match", k, "tr", 2.2, "pr", 1.9, "se", 1.6, 1.3)),
+                ), filter = lowShown)
+                if (roadsOn) labels += layer("lowroad-ref", "symbol", "lowroads", source = ls, layout = mapOf(
+                    "symbol-placement" to "line",
+                    "text-field" to listOf("get", "r"),
+                    "text-font" to listOf(MEDIUM),
+                    "text-size" to 11,
+                    "symbol-spacing" to 500,
+                    "text-rotation-alignment" to "viewport",
+                    "text-keep-upright" to true,
+                ), paint = mapOf(
+                    "text-color" to listOf("match", k, "tr", c.trunk, "pr", c.primary, c.label),
+                    "text-halo-color" to c.halo, "text-halo-width" to 2.2,
+                ), filter = listOf("all", listOf("has", "r"), lowShown, listOf(">=", listOf("zoom"), opts.from(Detail.ROAD_REFS))))
                 // Almost invisible: only there so the screen can ask which limit is under the bike.
                 lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
                     "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,
