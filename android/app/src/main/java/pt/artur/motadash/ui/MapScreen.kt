@@ -128,6 +128,12 @@ import pt.artur.motadash.Guidance
 import pt.artur.motadash.Maneuver
 import pt.artur.motadash.TurnKind
 import pt.artur.motadash.TurnVoice
+import pt.artur.motadash.Note
+import pt.artur.motadash.NoteText
+import pt.artur.motadash.PacenoteVoice
+import pt.artur.motadash.Pacenotes
+import pt.artur.motadash.SectionTimes
+import pt.artur.motadash.Split
 import pt.artur.motadash.Turns
 import pt.artur.motadash.TrackMode
 import kotlinx.coroutines.withContext
@@ -871,6 +877,27 @@ fun MapScreen() {
     }
     var nextTurn by remember { mutableStateOf<Pair<Maneuver, Double>?>(null) }
     val turnVoice = remember { TurnVoice() }
+    // Track mode: rally pacenotes from the track's shape and heights, and each section timed against the best.
+    var pacenotes by remember { mutableStateOf<Pacenotes?>(null) }
+    LaunchedEffect(activeTrack?.id, activeTrack?.lines, reversed, installed) {
+        val t = activeTrack
+        pacenotes = if (t == null) null else withContext(Dispatchers.Default) {
+            runCatching {
+                val heights = runCatching {
+                    ElevProfile.of(t, reversed, installed.filter { it.enabled }, samples = (t.lengthM / 10).toInt().coerceIn(50, 20000))
+                }.getOrNull()
+                Pacenotes(if (reversed) t.lines.reversed().map { it.reversed() } else t.lines, heights)
+            }.getOrNull()
+        }
+    }
+    var nextNote by remember { mutableStateOf<Pair<Note, Double>?>(null) }
+    val noteVoice = remember { PacenoteVoice() }
+    val sections = remember(follower, pacenotes?.notes?.size) {
+        val t = activeTrack
+        if (t == null || follower == null || pacenotes == null) null else runCatching { SectionTimes(ctx, t, reversed, follower.totalM, pacenotes) }.getOrNull()
+    }
+    var split by remember { mutableStateOf<Split?>(null) }
+    LaunchedEffect(split) { if (split != null) { delay(8000); split = null } }
     // Nav mode works out a road route back to the track; Track mode only shows the way to the nearest point.
     var trackMode by remember { mutableStateOf(MapStore.trackMode(ctx)) }
     var rejoinTick by remember { mutableIntStateOf(0) }
@@ -1156,7 +1183,14 @@ fun MapScreen() {
                 p.offM <= 50 -> guide?.next(p.doneM)
                 else -> null
             }
-            turnVoice.step(ctx, nextTurn, f.speed)
+            val pn = pacenotes
+            val noting = trackMode == TrackMode.TRACK && MapStore.pacenotes(ctx) && pn != null && p != null && p.offM <= 50 && back == null
+            nextNote = if (noting) pn!!.next(p!!.doneM) else null
+            if (noting) noteVoice.step(ctx, pn!!, p!!.doneM, f.speed) else turnVoice.step(ctx, nextTurn, f.speed)
+            if (p != null && MapStore.sectionTimes(ctx)) sections?.step(p.doneM, p.offM, f.elapsedRealtimeNanos / 1e9)?.let { s ->
+                split = s
+                s.faster?.let { if (MapStore.turnVoice(ctx)) Speech.say(ctx, L.s(if (it) R.string.split_fast else R.string.split_slow)) }
+            }
             limit = holder.limit
             val cam = holder.camera
             if (cam != null && cam.key != camera?.key && cameraBeep) Speech.beep(ctx)
@@ -1331,7 +1365,11 @@ fun MapScreen() {
             },
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
+            if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) {
+                val nn = nextNote
+                if (nn != null) NoteBanner(nn, pacenotes) else nextTurn?.let { TurnBanner(it) }
+            }
+            if (activeTrack != null && moving == null) split?.let { SplitChip(it) }
             if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick,
                 arrival.takeIf { !(MapStore.etaOnBar(ctx) && Widget.PROFILE in LayoutStore.shown(ctx, LayoutStore.MAP, isLandscape()) && profile != null) },
                 wpArrival.takeIf { MapStore.etaWaypoint(ctx) }) { m ->
@@ -1655,7 +1693,31 @@ private fun shareGpx(ctx: Context, t: Track) {
 @Composable
 private fun TurnBanner(next: Pair<Maneuver, Double>) {
     val (m, dist) = next
-    val soon = dist < 150
+    Banner(Turns.arrow(m), (m.exit.takeIf { m.kind == TurnKind.ROUNDABOUT && it > 0 })?.toString(), dist, Turns.phrase(m), dist < 150)
+}
+
+/** Next pacenote, the way a co-driver would call it (with the ones linked to it). */
+@Composable
+private fun NoteBanner(next: Pair<Note, Double>, pn: Pacenotes?) {
+    val ctx = LocalContext.current
+    val (n, dist) = next
+    val group = pn?.notes?.indexOf(n)?.takeIf { it >= 0 }?.let { pn.group(it) } ?: listOf(n)
+    Banner(NoteText.arrow(n), n.grade.takeIf { n.kind == pt.artur.motadash.NoteKind.CORNER }?.toString(), dist, NoteText.call(ctx, group, null), dist < 80)
+}
+
+/** A section just finished: its time, and how it compares with the best. */
+@Composable
+private fun SplitChip(s: Split) {
+    val d = s.delta
+    val col = when (s.faster) { true -> Color(0xFF2E7D32); false -> Color(0xFFC62828); null -> Color(0xF0101010) }
+    val txt = if (d == null) stringResource(R.string.split_first, s.section, SectionTimes.clock(s.secs))
+        else stringResource(R.string.split_delta, s.section, SectionTimes.delta(d)) + "  ·  " + stringResource(if (s.faster == true) R.string.split_fast else R.string.split_slow)
+    Text(txt, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold,
+        modifier = Modifier.background(col, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 6.dp))
+}
+
+@Composable
+private fun Banner(arrow: String, badge: String?, dist: Double, text: String, soon: Boolean) {
     // White on near black reads in full sun; the turn close by gets a thick yellow frame, not a fill.
     val ink = Color.White
     Row(
@@ -1666,13 +1728,12 @@ private fun TurnBanner(next: Pair<Maneuver, Double>) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(Turns.arrow(m), color = if (soon) Color(0xFFFFD400) else ink, fontSize = 44.sp, fontWeight = FontWeight.Bold)
-            if (m.kind == TurnKind.ROUNDABOUT && m.exit > 0)
-                Text("${m.exit}", color = Color(0xFFFFD400), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(arrow, color = if (soon) Color(0xFFFFD400) else ink, fontSize = 44.sp, fontWeight = FontWeight.Bold)
+            if (badge != null) Text(badge, color = Color(0xFFFFD400), fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Column {
             Text(Turns.shown(dist), color = ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Text(Turns.phrase(m), color = ink, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text(text, color = ink, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
     }
 }
@@ -1767,6 +1828,9 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         }
         check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
         check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
+        check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
+        check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
+        check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
         HorizontalDivider()
         header(R.string.track_mode_title)
         TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }

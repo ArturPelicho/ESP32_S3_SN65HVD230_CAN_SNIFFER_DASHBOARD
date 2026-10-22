@@ -176,6 +176,18 @@ object MapStore {
     /** Arrival time at the end of the progress (height) strip instead of in the track box. */
     fun etaOnBar(ctx: Context): Boolean = prefs(ctx).getBoolean("eta_bar", true)
     fun setEtaOnBar(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("eta_bar", on).apply()
+    /** Track mode calls rally pacenotes from the track's shape instead of turn by turn. */
+    fun pacenotes(ctx: Context): Boolean = prefs(ctx).getBoolean("pacenotes", true)
+    fun setPacenotes(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("pacenotes", on).apply()
+
+    /** Pacenotes as rally numbers ("left 4") rather than words ("medium left"). */
+    fun pacenoteNumbers(ctx: Context): Boolean = prefs(ctx).getBoolean("pacenote_numbers", false)
+    fun setPacenoteNumbers(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("pacenote_numbers", on).apply()
+
+    /** Times each section of a track ridden before, against the best: "Fast" or "Slow". */
+    fun sectionTimes(ctx: Context): Boolean = prefs(ctx).getBoolean("section_times", true)
+    fun setSectionTimes(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("section_times", on).apply()
+
     fun turnVoice(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_voice", true)
     fun setTurnVoice(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_voice", on).apply()
 
