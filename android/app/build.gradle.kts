@@ -5,12 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "pt.artur.navexpress"
+    namespace = "app.navexpress"
     compileSdk = 34
 
     defaultConfig {
-        // Kept from the first builds: changing it would install a separate app next to the old one.
-        applicationId = "pt.artur.motadash"
+        applicationId = "app.navexpress"
         minSdk = 26
         targetSdk = 34
         // CI sets the build number so every APK installs over the last one.

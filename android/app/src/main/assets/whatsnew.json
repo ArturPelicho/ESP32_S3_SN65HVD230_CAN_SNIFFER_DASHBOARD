@@ -33,10 +33,10 @@
   {
    "id": 3,
    "en": [
-    "The app's code now lives under the NavExpress name. If calls and messages stop showing on the map, allow notification access again in Settings → Phone."
+    "New app id (app.navexpress): this is installed as a new app. Download your maps again, then uninstall the old NavExpress."
    ],
    "pt": [
-    "O código da app passou para o nome NavExpress. Se as chamadas e mensagens deixarem de aparecer no mapa, volta a dar acesso às notificações em Definições → Telemóvel."
+    "Identificador novo da app (app.navexpress): instala-se como uma app nova. Volta a descarregar os mapas e depois desinstala o NavExpress antigo."
    ]
   }
  ]
