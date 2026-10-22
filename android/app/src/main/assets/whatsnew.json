@@ -33,10 +33,10 @@
   {
    "id": 3,
    "en": [
-    "New app id (app.navexpress): this is installed as a new app. Download your maps again, then uninstall the old NavExpress."
+    "Settings → About → Backup: save your settings, tracks and places to a file. The next version moves to a new app id and installs as a new app; load the file there."
    ],
    "pt": [
-    "Identificador novo da app (app.navexpress): instala-se como uma app nova. Volta a descarregar os mapas e depois desinstala o NavExpress antigo."
+    "Definições → Sobre → Cópia de segurança: guarda as definições, trajetos e sítios num ficheiro. A próxima versão muda de identificador e instala-se como uma app nova; carrega lá o ficheiro."
    ]
   }
  ]

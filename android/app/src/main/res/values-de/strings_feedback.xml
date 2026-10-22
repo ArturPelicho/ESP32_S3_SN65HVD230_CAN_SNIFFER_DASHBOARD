@@ -17,4 +17,11 @@
     <string name="fb_crash_ignore">Nicht jetzt</string>
     <string name="wn_title">Neu in %1$s</string>
     <string name="wn_close">Zum Schließen irgendwo tippen.</string>
+    <string name="bk_title">Sicherung</string>
+    <string name="bk_hint">Einstellungen, Tracks, Lieblingsorte, direkte Linien und Abschnittszeiten in einer Datei, für ein neues Handy oder eine neue Installation. Karten werden neu geladen.</string>
+    <string name="bk_save">In Datei speichern</string>
+    <string name="bk_load">Aus Datei laden</string>
+    <string name="bk_saved">Gespeichert: %1$d Einstellungen, %2$d Dateien.</string>
+    <string name="bk_loaded">Geladen: %1$d Einstellungen, %2$d Dateien. Die App startet neu.</string>
+    <string name="bk_failed">Nicht möglich: %1$s</string>
 </resources>

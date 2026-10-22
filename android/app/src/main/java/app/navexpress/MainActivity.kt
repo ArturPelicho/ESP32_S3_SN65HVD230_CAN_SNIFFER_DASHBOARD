@@ -5,6 +5,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
@@ -85,6 +86,34 @@ class MainActivity : ComponentActivity() {
 
     private val askBackground =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
+    private val saveBackup =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            Backup.export(this, uri)
+                .onSuccess { (n, f) -> Toast.makeText(this, getString(R.string.bk_saved, n, f), Toast.LENGTH_LONG).show() }
+                .onFailure { Toast.makeText(this, getString(R.string.bk_failed, it.message ?: "?"), Toast.LENGTH_LONG).show() }
+        }
+
+    private val loadBackup =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            Backup.import(this, uri)
+                .onSuccess { (n, f) ->
+                    Toast.makeText(this, getString(R.string.bk_loaded, n, f), Toast.LENGTH_LONG).show()
+                    // Settings are read once at start: open the app again so all of them take effect.
+                    window.decorView.postDelayed({
+                        packageManager.getLaunchIntentForPackage(packageName)?.let {
+                            startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                        }
+                        Runtime.getRuntime().exit(0)
+                    }, 1500)
+                }
+                .onFailure { Toast.makeText(this, getString(R.string.bk_failed, it.message ?: "?"), Toast.LENGTH_LONG).show() }
+        }
+
+    fun exportBackup() = saveBackup.launch(Backup.fileName())
+    fun importBackup() = loadBackup.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocale.wrap(newBase))

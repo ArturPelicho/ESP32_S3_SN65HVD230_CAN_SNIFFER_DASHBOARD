@@ -17,4 +17,11 @@
     <string name="fb_crash_ignore">Not now</string>
     <string name="wn_title">What\'s new in %1$s</string>
     <string name="wn_close">Tap anywhere to close.</string>
+    <string name="bk_title">Backup</string>
+    <string name="bk_hint">Settings, tracks, favourite places, direct lines and section times in one file, to load on a new phone or a new install. Maps download again.</string>
+    <string name="bk_save">Save to a file</string>
+    <string name="bk_load">Load from a file</string>
+    <string name="bk_saved">Saved: %1$d settings, %2$d files.</string>
+    <string name="bk_loaded">Loaded: %1$d settings, %2$d files. The app opens again.</string>
+    <string name="bk_failed">Could not do it: %1$s</string>
 </resources>

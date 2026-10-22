@@ -302,6 +302,13 @@ fun ControlScreen(activity: MainActivity) {
                         }.getOrNull() ?: "?")
                         UpdateBlock()
                     }
+                    Section(stringResource(R.string.bk_title)) {
+                        Text(stringResource(R.string.bk_hint), color = Palette.label, fontSize = 12.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { activity.exportBackup() }) { Text(stringResource(R.string.bk_save)) }
+                            OutlinedButton(onClick = { activity.importBackup() }) { Text(stringResource(R.string.bk_load)) }
+                        }
+                    }
                     Section(stringResource(R.string.fb_title)) {
                         Text(stringResource(R.string.fb_hint), color = Palette.label, fontSize = 12.sp)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

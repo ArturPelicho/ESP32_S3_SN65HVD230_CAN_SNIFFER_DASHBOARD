@@ -17,4 +17,11 @@
     <string name="fb_crash_ignore">Non ora</string>
     <string name="wn_title">Novità della %1$s</string>
     <string name="wn_close">Tocca ovunque per chiudere.</string>
+    <string name="bk_title">Backup</string>
+    <string name="bk_hint">Impostazioni, tracce, luoghi preferiti, linee dirette e tempi per settore in un solo file, da caricare su un telefono nuovo o una nuova installazione. Le mappe si scaricano di nuovo.</string>
+    <string name="bk_save">Salva in un file</string>
+    <string name="bk_load">Carica da un file</string>
+    <string name="bk_saved">Salvato: %1$d impostazioni, %2$d file.</string>
+    <string name="bk_loaded">Caricato: %1$d impostazioni, %2$d file. L\'app si riapre.</string>
+    <string name="bk_failed">Non riuscito: %1$s</string>
 </resources>

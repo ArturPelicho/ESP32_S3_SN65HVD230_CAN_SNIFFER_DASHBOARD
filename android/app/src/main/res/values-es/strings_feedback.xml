@@ -17,4 +17,11 @@
     <string name="fb_crash_ignore">Ahora no</string>
     <string name="wn_title">Novedades de la %1$s</string>
     <string name="wn_close">Toca en cualquier sitio para cerrar.</string>
+    <string name="bk_title">Copia de seguridad</string>
+    <string name="bk_hint">Ajustes, rutas, lugares favoritos, líneas directas y tiempos por tramo en un solo archivo, para cargar en un teléfono nuevo o una instalación nueva. Los mapas se vuelven a descargar.</string>
+    <string name="bk_save">Guardar en un archivo</string>
+    <string name="bk_load">Cargar de un archivo</string>
+    <string name="bk_saved">Guardado: %1$d ajustes, %2$d archivos.</string>
+    <string name="bk_loaded">Cargado: %1$d ajustes, %2$d archivos. La app se vuelve a abrir.</string>
+    <string name="bk_failed">No se pudo: %1$s</string>
 </resources>
