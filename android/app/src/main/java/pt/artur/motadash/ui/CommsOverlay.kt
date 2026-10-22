@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -51,31 +52,33 @@ fun CommsOverlay(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A call in one row, so the road and the next turn stay in view: who, then big Answer / Reject
+ * buttons while it rings; once answered, a slim bar with the time and Hang up.
+ */
 @Composable
 private fun CallCard(c: Call) {
     val ctx = LocalContext.current
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(c.ringing) { while (!c.ringing) { now = System.currentTimeMillis(); delay(1000) } }
     val who = c.name ?: c.number ?: stringResource(R.string.comms_unknown)
-    Column(
+    Row(
         Modifier.fillMaxWidth().background(Palette.panel, RoundedCornerShape(16.dp))
-            .border(2.dp, if (c.ringing) Palette.green else Palette.frame, RoundedCornerShape(16.dp)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .border(2.dp, if (c.ringing) Palette.green else Palette.frame, RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = if (c.ringing) 8.dp else 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("📞", fontSize = 28.sp)
-            Column(Modifier.padding(start = 10.dp).weight(1f)) {
-                Text(who, color = Palette.text, fontSize = 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                val sub = if (c.ringing) stringResource(R.string.comms_calling)
-                    else stringResource(R.string.comms_in_call, ((now - c.since) / 1000).let { "%d:%02d".format(it / 60, it % 60) })
-                Text(listOfNotNull(sub, c.number?.takeIf { c.name != null }).joinToString(" · "), color = Palette.label, fontSize = 15.sp, maxLines = 1)
-            }
+        Text("📞", fontSize = if (c.ringing) 24.sp else 18.sp)
+        Column(Modifier.weight(1f)) {
+            Text(who, color = Palette.text, fontSize = if (c.ringing) 20.sp else 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val sub = if (c.ringing) stringResource(R.string.comms_calling)
+                else stringResource(R.string.comms_in_call, ((now - c.since) / 1000).let { "%d:%02d".format(it / 60, it % 60) })
+            Text(sub, color = Palette.label, fontSize = 13.sp, maxLines = 1)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (c.ringing) BigButton(stringResource(R.string.comms_answer), Color(0xFF1E8E3E), Modifier.weight(1f)) { Comms.answer(ctx) }
-            BigButton(stringResource(if (c.ringing) R.string.comms_reject else R.string.comms_hang_up), Color(0xFFC62828),
-                Modifier.weight(1f)) { Comms.hangUp(ctx) }
-        }
+        if (c.ringing) BigButton(stringResource(R.string.comms_answer), Color(0xFF1E8E3E), Modifier.width(120.dp)) { Comms.answer(ctx) }
+        BigButton(stringResource(if (c.ringing) R.string.comms_reject else R.string.comms_hang_up), Color(0xFFC62828),
+            Modifier.width(if (c.ringing) 120.dp else 110.dp), slim = !c.ringing) { Comms.hangUp(ctx) }
     }
 }
 
@@ -102,9 +105,9 @@ private fun MessageCard(m: Msg) {
 }
 
 @Composable
-private fun BigButton(label: String, color: Color, modifier: Modifier, onClick: () -> Unit) {
+private fun BigButton(label: String, color: Color, modifier: Modifier, slim: Boolean = false, onClick: () -> Unit) {
     Box(
-        modifier.height(64.dp).background(color, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        modifier.height(if (slim) 48.dp else 60.dp).background(color, RoundedCornerShape(14.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
-    ) { Text(label, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+    ) { Text(label, color = Color.White, fontSize = if (slim) 17.sp else 20.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
 }

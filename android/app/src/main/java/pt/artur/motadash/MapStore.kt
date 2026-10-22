@@ -50,8 +50,9 @@ enum class MapTheme(@StringRes private val res: Int) {
     AUTO(R.string.maps_theme_auto), DAY(R.string.maps_theme_day), NIGHT(R.string.maps_theme_night);
     val label: String get() = L.s(res)
 }
+/** Names on the map: in the app's language where the map has them, or as written locally. */
 enum class MapLanguage(@StringRes private val res: Int) {
-    PT(R.string.maps_lang_pt), LOCAL(R.string.maps_lang_local);
+    APP(R.string.maps_lang_app), LOCAL(R.string.maps_lang_local);
     val label: String get() = L.s(res)
 }
 
@@ -150,7 +151,7 @@ object MapStore {
         MapTheme.entries.firstOrNull { it.name == prefs(ctx).getString("theme", null) } ?: MapTheme.AUTO
     fun setTheme(ctx: Context, t: MapTheme) = prefs(ctx).edit().putString("theme", t.name).apply()
     fun language(ctx: Context): MapLanguage =
-        MapLanguage.entries.firstOrNull { it.name == prefs(ctx).getString("lang", null) } ?: MapLanguage.PT
+        MapLanguage.entries.firstOrNull { it.name == prefs(ctx).getString("lang", null) } ?: MapLanguage.APP
     fun setLanguage(ctx: Context, l: MapLanguage) = prefs(ctx).edit().putString("lang", l.name).apply()
     fun followMode(ctx: Context): FollowMode =
         FollowMode.entries.firstOrNull { it.name == prefs(ctx).getString("follow", null) } ?: FollowMode.THREE_D

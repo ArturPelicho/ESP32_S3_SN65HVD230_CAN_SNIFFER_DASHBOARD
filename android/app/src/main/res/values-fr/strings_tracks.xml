@@ -3,7 +3,7 @@
     <string name="maps_theme_auto">Automatique</string>
     <string name="maps_theme_day">Jour</string>
     <string name="maps_theme_night">Nuit</string>
-    <string name="maps_lang_pt">Portugais</string>
+    <string name="maps_lang_app">Langue de l\'appli</string>
     <string name="maps_lang_local">Langue locale</string>
     <string name="maps_follow_heading">Direction en haut</string>
     <string name="maps_follow_3d">3D</string>
@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Tu peux aussi ouvrir un fichier avec NavExpress depuis le gestionnaire de fichiers ou WhatsApp.</string>
     <string name="tracks_create_hint">Pour créer un itinéraire : appui long sur la carte, « Commencer un nouvel itinéraire ici », puis appui long ailleurs pour ajouter des waypoints. Appui long sur un waypoint pour le déplacer ou le supprimer, et sur la ligne pour renommer, enregistrer ou partager.</string>
     <string name="tracks_roads">Les nouveaux itinéraires suivent les routes</string>
-    <string name="tracks_roads_hint">Avec les itinéraires hors ligne de la région (Mapas), ça marche sans réseau ; sinon il faut du réseau (BRouter, OpenStreetMap). Sans aucun des deux, les waypoints sont reliés en ligne droite.</string>
+    <string name="tracks_roads_hint">Avec les itinéraires hors ligne de la région (Cartes hors ligne), ça marche sans réseau ; sinon il faut du réseau (BRouter, OpenStreetMap). Sans aucun des deux, les waypoints sont reliés en ligne droite.</string>
     <string name="tracks_empty">Aucun itinéraire pour l\'instant.</string>
     <string name="tracks_save">Enregistrer</string>
     <string name="tracks_cancel">Annuler</string>
@@ -110,7 +110,7 @@
     <string name="trip_so_far">%1$s en %2$s</string>
     <string name="trip_stop">Arrêter et garder</string>
     <string name="trip_keep">Continuer</string>
-    <string name="trip_saved">Gardée dans Trajetos : %1$s</string>
+    <string name="trip_saved">Gardée dans Itinéraires : %1$s</string>
     <string name="trip_too_short">Trop courte pour être gardée (moins de 100 m)</string>
     <string name="trip_title">Enregistrer la sortie</string>
     <string name="trip_start">Commencer l’enregistrement</string>

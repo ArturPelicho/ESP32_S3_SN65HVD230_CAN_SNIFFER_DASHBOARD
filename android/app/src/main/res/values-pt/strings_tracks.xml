@@ -3,7 +3,7 @@
     <string name="maps_theme_auto">Automático</string>
     <string name="maps_theme_day">Dia</string>
     <string name="maps_theme_night">Noite</string>
-    <string name="maps_lang_pt">Português</string>
+    <string name="maps_lang_app">Língua da app</string>
     <string name="maps_lang_local">Língua local</string>
     <string name="maps_follow_heading">Direção para cima</string>
     <string name="maps_follow_3d">3D</string>

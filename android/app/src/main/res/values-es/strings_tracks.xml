@@ -3,7 +3,7 @@
     <string name="maps_theme_auto">Automático</string>
     <string name="maps_theme_day">Día</string>
     <string name="maps_theme_night">Noche</string>
-    <string name="maps_lang_pt">Portugués</string>
+    <string name="maps_lang_app">Idioma de la app</string>
     <string name="maps_lang_local">Idioma local</string>
     <string name="maps_follow_heading">Dirección arriba</string>
     <string name="maps_follow_3d">3D</string>
@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">También puedes abrir un archivo con NavExpress desde el gestor de archivos o WhatsApp.</string>
     <string name="tracks_create_hint">Para crear una ruta: pulsación larga en el mapa, «Empezar una ruta nueva aquí», y luego pulsación larga en otros sitios para añadir waypoints. Pulsación larga en un waypoint para moverlo o borrarlo, y en la línea para renombrar, guardar o compartir.</string>
     <string name="tracks_roads">Las rutas nuevas siguen las carreteras</string>
-    <string name="tracks_roads_hint">Con las rutas offline de la región (Mapas) funciona sin red; si no, necesita red (BRouter, OpenStreetMap). Sin ninguna, une los waypoints en línea recta.</string>
+    <string name="tracks_roads_hint">Con las rutas offline de la región (Mapas sin conexión) funciona sin red; si no, necesita red (BRouter, OpenStreetMap). Sin ninguna, une los waypoints en línea recta.</string>
     <string name="tracks_empty">Aún no hay rutas.</string>
     <string name="tracks_save">Guardar</string>
     <string name="tracks_cancel">Cancelar</string>
@@ -110,7 +110,7 @@
     <string name="trip_so_far">%1$s en %2$s</string>
     <string name="trip_stop">Parar y guardar</string>
     <string name="trip_keep">Seguir grabando</string>
-    <string name="trip_saved">Guardado en Trajetos: %1$s</string>
+    <string name="trip_saved">Guardado en Rutas: %1$s</string>
     <string name="trip_too_short">Demasiado corto para guardar (menos de 100 m)</string>
     <string name="trip_title">Grabar el viaje</string>
     <string name="trip_start">Empezar a grabar</string>

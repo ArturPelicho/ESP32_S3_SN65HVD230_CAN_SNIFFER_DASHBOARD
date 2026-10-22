@@ -3,7 +3,7 @@
     <string name="maps_theme_auto">Automatico</string>
     <string name="maps_theme_day">Giorno</string>
     <string name="maps_theme_night">Notte</string>
-    <string name="maps_lang_pt">Portoghese</string>
+    <string name="maps_lang_app">Lingua dell\'app</string>
     <string name="maps_lang_local">Lingua locale</string>
     <string name="maps_follow_heading">Direzione in alto</string>
     <string name="maps_follow_3d">3D</string>
@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Puoi anche aprire un file con NavExpress dal gestore file o da WhatsApp.</string>
     <string name="tracks_create_hint">Per creare un percorso: tocco lungo sulla mappa, «Inizia un nuovo percorso qui», poi tocco lungo altrove per aggiungere waypoint. Tocco lungo su un waypoint per spostarlo o eliminarlo, e sulla linea per rinominare, salvare o condividere.</string>
     <string name="tracks_roads">I nuovi percorsi seguono le strade</string>
-    <string name="tracks_roads_hint">Con i percorsi offline della regione (Mapas) funziona senza rete; altrimenti serve la rete (BRouter, OpenStreetMap). Senza nessuno dei due, unisce i waypoint in linea retta.</string>
+    <string name="tracks_roads_hint">Con i percorsi offline della regione (Mappe offline) funziona senza rete; altrimenti serve la rete (BRouter, OpenStreetMap). Senza nessuno dei due, unisce i waypoint in linea retta.</string>
     <string name="tracks_empty">Ancora nessun percorso.</string>
     <string name="tracks_save">Salva</string>
     <string name="tracks_cancel">Annulla</string>
@@ -110,7 +110,7 @@
     <string name="trip_so_far">%1$s in %2$s</string>
     <string name="trip_stop">Ferma e salva</string>
     <string name="trip_keep">Continua</string>
-    <string name="trip_saved">Salvato in Trajetos: %1$s</string>
+    <string name="trip_saved">Salvato in Percorsi: %1$s</string>
     <string name="trip_too_short">Troppo corto da salvare (meno di 100 m)</string>
     <string name="trip_title">Registra il viaggio</string>
     <string name="trip_start">Inizia a registrare</string>

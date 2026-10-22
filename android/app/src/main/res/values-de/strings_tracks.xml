@@ -3,7 +3,7 @@
     <string name="maps_theme_auto">Automatisch</string>
     <string name="maps_theme_day">Tag</string>
     <string name="maps_theme_night">Nacht</string>
-    <string name="maps_lang_pt">Portugiesisch</string>
+    <string name="maps_lang_app">App-Sprache</string>
     <string name="maps_lang_local">Landessprache</string>
     <string name="maps_follow_heading">Fahrtrichtung oben</string>
     <string name="maps_follow_3d">3D</string>
@@ -56,7 +56,7 @@
     <string name="tracks_open_hint">Du kannst eine Datei auch aus dem Dateimanager oder WhatsApp mit NavExpress öffnen.</string>
     <string name="tracks_create_hint">So erstellst du eine Route: lange auf die Karte drücken, „Neue Route hier beginnen“, dann lange auf andere Stellen drücken, um Waypoints hinzuzufügen. Lange auf einen Waypoint drücken, um ihn zu verschieben oder zu löschen, und auf die Linie, um sie umzubenennen, zu speichern oder zu teilen.</string>
     <string name="tracks_roads">Neue Routen folgen den Straßen</string>
-    <string name="tracks_roads_hint">Mit den Offline-Routen der Region (Mapas) geht es ohne Netz; sonst braucht es Netz (BRouter, OpenStreetMap). Ohne beides werden die Wegpunkte gerade verbunden.</string>
+    <string name="tracks_roads_hint">Mit den Offline-Routen der Region (Offline-Karten) geht es ohne Netz; sonst braucht es Netz (BRouter, OpenStreetMap). Ohne beides werden die Wegpunkte gerade verbunden.</string>
     <string name="tracks_empty">Noch keine Routen.</string>
     <string name="tracks_save">Speichern</string>
     <string name="tracks_cancel">Abbrechen</string>
@@ -110,7 +110,7 @@
     <string name="trip_so_far">%1$s in %2$s</string>
     <string name="trip_stop">Beenden und speichern</string>
     <string name="trip_keep">Weiter aufzeichnen</string>
-    <string name="trip_saved">In Trajetos gespeichert: %1$s</string>
+    <string name="trip_saved">In Routen gespeichert: %1$s</string>
     <string name="trip_too_short">Zu kurz zum Speichern (unter 100 m)</string>
     <string name="trip_title">Fahrt aufzeichnen</string>
     <string name="trip_start">Aufzeichnung starten</string>

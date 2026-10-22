@@ -35,4 +35,9 @@
     <string name="set_cat_about">À propos</string>
     <string name="set_cat_maps">Cartes</string>
     <string name="set_cat_gpx">Traces (GPX)</string>
+    <string name="upd_prompt_title">Nouvelle version %1$s</string>
+    <string name="upd_prompt_text">Vous avez la %1$s. Mettre à jour vers la %2$s maintenant ?</string>
+    <string name="upd_prompt_update">Mettre à jour</string>
+    <string name="upd_prompt_dismiss">Ignorer</string>
+    <string name="ble_no_service">Cet appareil n\'a pas le service NavExpress (firmware ancien ?)</string>
 </resources>

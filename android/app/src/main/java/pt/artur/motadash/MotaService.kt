@@ -281,7 +281,7 @@ class MotaService : Service() {
         val uart = g.getService(BleProtocol.UART_SERVICE)
         if (mota == null || uart == null) {
             // Not our board (or old firmware): forget it and look again.
-            Link.onLine("Este dispositivo não tem o serviço NavExpress (firmware antigo?)")
+            Link.onLine(L.s(R.string.ble_no_service))
             g.disconnect()
             return
         }

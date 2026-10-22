@@ -15,7 +15,7 @@
     <string name="map_save">Save</string>
     <string name="map_no_maps">No maps on the phone yet</string>
     <string name="map_all_off">All maps are switched off</string>
-    <string name="map_download_hint">Download Portugal over Wi-Fi and the map works offline.</string>
+    <string name="map_download_hint">Download your region over Wi-Fi and the map works offline.</string>
     <string name="map_maps">Maps</string>
     <string name="map_fix_waypoint_q">Place waypoint %1$d here?</string>
     <string name="map_waypoint_of">Waypoint %1$d · %2$s</string>
@@ -78,7 +78,7 @@
     <string name="turn_arrive">you have arrived</string>
     <string name="turn_show">Show the next turn on the map</string>
     <string name="turn_voice">Say the turns aloud</string>
-    <string name="turn_hint">Planned trajetos use the router\'s turns; imported tracks are read from the shape of the line.</string>
+    <string name="turn_hint">Planned routes use the router\'s turns; imported tracks are read from the shape of the line.</string>
     <string name="map_dr">No GPS: estimated position</string>
     <string name="pn_left">left</string>
     <string name="pn_right">right</string>

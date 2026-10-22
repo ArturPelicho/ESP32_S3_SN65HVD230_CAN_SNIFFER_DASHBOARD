@@ -1028,7 +1028,10 @@ fun MapScreen() {
         MapTheme.AUTO -> minute.let { MapStyle.isNight(fix?.latitude ?: 39.5, fix?.longitude ?: -8.0) }
     }
     val enabled = installed.filter { it.enabled }
-    val styleJson = remember(enabled, night, lang, layers, contourStep, layerOpts) { MapStyle.build(enabled, night, lang, layers, contourStep, layerOpts) }
+    val styleJson = remember(enabled, night, lang, layers, contourStep, layerOpts) {
+        MapStyle.appLang = pt.artur.motadash.AppLocale.tag(ctx).ifEmpty { java.util.Locale.getDefault().toLanguageTag() }.substringBefore('-')
+        MapStyle.build(enabled, night, lang, layers, contourStep, layerOpts)
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(

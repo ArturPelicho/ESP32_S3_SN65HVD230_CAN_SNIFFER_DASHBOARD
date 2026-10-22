@@ -71,8 +71,11 @@ object MapStyle {
 
     private val RANK = byClass(9, 8, 7, 6, 5, 3, 2, 1, 0)
 
+    /** The app's language for map names ("en", "pt"...), set by the screen before [build]. */
+    var appLang: String = "en"
+
     private fun name(lang: MapLanguage): List<Any> =
-        if (lang == MapLanguage.PT) listOf("coalesce", listOf("get", "name:pt"), listOf("get", "name"))
+        if (lang == MapLanguage.APP) listOf("coalesce", listOf("get", "name:$appLang"), listOf("get", "name"))
         else listOf("get", "name")
 
     /** Contour levels: spacing, line width, line opacity. Each line belongs to the coarsest level it is a multiple of. */

@@ -39,7 +39,7 @@ object Comms {
     val KNOWN = linkedMapOf(
         "com.whatsapp" to "WhatsApp", "com.whatsapp.w4b" to "WhatsApp Business",
         "org.telegram.messenger" to "Telegram", "org.thoughtcrime.securesms" to "Signal",
-        "com.facebook.orca" to "Messenger", "com.google.android.apps.messaging" to "Mensagens",
+        "com.facebook.orca" to "Messenger", "com.google.android.apps.messaging" to "Messages",
     )
 
     private val _call = MutableStateFlow<Call?>(null)

@@ -1,5 +1,6 @@
 package pt.artur.motadash
 
+import androidx.compose.ui.platform.LocalContext
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -46,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import pt.artur.motadash.ui.ControlScreen
+import pt.artur.motadash.ui.UpdatePrompt
 import pt.artur.motadash.ui.CommsOverlay
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.DiagScreen
@@ -226,8 +228,10 @@ private fun App(activity: MainActivity) {
                 2 -> DiagScreen()
                 else -> ControlScreen(activity)
             }
-            // Calls and messages show over any tab.
-            CommsOverlay(Modifier.align(Alignment.TopCenter))
+            // Calls and messages show over any tab, away from the navigation boxes' corner so the next turn stays in view.
+            val navTop = MapStore.navCorner(LocalContext.current).name.startsWith("TOP")
+            CommsOverlay(Modifier.align(if (navTop) Alignment.BottomCenter else Alignment.TopCenter))
+            UpdatePrompt()
         }
     }
 }
