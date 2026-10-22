@@ -11,12 +11,12 @@ range, gear and engine health. Two parts that work alone or together:
   works out fuel use, range and gear, and sends it all to the phone over BLE.
 
 <p align="center">
-  <img src="docs/img/map-day.png" width="49%" alt="Day map of Funchal with a followed track">
-  <img src="docs/img/map-night-3d.png" width="49%" alt="Night map in 3D with buildings">
+  <img src="docs/img/map-day.jpg" width="49%" alt="Day map of Funchal with a followed track">
+  <img src="docs/img/map-night-3d.jpg" width="49%" alt="Night map in 3D with buildings">
 </p>
 <p align="center">
-  <img src="docs/img/map-relief.png" width="49%" alt="Shaded relief and contour lines in the mountains of Madeira">
-  <img src="docs/img/map-dirt.png" width="49%" alt="Dirt roads coloured by difficulty">
+  <img src="docs/img/map-relief.jpg" width="49%" alt="Shaded relief and contour lines in the mountains of Madeira">
+  <img src="docs/img/map-dirt.jpg" width="49%" alt="Dirt roads coloured by difficulty">
 </p>
 <p align="center"><sub>The app's own map style, rendered from the same offline map files the phone downloads (Madeira).</sub></p>
 
