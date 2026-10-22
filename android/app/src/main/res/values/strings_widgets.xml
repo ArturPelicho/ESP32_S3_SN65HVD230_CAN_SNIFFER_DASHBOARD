@@ -105,4 +105,12 @@
     <string name="wx_uv">UV</string>
     <string name="wx_on_bar">Rain ahead on the progress bar</string>
     <string name="layer_weather_hint">Needs internet. The last forecast is kept, so it carries on for a while with no signal. Rain radar: RainViewer; forecast: Open-Meteo.</string>
+    <string name="detail_title">Detail by zoom</string>
+    <string name="detail_from">%1$s: from zoom %2$d</string>
+    <string name="detail_reset">Back to the usual zooms</string>
+    <string name="detail_waterways">Rivers and streams</string>
+    <string name="detail_water_names">Water names</string>
+    <string name="detail_street_names">Street names</string>
+    <string name="detail_road_refs">Road numbers</string>
+    <string name="detail_hint">Higher = shows only when closer in. Below a certain zoom the map files hold nothing of a class (secondary roads about 9, streets about 12), so going lower shows no more.</string>
 </resources>

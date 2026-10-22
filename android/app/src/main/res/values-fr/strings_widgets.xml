@@ -105,4 +105,12 @@
     <string name="wx_uv">UV</string>
     <string name="wx_on_bar">Pluie à venir sur la barre de progression</string>
     <string name="layer_weather_hint">Nécessite internet. La dernière prévision est gardée et sert encore quelques heures sans réseau. Radar de pluie : RainViewer ; prévisions : Open-Meteo.</string>
+    <string name="detail_title">Détail par zoom</string>
+    <string name="detail_from">%1$s : à partir du zoom %2$d</string>
+    <string name="detail_reset">Revenir aux zooms habituels</string>
+    <string name="detail_waterways">Rivières et ruisseaux</string>
+    <string name="detail_water_names">Noms des eaux</string>
+    <string name="detail_street_names">Noms de rues</string>
+    <string name="detail_road_refs">Numéros de routes</string>
+    <string name="detail_hint">Plus haut = n\'apparaît que plus près. Sous un certain zoom les fichiers de carte n\'ont pas cette classe (secondaires vers 9, rues vers 12), donc plus bas n\'affiche rien de plus.</string>
 </resources>

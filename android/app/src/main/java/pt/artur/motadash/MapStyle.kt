@@ -190,7 +190,7 @@ object MapStyle {
             fills += layer("waterway", "line", "water", paint = mapOf(
                 "line-color" to c.waterLine,
                 "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 10, 0.6, 16, 3),
-            ), filter = listOf("match", listOf("geometry-type"), listOf("LineString", "MultiLineString"), true, false), minzoom = 10)
+            ), filter = listOf("match", listOf("geometry-type"), listOf("LineString", "MultiLineString"), true, false), minzoom = opts.from(Detail.WATERWAY))
 
             m.contours?.takeIf { MapLayer.CONTOURS in layers }?.let { f ->
                 val cs = "ct-${m.id}"
@@ -230,10 +230,15 @@ object MapStyle {
                 "fill-extrusion-opacity" to 0.85,
             ), minzoom = 15)
 
+            // Each class from the zoom the rider chose (tracks and paths keep their own layers' zooms).
+            val classFrom = listOf(">=", listOf("zoom"), listOf("match", ROAD_CLASS,
+                "mw", opts.from(Detail.MOTORWAY), "tr", opts.from(Detail.TRUNK), "pr", opts.from(Detail.PRIMARY),
+                "se", opts.from(Detail.SECONDARY), "te", opts.from(Detail.TERTIARY), "sv", opts.from(Detail.SERVICE),
+                listOf("tk", "pa"), 0, opts.from(Detail.MINOR)))
             // Railways fall into the "minor" class; keep them out of the road layers so they stay dashed.
             val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa") + roadsOff, false, true),
-                listOf("!=", listOf("get", "kind"), "rail"))
-            val roadShown: Any = if (roadsOff.isEmpty()) true else listOf("match", ROAD_CLASS, roadsOff, false, true)
+                listOf("!=", listOf("get", "kind"), "rail"), classFrom)
+            val roadShown: Any = if (roadsOff.isEmpty()) classFrom else listOf("all", listOf("match", ROAD_CLASS, roadsOff, false, true), classFrom)
             val tunnel = listOf("==", listOf("get", "is_tunnel"), true)
             lines += layer("rail", "line", "roads", paint = mapOf(
                 "line-color" to c.rail, "line-width" to 1.2, "line-dasharray" to listOf(3, 3),
@@ -258,7 +263,7 @@ object MapStyle {
                     c.casing, c.casing, c.casing, c.casing, c.casing),
                 "line-width" to roadWidth(1.6),
                 "line-opacity" to listOf("case", tunnel, 0.4, 1),
-            ), filter = notPath, minzoom = 7)
+            ), filter = notPath, minzoom = 3)
             if (roadsOn) lines += layer("road", "line", "roads", layout = mapOf(
                 "line-cap" to "round", "line-join" to "round", "line-sort-key" to RANK,
             ), paint = mapOf(
@@ -310,7 +315,7 @@ object MapStyle {
             labels += layer("water-label", "symbol", "water", layout = mapOf(
                 "text-field" to name(lang), "text-font" to listOf(ITALIC), "text-size" to 13,
             ), paint = mapOf("text-color" to c.waterLabel, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
-                filter = listOf("all", listOf("has", "name"), listOf("==", listOf("geometry-type"), "Point")), minzoom = 9)
+                filter = listOf("all", listOf("has", "name"), listOf("==", listOf("geometry-type"), "Point")), minzoom = opts.from(Detail.WATER_NAMES))
             if (roadsOn) labels += layer("road-label", "symbol", "roads", layout = mapOf(
                 "symbol-placement" to "line",
                 "text-field" to name(lang),
@@ -319,7 +324,7 @@ object MapStyle {
                 "symbol-spacing" to 300,
                 "text-max-angle" to 30,
             ), paint = mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.6),
-                filter = listOf("all", listOf("has", "name"), roadShown), minzoom = 13)
+                filter = listOf("all", listOf("has", "name"), roadShown), minzoom = opts.from(Detail.STREET_NAMES))
             // Road numbers (A1, IC8, N222, EN2...) on the bigger roads.
             if (roadsOn) labels += layer("road-ref", "symbol", "roads", layout = mapOf(
                 "symbol-placement" to "line",
@@ -333,7 +338,7 @@ object MapStyle {
                 "text-color" to byClass(c.motorway, c.trunk, c.primary, c.label, c.label, c.label, c.label, c.label, c.label),
                 "text-halo-color" to c.halo, "text-halo-width" to 2.2,
             ), filter = listOf("all", listOf("has", "ref"), roadShown,
-                listOf("match", ROAD_CLASS, listOf("mw", "tr", "pr", "se", "te"), true, false)), minzoom = 8)
+                listOf("match", ROAD_CLASS, listOf("mw", "tr", "pr", "se", "te"), true, false)), minzoom = opts.from(Detail.ROAD_REFS))
             labels += layer("place", "symbol", "places", layout = mapOf(
                 "text-field" to name(lang),
                 "text-font" to listOf("match", listOf("get", "kind_detail"), listOf("city", "town"),

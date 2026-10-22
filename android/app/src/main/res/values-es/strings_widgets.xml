@@ -105,4 +105,12 @@
     <string name="wx_uv">UV</string>
     <string name="wx_on_bar">Lluvia por delante en la barra de progreso</string>
     <string name="layer_weather_hint">Necesita internet. La última previsión se guarda y sigue sirviendo unas horas sin cobertura. Radar de lluvia: RainViewer; previsión: Open-Meteo.</string>
+    <string name="detail_title">Detalle por zoom</string>
+    <string name="detail_from">%1$s: desde zoom %2$d</string>
+    <string name="detail_reset">Volver a los zooms habituales</string>
+    <string name="detail_waterways">Ríos y arroyos</string>
+    <string name="detail_water_names">Nombres de agua</string>
+    <string name="detail_street_names">Nombres de calles</string>
+    <string name="detail_road_refs">Números de carretera</string>
+    <string name="detail_hint">Más alto = solo aparece más cerca. Por debajo de cierto zoom los archivos del mapa no tienen esa clase (secundarias unos 9, calles unos 12), así que más bajo no muestra más.</string>
 </resources>

@@ -49,6 +49,7 @@ import pt.artur.motadash.FollowMode
 import pt.artur.motadash.MapLanguage
 import pt.artur.motadash.MapRegion
 import pt.artur.motadash.MapStore
+import pt.artur.motadash.Detail
 import pt.artur.motadash.MapTheme
 import pt.artur.motadash.OfflineRouter
 import pt.artur.motadash.R
@@ -174,6 +175,8 @@ fun MapsPanel(
                 }
             }
             Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
+            Text(stringResource(R.string.detail_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            DetailSliders()
             Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -324,6 +327,28 @@ private fun AutoZoomSliders() {
         RangeSlider(value = zoom, onValueChange = { zoom = it }, valueRange = 12f..19f, steps = 13,
             onValueChangeFinished = { save() })
         Text(stringResource(R.string.mapopts_az_zoom_hint), color = Palette.label, fontSize = 12.sp)
+    }
+}
+
+/** From which zoom each kind of detail shows: road classes, rivers, water names, street names, road numbers. */
+@Composable
+private fun DetailSliders() {
+    val ctx = LocalContext.current
+    val o by MapStore.layerOptsFlow.collectAsStateWithLifecycle()
+    Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
+        Detail.entries.forEach { d ->
+            var v by remember(o.detailAt[d]) { mutableStateOf(o.from(d).toFloat()) }
+            Text(stringResource(R.string.detail_from, d.label, v.roundToInt())), color = Palette.text, fontSize = 14.sp)
+            Slider(value = v, onValueChange = { v = it }, valueRange = d.floor.toFloat()..18f, steps = (18 - d.floor - 1).coerceAtLeast(0),
+                onValueChangeFinished = {
+                    val z = v.roundToInt()
+                    MapStore.setLayerOpts(ctx, o.copy(detailAt = if (z == d.def) o.detailAt - d else o.detailAt + (d to z)))
+                })
+        }
+        if (o.detailAt.isNotEmpty()) TextButton(onClick = { MapStore.setLayerOpts(ctx, o.copy(detailAt = emptyMap())) }) {
+            Text(stringResource(R.string.detail_reset), color = Palette.amber)
+        }
+        Text(stringResource(R.string.detail_hint), color = Palette.label, fontSize = 12.sp)
     }
 }
 

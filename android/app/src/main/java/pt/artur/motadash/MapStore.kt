@@ -89,6 +89,18 @@ enum class RoadClass(val code: String, @StringRes private val res: Int) {
     val label: String get() = L.s(res)
 }
 
+/**
+ * Map detail that can start at a zoom of the rider's choosing: road classes, rivers and streams, water names,
+ * street names and road numbers. [def] is the usual start; below [floor] the map files hold nothing of it.
+ */
+enum class Detail(val code: String, @StringRes private val res: Int, val def: Int, val floor: Int) {
+    MOTORWAY("mw", R.string.road_motorway, 5, 3), TRUNK("tr", R.string.road_trunk, 6, 6), PRIMARY("pr", R.string.road_primary, 7, 7),
+    SECONDARY("se", R.string.road_secondary, 8, 9), TERTIARY("te", R.string.road_tertiary, 9, 9), MINOR("mi", R.string.road_minor, 12, 12),
+    SERVICE("sv", R.string.road_service, 13, 13), WATERWAY("water", R.string.detail_waterways, 10, 9), WATER_NAMES("wlabel", R.string.detail_water_names, 9, 5),
+    STREET_NAMES("names", R.string.detail_street_names, 13, 11), ROAD_REFS("refs", R.string.detail_road_refs, 8, 6);
+    val label: String get() = L.s(res)
+}
+
 /** What the weather layer shows, each on or off. */
 enum class WxKind(@StringRes private val res: Int) {
     WIND(R.string.wx_wind), TEMP(R.string.wx_temp), RAIN(R.string.wx_rain), UV(R.string.wx_uv);
@@ -112,7 +124,11 @@ data class LayerOpts(
     val roadsOff: Set<RoadClass> = emptySet(),
     val dirtOff: Set<DirtKind> = emptySet(),
     val wxOff: Set<WxKind> = setOf(WxKind.UV),
-)
+    /** Zoom from which each kind of detail shows, where the rider changed it. */
+    val detailAt: Map<Detail, Int> = emptyMap(),
+) {
+    fun from(d: Detail): Int = detailAt[d] ?: d.def
+}
 
 /**
  * Auto zoom by speed: [nearZoom] at or below [slowKmh], [farZoom] at or above [fastKmh],
@@ -202,6 +218,9 @@ object MapStore {
             roadsOff = (p.getStringSet("roads_off", emptySet()) ?: emptySet()).mapNotNull { n -> RoadClass.entries.firstOrNull { it.name == n } }.toSet(),
             dirtOff = (p.getStringSet("dirt_off", emptySet()) ?: emptySet()).mapNotNull { n -> DirtKind.entries.firstOrNull { it.name == n } }.toSet(),
             wxOff = (p.getStringSet("wx_off", setOf(WxKind.UV.name)) ?: emptySet()).mapNotNull { n -> WxKind.entries.firstOrNull { it.name == n } }.toSet(),
+            detailAt = (p.getString("detail_at", "") ?: "").split(",").mapNotNull { e ->
+                e.split(":").takeIf { it.size == 2 }?.let { (k, z) -> Detail.entries.firstOrNull { it.name == k }?.let { d -> z.toIntOrNull()?.let { d to it } } }
+            }.toMap(),
         )
     }
     fun setLayerOpts(ctx: Context, o: LayerOpts) {
@@ -209,7 +228,8 @@ object MapStore {
             .putString("contour_at", o.contourAt.entries.joinToString(",") { "${it.key}:${it.value}" })
             .putStringSet("roads_off", o.roadsOff.map { it.name }.toSet())
             .putStringSet("dirt_off", o.dirtOff.map { it.name }.toSet())
-            .putStringSet("wx_off", o.wxOff.map { it.name }.toSet()).apply()
+            .putStringSet("wx_off", o.wxOff.map { it.name }.toSet())
+            .putString("detail_at", o.detailAt.entries.joinToString(",") { "${it.key.name}:${it.value}" }).apply()
         _layerOpts.value = o
     }
 

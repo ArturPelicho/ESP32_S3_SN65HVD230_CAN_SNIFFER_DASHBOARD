@@ -6,6 +6,14 @@ import pt.artur.motadash.LayerOpts
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Slider
 import android.Manifest
 import android.annotation.SuppressLint
@@ -1722,7 +1730,7 @@ private fun MapMenuItems(
     val line = mm.line?.let { id -> DirectLines.list.value.firstOrNull { it.id == id } }
     var looks by remember { mutableStateOf(false) }
     val t = tracks.firstOrNull { it.id == mm.tid }
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    ScrollMenu(onDismiss) {
         when {
             moving != null -> {
                 MenuItem(stringResource(R.string.map_fix_waypoint_q, moving.point + 1), onDismiss) { onMoveFix(moving) }
@@ -1821,6 +1829,18 @@ private fun MeasureBar(holder: MapHolder, onAdd: () -> Unit, onUndo: () -> Unit,
             OutlinedButton(onClick = onClose) { Text("✕") }
         }
         Text(stringResource(R.string.measure_hint), color = Palette.label, fontSize = 12.sp)
+    }
+}
+
+/** A menu that always fits the screen and scrolls when its options don't. */
+@Composable
+private fun ScrollMenu(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val h = LocalConfiguration.current.screenHeightDp
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
+            Column(Modifier.widthIn(min = 260.dp, max = 440.dp).heightIn(max = (h * 0.85f).dp)
+                .verticalScroll(rememberScrollState()).padding(vertical = 8.dp), content = content)
+        }
     }
 }
 
@@ -1975,7 +1995,7 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     @Composable
     fun check(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
         DropdownMenuItem(text = { Text((if (on) "✓  " else "     ") + label, fontSize = 16.sp) }, enabled = enabled, onClick = action)
-    if (routePage) DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    if (routePage) ScrollMenu(onDismiss) {
         DropdownMenuItem(text = { Text("‹  " + stringResource(R.string.route_title), color = Palette.amber, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
             onClick = { routePage = false })
         HorizontalDivider()
@@ -1999,7 +2019,7 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
             HorizontalDivider()
             MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }
         }
-    } else DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    } else ScrollMenu(onDismiss) {
         DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
             onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
         check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {

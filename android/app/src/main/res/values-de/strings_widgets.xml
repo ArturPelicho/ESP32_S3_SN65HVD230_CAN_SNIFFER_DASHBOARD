@@ -105,4 +105,12 @@
     <string name="wx_uv">UV</string>
     <string name="wx_on_bar">Regen voraus auf der Fortschrittsleiste</string>
     <string name="layer_weather_hint">Braucht Internet. Die letzte Vorhersage bleibt gespeichert und gilt ohne Netz noch einige Stunden. Regenradar: RainViewer; Vorhersage: Open-Meteo.</string>
+    <string name="detail_title">Details nach Zoom</string>
+    <string name="detail_from">%1$s: ab Zoom %2$d</string>
+    <string name="detail_reset">Zurück zu den üblichen Zooms</string>
+    <string name="detail_waterways">Flüsse und Bäche</string>
+    <string name="detail_water_names">Gewässernamen</string>
+    <string name="detail_street_names">Straßennamen</string>
+    <string name="detail_road_refs">Straßennummern</string>
+    <string name="detail_hint">Höher = erst näher sichtbar. Unter einem gewissen Zoom enthalten die Kartendateien diese Klasse nicht (Nebenstraßen ca. 9, Straßen ca. 12), tiefer zeigt also nicht mehr.</string>
 </resources>
