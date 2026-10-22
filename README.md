@@ -2,34 +2,91 @@
 
 <img src="docs/img/navexpress-icon.svg" width="96" align="right" alt="NavExpress icon">
 
-A motorcycle navigator and smart dashboard, in two parts that work alone or together:
+**A motorcycle navigator and smart dashboard.** Offline maps for anywhere, real
+turn-by-turn and rally-style pacenotes on the phone; a CAN-bus brain on the bike for fuel,
+range, gear and engine health. Two parts that work alone or together:
 
-- **NavExpress Mobile** (`android/`), the phone app, shown on the phone as **NavExpress**. It has offline maps with relief, planned and imported tracks, and a dashboard you lay out yourself.
-- **NavExpress Brain** (`main/`), the boards on the bike: ESP32-S3 firmware that reads the bike's CAN bus and works out fuel use, range and gear. It sends all of it to the phone over BLE.
+- **NavExpress Mobile** (`android/`), the phone app, shown on the phone as **NavExpress**.
+- **NavExpress Brain** (`main/`), the ESP32-S3 unit on the bike: reads the bike's CAN bus,
+  works out fuel use, range and gear, and sends it all to the phone over BLE.
 
-The name nods to the Espressif ESP32 at the heart of the bike unit. The first bike is a **ZongShen Carrera 125 Euro5+** (ZS125GY-13-E55); sensors, displays and the MCU are meant to be swappable, and the app is designed to work in any country.
+<p align="center">
+  <img src="docs/img/map-day.png" width="49%" alt="Day map of Funchal with a followed track">
+  <img src="docs/img/map-night-3d.png" width="49%" alt="Night map in 3D with buildings">
+</p>
+<p align="center">
+  <img src="docs/img/map-relief.png" width="49%" alt="Shaded relief and contour lines in the mountains of Madeira">
+  <img src="docs/img/map-dirt.png" width="49%" alt="Dirt roads coloured by difficulty">
+</p>
+<p align="center"><sub>The app's own map style, rendered from the same offline map files the phone downloads (Madeira).</sub></p>
+
+> 🚧 **Work in progress.** The map and navigation are used on real rides and improve with every one.
+> The **Dashboard tab is still under construction**: it works with the bike unit, but
+> configurable rows, a map/dashboard split and ride statistics are on the way, and its
+> layout may change between versions.
 
 ## Get it
 
 | What | Link |
 |---|---|
-| Phone app, newest APK (the file name carries the version; the app also updates itself from Definições → Sobre) | [Latest release](../../releases/latest) |
-| Offline maps: Portugal, Madeira, Açores and Spain, with contours every 10 m, shaded relief, speed limits and cameras | [Releases "maps-…"](../../releases?q=maps&expanded=true), downloaded from inside the app (Mapa → ☰) |
-| Every app and map build | [All releases](../../releases) |
-| How to install and use the app (Portuguese) | [docs/app-telemovel.md](docs/app-telemovel.md) |
+| Phone app, newest APK (the file name carries the version; the app checks for updates every time it starts) | [Latest release](../../releases/latest) |
+| Offline maps, rebuilt monthly from OpenStreetMap, with contours, shaded relief, speed limits, cameras and dirt roads | Downloaded from inside the app (Settings → Maps) · [map builds](../../releases?q=maps&expanded=true) |
+| **User guide: every feature and how to set it up** | [docs/app-guide.md](docs/app-guide.md) |
 | Sample track to try the track screens | [samples/gpx/teste-lisboa-marginal.gpx](samples/gpx/teste-lisboa-marginal.gpx) |
 | Wiring and pins of the bike unit | [PINOUT.md](PINOUT.md) |
-| PID scan procedure (Portuguese) | [docs/pid-scan-protocol.md](docs/pid-scan-protocol.md) |
 | Work in progress | [Pull requests](../../pulls) · [CI runs](../../actions) |
 
-## NavExpress Mobile at a glance
+## NavExpress Mobile
 
-- **Map** (MapLibre, fully offline once downloaded): road colours by class, local or Portuguese names, 3D buildings, shaded relief and contour lines. Contour spacing follows the zoom (100 m far out, down to 10 m close in) or can be fixed. Follows the bike heading-up, in 3D or north-up. Auto zoom works from your own speed and zoom ranges. Shows the speed limit sign and warns of speed cameras with a beep.
-- **Tracks**: opens GPX, KML, KMZ, GeoJSON, TCX and FIT. You can also plan a track on the map with numbered waypoints and road routing, or tap **Go there**. Tracks can be reversed, renamed, recoloured, saved or shared as GPX. While you follow one, the bottom strip shows its height profile and how far along you are.
-- **Your own screens**: the Painel and the Mapa are built from elements you pick, such as speed, gear, RPM, fuel, range, temperatures, clock, coordinates, a north rose that tilts with the 3D view, and a lean/pitch gauge. Each sits in a slot grid with small, medium or large slots and its own opacity, and you can drag elements between slots. The map's button bar can sit on any edge.
-- **Looks**: Sand or Graphite by day; warm desert, Graphite or pure-black OLED by night. It can switch by itself at sunset, from the light sensor or with the phone's dark mode. The interface goes from 85 % to 150 % for reading with a helmet on.
-- **Languages**: English, Portuguese, Spanish, French, Italian and German.
-- **With the Brain**: a full bike dashboard, fault codes read and cleared, fuel and gear settings, and the phone's GPS as a speed source for the bike.
+### 🗺️ Offline maps, any country
+- Download a country or region over Wi-Fi; the phone cuts it straight from the world map, so
+  the app is not tied to one country. Maps update monthly.
+- Road colours by class, names in your language, 3D buildings, shaded relief and contour lines.
+- **Layers with their own options** (long press): relief strength, contour spacing per zoom
+  level, each road class on or off, and dirt roads by difficulty (easy, medium, hard,
+  not graded, private or closed).
+- Speed limit sign and speed camera warnings, smooth arrow between GPS fixes, dead reckoning
+  in tunnels, heading-up / 3D / north-up with auto zoom by speed.
+
+### 🧭 Navigation
+- Plan on the map with numbered waypoints, **Go there** from a long press, or import GPX,
+  KML, KMZ, GeoJSON, TCX and FIT.
+- **Offline routing** (BRouter on the phone) with Fastest, Economical and **Fun** (seeks dirt
+  within the detour you allow), each with its own avoid toggles.
+- **Turn by turn** on screen and by voice, with the road taken ("Turn left onto N4").
+- *Nav* mode reroutes from where you are; *Track* mode keeps the line and guides you back.
+- Arrival time at the next waypoint and at the end, ridden part of the track faded, height
+  profile with total climb and descent.
+
+### 🏁 Track mode: like a rally co-driver
+- **Pacenotes read from the track itself**: corners graded 1–6 by radius, hairpins, long,
+  tightens, opens, crests and dips, linked notes and the straight to the next one, in words
+  or rally numbers.
+- **Section times**: on tracks you have ridden before, every section ends with **Fast** or
+  **Slow** against your best, and the best is always kept.
+
+### 📱 Your own screens
+- The Map and the Dashboard are built from elements you pick and place on a slot grid:
+  speed, gear, RPM, fuel, range, head temperature, trips A/B, odometer, clock, coordinates,
+  altitude, a north rose that leans with the 3D view, a lean/pitch gauge and more.
+- Units for any country (km/mph, °C/°F, L/100 km, km/L, mpg).
+- Calls and messages in big glove-friendly buttons, placed away from the navigation boxes.
+- Themes: Sand or Graphite by day, warm desert, Graphite or OLED black by night, switching by
+  itself at sunset or from the light sensor. Interface from 85 % to 150 %.
+- Languages: English, Portuguese, Spanish, French, Italian and German.
+- Ride recording to GPX, favourite places, distance measuring and direct lines.
+
+### 🏍️ With the Brain
+A full bike dashboard, fault codes read and cleared, fuel and gear settings, and the phone's
+GPS as a speed source for the bike.
+
+**How to set everything up: [user guide](docs/app-guide.md).**
+
+## NavExpress Brain
+
+The name nods to the Espressif ESP32 at the heart of the bike unit. The first bike is a
+**ZongShen Carrera 125 Euro5+** (ZS125GY-13-E55); sensors, displays and the MCU are meant to
+be swappable.
 
 The code is kept modular on purpose: sensors, displays and even the MCU are
 expected to change, so each subsystem sits behind its own module and runs in
@@ -51,7 +108,7 @@ The board-level GPIO matrix is in [ESP32_S3_Pinout](ESP32_S3_Pinout).
 Do not add a 120-ohm terminator to the transceiver unless it is a bus
 endpoint; measure the bike's own termination first.
 
-## NavExpress Brain: what it does today
+### What it does today
 
 **CAN and OBD**
 - Non-blocking OBD-II poller (`main/obd_poller.c`). It reads the ECU's
@@ -162,7 +219,7 @@ endpoint; measure the bike's own termination first.
 **BLE ELM327 emulator**
 - Advertises as `OBDII` with an ELM327-style GATT profile (service `FFF0`,
   notify `FFF1`, write `FFF2`) plus an HM-10 compatible profile (`FFE0` /
-  `FFE1`), so apps such as DMD2 or a generic BLE UART terminal can connect.
+  `FFE1`), so OBD apps or a generic BLE UART terminal can connect.
 - Answers the common `AT` commands and forwards Mode 01 requests to the bike.
 
 ## Build and flash
