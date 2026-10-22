@@ -98,4 +98,11 @@
     <string name="layer_contour_none">Keine</string>
     <string name="layer_contour_reset">Zur allgemeinen Einstellung</string>
     <string name="layer_contour_hint">Jede Zoomstufe behält ihren Abstand; zoomen und erneut lange drücken, um eine andere einzustellen.</string>
+    <string name="layer_weather">Wetter</string>
+    <string name="wx_wind">Wind</string>
+    <string name="wx_temp">Temperatur</string>
+    <string name="wx_rain">Regen</string>
+    <string name="wx_uv">UV</string>
+    <string name="wx_on_bar">Regen voraus auf der Fortschrittsleiste</string>
+    <string name="layer_weather_hint">Braucht Internet. Die letzte Vorhersage bleibt gespeichert und gilt ohne Netz noch einige Stunden. Regenradar: RainViewer; Vorhersage: Open-Meteo.</string>
 </resources>

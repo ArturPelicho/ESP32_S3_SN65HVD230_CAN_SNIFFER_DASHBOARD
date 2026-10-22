@@ -56,6 +56,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.mutableIntStateOf
 import pt.artur.motadash.MapLayer
+import pt.artur.motadash.RouteWeather
+import pt.artur.motadash.Weather
+import pt.artur.motadash.WxKind
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -159,6 +162,10 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.RasterLayer
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.RasterSource
+import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -231,11 +238,43 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             s.addImage("me-arrow", arrow)
             s.addImage("radar", radar)
             s.addImage("trk-arrow", trackArrow)
+            s.addImage("wx-arrow", windArrow, true)
             style = s
+            wx?.let { s.getSourceAs<GeoJsonSource>("wx")?.setGeoJson(it) }
+            radarShown = null; showRadar()
             show3dBuildings()
             drawMarker()
             tracks?.let { s.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(it) }
         }
+    }
+
+    private val windArrow = windArrowBitmap()
+    private var wx: FeatureCollection? = null
+    /** Rain radar tiles to show (null: none), and the ones on the map now. */
+    var radarTiles: String? = null
+        set(v) { field = v; showRadar() }
+    private var radarShown: String? = null
+
+    /** The weather layer's points; empty to clear it. */
+    fun setWeather(fc: FeatureCollection) {
+        wx = fc
+        style?.getSourceAs<GeoJsonSource>("wx")?.setGeoJson(fc)
+    }
+
+    /** The radar picture under the map's labels, swapped when a newer one comes. */
+    private fun showRadar() {
+        val s = style ?: return
+        val want = radarTiles
+        if (want == radarShown) return
+        s.getLayer("rain")?.let { s.removeLayer(it) }
+        s.getSource("rain")?.let { s.removeSource(it) }
+        radarShown = want
+        if (want == null) return
+        // RainViewer's free pictures go to zoom 7; closer in they are enlarged.
+        s.addSource(RasterSource("rain", TileSet("2.2.0", want).apply { setMaxZoom(7f) }, 256))
+        val l = RasterLayer("rain", "rain").withProperties(PropertyFactory.rasterOpacity(0.55f))
+        val below = s.layers.firstOrNull { it is SymbolLayer }?.id
+        if (below != null) s.addLayerBelow(l, below) else s.addLayer(l)
     }
 
     /** Buildings in volume only in the 3D follow mode. */
@@ -784,6 +823,39 @@ private fun trackArrowBitmap(): Bitmap {
     return b
 }
 
+/** The weather layer's points: wind arrow, and the values chosen, at the time now. */
+private fun wxFeatures(s: List<Weather.Series>, off: Set<WxKind>): FeatureCollection {
+    val now = System.currentTimeMillis()
+    return FeatureCollection.fromFeatures(s.mapNotNull { x ->
+        val w = x.at(now) ?: return@mapNotNull null
+        Feature.fromGeometry(Point.fromLngLat(x.lon, x.lat)).apply {
+            val lines = ArrayList<String>()
+            val kmh = w.windKmh; val from = w.windFrom
+            if (WxKind.WIND !in off && kmh != null && from != null) {
+                addNumberProperty("rot", (from + 180) % 360); addNumberProperty("kmh", kmh)
+                val gust = w.gustKmh?.takeIf { it > kmh + 10 }?.let { "–%.0f".format(Units.speed(it.toDouble())) } ?: ""
+                lines += "%.0f".format(Units.speed(kmh.toDouble())) + gust + " " + Units.speedUnit
+            }
+            w.tempC?.takeIf { WxKind.TEMP !in off }?.let { lines += "%.0f%s".format(Units.temp(it.toDouble()), Units.tempUnit) }
+            if (WxKind.RAIN !in off && w.rainMmH >= RouteWeather.WET) lines += "%.1f mm/h".format(w.rainMmH)
+            w.uv?.takeIf { WxKind.UV !in off && it >= 1 }?.let { lines += "UV %.0f".format(it) }
+            if (lines.isNotEmpty()) addStringProperty("label", lines.joinToString("\n"))
+        }
+    })
+}
+
+/** Wind arrow (tinted by the style), pointing north before rotation: where the wind blows to. */
+private fun windArrowBitmap(): Bitmap {
+    val s = 48
+    val b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
+    val c = Canvas(b)
+    val p = Path().apply {
+        moveTo(24f, 3f); lineTo(40f, 22f); lineTo(29f, 22f); lineTo(29f, 45f); lineTo(19f, 45f); lineTo(19f, 22f); lineTo(8f, 22f); close()
+    }
+    c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFFFFF.toInt(); style = Paint.Style.FILL })
+    return b
+}
+
 /** Speed camera mark: red disc with a white camera. */
 private fun radarBitmap(): Bitmap {
     val s = 64
@@ -934,6 +1006,50 @@ fun MapScreen() {
         MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
     }
     LaunchedEffect(azCfg) { holder.azCfg = azCfg }
+
+    // Weather along the followed line, for the progress bar: fetched again every 15 minutes, kept for when there is no network.
+    val routeWx = remember(activeTrack?.id, reversed, follower) {
+        if (activeTrack == null || follower == null || follower.totalM < 2000) null
+        else RouteWeather(activeTrack.id + (if (reversed) "-r" else "") + "-" + follower.totalM.toLong(), follower.totalM) { follower.pointAt(it) }
+    }
+    var wxTick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(routeWx) {
+        val w = routeWx ?: return@LaunchedEffect
+        while (true) {
+            if (MapStore.wxOnBar(ctx) && w.refresh(ctx)) wxTick++
+            delay(if (w.ready) 15 * 60_000L else 2 * 60_000L)
+        }
+    }
+    // The weather layer: a grid over what the map shows, fetched again when the map moves on or every 15 minutes.
+    val wxOn = MapLayer.WEATHER in layers
+    LaunchedEffect(wxOn, layerOpts.wxOff) {
+        if (!wxOn) { holder.setWeather(FeatureCollection.fromFeatures(emptyList())); holder.radarTiles = null; return@LaunchedEffect }
+        var lastAt = 0L; var triedAt = 0L; var lastC: LatLng? = null; var lastSpan = 0.0; var radarAt = 0L
+        var series: List<Weather.Series>? = null
+        while (true) {
+            val b = holder.map?.projection?.visibleRegion?.latLngBounds
+            val now = System.currentTimeMillis()
+            if (b != null && now - triedAt > 60_000L) {
+                val c = b.center
+                val span = b.latitudeSpan.coerceAtLeast(0.01)
+                val lc = lastC
+                val moved = lc == null || abs(c.latitude - lc.latitude) > lastSpan / 3 || abs(c.longitude - lc.longitude) > b.longitudeSpan / 3 ||
+                    span > lastSpan * 1.8 || span < lastSpan / 1.8
+                if (moved || now - lastAt > 15 * 60_000L) {
+                    triedAt = now
+                    val pts = ArrayList<LatLon>()
+                    for (r in 0 until 3) for (k in 0 until 4)
+                        pts += LatLon(b.latitudeSouth + span * (r + 0.5) / 3, b.longitudeWest + b.longitudeSpan * (k + 0.5) / 4)
+                    Weather.fetch(ctx, "area", pts)?.let { series = it; lastAt = now; lastC = c; lastSpan = span }
+                }
+            }
+            series?.let { holder.setWeather(wxFeatures(it, layerOpts.wxOff)) }
+            if (WxKind.RAIN !in layerOpts.wxOff) {
+                if (now - radarAt > 10 * 60_000L) Weather.radarTiles()?.let { holder.radarTiles = it; radarAt = now }
+            } else holder.radarTiles = null
+            delay(20_000)
+        }
+    }
 
     LaunchedEffect(Unit) {
         MapStore.load(ctx)
@@ -1238,6 +1354,10 @@ fun MapScreen() {
                 altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt,
                 profile = if (activeTrack != null) profile else ridden,
                 arrival = arrival.takeIf { activeTrack != null && MapStore.etaOnBar(ctx) },
+                wx = routeWx?.takeIf { activeTrack != null && MapStore.wxOnBar(ctx) && it.ready }?.let { w ->
+                    wxTick
+                    progress?.doneM?.let { d -> w.ahead(d, System.currentTimeMillis(), arrival, (fix?.speed ?: 0f).toDouble()) }
+                },
                 doneM = if (activeTrack != null) progress?.doneM else ridden?.totalM?.toDouble()),
             modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
@@ -1887,6 +2007,7 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         }
         check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
         check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
+        check(stringResource(R.string.wx_on_bar), MapStore.wxOnBar(ctx)) { MapStore.setWxOnBar(ctx, !MapStore.wxOnBar(ctx)); tick++ }
         check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
         check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
         if (MapStore.pacenotes(ctx)) {
@@ -2146,6 +2267,16 @@ private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Doub
                         Box(Modifier.size(width = 18.dp, height = 4.dp).background(Color(d.color)))
                     })
                 }
+            }
+            MapLayer.WEATHER -> {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    WxKind.entries.forEach { k ->
+                        FilterChip(selected = k !in o.wxOff, onClick = {
+                            set(o.copy(wxOff = if (k in o.wxOff) o.wxOff - k else o.wxOff + k))
+                        }, label = { Text(k.label) })
+                    }
+                }
+                Text(stringResource(R.string.layer_weather_hint), color = Palette.label, fontSize = 12.sp)
             }
             else -> {}
         }

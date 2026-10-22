@@ -98,4 +98,11 @@
     <string name="layer_contour_none">None</string>
     <string name="layer_contour_reset">Back to the general setting</string>
     <string name="layer_contour_hint">Each zoom level keeps its own spacing; zoom in or out and long press again to set another.</string>
+    <string name="layer_weather">Weather</string>
+    <string name="wx_wind">Wind</string>
+    <string name="wx_temp">Temperature</string>
+    <string name="wx_rain">Rain</string>
+    <string name="wx_uv">UV</string>
+    <string name="wx_on_bar">Rain ahead on the progress bar</string>
+    <string name="layer_weather_hint">Needs internet. The last forecast is kept, so it carries on for a while with no signal. Rain radar: RainViewer; forecast: Open-Meteo.</string>
 </resources>

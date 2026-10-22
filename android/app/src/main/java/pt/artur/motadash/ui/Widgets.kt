@@ -21,6 +21,8 @@ import pt.artur.motadash.Trip
 import pt.artur.motadash.Trips
 import pt.artur.motadash.Attitude
 import pt.artur.motadash.ElevProfile
+import pt.artur.motadash.RouteWeather
+import pt.artur.motadash.WxCell
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.RepeatMode
@@ -172,6 +174,8 @@ class WidgetData(
     val profile: ElevProfile? = null, val doneM: Double? = null,
     /** Arrival time at the end of the followed track, shown at the end of the profile strip. */
     val arrival: Long? = null,
+    /** Rain along what is left of the followed track, for when the bike gets there. */
+    val wx: List<WxCell>? = null,
 )
 
 /** Board data plus a 4 Hz blink and a clock; [speed] null means the board's speed. */
@@ -179,6 +183,7 @@ class WidgetData(
 fun widgetData(
     speed: Double? = null, limit: Int? = null, lat: Double? = null, lon: Double? = null, altM: Double? = null,
     bearing: Float? = null, tilt: Float? = null, profile: ElevProfile? = null, doneM: Double? = null, arrival: Long? = null,
+    wx: List<WxCell>? = null,
 ): WidgetData {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val status by Link.status.collectAsStateWithLifecycle()
@@ -193,7 +198,7 @@ fun widgetData(
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(5_000) } }
     return WidgetData(
         t, status, gps, dtc, blink > 0.5f, now, params["TANK_DL"]?.value?.div(10.0) ?: 16.0,
-        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt, profile, doneM, arrival,
+        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt, profile, doneM, arrival, wx,
     )
 }
 
@@ -515,7 +520,7 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
             }
         }
         if (prof != null) {
-            ProfileStrip(prof, data.doneM, data.arrival, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
+            ProfileStrip(prof, data.doneM, data.arrival, data.wx, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(profH))
         }
         if (moving) {
@@ -985,7 +990,7 @@ private fun Modifier.outline(): Modifier =
  * in cyan, what is left in amber, a marker where the bike is.
  */
 @Composable
-private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, bg: Color, modifier: Modifier) {
+private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, wx: List<WxCell>?, bg: Color, modifier: Modifier) {
     val frac = ((doneM ?: 0.0) / p.totalM).toFloat().coerceIn(0f, 1f)
     val here = doneM?.let { p.at(it) }
     val span = (p.maxE - p.minE).coerceAtLeast(20f)
@@ -995,9 +1000,29 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, bg: Col
         val cyan = Palette.cyan
         val amber = Palette.amber
         val text = Palette.text
-        Canvas(Modifier.fillMaxSize().padding(top = 14.dp)) {
+        val rainC = Color(0xFF2F9BFF)
+        // The first rain ahead, for when the bike gets there.
+        val firstWet = wx?.firstOrNull { it.rainThen >= RouteWeather.WET && it.toM > (doneM ?: 0.0) }
+        BoxWithConstraints(Modifier.fillMaxSize().padding(top = 14.dp)) {
+        val boxW = maxWidth
+        Canvas(Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
+            // Rain lane along the top: deeper blue for heavier rain when the bike gets there; an outline where it
+            // rains now but should have stopped by then.
+            wx?.forEach { cell ->
+                val x0 = (cell.fromM / p.totalM * w).toFloat().coerceIn(0f, w)
+                val x1 = (cell.toM / p.totalM * w).toFloat().coerceIn(0f, w)
+                if (x1 - x0 < 0.5f) return@forEach
+                val lane = h * 0.2f
+                if (cell.rainThen >= RouteWeather.WET) {
+                    val a = when { cell.rainThen < 1f -> 0.35f; cell.rainThen < 4f -> 0.6f; else -> 0.9f }
+                    drawRect(rainC.copy(alpha = a), Offset(x0, 0f), Size(x1 - x0, lane))
+                    drawRect(rainC.copy(alpha = 0.12f), Offset(x0, lane), Size(x1 - x0, h - lane))
+                } else if (cell.rainNow >= RouteWeather.WET) {
+                    drawRect(rainC.copy(alpha = 0.7f), Offset(x0 + 1f, 1f), Size((x1 - x0 - 2f).coerceAtLeast(1f), lane - 2f), style = Stroke(2f))
+                }
+            }
             fun x(i: Int) = p.distM[i] / p.totalM * w
             fun y(e: Float) = h - (e - lo) / (hi - lo) * h
             val n = p.eleM.size
@@ -1024,6 +1049,13 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, bg: Col
                 drawCircle(text, 7f, Offset(cut, y(here)))
                 drawCircle(cyan, 4f, Offset(cut, y(here)))
             }
+        }
+        if (firstWet != null) {
+            val x = boxW * (firstWet.fromM / p.totalM).toFloat().coerceIn(0f, 0.7f)
+            Text("🌧 " + Units.short(firstWet.fromM - (doneM ?: 0.0), 1) + " · " + clockOf(firstWet.etaMs),
+                color = Palette.text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                modifier = Modifier.padding(start = x, top = 1.dp).background(bg.copy(alpha = 0.7f), RoundedCornerShape(4.dp)).padding(horizontal = 3.dp))
+        }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             // Highest and lowest point, then the total climb and descent.

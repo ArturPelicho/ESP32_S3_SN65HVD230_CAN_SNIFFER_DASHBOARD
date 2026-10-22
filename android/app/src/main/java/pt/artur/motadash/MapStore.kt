@@ -73,10 +73,12 @@ enum class NavCorner(@StringRes private val res: Int) {
 }
 
 enum class MapLayer(@StringRes val res: Int) {
-    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), ROADS(R.string.layer_roads), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt);
+    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), ROADS(R.string.layer_roads), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt),
+    /** Wind, temperature, rain radar and UV from the internet; off until switched on. */
+    WEATHER(R.string.layer_weather);
     val label: String get() = L.s(res)
     /** Has its own options (long press on it in the layers list). */
-    val hasOptions: Boolean get() = this == SHADE || this == CONTOURS || this == ROADS || this == DIRT
+    val hasOptions: Boolean get() = this == SHADE || this == CONTOURS || this == ROADS || this == DIRT || this == WEATHER
 }
 
 /** Road classes that can be hidden one by one (MapStyle's class codes). */
@@ -84,6 +86,12 @@ enum class RoadClass(val code: String, @StringRes private val res: Int) {
     MOTORWAY("mw", R.string.road_motorway), TRUNK("tr", R.string.road_trunk), PRIMARY("pr", R.string.road_primary),
     SECONDARY("se", R.string.road_secondary), TERTIARY("te", R.string.road_tertiary), MINOR("mi", R.string.road_minor),
     SERVICE("sv", R.string.road_service);
+    val label: String get() = L.s(res)
+}
+
+/** What the weather layer shows, each on or off. */
+enum class WxKind(@StringRes private val res: Int) {
+    WIND(R.string.wx_wind), TEMP(R.string.wx_temp), RAIN(R.string.wx_rain), UV(R.string.wx_uv);
     val label: String get() = L.s(res)
 }
 
@@ -103,6 +111,7 @@ data class LayerOpts(
     val contourAt: Map<Int, Int> = emptyMap(),
     val roadsOff: Set<RoadClass> = emptySet(),
     val dirtOff: Set<DirtKind> = emptySet(),
+    val wxOff: Set<WxKind> = setOf(WxKind.UV),
 )
 
 /**
@@ -192,13 +201,15 @@ object MapStore {
             }.toMap(),
             roadsOff = (p.getStringSet("roads_off", emptySet()) ?: emptySet()).mapNotNull { n -> RoadClass.entries.firstOrNull { it.name == n } }.toSet(),
             dirtOff = (p.getStringSet("dirt_off", emptySet()) ?: emptySet()).mapNotNull { n -> DirtKind.entries.firstOrNull { it.name == n } }.toSet(),
+            wxOff = (p.getStringSet("wx_off", setOf(WxKind.UV.name)) ?: emptySet()).mapNotNull { n -> WxKind.entries.firstOrNull { it.name == n } }.toSet(),
         )
     }
     fun setLayerOpts(ctx: Context, o: LayerOpts) {
         prefs(ctx).edit().putInt("shade_strength", o.shade)
             .putString("contour_at", o.contourAt.entries.joinToString(",") { "${it.key}:${it.value}" })
             .putStringSet("roads_off", o.roadsOff.map { it.name }.toSet())
-            .putStringSet("dirt_off", o.dirtOff.map { it.name }.toSet()).apply()
+            .putStringSet("dirt_off", o.dirtOff.map { it.name }.toSet())
+            .putStringSet("wx_off", o.wxOff.map { it.name }.toSet()).apply()
         _layerOpts.value = o
     }
 
@@ -207,9 +218,12 @@ object MapStore {
 
     fun layers(ctx: Context): Set<MapLayer> {
         val off = prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()
-        return MapLayer.entries.filter { it.name !in off }.toSet()
+        // The weather layer needs the network: off until chosen.
+        val wx = prefs(ctx).getBoolean("layer_weather", false)
+        return MapLayer.entries.filter { if (it == MapLayer.WEATHER) wx else it.name !in off }.toSet()
     }
     fun setLayer(ctx: Context, l: MapLayer, on: Boolean) {
+        if (l == MapLayer.WEATHER) { prefs(ctx).edit().putBoolean("layer_weather", on).apply(); return }
         val off = (prefs(ctx).getStringSet("layers_off", emptySet()) ?: emptySet()).toMutableSet()
         if (on) off -= l.name else off += l.name
         prefs(ctx).edit().putStringSet("layers_off", off).apply()
@@ -240,6 +254,10 @@ object MapStore {
     fun pacenoteLead(ctx: Context): Int = prefs(ctx).getInt("pacenote_lead", 8)
     fun setPacenoteLead(ctx: Context, s: Int) = prefs(ctx).edit().putInt("pacenote_lead", s).apply()
     val PACENOTE_LEADS = listOf(5, 8, 11, 14)
+
+    /** Rain along the followed line, for when the bike gets there, on the progress bar (needs the network now and then). */
+    fun wxOnBar(ctx: Context): Boolean = prefs(ctx).getBoolean("wx_on_bar", true)
+    fun setWxOnBar(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("wx_on_bar", on).apply()
 
     /** Times each section of a track ridden before, against the best: "Fast" or "Slow". */
     fun sectionTimes(ctx: Context): Boolean = prefs(ctx).getBoolean("section_times", true)

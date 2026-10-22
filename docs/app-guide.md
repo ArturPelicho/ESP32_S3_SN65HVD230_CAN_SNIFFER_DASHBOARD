@@ -87,6 +87,7 @@ its options:
 | Dirt roads by difficulty | Each kind on or off: easy (green), medium (yellow), hard (red), not graded (brown), private or closed (black, gates may be shut) |
 | 3D buildings | Shown in the 3D view from zoom 15 |
 | Speed cameras | Icons with the limit |
+| Weather (needs internet, off by default) | Wind arrows (coloured by strength, with gusts), temperature, rain radar and forecast, UV, each on or off. The last forecast is kept for when there is no signal |
 
 ## Tracks, routes and places
 
@@ -120,7 +121,10 @@ from the offline map, plus voice. Volumes for voice and warnings are in the map'
 
 **Progress bar**: the height profile of the track ahead (or of the ride so far when nothing
 is followed). Under it: ▲ highest and ▼ lowest point, ↗ total climb and ↘ total descent,
-where you are, and the arrival time at the end.
+where you are, and the arrival time at the end. With internet now and then, a blue lane along
+its top shows the rain forecast for the time you reach each place (deeper blue for heavier rain),
+an outline where it rains now but should have stopped by then, and the first rain ahead with
+its distance and time ("🌧 42 km · 14:40"). Switch it off in the track box menu.
 
 ## Track mode: pacenotes and section times
 

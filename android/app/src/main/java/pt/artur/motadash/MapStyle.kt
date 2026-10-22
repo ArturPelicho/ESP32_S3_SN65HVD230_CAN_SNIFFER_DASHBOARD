@@ -436,6 +436,34 @@ object MapStyle {
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
 
+        // Weather (filled by the screen when the layer is on): wind arrows coloured by strength, with the values under them.
+        labels += mapOf(
+            "id" to "wx-arrow", "type" to "symbol", "source" to "wx",
+            "filter" to listOf("has", "rot"),
+            "layout" to mapOf(
+                "icon-image" to "wx-arrow",
+                "icon-rotate" to listOf("get", "rot"),
+                "icon-rotation-alignment" to "map",
+                "icon-size" to listOf("interpolate", listOf("linear"), listOf("get", "kmh"), 0, 0.55, 60, 1.0),
+                "icon-allow-overlap" to true,
+                "icon-ignore-placement" to true,
+            ),
+            "paint" to mapOf(
+                "icon-color" to listOf("step", listOf("get", "kmh"), "#4fc3f7", 20, "#81c784", 35, "#ffb300", 50, "#ff7043", 70, "#e53935"),
+                "icon-halo-color" to c.halo, "icon-halo-width" to 1.5,
+            ),
+        )
+        labels += mapOf(
+            "id" to "wx-label", "type" to "symbol", "source" to "wx",
+            "filter" to listOf("has", "label"),
+            "layout" to mapOf(
+                "text-field" to listOf("get", "label"), "text-font" to listOf(MEDIUM), "text-size" to 13,
+                "text-offset" to listOf(0, 1.6), "text-anchor" to "top", "text-allow-overlap" to true,
+            ),
+            "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 2),
+        )
+        sources["wx"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
+
         // Faint arrow on the followed line where the bike is taken to be, when the GPS puts it a little off.
         labels += mapOf(
             "id" to "ghost", "type" to "symbol", "source" to "ghost",

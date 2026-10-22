@@ -98,4 +98,11 @@
     <string name="layer_contour_none">Nenhum</string>
     <string name="layer_contour_reset">Voltar à opção geral</string>
     <string name="layer_contour_hint">Cada nível de zoom guarda o seu intervalo; aproxima ou afasta e faz toque longo outra vez para mudar outro.</string>
+    <string name="layer_weather">Meteorologia</string>
+    <string name="wx_wind">Vento</string>
+    <string name="wx_temp">Temperatura</string>
+    <string name="wx_rain">Chuva</string>
+    <string name="wx_uv">UV</string>
+    <string name="wx_on_bar">Chuva à frente na barra de progresso</string>
+    <string name="layer_weather_hint">Precisa de internet. A última previsão fica guardada e continua a servir durante umas horas sem rede. Radar de chuva: RainViewer; previsão: Open-Meteo.</string>
 </resources>
