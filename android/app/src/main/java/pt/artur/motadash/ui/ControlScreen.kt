@@ -1,5 +1,6 @@
 package pt.artur.motadash.ui
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -92,8 +93,8 @@ private fun parsed(text: String, s: ParamSpec): Int? =
 
 /** The groups of Definições, listed on the left; only the chosen one shows on the right. */
 /** [panel]: a shortcut that opens that panel on the map instead of a group here. */
-private enum class SetCat(@StringRes val res: Int, val panel: String? = null) {
-    LOOK(R.string.set_cat_look), MAPS(R.string.set_cat_maps, "maps"), GPX(R.string.set_cat_gpx, "gpx"), BIKE(R.string.set_cat_bike),
+private enum class SetCat(@StringRes val res: Int) {
+    LOOK(R.string.set_cat_look), MAPS(R.string.set_cat_maps), GPX(R.string.set_cat_gpx), BIKE(R.string.set_cat_bike),
     PHONE(R.string.set_cat_phone), ABOUT(R.string.set_cat_about),
 }
 
@@ -117,19 +118,36 @@ fun ControlScreen(activity: MainActivity) {
                 val on = c == cat
                 Row(
                     Modifier.fillMaxWidth().height(52.dp).clickable {
-                        if (c.panel != null) { MapStore.openPanel.value = c.panel; activity.openMap.value++ } else cat = c
+                        cat = c
                     }
                         .background(if (on) Palette.bg else Color.Transparent),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.width(4.dp).fillMaxHeight().background(if (on) Palette.amber else Color.Transparent))
-                    Text(stringResource(c.res) + if (c.panel != null) "  ›" else "", color = if (on) Palette.amber else Palette.text, fontSize = 16.sp,
+                    Text(stringResource(c.res), color = if (on) Palette.amber else Palette.text, fontSize = 16.sp,
                         fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 12.dp))
                 }
             }
         }
-        // The chosen group, with room to breathe.
-        Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
+        // The chosen group, with room to breathe. Maps and GPX are the map's own panels, scrolling by themselves.
+        if (cat == SetCat.MAPS) Box(Modifier.weight(1f).fillMaxHeight()) {
+            // Read from the settings each time one changes (the map reads them again when it opens).
+            var tick by remember { mutableIntStateOf(0) }
+            tick
+            MapsPanel(
+                theme = MapStore.theme(ctx), lang = MapStore.language(ctx), mode = MapStore.followMode(ctx), autoZoom = MapStore.autoZoom(ctx),
+                onTheme = { MapStore.setTheme(ctx, it); tick++ }, onLang = { MapStore.setLanguage(ctx, it); tick++ },
+                onMode = { MapStore.setFollowMode(ctx, it); tick++ }, onAutoZoom = { MapStore.setAutoZoom(ctx, it); tick++ },
+                cameraBeep = MapStore.cameraBeep(ctx), onCameraBeep = { MapStore.setCameraBeep(ctx, it); tick++ },
+                navCorner = MapStore.navCorner(ctx), onNavCorner = { MapStore.setNavCorner(ctx, it); tick++ },
+                onClose = {}, embedded = true,
+            )
+        } else if (cat == SetCat.GPX) Box(Modifier.weight(1f).fillMaxHeight()) {
+            TracksPanel(
+                onShow = { t -> MapStore.showTrack.value = t.id; activity.openMap.value++ },
+                onClose = { activity.openMap.value++ }, embedded = true,
+            )
+        } else Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
             when (cat) {
                 SetCat.MAPS, SetCat.GPX -> {}
                 SetCat.LOOK -> {

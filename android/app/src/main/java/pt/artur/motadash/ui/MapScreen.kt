@@ -1535,6 +1535,15 @@ fun MapScreen() {
                 if (p != null) MapStore.openPanel.value = null
             }
         }
+        LaunchedEffect(Unit) {
+            MapStore.showTrack.collect { id ->
+                if (id == null) return@collect
+                // Wait for the map to be up before moving it.
+                repeat(50) { if (holder.map == null) delay(100) }
+                TrackStore.tracks.value.firstOrNull { it.id == id }?.let { holder.showTrack(it) }
+                MapStore.showTrack.value = null
+            }
+        }
 
         if (showTracks) {
             TracksPanel(
@@ -1835,6 +1844,8 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     val ctx = LocalContext.current
     var style by remember { mutableStateOf(RouteOptions.style(ctx)) }
     var tick by remember { mutableIntStateOf(0) }
+    // The route options are a page of their own, so the first page stays short enough to read.
+    var routePage by remember { mutableStateOf(false) }
     tick
     @Composable
     fun header(@androidx.annotation.StringRes res: Int) =
@@ -1842,22 +1853,10 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     @Composable
     fun check(label: String, on: Boolean, enabled: Boolean = true, action: () -> Unit) =
         DropdownMenuItem(text = { Text((if (on) "✓  " else "     ") + label, fontSize = 16.sp) }, enabled = enabled, onClick = action)
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
-        DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
-            onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
-        check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
-            val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
-        }
-        check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
-        check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
-        check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
-        check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
-        check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
+    if (routePage) DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        DropdownMenuItem(text = { Text("‹  " + stringResource(R.string.route_title), color = Palette.amber, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+            onClick = { routePage = false })
         HorizontalDivider()
-        header(R.string.track_mode_title)
-        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
-        HorizontalDivider()
-        header(R.string.route_title)
         RouteStyle.entries.forEach { s -> check(s.label, style == s) { style = s; RouteOptions.setStyle(ctx, s) } }
         HorizontalDivider()
         val fun_ = style == RouteStyle.FUN
@@ -1878,6 +1877,23 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
             HorizontalDivider()
             MenuItem(stringResource(R.string.route_replan_trip), onDismiss) { Planner.replan(ctx, t.id) }
         }
+    } else DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+        DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+            onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
+        check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
+            val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
+        }
+        check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
+        check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
+        check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
+        check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
+        check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
+        HorizontalDivider()
+        header(R.string.track_mode_title)
+        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
+        HorizontalDivider()
+        DropdownMenuItem(text = { Text("     " + stringResource(R.string.route_title) + ": " + style.label + "  ›", fontSize = 16.sp) },
+            onClick = { routePage = true })
     }
 }
 

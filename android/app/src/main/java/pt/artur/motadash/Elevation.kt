@@ -14,6 +14,14 @@ class ElevProfile(val distM: FloatArray, val eleM: FloatArray, val ride: Boolean
     val totalM: Float get() = distM.last()
     val minE: Float = eleM.min()
     val maxE: Float = eleM.max()
+    /** Total climb and descent, ignoring wiggles under 3 m. */
+    val climbM: Float
+    val descentM: Float
+    init {
+        var up = 0f; var down = 0f; var ref = eleM[0]
+        for (e in eleM) { val d = e - ref; if (d >= 3f) { up += d; ref = e } else if (d <= -3f) { down -= d; ref = e } }
+        climbM = up; descentM = down
+    }
 
     /** Height at [d] metres along the track. */
     fun at(d: Double): Float {

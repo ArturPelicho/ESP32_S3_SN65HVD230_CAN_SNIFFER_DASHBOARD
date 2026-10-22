@@ -28,7 +28,7 @@
     <string name="upd_error">Échec de la mise à jour : %1$s</string>
     <string name="upd_no_network">Pas de réseau</string>
     <string name="upd_no_release">Aucune version de l\'appli trouvée</string>
-    <string name="set_cat_look">Apparence</string>
+    <string name="set_cat_look">Préférences</string>
     <string name="set_cat_screen">Écran</string>
     <string name="set_cat_bike">Moto</string>
     <string name="set_cat_phone">Téléphone</string>

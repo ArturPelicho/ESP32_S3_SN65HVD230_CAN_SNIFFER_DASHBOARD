@@ -1,5 +1,7 @@
 package pt.artur.motadash.ui
 
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -106,31 +108,32 @@ import pt.artur.motadash.Telemetry
 /**
  * Everything the rider can show on the Painel or on the Mapa. Each takes [cols] x [rows] slots of the
  * screen's grid ([SHIFT] is a strip along the top instead). [refW] x [refH] (dp) is the box its text is
- * drawn for at scale 1; a bigger or smaller slot scales it.
+ * drawn for at scale 1 (one slot is 120 x 60 at Large, the same for every element so they all match);
+ * a bigger or smaller slot scales it.
  */
 enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val cols: Int, val rows: Int) {
     CLUSTER(R.string.w_cluster, 320f, 320f, 3, 5),
     SHIFT(R.string.w_shift, 400f, 16f, 0, 0),
     SPEED(R.string.w_speed, 120f, 60f, 1, 1),
-    GEAR(R.string.w_gear, 80f, 80f, 1, 1),
-    RPM(R.string.w_rpm, 130f, 60f, 1, 1),
-    FUEL(R.string.w_fuel, 280f, 110f, 2, 2),
-    RANGE(R.string.w_range, 140f, 70f, 1, 1),
+    GEAR(R.string.w_gear, 120f, 60f, 1, 1),
+    RPM(R.string.w_rpm, 120f, 60f, 1, 1),
+    FUEL(R.string.w_fuel, 240f, 120f, 2, 2),
+    RANGE(R.string.w_range, 120f, 60f, 1, 1),
     CHT(R.string.w_cht, 120f, 60f, 1, 1),
-    FUEL_NOW(R.string.w_fuel_now, 140f, 70f, 1, 1),
-    FUEL_AVG(R.string.w_fuel_avg, 140f, 70f, 1, 1),
-    CLOCK(R.string.w_clock, 120f, 50f, 1, 1),
-    LINK(R.string.w_link, 120f, 50f, 1, 1),
-    BATTERY(R.string.w_battery, 140f, 70f, 1, 1),
-    AIR(R.string.w_air, 140f, 70f, 1, 1),
-    THROTTLE(R.string.w_throttle, 220f, 50f, 2, 1),
-    TRIP(R.string.w_trip, 220f, 90f, 2, 2),
-    TRIP_A(R.string.w_trip_a, 220f, 90f, 2, 2),
-    TRIP_B(R.string.w_trip_b, 220f, 90f, 2, 2),
-    ODO(R.string.w_odo, 160f, 70f, 1, 1),
-    COORDS(R.string.w_coords, 190f, 50f, 2, 1),
-    ALTITUDE(R.string.w_altitude, 140f, 70f, 1, 1),
-    FAULTS(R.string.w_faults, 280f, 56f, 2, 1),
+    FUEL_NOW(R.string.w_fuel_now, 120f, 60f, 1, 1),
+    FUEL_AVG(R.string.w_fuel_avg, 120f, 60f, 1, 1),
+    CLOCK(R.string.w_clock, 120f, 60f, 1, 1),
+    LINK(R.string.w_link, 120f, 60f, 1, 1),
+    BATTERY(R.string.w_battery, 120f, 60f, 1, 1),
+    AIR(R.string.w_air, 120f, 60f, 1, 1),
+    THROTTLE(R.string.w_throttle, 240f, 60f, 2, 1),
+    TRIP(R.string.w_trip, 240f, 120f, 2, 2),
+    TRIP_A(R.string.w_trip_a, 240f, 120f, 2, 2),
+    TRIP_B(R.string.w_trip_b, 240f, 120f, 2, 2),
+    ODO(R.string.w_odo, 120f, 60f, 1, 1),
+    COORDS(R.string.w_coords, 240f, 60f, 2, 1),
+    ALTITUDE(R.string.w_altitude, 120f, 60f, 1, 1),
+    FAULTS(R.string.w_faults, 240f, 60f, 2, 1),
     NORTH(R.string.w_north, 120f, 120f, 1, 2),
     ATTITUDE(R.string.w_attitude, 240f, 120f, 2, 2),
     /** Map only: the followed track's height profile, a strip along the bottom. */
@@ -646,17 +649,12 @@ private fun WidgetCellBody(w: Widget, d: WidgetData, bg: Color, editing: Boolean
             Widget.PROFILE -> {}
             Widget.SPEED -> SpeedBox(d, u, bg)
             Widget.GEAR -> Box(Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                Box(Modifier.size((66 * u).dp).border(3.dp, Palette.cyan, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size((52 * u).dp).border(3.dp, Palette.cyan, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                     val g = d.t?.gear ?: 0
-                    Text(if (g == 0) "-" else "$g", color = Palette.cyan, fontSize = (46 * u).sp, fontWeight = FontWeight.Bold)
+                    Text(if (g == 0) "-" else "$g", color = Palette.cyan, fontSize = (38 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (38 * u).sp)
                 }
             }
-            Widget.RPM -> Cell(bg, u) {
-                val shifting = d.t?.shift == true
-                Text("${d.t?.rpm ?: "--"}", color = if (shifting && d.blinkOn) Palette.red else Palette.text,
-                    fontSize = (28 * u).sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                Text("RPM", color = Palette.label, fontSize = (11 * u).sp)
-            }
+            Widget.RPM -> ValueTile("RPM", "${d.t?.rpm ?: "--"}", "", if (d.t?.shift == true && d.blinkOn) Palette.red else Palette.text, bg, u)
             Widget.FUEL -> Cell(bg, u) {
                 val t = d.t
                 val tank = t?.tankL
@@ -679,13 +677,11 @@ private fun WidgetCellBody(w: Widget, d: WidgetData, bg: Color, editing: Boolean
                 // Just the value in its colour, with a thin gauge; STOP flashes over it when critical.
                 val cht = d.t?.chtC
                 val critical = d.t?.chtCritical == true
-                Cell(if (critical && d.blinkOn) Palette.red else bg, u, center = true) {
-                    Text(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp),
-                        color = if (critical) Palette.text else Palette.label, fontSize = (10 * u).sp, fontWeight = FontWeight.Bold,
-                        maxLines = 1, lineHeight = (11 * u).sp)
-                    BigValue(fmt(Units.temp(cht), 0), Units.tempUnit, if (critical) Palette.text else chtColor(cht), u, 26f)
-                    val frac = cht?.let { ((it - CHT_MIN) / (CHT_MAX - CHT_MIN)).coerceIn(0.0, 1.0) }
-                    SegmentBar(frac, 10, Modifier.fillMaxWidth().height((5 * u).dp)) { i ->
+                val frac = cht?.let { ((it - CHT_MIN) / (CHT_MAX - CHT_MIN)).coerceIn(0.0, 1.0) }
+                ValueTile(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp),
+                    fmt(Units.temp(cht), 0), Units.tempUnit, if (critical) Palette.text else chtColor(cht),
+                    if (critical && d.blinkOn) Palette.red else bg, u) {
+                    SegmentBar(frac, 10, Modifier.fillMaxWidth().height((4 * u).dp)) { i ->
                         chtColor(CHT_MIN + (i + 0.5) * (CHT_MAX - CHT_MIN) / 10)
                     }
                 }
@@ -704,10 +700,7 @@ private fun WidgetCellBody(w: Widget, d: WidgetData, bg: Color, editing: Boolean
             Widget.FUEL_AVG -> ValueTile(stringResource(R.string.dash_average),
                 fmt(if (d.t?.avgPerKm == true) Units.cons(d.t.average) else Units.flow(d.t?.average), 1),
                 if (d.t?.avgPerKm == true) Units.consUnit else Units.flowUnit, Palette.text, bg, u)
-            Widget.CLOCK -> Cell(bg, u, center = true) {
-                Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(d.now)), color = Palette.text,
-                    fontSize = (28 * u).sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
+            Widget.CLOCK -> ValueTile("", SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(d.now)), "", Palette.text, bg, u)
             Widget.LINK -> Cell(bg, u, center = true) {
                 val on = d.status == LinkStatus.CONNECTED
                 Text(stringResource(R.string.dash_bike) + if (on) " ●" else " ○", color = if (on) Palette.green else Palette.orange,
@@ -817,10 +810,34 @@ private fun Cell(bg: Color, u: Float, center: Boolean = false, content: @Composa
     ) { content() }
 }
 
+/**
+ * The common one-value element: the label small in the corner, the value as big as the box allows
+ * (the same look for every element), an optional thin gauge under it.
+ */
 @Composable
-private fun ValueTile(label: String, value: String, unit: String, color: Color, bg: Color, u: Float) = Cell(bg, u) {
-    Text(label, color = Palette.label, fontSize = (12 * u).sp, fontWeight = FontWeight.Bold, maxLines = 1)
-    BigValue(value, unit, color, u, 28f)
+private fun ValueTile(label: String, value: String, unit: String, color: Color, bg: Color, u: Float, under: (@Composable () -> Unit)? = null) {
+    BoxWithConstraints(
+        Modifier.fillMaxSize().background(bg, RoundedCornerShape(10.dp))
+            .then(if (Palette.outlined) Modifier.border(1.dp, Palette.frame, RoundedCornerShape(10.dp)) else Modifier)
+            .padding(horizontal = (6 * u).dp, vertical = (3 * u).dp),
+    ) {
+        val h = maxHeight.value; val w = maxWidth.value
+        val labelSp = (h * 0.19f).coerceIn(7f, 13f)
+        val room = h - (if (label.isNotEmpty()) labelSp * 1.1f else 0f) - (if (under != null) 5 * u else 0f)
+        val chars = value.length + unit.length * 0.45f + (if (unit.isNotEmpty()) 0.3f else 0f)
+        val valueSp = minOf(room * 0.92f, w / (chars * 0.6f)).coerceAtLeast(8f)
+        val tight = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
+            if (label.isNotEmpty()) Text(label, color = Palette.label, fontSize = labelSp.sp, lineHeight = (labelSp * 1.1f).sp,
+                fontWeight = FontWeight.Bold, maxLines = 1, style = tight)
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Text(value, color = color, fontSize = valueSp.sp, lineHeight = valueSp.sp, fontWeight = FontWeight.Bold, maxLines = 1, style = tight)
+                if (unit.isNotEmpty()) Text(" $unit", color = Palette.label, fontSize = (valueSp * 0.4f).sp, lineHeight = (valueSp * 0.4f).sp,
+                    maxLines = 1, style = tight, modifier = Modifier.align(Alignment.Bottom).padding(bottom = (valueSp * 0.1f).dp))
+            }
+            under?.invoke()
+        }
+    }
 }
 
 @Composable
@@ -832,10 +849,11 @@ private fun SpeedBox(d: WidgetData, u: Float, bg: Color) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
+        val tight = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text(Units.speed(speed)?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
-                fontSize = (34 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (34 * u).sp, maxLines = 1)
-            Text(Units.speedUnit, color = Palette.label, fontSize = (10 * u).sp, lineHeight = (11 * u).sp, maxLines = 1)
+                fontSize = (40 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (40 * u).sp, maxLines = 1, style = tight)
+            Text(Units.speedUnit, color = Palette.label, fontSize = (9 * u).sp, lineHeight = (10 * u).sp, maxLines = 1, style = tight)
         }
         d.limit?.let { LimitSign(it, small = true, scale = u) }
     }
@@ -1008,7 +1026,9 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, bg: Col
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("▲ %.0f %s  ▼ %.0f %s".format(Units.alt(p.maxE.toDouble()), Units.altUnit, Units.alt(p.minE.toDouble()), Units.altUnit), color = Palette.label, fontSize = 11.sp, maxLines = 1)
+            // Highest and lowest point, then the total climb and descent.
+            Text("▲ %.0f  ▼ %.0f  ↗ %.0f  ↘ %.0f %s".format(Units.alt(p.maxE.toDouble()), Units.alt(p.minE.toDouble()),
+                Units.alt(p.climbM.toDouble()), Units.alt(p.descentM.toDouble()), Units.altUnit), color = Palette.label, fontSize = 11.sp, maxLines = 1)
             if (here != null) Text(if (p.ride) "%.0f %s".format(Units.alt(here.toDouble()), Units.altUnit)
                 else "%.0f %s · %d%%".format(Units.alt(here.toDouble()), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)

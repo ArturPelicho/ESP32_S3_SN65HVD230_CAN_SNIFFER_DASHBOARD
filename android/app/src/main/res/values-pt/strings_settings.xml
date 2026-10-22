@@ -28,7 +28,7 @@
     <string name="upd_error">A atualização falhou: %1$s</string>
     <string name="upd_no_network">Sem rede</string>
     <string name="upd_no_release">Nenhuma versão da app encontrada</string>
-    <string name="set_cat_look">Aparência</string>
+    <string name="set_cat_look">Preferências</string>
     <string name="set_cat_screen">Ecrã</string>
     <string name="set_cat_bike">Mota</string>
     <string name="set_cat_phone">Telemóvel</string>

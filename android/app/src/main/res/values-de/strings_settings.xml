@@ -28,7 +28,7 @@
     <string name="upd_error">Update fehlgeschlagen: %1$s</string>
     <string name="upd_no_network">Kein Netz</string>
     <string name="upd_no_release">Keine App-Version gefunden</string>
-    <string name="set_cat_look">Darstellung</string>
+    <string name="set_cat_look">Präferenzen</string>
     <string name="set_cat_screen">Bildschirm</string>
     <string name="set_cat_bike">Motorrad</string>
     <string name="set_cat_phone">Telefon</string>

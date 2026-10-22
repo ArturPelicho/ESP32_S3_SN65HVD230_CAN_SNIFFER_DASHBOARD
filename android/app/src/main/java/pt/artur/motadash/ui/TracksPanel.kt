@@ -58,7 +58,7 @@ import pt.artur.motadash.TrackStore
 /** Trajetos: import GPX/KML/KMZ/GeoJSON/TCX/FIT, show, colour, follow, rename or delete them. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
+fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit, embedded: Boolean = false) {
     val ctx = LocalContext.current
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val active by TrackStore.active.collectAsStateWithLifecycle()
@@ -72,7 +72,7 @@ fun TracksPanel(onShow: (Track) -> Unit, onClose: () -> Unit) {
 
     Column(Modifier.fillMaxSize().background(Palette.sheet)) {
         // Title and Fechar stay put; only the content below scrolls.
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (!embedded) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.tracks_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = onClose) { Text(stringResource(R.string.tracks_close)) }

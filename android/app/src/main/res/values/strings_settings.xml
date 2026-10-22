@@ -28,7 +28,7 @@
     <string name="upd_error">Update failed: %1$s</string>
     <string name="upd_no_network">No network</string>
     <string name="upd_no_release">No app release found</string>
-    <string name="set_cat_look">Appearance</string>
+    <string name="set_cat_look">Preferences</string>
     <string name="set_cat_screen">Screen</string>
     <string name="set_cat_bike">Bike</string>
     <string name="set_cat_phone">Phone</string>

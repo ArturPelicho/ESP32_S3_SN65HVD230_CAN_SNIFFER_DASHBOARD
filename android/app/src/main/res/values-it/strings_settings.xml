@@ -28,7 +28,7 @@
     <string name="upd_error">Aggiornamento non riuscito: %1$s</string>
     <string name="upd_no_network">Nessuna rete</string>
     <string name="upd_no_release">Nessuna versione dell\'app trovata</string>
-    <string name="set_cat_look">Aspetto</string>
+    <string name="set_cat_look">Preferenze</string>
     <string name="set_cat_screen">Schermo</string>
     <string name="set_cat_bike">Moto</string>
     <string name="set_cat_phone">Telefono</string>

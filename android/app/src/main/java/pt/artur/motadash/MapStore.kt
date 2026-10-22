@@ -127,6 +127,8 @@ data class DownloadState(val done: Long, val total: Long, val failed: Boolean = 
 object MapStore {
     /** Asks the map to open one of its panels ("maps" or "gpx"), from the app's settings. */
     val openPanel = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    /** Asks the map to show one track (by id), from the app's settings. */
+    val showTrack = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private const val RELEASES =
         "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100&page="
     private const val PREFS = "maps"
