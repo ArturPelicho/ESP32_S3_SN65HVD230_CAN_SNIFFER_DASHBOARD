@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="fb_title">Suggestions and problems</string>
-    <string name="fb_hint">Opens a ready-filled page on the project's GitHub (a free GitHub account is needed to send it).</string>
+    <string name="fb_hint">Opens a ready-filled page on the project\'s GitHub (a free GitHub account is needed to send it).</string>
     <string name="fb_suggest">Send a suggestion</string>
     <string name="fb_problem">Report a problem</string>
     <string name="fb_suggest_title">Suggestion: </string>
@@ -15,6 +15,6 @@
     <string name="fb_crash_send">Send on GitHub</string>
     <string name="fb_crash_share">Share another way</string>
     <string name="fb_crash_ignore">Not now</string>
-    <string name="wn_title">What's new in %1$s</string>
+    <string name="wn_title">What\'s new in %1$s</string>
     <string name="wn_close">Tap anywhere to close.</string>
 </resources>
