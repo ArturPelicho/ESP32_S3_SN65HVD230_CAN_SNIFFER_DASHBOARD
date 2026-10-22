@@ -78,8 +78,19 @@ object MapStyle {
     /** Contour levels: spacing, line width, line opacity. Each line belongs to the coarsest level it is a multiple of. */
     private val CONTOUR_LEVELS = listOf(Triple(100, 1.1, 0.65), Triple(50, 0.8, 0.5), Triple(20, 0.6, 0.42), Triple(10, 0.45, 0.35))
 
-    /** Zoom each level shows from when the spacing is automatic. */
-    private fun contourMinZoom(level: Int) = when (level) { 100 -> 11; 50 -> 12; 20 -> 13; else -> 14 }
+    /** Shaded relief exaggeration for a strength of 10-100 (stronger zoomed out, where hills are small). */
+    fun shadeExaggeration(strength: Int): List<Any> {
+        val k = strength.coerceIn(0, 100) / 100.0
+        return listOf("interpolate", listOf("linear"), listOf("zoom"), 6, (0.95 * k).coerceAtMost(1.0), 14, 0.7 * k)
+    }
+
+    /** Contour spacing the general setting gives at zoom [z] (-1 none), before any choice for that zoom. */
+    fun defaultStep(contourStep: Int, z: Int): Int = when {
+        z < 11 -> -1
+        contourStep in setOf(10, 20, 50, 100) -> contourStep
+        z == 11 -> 100; z == 12 -> 50; z == 13 -> 20
+        else -> 10
+    }
 
     /**
      * Filter for the lines of one contour level, from the height alone so it works on both
@@ -105,8 +116,18 @@ object MapStyle {
      * 10 m from z14); 10, 20, 50 or 100 = lines at that spacing from z11.
      */
     fun build(maps: List<InstalledMap>, night: Boolean, lang: MapLanguage, layers: Set<MapLayer> = MapLayer.entries.toSet(),
-              contourStep: Int = 0): String {
+              contourStep: Int = 0, opts: LayerOpts = LayerOpts()): String {
         val c = if (night) NIGHT else DAY
+        // Contour spacing at each zoom: the rider's choice for that zoom, else the general setting.
+        fun stepAt(z: Int): Int = opts.contourAt[z] ?: defaultStep(contourStep, z)
+        fun shownAt(lv: Int, z: Int) = stepAt(z).let { it > 0 && lv % it == 0 }
+        /** Opacity by zoom: [on] where the level is shown, 0 elsewhere. */
+        fun byZoom(lv: Int, on: Double, from: Int = 0): List<Any> = buildList {
+            add("step"); add(listOf("zoom")); add(0)
+            for (z in 8..19) { add(z); add(if (z >= from && shownAt(lv, z)) on else 0) }
+        }
+        val roadsOn = MapLayer.ROADS in layers
+        val roadsOff = opts.roadsOff.map { it.code }
         val sources = LinkedHashMap<String, Any>()
         val fills = ArrayList<Any>()
         val lines = ArrayList<Any>()
@@ -154,8 +175,8 @@ object MapStyle {
                 sources[hs] = mapOf("type" to "raster-dem", "url" to "pmtiles://file://${f.absolutePath}",
                     "encoding" to "mapbox", "tileSize" to 256, "attribution" to "Copernicus DEM")
                 fills += mapOf("id" to "hillshade-${m.id}", "type" to "hillshade", "source" to hs, "paint" to mapOf(
-                    "hillshade-exaggeration" to listOf("interpolate", listOf("linear"), listOf("zoom"), 6, 0.45, 14, 0.25),
-                    "hillshade-shadow-color" to if (c === NIGHT) "#000000" else "#5a4a3a",
+                    "hillshade-exaggeration" to shadeExaggeration(opts.shade),
+                    "hillshade-shadow-color" to if (c === NIGHT) "#000000" else "#3d3024",
                     "hillshade-highlight-color" to if (c === NIGHT) "#2a3038" else "#ffffff",
                     "hillshade-accent-color" to if (c === NIGHT) "#000000" else "#6b5a48",
                     "hillshade-illumination-anchor" to "map",
@@ -172,13 +193,12 @@ object MapStyle {
                 val cs = "ct-${m.id}"
                 sources[cs] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "Copernicus DEM")
-                // Finest first so the bolder lines draw on top.
-                val fixed = contourStep in setOf(10, 20, 50, 100)
-                val shown = CONTOUR_LEVELS.filter { (lv, _, _) -> !fixed || lv % contourStep == 0 }
+                // Finest first so the bolder lines draw on top; each level only at the zooms whose spacing includes it.
+                val shown = CONTOUR_LEVELS.filter { (lv, _, _) -> (8..19).any { shownAt(lv, it) } }
                 for ((lv, width, opacity) in shown.reversed()) {
                     fills += layer("contour$lv", "line", "contours", source = cs, paint = mapOf(
-                        "line-color" to c.contour, "line-opacity" to opacity, "line-width" to width,
-                    ), filter = contourFilter(lv), minzoom = if (fixed) 11 else contourMinZoom(lv))
+                        "line-color" to c.contour, "line-opacity" to byZoom(lv, opacity), "line-width" to width,
+                    ), filter = contourFilter(lv))
                 }
                 // Heights on the 100 m lines, and on the 50 m ones when zoomed right in.
                 for ((lv, minz) in listOf(100 to 13, 50 to 14)) {
@@ -189,7 +209,8 @@ object MapStyle {
                         "text-font" to listOf(REGULAR),
                         "text-size" to if (lv == 100) 11 else 10,
                         "symbol-spacing" to 350,
-                    ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
+                    ), paint = mapOf("text-color" to c.contour, "text-halo-color" to c.halo, "text-halo-width" to 1.2,
+                        "text-opacity" to byZoom(lv, 1.0, minz)),
                         filter = contourFilter(lv), minzoom = minz)
                 }
             }
@@ -207,8 +228,9 @@ object MapStyle {
             ), minzoom = 15)
 
             // Railways fall into the "minor" class; keep them out of the road layers so they stay dashed.
-            val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa"), false, true),
+            val notPath = listOf("all", listOf("match", ROAD_CLASS, listOf("tk", "pa") + roadsOff, false, true),
                 listOf("!=", listOf("get", "kind"), "rail"))
+            val roadShown: Any = if (roadsOff.isEmpty()) true else listOf("match", ROAD_CLASS, roadsOff, false, true)
             val tunnel = listOf("==", listOf("get", "is_tunnel"), true)
             lines += layer("rail", "line", "roads", paint = mapOf(
                 "line-color" to c.rail, "line-width" to 1.2, "line-dasharray" to listOf(3, 3),
@@ -220,12 +242,13 @@ object MapStyle {
                 "line-dasharray" to listOf(2, 2),
                 "line-opacity" to 0.55,
             ), filter = listOf("match", ROAD_CLASS, "pa", true, false), minzoom = 14)
-            lines += layer("track", "line", "roads", layout = mapOf("line-cap" to "butt"), paint = mapOf(
+            // With the dirt pack, its coloured lines take over the tracks (no brown dashes under them).
+            if (m.limits == null) lines += layer("track", "line", "roads", layout = mapOf("line-cap" to "butt"), paint = mapOf(
                 "line-color" to c.track,
                 "line-width" to roadWidth(0.6),
                 "line-dasharray" to listOf(2.2, 1.4),
             ), filter = listOf("match", ROAD_CLASS, "tk", true, false), minzoom = 12)
-            lines += layer("casing", "line", "roads", layout = mapOf(
+            if (roadsOn) lines += layer("casing", "line", "roads", layout = mapOf(
                 "line-cap" to "round", "line-join" to "round", "line-sort-key" to RANK,
             ), paint = mapOf(
                 "line-color" to byClass(c.casingMajor, c.casingMajor, c.casingMajor, c.casingMajor,
@@ -233,7 +256,7 @@ object MapStyle {
                 "line-width" to roadWidth(1.6),
                 "line-opacity" to listOf("case", tunnel, 0.4, 1),
             ), filter = notPath, minzoom = 7)
-            lines += layer("road", "line", "roads", layout = mapOf(
+            if (roadsOn) lines += layer("road", "line", "roads", layout = mapOf(
                 "line-cap" to "round", "line-join" to "round", "line-sort-key" to RANK,
             ), paint = mapOf(
                 "line-color" to byClass(c.motorway, c.trunk, c.primary, c.secondary, c.tertiary,
@@ -253,11 +276,17 @@ object MapStyle {
                 sources[ls] = mapOf("type" to "vector", "url" to "pmtiles://file://${f.absolutePath}",
                     "attribution" to "© OpenStreetMap")
                 // Unpaved roads and tracks by how hard they are (DMD2-style): green easy, yellow medium, red hard.
+                // Ungraded tracks keep the brown; closed or private ones (gates may be shut) are black.
+                val private = listOf("==", listOf("coalesce", listOf("get", "p"), 0), 1)
+                val gradesOff = opts.dirtOff.filter { it != DirtKind.PRIVATE }.map { it.g }
+                val dirtShown = listOf("case", private, DirtKind.PRIVATE !in opts.dirtOff,
+                    if (gradesOff.isEmpty()) true else listOf("match", listOf("coalesce", listOf("get", "g"), 0), gradesOff, false, true))
                 if (MapLayer.DIRT in layers) lines += layer("dirt", "line", "dirt", source = ls, layout = mapOf("line-cap" to "butt"), paint = mapOf(
-                    "line-color" to listOf("match", listOf("get", "g"), 1, "#3fae49", 2, "#e0b000", "#e2463c"),
+                    "line-color" to listOf("case", private, if (c === NIGHT) "#e6e6e6" else "#111111",
+                        listOf("match", listOf("coalesce", listOf("get", "g"), 0), 1, "#3fae49", 2, "#e0b000", 3, "#e2463c", c.track)),
                     "line-width" to roadWidth(0.6),
                     "line-dasharray" to listOf(2.2, 1.4),
-                ), minzoom = 12)
+                ), filter = dirtShown, minzoom = 12)
                 // Almost invisible: only there so the screen can ask which limit is under the bike.
                 lines += layer("limit-hit", "line", "limits", source = ls, paint = mapOf(
                     "line-color" to c.label, "line-opacity" to 0.01, "line-width" to 14,
@@ -279,7 +308,7 @@ object MapStyle {
                 "text-field" to name(lang), "text-font" to listOf(ITALIC), "text-size" to 13,
             ), paint = mapOf("text-color" to c.waterLabel, "text-halo-color" to c.halo, "text-halo-width" to 1.2),
                 filter = listOf("all", listOf("has", "name"), listOf("==", listOf("geometry-type"), "Point")), minzoom = 9)
-            labels += layer("road-label", "symbol", "roads", layout = mapOf(
+            if (roadsOn) labels += layer("road-label", "symbol", "roads", layout = mapOf(
                 "symbol-placement" to "line",
                 "text-field" to name(lang),
                 "text-font" to listOf(REGULAR),
@@ -287,9 +316,9 @@ object MapStyle {
                 "symbol-spacing" to 300,
                 "text-max-angle" to 30,
             ), paint = mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 1.6),
-                filter = listOf("has", "name"), minzoom = 13)
+                filter = listOf("all", listOf("has", "name"), roadShown), minzoom = 13)
             // Road numbers (A1, IC8, N222, EN2...) on the bigger roads.
-            labels += layer("road-ref", "symbol", "roads", layout = mapOf(
+            if (roadsOn) labels += layer("road-ref", "symbol", "roads", layout = mapOf(
                 "symbol-placement" to "line",
                 "text-field" to listOf("get", "ref"),
                 "text-font" to listOf(MEDIUM),
@@ -300,7 +329,7 @@ object MapStyle {
             ), paint = mapOf(
                 "text-color" to byClass(c.motorway, c.trunk, c.primary, c.label, c.label, c.label, c.label, c.label, c.label),
                 "text-halo-color" to c.halo, "text-halo-width" to 2.2,
-            ), filter = listOf("all", listOf("has", "ref"),
+            ), filter = listOf("all", listOf("has", "ref"), roadShown,
                 listOf("match", ROAD_CLASS, listOf("mw", "tr", "pr", "se", "te"), true, false)), minzoom = 8)
             labels += layer("place", "symbol", "places", layout = mapOf(
                 "text-field" to name(lang),

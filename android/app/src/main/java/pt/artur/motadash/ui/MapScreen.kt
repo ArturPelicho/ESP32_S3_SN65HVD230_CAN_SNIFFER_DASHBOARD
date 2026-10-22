@@ -1,5 +1,12 @@
 package pt.artur.motadash.ui
 
+import pt.artur.motadash.DirtKind
+import pt.artur.motadash.RoadClass
+import pt.artur.motadash.LayerOpts
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Slider
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -836,11 +843,13 @@ fun MapScreen() {
     var stopTrip by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
+    var layerDetail by remember { mutableStateOf<MapLayer?>(null) }
     var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
     var themeTick by remember { mutableIntStateOf(0) }
     var mapBearing by remember { mutableFloatStateOf(0f) }
     var mapTilt by remember { mutableFloatStateOf(0f) }
     val contourStep by MapStore.contourStepFlow.collectAsStateWithLifecycle()
+    val layerOpts by MapStore.layerOptsFlow.collectAsStateWithLifecycle()
     val azCfg by MapStore.autoZoomFlow.collectAsStateWithLifecycle()
     val tracks by TrackStore.tracks.collectAsStateWithLifecycle()
     val activeId by TrackStore.active.collectAsStateWithLifecycle()
@@ -1019,7 +1028,7 @@ fun MapScreen() {
         MapTheme.AUTO -> minute.let { MapStyle.isNight(fix?.latitude ?: 39.5, fix?.longitude ?: -8.0) }
     }
     val enabled = installed.filter { it.enabled }
-    val styleJson = remember(enabled, night, lang, layers, contourStep) { MapStyle.build(enabled, night, lang, layers, contourStep) }
+    val styleJson = remember(enabled, night, lang, layers, contourStep, layerOpts) { MapStyle.build(enabled, night, lang, layers, contourStep, layerOpts) }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.bg)) {
         AndroidView(
@@ -1294,17 +1303,30 @@ fun MapScreen() {
                     .background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                MapLayer.entries.forEach { l ->
-                    FilterChip(selected = l in layers, onClick = {
-                        val on = l !in layers
-                        MapStore.setLayer(ctx, l, on)
-                        layers = if (on) layers + l else layers - l
-                        if (l == MapLayer.BUILDINGS_3D) { holder.buildings3d = on; holder.show3dBuildings() }
-                    }, label = { Text(l.label) })
-                }
-                if (enabled.none { it.shade != null || it.contours != null }) {
-                    Text(stringResource(R.string.map_layers_hint), color = Palette.label, fontSize = 12.sp)
+                val detail = layerDetail
+                if (detail != null) LayerOptions(detail, layerOpts, contourStep,
+                    zoom = holder.map?.cameraPosition?.zoom ?: 14.0,
+                    onShadeLive = { v -> holder.style?.layers?.filter { it.id.startsWith("hillshade-") }?.forEach {
+                        val k = v / 100f
+                        val e = org.maplibre.android.style.expressions.Expression
+                        it.setProperties(PropertyFactory.hillshadeExaggeration(e.interpolate(e.linear(), e.zoom(),
+                            e.stop(6, (0.95f * k).coerceAtMost(1f)), e.stop(14, 0.7f * k))))
+                    } },
+                    onBack = { layerDetail = null })
+                else {
+                    Text(stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    MapLayer.entries.forEach { l ->
+                        LayerChip(l.label, l in layers, l.hasOptions, onClick = {
+                            val on = l !in layers
+                            MapStore.setLayer(ctx, l, on)
+                            layers = if (on) layers + l else layers - l
+                            if (l == MapLayer.BUILDINGS_3D) { holder.buildings3d = on; holder.show3dBuildings() }
+                        }, onLong = { if (l.hasOptions) layerDetail = l })
+                    }
+                    Text(stringResource(R.string.map_layers_long), color = Palette.label, fontSize = 12.sp)
+                    if (enabled.none { it.shade != null || it.contours != null }) {
+                        Text(stringResource(R.string.map_layers_hint), color = Palette.label, fontSize = 12.sp)
+                    }
                 }
             }
         }
@@ -2030,3 +2052,76 @@ internal fun mb(bytes: Long): String = if (bytes <= 0) "?" else "%.0f MB".format
 /** How old a fix is, in milliseconds. */
 private fun ageMs(loc: Location): Long =
     (SystemClock.elapsedRealtimeNanos() - loc.elapsedRealtimeNanos) / 1_000_000
+
+/** A layer in the layers list: tap switches it, long press opens its options (⋯ when it has some). */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LayerChip(label: String, on: Boolean, options: Boolean, onClick: () -> Unit, onLong: () -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(8.dp))
+            .background(if (on) Palette.amber.copy(alpha = 0.25f) else Color.Transparent)
+            .border(1.dp, if (on) Palette.amber else Palette.label, RoundedCornerShape(8.dp))
+            .combinedClickable(onClick = onClick, onLongClick = onLong)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(if (on) "✓" else " ", color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Palette.text, fontSize = 15.sp)
+        if (options) Text("⋯", color = Palette.label, fontSize = 15.sp)
+    }
+}
+
+/** A layer's own options, in place of the layers list. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Double, onShadeLive: (Int) -> Unit, onBack: () -> Unit) {
+    val ctx = LocalContext.current
+    fun set(n: LayerOpts) = MapStore.setLayerOpts(ctx, n)
+    Column(Modifier.widthIn(max = 340.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ " + stringResource(R.string.map_layers), color = Palette.amber, fontSize = 15.sp) }
+        }
+        Text(l.label, color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        when (l) {
+            MapLayer.SHADE -> {
+                var v by remember { mutableFloatStateOf(o.shade.toFloat()) }
+                Text(stringResource(R.string.layer_shade_strength, v.toInt()), color = Palette.text, fontSize = 14.sp)
+                Slider(value = v, onValueChange = { v = it; onShadeLive(it.toInt()) }, valueRange = 10f..100f,
+                    onValueChangeFinished = { set(o.copy(shade = v.toInt())) }, modifier = Modifier.width(280.dp))
+            }
+            MapLayer.CONTOURS -> {
+                val z = kotlin.math.floor(zoom).toInt().coerceIn(8, 19)
+                val cur = o.contourAt[z] ?: MapStyle.defaultStep(contourStep, z)
+                Text(stringResource(R.string.layer_contour_at_zoom, z), color = Palette.text, fontSize = 14.sp)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(-1, 10, 20, 50, 100).forEach { st ->
+                        FilterChip(selected = cur == st, onClick = { set(o.copy(contourAt = o.contourAt + (z to st))) },
+                            label = { Text(if (st < 0) stringResource(R.string.layer_contour_none) else stringResource(R.string.mapopts_contour_m, st)) })
+                    }
+                }
+                if (o.contourAt.isNotEmpty()) TextButton(onClick = { set(o.copy(contourAt = emptyMap())) }) {
+                    Text(stringResource(R.string.layer_contour_reset), color = Palette.amber)
+                }
+                Text(stringResource(R.string.layer_contour_hint), color = Palette.label, fontSize = 12.sp)
+            }
+            MapLayer.ROADS -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                RoadClass.entries.forEach { r ->
+                    FilterChip(selected = r !in o.roadsOff, onClick = {
+                        set(o.copy(roadsOff = if (r in o.roadsOff) o.roadsOff - r else o.roadsOff + r))
+                    }, label = { Text(r.label) })
+                }
+            }
+            MapLayer.DIRT -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                DirtKind.entries.forEach { d ->
+                    FilterChip(selected = d !in o.dirtOff, onClick = {
+                        set(o.copy(dirtOff = if (d in o.dirtOff) o.dirtOff - d else o.dirtOff + d))
+                    }, label = { Text(d.label) }, leadingIcon = {
+                        Box(Modifier.size(width = 18.dp, height = 4.dp).background(Color(d.color)))
+                    })
+                }
+            }
+            else -> {}
+        }
+    }
+}

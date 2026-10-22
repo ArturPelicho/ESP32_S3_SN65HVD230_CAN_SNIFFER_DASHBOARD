@@ -79,4 +79,23 @@
     <string name="w_trip_b">Fahrt B</string>
     <string name="w_odo">Kilometerzähler</string>
     <string name="w_att_zeroed">Tariert: diese Lage gilt jetzt als aufrecht und waagrecht</string>
+    <string name="layer_roads">Straßen</string>
+    <string name="road_motorway">Autobahnen</string>
+    <string name="road_trunk">Schnellstraßen</string>
+    <string name="road_primary">Hauptstraßen</string>
+    <string name="road_secondary">Nebenstraßen</string>
+    <string name="road_tertiary">Ortsverbindungen</string>
+    <string name="road_minor">Wege und kleine Straßen</string>
+    <string name="road_service">Zufahrten</string>
+    <string name="dirt_easy">Leicht</string>
+    <string name="dirt_medium">Mittel</string>
+    <string name="dirt_hard">Schwer</string>
+    <string name="dirt_unknown">Ohne Einstufung</string>
+    <string name="dirt_private">Privat oder gesperrt</string>
+    <string name="map_layers_long">Lange auf eine Ebene mit ⋯ drücken für ihre Optionen.</string>
+    <string name="layer_shade_strength">Stärke: %1$d %%</string>
+    <string name="layer_contour_at_zoom">Abstand bei diesem Zoom (%1$d):</string>
+    <string name="layer_contour_none">Keine</string>
+    <string name="layer_contour_reset">Zur allgemeinen Einstellung</string>
+    <string name="layer_contour_hint">Jede Zoomstufe behält ihren Abstand; zoomen und erneut lange drücken, um eine andere einzustellen.</string>
 </resources>

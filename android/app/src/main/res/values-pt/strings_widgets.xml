@@ -79,4 +79,23 @@
     <string name="w_trip_b">Viagem B</string>
     <string name="w_odo">Odómetro</string>
     <string name="w_att_zeroed">Tara feita: esta posição é agora direita e nivelada</string>
+    <string name="layer_roads">Estradas</string>
+    <string name="road_motorway">Autoestradas</string>
+    <string name="road_trunk">Vias rápidas</string>
+    <string name="road_primary">Estradas principais</string>
+    <string name="road_secondary">Estradas secundárias</string>
+    <string name="road_tertiary">Estradas locais</string>
+    <string name="road_minor">Ruas e estradas menores</string>
+    <string name="road_service">Acessos e serviço</string>
+    <string name="dirt_easy">Fácil</string>
+    <string name="dirt_medium">Média</string>
+    <string name="dirt_hard">Difícil</string>
+    <string name="dirt_unknown">Sem classificação</string>
+    <string name="dirt_private">Privada ou fechada</string>
+    <string name="map_layers_long">Toque longo numa camada com ⋯ para as suas opções.</string>
+    <string name="layer_shade_strength">Intensidade: %1$d %%</string>
+    <string name="layer_contour_at_zoom">Intervalo neste zoom (%1$d):</string>
+    <string name="layer_contour_none">Nenhum</string>
+    <string name="layer_contour_reset">Voltar à opção geral</string>
+    <string name="layer_contour_hint">Cada nível de zoom guarda o seu intervalo; aproxima ou afasta e faz toque longo outra vez para mudar outro.</string>
 </resources>

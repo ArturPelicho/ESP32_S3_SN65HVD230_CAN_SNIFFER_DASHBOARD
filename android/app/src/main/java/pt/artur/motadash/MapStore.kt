@@ -72,9 +72,37 @@ enum class NavCorner(@StringRes private val res: Int) {
 }
 
 enum class MapLayer(@StringRes val res: Int) {
-    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt);
+    SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), ROADS(R.string.layer_roads), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt);
+    val label: String get() = L.s(res)
+    /** Has its own options (long press on it in the layers list). */
+    val hasOptions: Boolean get() = this == SHADE || this == CONTOURS || this == ROADS || this == DIRT
+}
+
+/** Road classes that can be hidden one by one (MapStyle's class codes). */
+enum class RoadClass(val code: String, @StringRes private val res: Int) {
+    MOTORWAY("mw", R.string.road_motorway), TRUNK("tr", R.string.road_trunk), PRIMARY("pr", R.string.road_primary),
+    SECONDARY("se", R.string.road_secondary), TERTIARY("te", R.string.road_tertiary), MINOR("mi", R.string.road_minor),
+    SERVICE("sv", R.string.road_service);
     val label: String get() = L.s(res)
 }
+
+/** Dirt road kinds that can be hidden one by one: grades 1-3, ungraded, and closed or private ones. */
+enum class DirtKind(val g: Int, @StringRes private val res: Int, val color: Long) {
+    EASY(1, R.string.dirt_easy, 0xFF3FAE49), MEDIUM(2, R.string.dirt_medium, 0xFFE0B000), HARD(3, R.string.dirt_hard, 0xFFE2463C),
+    UNKNOWN(0, R.string.dirt_unknown, 0xFF9B7448), PRIVATE(-1, R.string.dirt_private, 0xFF111111);
+    val label: String get() = L.s(res)
+}
+
+/**
+ * The layers' own options: shaded relief strength (10-100), contour spacing chosen per zoom level
+ * (metres; -1 none; missing = the general setting), and the road classes and dirt kinds hidden.
+ */
+data class LayerOpts(
+    val shade: Int = 70,
+    val contourAt: Map<Int, Int> = emptyMap(),
+    val roadsOff: Set<RoadClass> = emptySet(),
+    val dirtOff: Set<DirtKind> = emptySet(),
+)
 
 /**
  * Auto zoom by speed: [nearZoom] at or below [slowKmh], [farZoom] at or above [fastKmh],
@@ -150,6 +178,27 @@ object MapStore {
         _contourStepFlow.value = step
     }
 
+    private val _layerOpts = MutableStateFlow(LayerOpts())
+    val layerOptsFlow: StateFlow<LayerOpts> = _layerOpts.asStateFlow()
+    fun layerOpts(ctx: Context): LayerOpts {
+        val p = prefs(ctx)
+        return LayerOpts(
+            shade = p.getInt("shade_strength", 70),
+            contourAt = (p.getString("contour_at", "") ?: "").split(",").mapNotNull { e ->
+                e.split(":").takeIf { it.size == 2 }?.let { (z, st) -> z.toIntOrNull()?.let { zz -> st.toIntOrNull()?.let { zz to it } } }
+            }.toMap(),
+            roadsOff = (p.getStringSet("roads_off", emptySet()) ?: emptySet()).mapNotNull { n -> RoadClass.entries.firstOrNull { it.name == n } }.toSet(),
+            dirtOff = (p.getStringSet("dirt_off", emptySet()) ?: emptySet()).mapNotNull { n -> DirtKind.entries.firstOrNull { it.name == n } }.toSet(),
+        )
+    }
+    fun setLayerOpts(ctx: Context, o: LayerOpts) {
+        prefs(ctx).edit().putInt("shade_strength", o.shade)
+            .putString("contour_at", o.contourAt.entries.joinToString(",") { "${it.key}:${it.value}" })
+            .putStringSet("roads_off", o.roadsOff.map { it.name }.toSet())
+            .putStringSet("dirt_off", o.dirtOff.map { it.name }.toSet()).apply()
+        _layerOpts.value = o
+    }
+
     fun cameraBeep(ctx: Context): Boolean = prefs(ctx).getBoolean("camera_beep", true)
     fun setCameraBeep(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("camera_beep", on).apply()
 
@@ -213,6 +262,7 @@ object MapStore {
         prefs(ctx).getString("index", null)?.let { runCatching { _index.value = parseIndex(JSONObject(it), null) } }
         _autoZoomFlow.value = autoZoomCfg(ctx)
         _contourStepFlow.value = contourStep(ctx)
+        _layerOpts.value = layerOpts(ctx)
         refreshInstalled(ctx)
         pollDownloads(ctx)
     }

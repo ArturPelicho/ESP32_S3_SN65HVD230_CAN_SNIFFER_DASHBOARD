@@ -4,7 +4,8 @@
 Reads osmium GeoJSONSeq exports and writes compact GeoJSONSeq with only what the app needs:
   limits.py ways <in> <out>     lines: kmh, and kmh_f / kmh_b when they differ by direction
   limits.py cameras <in> <out>  points: kmh (if tagged), dir (degrees, if tagged)
-  limits.py dirt <in> <out>     lines: g = 1 easy, 2 medium, 3 hard (unpaved roads and tracks)
+  limits.py dirt <in> <out>     lines: g = 1 easy, 2 medium, 3 hard, 0 ungraded track (unpaved roads and tracks);
+                                p = 1 where closed to the public or to motor vehicles (gates may be shut)
 """
 import json
 import re
@@ -83,8 +84,20 @@ SURFACE = {"compacted": 1, "fine_gravel": 1, "gravel": 2, "unpaved": 2, "dirt": 
 PAVED = {"asphalt", "paved", "concrete", "concrete:plates", "paving_stones", "sett", "cobblestone", "chipseal"}
 
 
+CLOSED = {"private", "no"}
+
+
+def closed(t):
+    """Private or closed to motor vehicles: access, then vehicle, motor_vehicle, motorcycle (most specific wins)."""
+    v = None
+    for k in ("access", "vehicle", "motor_vehicle", "motorcycle"):
+        if t.get(k):
+            v = t[k].split(";")[0]
+    return v in CLOSED
+
+
 def dirt(src, dst):
-    """Unpaved ways with a grade: smoothness when tagged, else tracktype, else surface."""
+    """Unpaved ways with a grade: smoothness when tagged, else tracktype, else surface; any other track ungraded (0)."""
     n = 0
     with open(src) as f, open(dst, "w") as o:
         for line in f:
@@ -104,9 +117,12 @@ def dirt(src, dst):
             if hw != "track" and surface not in SURFACE:
                 continue
             g = SMOOTH.get(t.get("smoothness")) or GRADE.get(t.get("tracktype")) or SURFACE.get(surface)
-            if not g:
+            if not g and hw != "track":
                 continue
-            o.write(feature(ft["geometry"], {"g": g}) + "\n")
+            p = {"g": g or 0}
+            if closed(t):
+                p["p"] = 1
+            o.write(feature(ft["geometry"], p) + "\n")
             n += 1
     print(f"limits: {n} graded unpaved ways", file=sys.stderr)
 

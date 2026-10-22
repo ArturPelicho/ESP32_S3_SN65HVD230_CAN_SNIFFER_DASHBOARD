@@ -57,7 +57,7 @@
     <string name="w_btn_maps">Maps</string>
     <string name="w_dash_settings">Dashboard settings</string>
     <string name="map_layers">Layers</string>
-    <string name="map_layers_hint">Relief, shading and contours come with maps that have them (Mapas, Add relief / shading).</string>
+    <string name="map_layers_hint">Relief, shading and contours come with maps that have them (Maps, Add relief / shading).</string>
     <string name="layer_shade">Shaded relief</string>
     <string name="layer_contours">Contour lines</string>
     <string name="layer_3d">3D buildings (3D view)</string>
@@ -79,4 +79,23 @@
     <string name="w_trip_b">Trip B</string>
     <string name="w_odo">Odometer</string>
     <string name="w_att_zeroed">Level set: this is upright and level now</string>
+    <string name="layer_roads">Roads</string>
+    <string name="road_motorway">Motorways</string>
+    <string name="road_trunk">Expressways</string>
+    <string name="road_primary">Main roads</string>
+    <string name="road_secondary">Secondary roads</string>
+    <string name="road_tertiary">Local roads</string>
+    <string name="road_minor">Streets and minor roads</string>
+    <string name="road_service">Service roads</string>
+    <string name="dirt_easy">Easy</string>
+    <string name="dirt_medium">Medium</string>
+    <string name="dirt_hard">Hard</string>
+    <string name="dirt_unknown">Not graded</string>
+    <string name="dirt_private">Private or closed</string>
+    <string name="map_layers_long">Long press a layer with ⋯ for its options.</string>
+    <string name="layer_shade_strength">Strength: %1$d %%</string>
+    <string name="layer_contour_at_zoom">Spacing at this zoom (%1$d):</string>
+    <string name="layer_contour_none">None</string>
+    <string name="layer_contour_reset">Back to the general setting</string>
+    <string name="layer_contour_hint">Each zoom level keeps its own spacing; zoom in or out and long press again to set another.</string>
 </resources>

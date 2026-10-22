@@ -79,4 +79,23 @@
     <string name="w_trip_b">Viaggio B</string>
     <string name="w_odo">Contachilometri</string>
     <string name="w_att_zeroed">Tara fatta: questa posizione ora è dritta e in piano</string>
+    <string name="layer_roads">Strade</string>
+    <string name="road_motorway">Autostrade</string>
+    <string name="road_trunk">Superstrade</string>
+    <string name="road_primary">Strade principali</string>
+    <string name="road_secondary">Strade secondarie</string>
+    <string name="road_tertiary">Strade locali</string>
+    <string name="road_minor">Vie e strade minori</string>
+    <string name="road_service">Strade di servizio</string>
+    <string name="dirt_easy">Facile</string>
+    <string name="dirt_medium">Media</string>
+    <string name="dirt_hard">Difficile</string>
+    <string name="dirt_unknown">Non classificata</string>
+    <string name="dirt_private">Privata o chiusa</string>
+    <string name="map_layers_long">Pressione lunga su un livello con ⋯ per le sue opzioni.</string>
+    <string name="layer_shade_strength">Intensità: %1$d %%</string>
+    <string name="layer_contour_at_zoom">Intervallo a questo zoom (%1$d):</string>
+    <string name="layer_contour_none">Nessuna</string>
+    <string name="layer_contour_reset">Torna all\'impostazione generale</string>
+    <string name="layer_contour_hint">Ogni livello di zoom tiene il suo intervallo; ingrandisci o riduci e premi a lungo di nuovo per cambiarne un altro.</string>
 </resources>

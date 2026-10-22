@@ -79,4 +79,23 @@
     <string name="w_trip_b">Trajet B</string>
     <string name="w_odo">Odomètre</string>
     <string name="w_att_zeroed">Tare faite : cette position est maintenant droite et à niveau</string>
+    <string name="layer_roads">Routes</string>
+    <string name="road_motorway">Autoroutes</string>
+    <string name="road_trunk">Voies rapides</string>
+    <string name="road_primary">Routes principales</string>
+    <string name="road_secondary">Routes secondaires</string>
+    <string name="road_tertiary">Routes locales</string>
+    <string name="road_minor">Rues et petites routes</string>
+    <string name="road_service">Voies de service</string>
+    <string name="dirt_easy">Facile</string>
+    <string name="dirt_medium">Moyenne</string>
+    <string name="dirt_hard">Difficile</string>
+    <string name="dirt_unknown">Non classée</string>
+    <string name="dirt_private">Privée ou fermée</string>
+    <string name="map_layers_long">Appui long sur une couche avec ⋯ pour ses options.</string>
+    <string name="layer_shade_strength">Intensité : %1$d %%</string>
+    <string name="layer_contour_at_zoom">Écart à ce zoom (%1$d) :</string>
+    <string name="layer_contour_none">Aucune</string>
+    <string name="layer_contour_reset">Revenir au réglage général</string>
+    <string name="layer_contour_hint">Chaque niveau de zoom garde son écart ; zoomez puis appui long à nouveau pour en régler un autre.</string>
 </resources>
