@@ -134,4 +134,8 @@
     <string name="prof_colours">Cyan : fait. Ambre : reste à faire. Bande bleue en haut : pluie prévue à ton passage en chaque endroit (plus foncé = plus fort) ; contour bleu : il pleut maintenant mais ça devrait avoir cessé à ton arrivée.</string>
     <string name="prof_close">Touche en dehors pour fermer.</string>
     <string name="layer_tracks">Tracés sur la carte</string>
+    <string name="ms_screen">À l\'écran</string>
+    <string name="ms_look">Apparence</string>
+    <string name="ms_detail">Détail</string>
+    <string name="ms_sound">Son</string>
 </resources>

@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import pt.artur.motadash.ui.ControlScreen
 import pt.artur.motadash.ui.UpdatePrompt
+import pt.artur.motadash.ui.StartPrompts
 import pt.artur.motadash.ui.CommsOverlay
 import pt.artur.motadash.ui.DashboardScreen
 import pt.artur.motadash.ui.MapScreen
@@ -91,6 +92,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Feedback.catchCrashes(this)
         L.init(this)
         Units.load(this)
         Trips.load(this)
@@ -229,6 +231,7 @@ private fun App(activity: MainActivity) {
             val navTop = MapStore.navCorner(LocalContext.current).name.startsWith("TOP")
             CommsOverlay(Modifier.align(if (navTop) Alignment.BottomCenter else Alignment.TopCenter))
             UpdatePrompt()
+            StartPrompts()
         }
     }
 }

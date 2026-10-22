@@ -39,7 +39,14 @@ The Android status bar and navigation buttons always stay visible.
 | **Dashboard** | The bike's dashboard, built from elements (🚧 still being worked on, see below) |
 | **Settings** | General settings on the left (Preferences, Maps, Tracks, Bike, Diagnostics, Phone, About), each opening in the panel on the right. Diagnostics holds the live data from the bike unit, the speed sources side by side and the fault codes; with faults stored the tab shows their count in orange |
 
-Settings that belong to one screen live on that screen: tap the ⚙ button in its corner.
+Settings that belong to one screen live on that screen: the Dashboard's ⚙ in its corner, and the map's ☰ button
+(Map settings, also under Settings → Maps). Map settings come in groups: **On screen** (elements, button bar,
+navigation boxes), **View** (follow mode, auto zoom), **Look** (theme, names, contours), **Detail** (detail by
+zoom), **Sound** and **Regions** (download and update maps).
+
+After each update a short window lists what changed; one tap anywhere closes it. **Settings → About** has
+**Send a suggestion** and **Report a problem** (a filled-in GitHub issue). If the app ever closes unexpectedly,
+the next time it opens it offers to send the error report; nothing is sent without the rider's tap.
 
 > **Dashboard tab: under construction.** It works and shows live data when the bike unit is
 > connected, but configurable rows, a map/dashboard split screen and ride statistics are
@@ -68,8 +75,8 @@ Map data © OpenStreetMap contributors, base map Protomaps, relief Copernicus DE
 
 - The arrow moves smoothly between GPS fixes: it is predicted along the road or track ahead
   and eased back onto each new fix.
-- **Buttons** (the bar can sit on any edge; hide the ones you don't use in the map's ⚙):
-  view mode (▲ / 3D / N), follow, zoom, GPS details, day/night, layers, tracks, record, maps.
+- **Buttons** (the bar can sit on any edge; hide the ones you don't use in Map settings → On screen):
+  search, view mode (▲ / 3D / N), follow, zoom, GPS details, day/night, layers, tracks, record, map settings (☰, always there).
 - **Speed limit sign** from OpenStreetMap, red when you are over it; **speed camera** warning
   with a beep.
 - **Search** (🔍): type an address or a place; your favourite places come first, then results
@@ -125,7 +132,7 @@ press the track box** for its menu:
   main road for small gains). Changing any of them recalculates the route.
 
 **Turn by turn**: a banner with the next turn and the road taken ("Turn left onto N4"), read
-from the offline map, plus voice. Volumes for voice and warnings are in the map's ⚙.
+from the offline map, plus voice. Volumes for voice and warnings are in Map settings → Sound.
 
 **Progress bar**: the height profile of the track ahead (or of the ride so far when nothing
 is followed). Under it: ▲ highest and ▼ lowest point, ↗ total climb and ↘ total descent,
@@ -172,7 +179,7 @@ clock, bike and GPS link, battery, intake air, throttle, trips A/B and the bike'
 odometer, coordinates, altitude, engine faults, north rose (leans with the 3D view),
 lean/pitch gauge (long press to zero it) and, on the map, the progress bar.
 
-Open the screen's ⚙:
+Open the Dashboard's ⚙, or Map settings → On screen for the map:
 
 - **Shown on this screen**: pick the elements. Landscape and portrait each keep their own.
 - **Slot size** (small, medium, large) and **background opacity**.

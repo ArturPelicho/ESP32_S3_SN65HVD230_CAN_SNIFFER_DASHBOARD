@@ -134,4 +134,8 @@
     <string name="prof_colours">Cyan: gefahren. Bernstein: noch zu fahren. Blaues Band oben: Regen, wenn du an jedem Ort ankommst (dunkler = stärker); blauer Rahmen: regnet jetzt, sollte aber aufgehört haben, wenn du dort bist.</string>
     <string name="prof_close">Außerhalb tippen zum Schließen.</string>
     <string name="layer_tracks">Strecken auf der Karte</string>
+    <string name="ms_screen">Auf dem Bildschirm</string>
+    <string name="ms_look">Aussehen</string>
+    <string name="ms_detail">Details</string>
+    <string name="ms_sound">Ton</string>
 </resources>

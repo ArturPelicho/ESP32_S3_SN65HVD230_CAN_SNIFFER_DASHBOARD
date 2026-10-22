@@ -1,6 +1,12 @@
 package pt.artur.motadash.ui
 
 import androidx.compose.foundation.background
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -59,7 +65,10 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-/** Mapas: view options (follow mode, auto zoom, theme, names, contour spacing), then download, update, switch off or delete regions. */
+/**
+ * The map's settings, in groups: what shows on the screen (elements, button bar, navigation boxes), view,
+ * look, detail by zoom, sound, and the regions to download, update, switch off or delete.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MapsPanel(
@@ -78,6 +87,8 @@ fun MapsPanel(
     onClose: () -> Unit,
     /** Shown inside the app's settings: no title bar of its own. */
     embedded: Boolean = false,
+    /** Move mode was switched on: show the map so its elements can be moved. */
+    onMoveStart: () -> Unit = onClose,
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -114,193 +125,224 @@ fun MapsPanel(
     }
     val free = MapStore.dir(ctx).usableSpace
 
-    Column(Modifier.fillMaxSize().background(Palette.sheet)) {
-        // Title and Fechar stay put; only the content below scrolls.
+    @Composable
+    fun Body(sec: MapSec) {
+        when (sec) {
+            MapSec.SCREEN -> {
+                WidgetOptions(LayoutStore.MAP, onMoveStart)
+                BarSettings()
+                Text(stringResource(R.string.nav_corner_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NavCorner.entries.forEach { c ->
+                        FilterChip(selected = navCorner == c, onClick = { onNavCorner(c) }, label = { Text(c.label) })
+                    }
+                }
+            }
+            MapSec.VIEW -> {
+                Text(stringResource(R.string.maps_view), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FollowMode.entries.forEach { m ->
+                        FilterChip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.maps_auto_zoom), color = Palette.text, fontSize = 15.sp)
+                        Text(stringResource(R.string.maps_auto_zoom_hint), color = Palette.label, fontSize = 12.sp)
+                    }
+                    Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
+                }
+                if (autoZoom) AutoZoomSliders()
+            }
+            MapSec.LOOK -> {
+                Text(stringResource(R.string.maps_theme_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MapTheme.entries.forEach { t ->
+                        FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
+                    }
+                }
+                Text(stringResource(R.string.maps_theme_hint), color = Palette.label, fontSize = 12.sp)
+                Text(stringResource(R.string.maps_names_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MapLanguage.entries.forEach { l ->
+                        FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
+                    }
+                }
+                Text(stringResource(R.string.mapopts_contour_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(0, 10, 20, 50, 100).forEach { step ->
+                        FilterChip(selected = contourStep == step, onClick = { contourStep = step; MapStore.setContourStep(ctx, step) },
+                            label = { Text(if (step == 0) stringResource(R.string.mapopts_contour_auto) else stringResource(R.string.mapopts_contour_m, step)) })
+                    }
+                }
+                Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
+            }
+            MapSec.DETAIL -> {
+                Text(stringResource(R.string.detail_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                DetailSliders()
+            }
+            MapSec.SOUND -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.maps_camera_beep), color = Palette.text, fontSize = 15.sp)
+                        Text(stringResource(R.string.maps_camera_beep_hint),
+                            color = Palette.label, fontSize = 12.sp)
+                    }
+                    Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
+                }
+                SoundSliders()
+            }
+            MapSec.REGIONS -> {
+                Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { check() }) { Text(stringResource(R.string.maps_check_updates)) }
+                    if (updates.isNotEmpty()) {
+                        Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text(stringResource(R.string.maps_update_all, updates.size)) }
+                    }
+                }
+
+                if (regions.isEmpty() && installed.isEmpty()) {
+                    Text(stringResource(R.string.maps_list_needs_network), color = Palette.label, fontSize = 14.sp)
+                }
+                OutlinedTextField(
+                    value = search, onValueChange = { search = it }, singleLine = true,
+                    label = { Text(stringResource(R.string.maps_search_hint)) }, modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
+                )
+                // Installed first, then by name; the search narrows it with every letter typed.
+                val q = plain(search)
+                val ids = (regions.map { it.id } + installed.map { it.id }).distinct()
+                    .sortedWith(compareBy({ id -> installed.none { it.id == id } }, { id -> plain(regions.firstOrNull { it.id == id }?.name ?: id) }))
+                    .filter { id -> q.isEmpty() || plain(regions.firstOrNull { it.id == id }?.name ?: id).contains(q) || plain(id).contains(q) }
+                if (ids.isEmpty() && q.isNotEmpty()) Text(stringResource(R.string.maps_no_match, search), color = Palette.label, fontSize = 14.sp)
+                for (id in ids) {
+                    val r = regions.firstOrNull { it.id == id }
+                    val have = installed.firstOrNull { it.id == id }
+                    val dl = downloads[id]
+                    Column(
+                        Modifier.fillMaxWidth().background(Palette.panel, androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(r?.name ?: id, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                val size = r?.let {
+                                    mb(it.bytes) + (if (it.contoursBytes > 0) " " + stringResource(R.string.maps_size_contours, mb(it.contoursBytes)) else "") +
+                                        (if (it.shadeBytes > 0) " " + stringResource(R.string.maps_size_shade, mb(it.shadeBytes)) else "") +
+                                        if (it.limitsBytes > 0) " " + stringResource(R.string.maps_size_limits, mb(it.limitsBytes)) else ""
+                                }
+                                val state = when {
+                                    dl != null && dl.failed -> stringResource(R.string.maps_state_failed)
+                                    dl != null -> stringResource(R.string.maps_state_downloading, if (dl.total > 0) "${dl.done * 100 / dl.total}%" else "…")
+                                    have != null && index != null && have.version < index!!.version ->
+                                        stringResource(R.string.maps_state_installed_update, pretty(have.version))
+                                    have != null -> stringResource(R.string.maps_state_installed, pretty(have.version))
+                                    else -> stringResource(R.string.maps_state_not_installed)
+                                }
+                                Text(listOfNotNull(size, state).joinToString(" · "), color = Palette.label, fontSize = 13.sp)
+                            }
+                            if (have != null) {
+                                Switch(checked = have.enabled, onCheckedChange = { MapStore.setEnabled(ctx, id, it) })
+                            }
+                        }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            when {
+                                dl != null && !dl.failed ->
+                                    OutlinedButton(onClick = { MapStore.cancel(ctx, id) }) { Text(stringResource(R.string.maps_cancel)) }
+                                r?.url != null && (have == null || dl?.failed == true) ->
+                                    Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
+                                r?.url != null && index != null && have != null && have.version < index!!.version ->
+                                    Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_update)) }
+                            }
+                            // Map already here from before speed limits or relief existed: fetch only those, without the whole map.
+                            val needLimits = r?.limitsUrl != null && have != null && have.limits == null
+                            val needShade = r?.shadeUrl != null && have != null && have.shade == null
+                            if (r != null && dl == null && (needLimits || needShade)) {
+                                val what = when {
+                                    needLimits && needShade -> R.string.maps_add_limits_shade
+                                    needLimits -> R.string.maps_add_limits
+                                    else -> R.string.maps_add_shade
+                                }
+                                val bytes = (if (needLimits) r.limitsBytes else 0) + (if (needShade) r.shadeBytes else 0)
+                                Button(onClick = { MapStore.download(ctx, r, extrasOnly = true) }) {
+                                    Text(stringResource(what, mb(bytes)))
+                                }
+                            }
+                            if (have != null && dl == null) {
+                                if (confirmDelete == id) {
+                                    Button(onClick = { MapStore.delete(ctx, id); confirmDelete = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
+                                    OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.maps_no)) }
+                                } else {
+                                    OutlinedButton(onClick = { confirmDelete = id }) { Text(stringResource(R.string.maps_delete)) }
+                                }
+                            }
+                        }
+                        // Routing data for road routes without network (Nav rejoin and planned trajetos).
+                        if (r != null && r.bbox.size >= 4) {
+                            val rdl = routeDownloads[id]
+                            val routes = remember(routeChanged, id) { OfflineRouter.installed(ctx, r) to OfflineRouter.bytes(ctx, r) }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    when {
+                                        rdl != null && rdl.failed -> stringResource(R.string.routes_failed)
+                                        rdl != null -> stringResource(R.string.routes_downloading, mb(rdl.done))
+                                        routes.first -> stringResource(R.string.routes_installed, mb(routes.second))
+                                        else -> stringResource(R.string.routes_none)
+                                    },
+                                    color = Palette.label, fontSize = 13.sp, modifier = Modifier.weight(1f),
+                                )
+                                when {
+                                    rdl != null && !rdl.failed ->
+                                        OutlinedButton(onClick = { OfflineRouter.cancel(r) }) { Text(stringResource(R.string.maps_cancel)) }
+                                    !routes.first ->
+                                        Button(onClick = { OfflineRouter.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
+                                    confirmRoutes == id -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Button(onClick = { OfflineRouter.delete(ctx, r, regions); confirmRoutes = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
+                                        OutlinedButton(onClick = { confirmRoutes = null }) { Text(stringResource(R.string.maps_no)) }
+                                    }
+                                    else -> OutlinedButton(onClick = { confirmRoutes = id }) { Text(stringResource(R.string.maps_delete)) }
+                                }
+                            }
+                        }
+                    }
+                }
+                Text(stringResource(R.string.maps_attribution), color = Palette.label, fontSize = 12.sp)
+            }
+        }
+    }
+
+    var sec by rememberSaveable { mutableStateOf(MapSec.SCREEN) }
+    Column(Modifier.fillMaxSize().background(Palette.sheet)
+        // Keep touches off whatever is underneath (the map).
+        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}) {
+        // Title and Fechar stay put; only the content scrolls.
         if (!embedded) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.maps_title), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.w_map_settings), color = Palette.amber, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = onClose) { Text(stringResource(R.string.maps_close)) }
         }
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(stringResource(R.string.maps_view), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FollowMode.entries.forEach { m ->
-                    FilterChip(selected = mode == m, onClick = { onMode(m) }, label = { Text(m.label) })
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.maps_auto_zoom), color = Palette.text, fontSize = 15.sp)
-                    Text(stringResource(R.string.maps_auto_zoom_hint), color = Palette.label, fontSize = 12.sp)
-                }
-                Switch(checked = autoZoom, onCheckedChange = onAutoZoom)
-            }
-            if (autoZoom) AutoZoomSliders()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.maps_camera_beep), color = Palette.text, fontSize = 15.sp)
-                    Text(stringResource(R.string.maps_camera_beep_hint),
-                        color = Palette.label, fontSize = 12.sp)
-                }
-                Switch(checked = cameraBeep, onCheckedChange = onCameraBeep)
-            }
-            SoundSliders()
-            Text(stringResource(R.string.nav_corner_title), color = Palette.text, fontSize = 15.sp)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NavCorner.entries.forEach { c ->
-                    FilterChip(selected = navCorner == c, onClick = { onNavCorner(c) }, label = { Text(c.label) })
-                }
-            }
-            Text(stringResource(R.string.maps_theme_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MapTheme.entries.forEach { t ->
-                    FilterChip(selected = theme == t, onClick = { onTheme(t) }, label = { Text(t.label) })
-                }
-            }
-            Text(stringResource(R.string.maps_theme_hint), color = Palette.label, fontSize = 12.sp)
-            Text(stringResource(R.string.maps_names_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MapLanguage.entries.forEach { l ->
-                    FilterChip(selected = lang == l, onClick = { onLang(l) }, label = { Text(l.label) })
-                }
-            }
-            Text(stringResource(R.string.mapopts_contour_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(0, 10, 20, 50, 100).forEach { step ->
-                    FilterChip(selected = contourStep == step, onClick = { contourStep = step; MapStore.setContourStep(ctx, step) },
-                        label = { Text(if (step == 0) stringResource(R.string.mapopts_contour_auto) else stringResource(R.string.mapopts_contour_m, step)) })
-                }
-            }
-            Text(stringResource(R.string.mapopts_contour_hint), color = Palette.label, fontSize = 12.sp)
-            Text(stringResource(R.string.detail_title), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            DetailSliders()
-            Text(stringResource(R.string.maps_regions), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.maps_status_free, status, mb(free)), color = Palette.label, fontSize = 13.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { check() }) { Text(stringResource(R.string.maps_check_updates)) }
-                if (updates.isNotEmpty()) {
-                    Button(onClick = { updates.forEach { MapStore.download(ctx, it) } }) { Text(stringResource(R.string.maps_update_all, updates.size)) }
-                }
-            }
-
-            if (regions.isEmpty() && installed.isEmpty()) {
-                Text(stringResource(R.string.maps_list_needs_network), color = Palette.label, fontSize = 14.sp)
-            }
-            OutlinedTextField(
-                value = search, onValueChange = { search = it }, singleLine = true,
-                label = { Text(stringResource(R.string.maps_search_hint)) }, modifier = Modifier.fillMaxWidth(),
-                trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("✕") } },
-            )
-            // Installed first, then by name; the search narrows it with every letter typed.
-            val q = plain(search)
-            val ids = (regions.map { it.id } + installed.map { it.id }).distinct()
-                .sortedWith(compareBy({ id -> installed.none { it.id == id } }, { id -> plain(regions.firstOrNull { it.id == id }?.name ?: id) }))
-                .filter { id -> q.isEmpty() || plain(regions.firstOrNull { it.id == id }?.name ?: id).contains(q) || plain(id).contains(q) }
-            if (ids.isEmpty() && q.isNotEmpty()) Text(stringResource(R.string.maps_no_match, search), color = Palette.label, fontSize = 14.sp)
+        // Inside Definições (which has its own menu on the left) the groups are chips on top, as in Diagnóstico;
+        // opened from the map, the same menu on the left as Definições.
+        if (embedded) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapSec.entries.forEach { c -> FilterChip(selected = sec == c, onClick = { sec = c }, label = { Text(stringResource(c.res)) }) }
+        }
+        Row(Modifier.weight(1f)) {
+            if (!embedded) SideMenu(MapSec.entries.map { stringResource(it.res) }, sec.ordinal, { sec = MapSec.entries[it] })
             Column(
-                Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-            for (id in ids) {
-                val r = regions.firstOrNull { it.id == id }
-                val have = installed.firstOrNull { it.id == id }
-                val dl = downloads[id]
-                Column(
-                    Modifier.fillMaxWidth().background(Palette.panel, androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(r?.name ?: id, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                            val size = r?.let {
-                                mb(it.bytes) + (if (it.contoursBytes > 0) " " + stringResource(R.string.maps_size_contours, mb(it.contoursBytes)) else "") +
-                                    (if (it.shadeBytes > 0) " " + stringResource(R.string.maps_size_shade, mb(it.shadeBytes)) else "") +
-                                    if (it.limitsBytes > 0) " " + stringResource(R.string.maps_size_limits, mb(it.limitsBytes)) else ""
-                            }
-                            val state = when {
-                                dl != null && dl.failed -> stringResource(R.string.maps_state_failed)
-                                dl != null -> stringResource(R.string.maps_state_downloading, if (dl.total > 0) "${dl.done * 100 / dl.total}%" else "…")
-                                have != null && index != null && have.version < index!!.version ->
-                                    stringResource(R.string.maps_state_installed_update, pretty(have.version))
-                                have != null -> stringResource(R.string.maps_state_installed, pretty(have.version))
-                                else -> stringResource(R.string.maps_state_not_installed)
-                            }
-                            Text(listOfNotNull(size, state).joinToString(" · "), color = Palette.label, fontSize = 13.sp)
-                        }
-                        if (have != null) {
-                            Switch(checked = have.enabled, onCheckedChange = { MapStore.setEnabled(ctx, id, it) })
-                        }
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        when {
-                            dl != null && !dl.failed ->
-                                OutlinedButton(onClick = { MapStore.cancel(ctx, id) }) { Text(stringResource(R.string.maps_cancel)) }
-                            r?.url != null && (have == null || dl?.failed == true) ->
-                                Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
-                            r?.url != null && index != null && have != null && have.version < index!!.version ->
-                                Button(onClick = { MapStore.download(ctx, r) }) { Text(stringResource(R.string.maps_update)) }
-                        }
-                        // Map already here from before speed limits or relief existed: fetch only those, without the whole map.
-                        val needLimits = r?.limitsUrl != null && have != null && have.limits == null
-                        val needShade = r?.shadeUrl != null && have != null && have.shade == null
-                        if (r != null && dl == null && (needLimits || needShade)) {
-                            val what = when {
-                                needLimits && needShade -> R.string.maps_add_limits_shade
-                                needLimits -> R.string.maps_add_limits
-                                else -> R.string.maps_add_shade
-                            }
-                            val bytes = (if (needLimits) r.limitsBytes else 0) + (if (needShade) r.shadeBytes else 0)
-                            Button(onClick = { MapStore.download(ctx, r, extrasOnly = true) }) {
-                                Text(stringResource(what, mb(bytes)))
-                            }
-                        }
-                        if (have != null && dl == null) {
-                            if (confirmDelete == id) {
-                                Button(onClick = { MapStore.delete(ctx, id); confirmDelete = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
-                                OutlinedButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.maps_no)) }
-                            } else {
-                                OutlinedButton(onClick = { confirmDelete = id }) { Text(stringResource(R.string.maps_delete)) }
-                            }
-                        }
-                    }
-                    // Routing data for road routes without network (Nav rejoin and planned trajetos).
-                    if (r != null && r.bbox.size >= 4) {
-                        val rdl = routeDownloads[id]
-                        val routes = remember(routeChanged, id) { OfflineRouter.installed(ctx, r) to OfflineRouter.bytes(ctx, r) }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                when {
-                                    rdl != null && rdl.failed -> stringResource(R.string.routes_failed)
-                                    rdl != null -> stringResource(R.string.routes_downloading, mb(rdl.done))
-                                    routes.first -> stringResource(R.string.routes_installed, mb(routes.second))
-                                    else -> stringResource(R.string.routes_none)
-                                },
-                                color = Palette.label, fontSize = 13.sp, modifier = Modifier.weight(1f),
-                            )
-                            when {
-                                rdl != null && !rdl.failed ->
-                                    OutlinedButton(onClick = { OfflineRouter.cancel(r) }) { Text(stringResource(R.string.maps_cancel)) }
-                                !routes.first ->
-                                    Button(onClick = { OfflineRouter.download(ctx, r) }) { Text(stringResource(R.string.maps_download)) }
-                                confirmRoutes == id -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Button(onClick = { OfflineRouter.delete(ctx, r, regions); confirmRoutes = null }) { Text(stringResource(R.string.maps_confirm_delete)) }
-                                    OutlinedButton(onClick = { confirmRoutes = null }) { Text(stringResource(R.string.maps_no)) }
-                                }
-                                else -> OutlinedButton(onClick = { confirmRoutes = id }) { Text(stringResource(R.string.maps_delete)) }
-                            }
-                        }
-                    }
-                }
-            }
-
-            }
-            Text(stringResource(R.string.maps_attribution), color = Palette.label, fontSize = 12.sp)
+            ) { Body(sec) }
         }
     }
+}
+
+/** The groups of the map's settings. */
+private enum class MapSec(@StringRes val res: Int) {
+    SCREEN(R.string.ms_screen), VIEW(R.string.maps_view), LOOK(R.string.ms_look), DETAIL(R.string.ms_detail),
+    SOUND(R.string.ms_sound), REGIONS(R.string.maps_regions),
 }
 
 /** Speed and zoom ranges of the auto zoom; saved (and sent to the map through MapStore.autoZoomFlow) when a thumb is let go. */
@@ -310,11 +352,15 @@ private fun AutoZoomSliders() {
     val ctx = LocalContext.current
     val start = remember { MapStore.autoZoomCfg(ctx) }
     var speed by remember { mutableStateOf(start.slowKmh.toFloat()..start.fastKmh.toFloat()) }
-    // Low end = zoomed out (fast), high end = zoomed in (slow).
-    var zoom by remember { mutableStateOf(start.farZoom.toFloat()..start.nearZoom.toFloat()) }
+    // Same order as the speed slider above: slow (zoomed in) on the left, fast (zoomed out) on the right.
+    // The slider runs on 31 - zoom, so its left thumb is the nearer zoom.
+    fun flip(z: Float) = 31f - z
+    var zoom by remember { mutableStateOf(flip(start.nearZoom.toFloat())..flip(start.farZoom.toFloat())) }
+    val near = flip(zoom.start)
+    val far = flip(zoom.endInclusive)
     fun save() = MapStore.setAutoZoomCfg(ctx, AutoZoom(
         slowKmh = speed.start.roundToInt(), fastKmh = speed.endInclusive.roundToInt(),
-        nearZoom = (zoom.endInclusive * 2).roundToInt() / 2.0, farZoom = (zoom.start * 2).roundToInt() / 2.0,
+        nearZoom = (flip(zoom.start) * 2).roundToInt() / 2.0, farZoom = (flip(zoom.endInclusive) * 2).roundToInt() / 2.0,
     ))
     Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
         Text(stringResource(R.string.mapopts_az_speed, Units.speed(speed.start.toDouble()).roundToInt(), Units.speed(speed.endInclusive.toDouble()).roundToInt(), Units.speedUnit),
@@ -322,8 +368,8 @@ private fun AutoZoomSliders() {
         RangeSlider(value = speed, onValueChange = { speed = it }, valueRange = 0f..160f, steps = 31,
             onValueChangeFinished = { save() })
         Text(stringResource(R.string.mapopts_az_speed_hint), color = Palette.label, fontSize = 12.sp)
-        Text(stringResource(R.string.mapopts_az_zoom, zoomText(zoom.start), metresPer100dp(zoom.start),
-            zoomText(zoom.endInclusive), metresPer100dp(zoom.endInclusive)), color = Palette.text, fontSize = 14.sp)
+        Text(stringResource(R.string.mapopts_az_zoom, zoomText(near), metresPer100dp(near),
+            zoomText(far), metresPer100dp(far)), color = Palette.text, fontSize = 14.sp)
         RangeSlider(value = zoom, onValueChange = { zoom = it }, valueRange = 12f..19f, steps = 13,
             onValueChangeFinished = { save() })
         Text(stringResource(R.string.mapopts_az_zoom_hint), color = Palette.label, fontSize = 12.sp)

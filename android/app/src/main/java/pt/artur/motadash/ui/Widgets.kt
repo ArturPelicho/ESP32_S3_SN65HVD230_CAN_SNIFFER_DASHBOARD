@@ -156,14 +156,13 @@ enum class BarSide(@StringRes val res: Int) {
 }
 
 /**
- * The map's buttons, in bar order; the bar fills its outer line first. Settings can't be hidden
- * (it is the way back to the others).
+ * The map's buttons, in bar order; the bar fills its outer line first. The map's settings (☰) can't be
+ * hidden (it is the way back to the others).
  */
 enum class MapCtl(@StringRes val res: Int, val hideable: Boolean = true) {
-    SETTINGS(R.string.w_btn_settings, hideable = false),
     SEARCH(R.string.w_btn_search), MODE(R.string.w_btn_mode), FOLLOW(R.string.w_btn_follow), ZOOM_IN(R.string.w_btn_zoom_in), ZOOM_OUT(R.string.w_btn_zoom_out),
     GPS(R.string.w_btn_gps), DAYNIGHT(R.string.w_btn_daynight),
-    LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), REC(R.string.w_btn_rec), MAPS(R.string.w_btn_maps),
+    LAYERS(R.string.w_btn_layers), GPX(R.string.w_btn_gpx), REC(R.string.w_btn_rec), MAPS(R.string.w_btn_maps, hideable = false),
 }
 
 /** What the elements show; each screen fills it from the board and, on the map, the phone's GPS. */
@@ -564,10 +563,6 @@ fun ScreenSettingsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
-    val ctx = LocalContext.current
-    val land = isLandscape()
-    val shown = LayoutStore.shown(ctx, screen, land)
-    val noRoom = LayoutStore.unplaced[screen] ?: emptySet()
     Column(
         Modifier.fillMaxSize().background(Palette.sheet)
             // Keep touches off whatever is underneath (the map).
@@ -582,43 +577,54 @@ fun WidgetSheet(screen: String, title: String, onClose: () -> Unit, extra: @Comp
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(stringResource(R.string.w_shown), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Widget.entries.filter { it != Widget.PROFILE || screen == LayoutStore.MAP }.forEach { w ->
-                    val on = w in shown
-                    FilterChip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
-                        label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
-                }
-            }
-            Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
-                color = Palette.label, fontSize = 12.sp)
-            if (Widget.ATTITUDE in shown) Text(stringResource(R.string.w_att_hint), color = Palette.label, fontSize = 12.sp)
-
-            Text(stringResource(R.string.w_size), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            val size = LayoutStore.size(ctx, screen)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SlotSize.entries.forEach { s ->
-                    FilterChip(selected = size == s, onClick = { LayoutStore.setSize(ctx, screen, s) }, label = { Text(stringResource(s.res)) })
-                }
-            }
-
-            val alpha = LayoutStore.alpha(ctx, screen)
-            Text(stringResource(R.string.w_alpha, (alpha * 100).roundToInt()), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            Slider(value = alpha, onValueChange = { LayoutStore.setAlpha(ctx, screen, (it * 20).roundToInt() / 20f) }, valueRange = 0.2f..1f)
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp)
-                }
-                Switch(checked = LayoutStore.moving(screen), onCheckedChange = {
-                    if (it) { LayoutStore.startMoving(ctx, screen); onClose() } else LayoutStore.saveMoving(screen)
-                })
-            }
-            OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
+            WidgetOptions(screen, onMoveStart = onClose)
             extra()
         }
     }
+}
+
+/** A screen's elements: which show, slot size, see-through, move mode ([onMoveStart] shows the screen) and reset. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun WidgetOptions(screen: String, onMoveStart: () -> Unit) {
+    val ctx = LocalContext.current
+    val land = isLandscape()
+    val shown = LayoutStore.shown(ctx, screen, land)
+    val noRoom = LayoutStore.unplaced[screen] ?: emptySet()
+    Text(stringResource(R.string.w_shown), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Widget.entries.filter { it != Widget.PROFILE || screen == LayoutStore.MAP }.forEach { w ->
+            val on = w in shown
+            FilterChip(selected = on, onClick = { LayoutStore.toggle(ctx, screen, land, w, !on) },
+                label = { Text(stringResource(w.res) + if (on && w in noRoom) stringResource(R.string.w_no_room) else "") })
+        }
+    }
+    Text(stringResource(if (land) R.string.w_orientation_land else R.string.w_orientation_port),
+        color = Palette.label, fontSize = 12.sp)
+    if (Widget.ATTITUDE in shown) Text(stringResource(R.string.w_att_hint), color = Palette.label, fontSize = 12.sp)
+
+    Text(stringResource(R.string.w_size), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    val size = LayoutStore.size(ctx, screen)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SlotSize.entries.forEach { s ->
+            FilterChip(selected = size == s, onClick = { LayoutStore.setSize(ctx, screen, s) }, label = { Text(stringResource(s.res)) })
+        }
+    }
+
+    val alpha = LayoutStore.alpha(ctx, screen)
+    Text(stringResource(R.string.w_alpha, (alpha * 100).roundToInt()), color = Palette.amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+    Slider(value = alpha, onValueChange = { LayoutStore.setAlpha(ctx, screen, (it * 20).roundToInt() / 20f) }, valueRange = 0.2f..1f)
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.w_move_mode), color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.w_move_mode_hint), color = Palette.label, fontSize = 12.sp)
+        }
+        Switch(checked = LayoutStore.moving(screen), onCheckedChange = {
+            if (it) { LayoutStore.startMoving(ctx, screen); onMoveStart() } else LayoutStore.saveMoving(screen)
+        })
+    }
+    OutlinedButton(onClick = { LayoutStore.reset(ctx, screen, land) }) { Text(stringResource(R.string.w_reset)) }
 }
 
 /** The map's button bar settings: which edge, and which buttons. */

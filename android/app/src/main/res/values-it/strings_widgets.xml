@@ -134,4 +134,8 @@
     <string name="prof_colours">Ciano: fatto. Ambra: da fare. Fascia blu in alto: pioggia prevista quando passi in ogni punto (più scuro = più forte); contorno blu: piove ora ma dovrebbe aver smesso al tuo arrivo.</string>
     <string name="prof_close">Tocca fuori per chiudere.</string>
     <string name="layer_tracks">Tracce sulla mappa</string>
+    <string name="ms_screen">Sullo schermo</string>
+    <string name="ms_look">Aspetto</string>
+    <string name="ms_detail">Dettaglio</string>
+    <string name="ms_sound">Suono</string>
 </resources>

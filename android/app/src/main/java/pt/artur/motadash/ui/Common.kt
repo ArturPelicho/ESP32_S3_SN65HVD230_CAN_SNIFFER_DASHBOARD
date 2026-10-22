@@ -2,6 +2,14 @@ package pt.artur.motadash.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -179,5 +187,29 @@ fun Section(title: String, content: @Composable () -> Unit) {
     ) {
         Text(title, color = Palette.amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         content()
+    }
+}
+
+/**
+ * The fixed menu on the left of a settings screen (Definições, the map's settings): one line per group,
+ * the chosen one marked; [colors] gives a line its own colour (a warning), null keeps the usual.
+ */
+@Composable
+fun SideMenu(labels: List<String>, selected: Int, onPick: (Int) -> Unit, colors: List<Color?> = emptyList()) {
+    Column(
+        Modifier.width(if (isLandscape()) 170.dp else 120.dp).fillMaxHeight().background(Palette.panel)
+            .verticalScroll(rememberScrollState()).padding(vertical = 8.dp),
+    ) {
+        labels.forEachIndexed { i, label ->
+            val on = i == selected
+            Row(
+                Modifier.fillMaxWidth().height(52.dp).clickable { onPick(i) }.background(if (on) Palette.bg else Color.Transparent),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.width(4.dp).fillMaxHeight().background(if (on) Palette.amber else Color.Transparent))
+                Text(label, color = if (on) Palette.amber else colors.getOrNull(i) ?: Palette.text, fontSize = 16.sp,
+                    fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 12.dp))
+            }
+        }
     }
 }

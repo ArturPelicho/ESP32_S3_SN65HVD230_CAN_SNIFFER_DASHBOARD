@@ -134,4 +134,8 @@
     <string name="prof_colours">Cian: hecho. Ámbar: por hacer. Franja azul arriba: lluvia prevista para cuando pases por cada sitio (más oscuro = más fuerte); contorno azul: llueve ahora pero debería haber parado cuando llegues.</string>
     <string name="prof_close">Toca fuera para cerrar.</string>
     <string name="layer_tracks">Recorridos en el mapa</string>
+    <string name="ms_screen">En pantalla</string>
+    <string name="ms_look">Aspecto</string>
+    <string name="ms_detail">Detalle</string>
+    <string name="ms_sound">Sonido</string>
 </resources>

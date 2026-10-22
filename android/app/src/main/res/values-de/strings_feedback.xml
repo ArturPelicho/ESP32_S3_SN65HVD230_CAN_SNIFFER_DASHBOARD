@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fb_title">Vorschläge und Probleme</string>
+    <string name="fb_hint">Öffnet eine ausgefüllte Seite auf dem GitHub des Projekts (zum Senden ist ein kostenloses GitHub-Konto nötig).</string>
+    <string name="fb_suggest">Vorschlag senden</string>
+    <string name="fb_problem">Problem melden</string>
+    <string name="fb_suggest_title">Vorschlag: </string>
+    <string name="fb_suggest_body">Was soll die App können?\n\n</string>
+    <string name="fb_problem_title">Problem: </string>
+    <string name="fb_problem_body">Was ist passiert, und was hast du erwartet?\n\nSchritte, um es wieder zu sehen:\n1. \n</string>
+    <string name="fb_crash_title">Absturzbericht</string>
+    <string name="fb_crash_body">Die App wurde unerwartet beendet. Was hast du gerade gemacht?\n\n</string>
+    <string name="fb_crash_prompt_title">Die App wurde letztes Mal unerwartet beendet</string>
+    <string name="fb_crash_prompt_text">Einen Bericht senden, damit es behoben wird? Er enthält den Fehler, die App-Version und das Handymodell, sonst nichts. Du siehst ihn vor dem Senden.</string>
+    <string name="fb_crash_send">Auf GitHub senden</string>
+    <string name="fb_crash_share">Anders teilen</string>
+    <string name="fb_crash_ignore">Nicht jetzt</string>
+    <string name="wn_title">Neu in %1$s</string>
+    <string name="wn_close">Zum Schließen irgendwo tippen.</string>
+</resources>

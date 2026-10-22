@@ -957,7 +957,6 @@ fun MapScreen() {
     /** Points of the distance being measured (the last leg runs to the cross in the middle), or null. */
     var measuring by remember { mutableStateOf<List<LatLon>?>(null) }
     var stopTrip by remember { mutableStateOf(false) }
-    var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var found by remember { mutableStateOf<Found?>(null) }
@@ -1410,7 +1409,6 @@ fun MapScreen() {
 
         @Composable
         fun BarButton(b: MapCtl) = when (b) {
-            MapCtl.SETTINGS -> ScreenSettingsButton(Modifier.size(52.dp)) { showSheet = true }
             MapCtl.MODE -> MapButton(mode.button, active = mode != FollowMode.NORTH) {
                 mode = mode.next(); MapStore.setFollowMode(ctx, mode); holder.mode = mode; holder.show3dBuildings()
                 holder.setFollow(true); holder.update(600)
@@ -1451,7 +1449,7 @@ fun MapScreen() {
                     Toast.makeText(ctx, ctx.getString(R.string.trip_started), Toast.LENGTH_SHORT).show()
                 } else stopTrip = true
             }
-            MapCtl.MAPS -> MapButton("☰") { showMaps = true }
+            MapCtl.MAPS -> MapButton("☰", active = showMaps) { showMaps = true }
         }
 
         // Full lines on the outside, the remainder on the inner line.
@@ -1745,13 +1743,6 @@ fun MapScreen() {
                 onShow = { t -> showTracks = false; holder.showTrack(t) },
                 onClose = { showTracks = false; TrackStore.clearMessage() },
             )
-        }
-
-        if (showSheet) {
-            WidgetSheet(LayoutStore.MAP, stringResource(R.string.w_map_title), onClose = { showSheet = false }) {
-                BarSettings()
-                OutlinedButton(onClick = { showSheet = false; showMaps = true }) { Text(stringResource(R.string.w_map_settings)) }
-            }
         }
 
         if (showMaps) {

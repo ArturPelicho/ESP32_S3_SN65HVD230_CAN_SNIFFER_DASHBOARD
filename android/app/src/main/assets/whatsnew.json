@@ -1,0 +1,21 @@
+{"notes": [
+  {"id": 1,
+   "en": [
+     "Diagnostics is now a section of Settings (with the fault codes inside); stored faults show their count in orange.",
+     "Map settings in groups: On screen, View, Look, Detail, Sound, Regions. The map's elements and button bar are under On screen, so the ⚙ button left the bar and the 🔍 search took its place.",
+     "Auto zoom: the zoom slider now has the slow-speed (closer) end on the left, like the speed slider.",
+     "GPX button: tap shows or hides the followed track, long press opens the list. New layer \"Tracks on the map\".",
+     "Every menu and panel scrolls when it does not fit the screen.",
+     "Settings → About: send a suggestion or report a problem. If the app ever crashes, it offers to send a report the next time it opens.",
+     "This window: what changed, after each update."
+   ],
+   "pt": [
+     "O Diagnóstico é agora uma secção das Definições (com os Erros lá dentro); com erros guardados, o número aparece a laranja.",
+     "Definições do mapa em grupos: No ecrã, Vista, Aspeto, Detalhe, Som, Regiões. Os elementos e a barra de botões do mapa estão em No ecrã, por isso o botão ⚙ saiu da barra e a lupa 🔍 ficou no lugar dele.",
+     "Zoom automático: o slider do zoom tem agora a ponta da velocidade baixa (mais perto) à esquerda, como o da velocidade.",
+     "Botão GPX: toque mostra ou esconde o trajeto seguido, toque longo abre a lista. Camada nova \"Trajetos no mapa\".",
+     "Todos os menus e painéis têm scroll quando não cabem no ecrã.",
+     "Definições → Sobre: enviar sugestão ou reportar problema. Se a app alguma vez falhar, na abertura seguinte oferece enviar um relatório.",
+     "Esta janela: o que mudou, depois de cada atualização."
+   ]}
+]}

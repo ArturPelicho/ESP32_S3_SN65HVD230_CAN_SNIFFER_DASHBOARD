@@ -134,4 +134,8 @@
     <string name="prof_colours">Ciano: já feito. Âmbar: falta fazer. Faixa azul em cima: chuva prevista para quando passas em cada sítio (mais escuro = mais forte); contorno azul: chove lá agora mas já deve ter parado quando chegares.</string>
     <string name="prof_close">Toca fora para fechar.</string>
     <string name="layer_tracks">Trajetos no mapa</string>
+    <string name="ms_screen">No ecrã</string>
+    <string name="ms_look">Aspeto</string>
+    <string name="ms_detail">Detalhe</string>
+    <string name="ms_sound">Som</string>
 </resources>

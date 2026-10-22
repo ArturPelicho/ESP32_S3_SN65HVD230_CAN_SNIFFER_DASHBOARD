@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pt.artur.motadash.Feedback
 import pt.artur.motadash.Link
 import pt.artur.motadash.LinkStatus
 import pt.artur.motadash.MainActivity
@@ -111,27 +112,13 @@ fun ControlScreen(activity: MainActivity) {
 
     Row(Modifier.fillMaxSize()) {
         // Fixed menu on the left.
-        Column(
-            Modifier.width(if (isLandscape()) 170.dp else 120.dp).fillMaxHeight().background(Palette.panel)
-                .verticalScroll(rememberScrollState()).padding(vertical = 8.dp),
-        ) {
-            SetCat.entries.forEach { c ->
-                val on = c == cat
-                Row(
-                    Modifier.fillMaxWidth().height(52.dp).clickable {
-                        cat = c
-                    }
-                        .background(if (on) Palette.bg else Color.Transparent),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(Modifier.width(4.dp).fillMaxHeight().background(if (on) Palette.amber else Color.Transparent))
-                    val faults = c == SetCat.DIAG && dtc.total > 0
-                    Text(if (faults) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(c.res),
-                        color = if (on) Palette.amber else if (faults) Palette.orange else Palette.text, fontSize = 16.sp,
-                        fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 12.dp))
-                }
-            }
-        }
+        SideMenu(
+            SetCat.entries.map { c ->
+                if (c == SetCat.DIAG && dtc.total > 0) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(c.res)
+            },
+            cat.ordinal, { cat = SetCat.entries[it] },
+            SetCat.entries.map { c -> if (c == SetCat.DIAG && dtc.total > 0) Palette.orange else null },
+        )
         // The chosen group, with room to breathe. Maps, GPX and Diagnostics are panels scrolling by themselves.
         if (cat == SetCat.MAPS) Box(Modifier.weight(1f).fillMaxHeight()) {
             // Read from the settings each time one changes (the map reads them again when it opens).
@@ -143,7 +130,7 @@ fun ControlScreen(activity: MainActivity) {
                 onMode = { MapStore.setFollowMode(ctx, it); tick++ }, onAutoZoom = { MapStore.setAutoZoom(ctx, it); tick++ },
                 cameraBeep = MapStore.cameraBeep(ctx), onCameraBeep = { MapStore.setCameraBeep(ctx, it); tick++ },
                 navCorner = MapStore.navCorner(ctx), onNavCorner = { MapStore.setNavCorner(ctx, it); tick++ },
-                onClose = {}, embedded = true,
+                onClose = {}, embedded = true, onMoveStart = { activity.openMap.value++ },
             )
         } else if (cat == SetCat.GPX) Box(Modifier.weight(1f).fillMaxHeight()) {
             TracksPanel(
@@ -314,6 +301,13 @@ fun ControlScreen(activity: MainActivity) {
                             ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName
                         }.getOrNull() ?: "?")
                         UpdateBlock()
+                    }
+                    Section(stringResource(R.string.fb_title)) {
+                        Text(stringResource(R.string.fb_hint), color = Palette.label, fontSize = 12.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { Feedback.suggest(ctx) }) { Text(stringResource(R.string.fb_suggest)) }
+                            OutlinedButton(onClick = { Feedback.problem(ctx) }) { Text(stringResource(R.string.fb_problem)) }
+                        }
                     }
                 }
             }
