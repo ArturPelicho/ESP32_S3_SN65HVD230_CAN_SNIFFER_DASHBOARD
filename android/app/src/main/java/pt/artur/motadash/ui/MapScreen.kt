@@ -449,7 +449,12 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     private var tracks: FeatureCollection? = null
 
     /** Draws the visible tracks; the followed one gets arrows in the riding direction. */
-    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean, places: List<Place> = emptyList(), dim: Boolean = false) {
+    /**
+     * Tracks, planned trajetos and favourites. The followed one is cut where the bike is ([follower],
+     * [doneM]): the part already ridden is drawn faint.
+     */
+    fun setTracks(list: List<Track>, activeId: String?, reversed: Boolean, places: List<Place> = emptyList(), dim: Boolean = false,
+                  follower: TrackFollower? = null, doneM: Double? = null) {
         val fs = mutableListOf<Feature>()
         for (pl in places) {
             fs += Feature.fromGeometry(Point.fromLngLat(pl.lon, pl.lat)).apply {
@@ -458,14 +463,17 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         }
         for (t in list.filter { it.visible }) {
             val active = t.id == activeId
-            for ((leg, l) in t.lines.withIndex()) {
+            val pieces = if (active && follower != null && doneM != null) follower.pieces(doneM)
+                else t.lines.mapIndexed { leg, l -> Triple(leg, if (active && reversed) l.reversed() else l, false) }
+            for ((leg, l, done) in pieces) {
                 if (l.size < 2) continue
-                val pts = l.map { Point.fromLngLat(it.lon, it.lat) }.let { if (active && reversed) it.reversed() else it }
-                fs += Feature.fromGeometry(LineString.fromLngLats(pts)).apply {
+                fs += Feature.fromGeometry(LineString.fromLngLats(l.map { Point.fromLngLat(it.lon, it.lat) })).apply {
                     addStringProperty("kind", "line"); addStringProperty("color", t.color); addStringProperty("tid", t.id)
                     addNumberProperty("w", t.width); addBooleanProperty("active", active)
                     // Nav is taking another way: the track stays, faint and thin.
                     if (active && dim) addBooleanProperty("dim", true)
+                    // Already ridden: faint behind the bike.
+                    if (done) addBooleanProperty("done", true)
                     if (t.plan.isNotEmpty()) addNumberProperty("leg", leg)
                 }
             }
@@ -785,6 +793,8 @@ fun MapScreen() {
     var navCorner by remember { mutableStateOf(MapStore.navCorner(ctx)) }
     val eta = remember { Eta() }
     var arrival by remember { mutableStateOf<Long?>(null) }
+    /** Next waypoint of a planned trajeto (its number) and the arrival time there. */
+    var wpArrival by remember { mutableStateOf<Pair<Int, Long>?>(null) }
     val navScope = rememberCoroutineScope()
     var menu by remember { mutableStateOf<MapMenu?>(null) }
     var moving by remember { mutableStateOf<Moving?>(null) }
@@ -963,8 +973,10 @@ fun MapScreen() {
             holder.editing = measuring != null || moving != null
             holder.drawTools()
         }
-        LaunchedEffect(tracks, activeId, reversed, places, navDim) {
-            holder.setTracks(tracks, activeId, reversed, places, navDim)
+        // Redrawn as the bike moves along the followed one (every 20 m), so the ridden part fades behind it.
+        val doneStep = progress?.takeIf { it.offM <= SNAP_M * 2 }?.doneM?.let { (it / 20).toInt() }
+        LaunchedEffect(tracks, activeId, reversed, places, navDim, doneStep, follower) {
+            holder.setTracks(tracks, activeId, reversed, places, navDim, follower, doneStep?.let { it * 20.0 })
             if (follower == null) { progress = null; holder.setJoin(null) }
         }
         // Route type or toggles changed: the planned trajeto being followed is worked out again.
@@ -1016,6 +1028,19 @@ fun MapScreen() {
                     else (navBack?.routeLeftM ?: 0.0) + (follower.totalM - fromM).coerceAtLeast(0.0)
                 eta.update(activeTrack.id to reversed, follower to navBack?.route, timed, left, SystemClock.elapsedRealtime(), System.currentTimeMillis())
             }
+            // The next waypoint, at the same pace as the whole way.
+            wpArrival = arrival?.let { end ->
+                if (follower == null || activeTrack == null || reversed || activeTrack.plan.size < 3 || p == null) return@let null
+                val fromM = navBack?.targetM ?: p.doneM
+                val (leg, legEndM) = follower.legEnd(fromM) ?: return@let null
+                val timed = follower.timed && (navBack == null || navBack.routeSecsLeft != null)
+                val head = if (timed) navBack?.routeSecsLeft ?: 0.0 else navBack?.routeLeftM ?: 0.0
+                val all = if (timed) head + (follower.secsLeft(fromM) ?: 0.0) else head + (follower.totalM - fromM)
+                val part = if (timed) head + (follower.secsLeft(fromM) ?: 0.0) - (follower.secsLeft(legEndM) ?: 0.0) else head + (legEndM - fromM)
+                if (all <= 0) return@let null
+                val now = System.currentTimeMillis()
+                (leg + 2) to now + ((end - now) * (part / all)).toLong()
+            }
             // A few metres off the line still counts as on it: a faint arrow shows where.
             val snap = back?.routeSnap ?: p?.takeIf { it.offM <= SNAP_M }
             holder.ghost = snap?.takeIf { it.offM > 6 }?.nearest
@@ -1063,6 +1088,7 @@ fun MapScreen() {
             widgetData(speed = speed, limit = limit, lat = fix?.latitude, lon = fix?.longitude,
                 altM = fix?.takeIf { it.hasAltitude() }?.altitude, bearing = mapBearing, tilt = mapTilt,
                 profile = if (activeTrack != null) profile else ridden,
+                arrival = arrival.takeIf { activeTrack != null && MapStore.etaOnBar(ctx) },
                 doneM = if (activeTrack != null) progress?.doneM else ridden?.totalM?.toDouble()),
             modifier = Modifier.fillMaxSize().padding(inset).padding(6.dp))
 
@@ -1203,7 +1229,9 @@ fun MapScreen() {
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (activeTrack != null && moving == null && MapStore.turnBanner(ctx)) nextTurn?.let { TurnBanner(it) }
-            if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick, arrival) { m ->
+            if (activeTrack != null && moving == null) TrackBox(activeTrack, progress, trackMode, rejoin, rejoinTick,
+                arrival.takeIf { !(MapStore.etaOnBar(ctx) && Widget.PROFILE in LayoutStore.shown(ctx, LayoutStore.MAP, isLandscape()) && profile != null) },
+                wpArrival.takeIf { MapStore.etaWaypoint(ctx) }) { m ->
                 trackMode = m
                 MapStore.setTrackMode(ctx, m)
             }
@@ -1337,6 +1365,14 @@ fun MapScreen() {
             }
         }
 
+        // Opened from the app's settings.
+        LaunchedEffect(Unit) {
+            MapStore.openPanel.collect { p ->
+                when (p) { "maps" -> showMaps = true; "gpx" -> showTracks = true }
+                if (p != null) MapStore.openPanel.value = null
+            }
+        }
+
         if (showTracks) {
             TracksPanel(
                 onShow = { t -> showTracks = false; holder.showTrack(t) },
@@ -1422,6 +1458,13 @@ private fun MapMenuItems(
             }
             t != null -> {
                 Text(t.name, color = Palette.label, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 12.dp))
+                // Delete first: in landscape a long menu runs off the screen.
+                if (confirmDelete) {
+                    MenuItem(stringResource(R.string.map_confirm_delete, t.name), onDismiss) { TrackStore.delete(ctx, t.id) }
+                } else {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.map_delete_route), fontSize = 16.sp, color = Palette.red) },
+                        onClick = { confirmDelete = true })
+                }
                 if (mm.leg != null && mm.leg in 0 until t.plan.size - 1) {
                     MenuItem(stringResource(R.string.map_insert_waypoint, mm.leg + 2), onDismiss) { Planner.insert(ctx, t.id, mm.leg, mm.at) }
                 }
@@ -1453,12 +1496,6 @@ private fun MapMenuItems(
                 }
                 MenuItem(stringResource(R.string.map_save_gpx), onDismiss) { onSave(t) }
                 MenuItem(stringResource(R.string.map_share_gpx), onDismiss) { onShare(t) }
-                if (confirmDelete) {
-                    MenuItem(stringResource(R.string.map_confirm_delete, t.name), onDismiss) { TrackStore.delete(ctx, t.id) }
-                } else {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.map_delete_route), fontSize = 16.sp, color = Palette.red) },
-                        onClick = { confirmDelete = true })
-                }
             }
             else -> {
                 if (current != null && current.plan.isNotEmpty()) {
@@ -1540,7 +1577,7 @@ private fun TurnBanner(next: Pair<Maneuver, Double>) {
 /** Followed track: distance left, how far off it the bike is, and the follow mode; long press for the options. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, arrival: Long?, onMode: (TrackMode) -> Unit) {
+private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, tick: Int, arrival: Long?, wp: Pair<Int, Long>?, onMode: (TrackMode) -> Unit) {
     tick
     val ctx = LocalContext.current
     val off = p != null && p.offM > 50
@@ -1586,11 +1623,11 @@ private fun TrackBox(t: Track, p: TrackProgress?, mode: TrackMode, rj: Rejoin?, 
                 if (off) Text(stringResource(R.string.map_off_route, p.offM.toInt()), color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
+        if (wp != null && p != null) {
+            Text(stringResource(R.string.nav_eta_wp, wp.first, clockOf(wp.second)), color = if (warn) Color.Black else Palette.label, fontSize = 14.sp)
+        }
         if (arrival != null && p != null) {
-            val clock = remember(arrival / 60_000) {
-                java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(arrival))
-            }
-            Text(stringResource(R.string.nav_eta, clock), color = if (warn) Color.Black else Palette.label, fontSize = 14.sp)
+            Text(stringResource(R.string.nav_eta, clockOf(arrival)), color = if (warn) Color.Black else Palette.label, fontSize = 14.sp)
         }
         val planning by Planner.busy.collectAsStateWithLifecycle()
         if (t.id in planning || (mode == TrackMode.NAV && rj?.busy == true)) {
@@ -1625,6 +1662,8 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
             val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
         }
+        check(stringResource(R.string.eta_waypoint), MapStore.etaWaypoint(ctx)) { MapStore.setEtaWaypoint(ctx, !MapStore.etaWaypoint(ctx)); tick++ }
+        check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
         HorizontalDivider()
         header(R.string.track_mode_title)
         TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
@@ -1652,6 +1691,9 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         }
     }
 }
+
+/** A time of day as the phone shows it (14:05, 2:05 PM). */
+internal fun clockOf(ms: Long): String = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms))
 
 /** How long a recording has run, as h:mm. */
 internal fun tripTime(startedMs: Long): String {

@@ -78,4 +78,5 @@
     <string name="w_trip_a">Trip A</string>
     <string name="w_trip_b">Trip B</string>
     <string name="w_odo">Odometer</string>
+    <string name="w_att_zeroed">Level set: this is upright and level now</string>
 </resources>

@@ -269,6 +269,44 @@ class TrackFollower(track: Track, private val reversed: Boolean) {
 
     private companion object { const val UNTIMED_KMH = 50.0 }
 
+    /**
+     * The lines in the riding direction cut where the bike is, [d] metres along: each piece with the
+     * index of the track's own line it comes from and whether it is already ridden.
+     */
+    fun pieces(d: Double): List<Triple<Int, List<LatLon>, Boolean>> {
+        val out = ArrayList<Triple<Int, List<LatLon>, Boolean>>()
+        var k = 0
+        for ((li, l) in lines.withIndex()) {
+            val own = if (reversed) lines.size - 1 - li else li
+            if (l.size >= 2) {
+                val start = cum[k]; val end = cum[k + l.size - 1]
+                when {
+                    end <= d -> out += Triple(own, l, true)
+                    start >= d -> out += Triple(own, l, false)
+                    else -> {
+                        val cut = pointAt(d)
+                        val j = (k until k + l.size).first { cum[it] > d } - k
+                        out += Triple(own, l.subList(0, j) + cut, true)
+                        out += Triple(own, listOf(cut) + l.subList(j, l.size), false)
+                    }
+                }
+            }
+            k += l.size
+        }
+        return out
+    }
+
+    /** End of the line [d] metres along is in (where its next waypoint is): the track's own line index and metres along, or null on the last. */
+    fun legEnd(d: Double): Pair<Int, Double>? {
+        var k = 0
+        for ((li, l) in lines.withIndex()) {
+            val end = cum[(k + l.size - 1).coerceAtLeast(0)]
+            if (li < lines.size - 1 && end > d) return (if (reversed) lines.size - 1 - li else li) to end
+            k += l.size
+        }
+        return null
+    }
+
     /** The point [d] metres along the track (clamped to its ends). */
     fun pointAt(d: Double): LatLon {
         if (pts.size < 2) return pts.firstOrNull() ?: LatLon(0.0, 0.0)

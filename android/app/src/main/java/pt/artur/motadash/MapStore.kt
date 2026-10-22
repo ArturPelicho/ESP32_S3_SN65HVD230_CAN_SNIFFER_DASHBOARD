@@ -97,6 +97,8 @@ data class DownloadState(val done: Long, val total: Long, val failed: Boolean = 
  * (GitHub release maps-<date>), the files on the phone, and their downloads.
  */
 object MapStore {
+    /** Asks the map to open one of its panels ("maps" or "gpx"), from the app's settings. */
+    val openPanel = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private const val RELEASES =
         "https://api.github.com/repos/ArturPelicho/ESP32_S3_SN65HVD230_CAN_SNIFFER_DASHBOARD/releases?per_page=100&page="
     private const val PREFS = "maps"
@@ -168,6 +170,12 @@ object MapStore {
     /** Next turn shown on the map, and said aloud, while following a track. */
     fun turnBanner(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_banner", true)
     fun setTurnBanner(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_banner", on).apply()
+    /** Arrival time at the next waypoint of a planned trajeto, in the track box. */
+    fun etaWaypoint(ctx: Context): Boolean = prefs(ctx).getBoolean("eta_wp", true)
+    fun setEtaWaypoint(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("eta_wp", on).apply()
+    /** Arrival time at the end of the progress (height) strip instead of in the track box. */
+    fun etaOnBar(ctx: Context): Boolean = prefs(ctx).getBoolean("eta_bar", true)
+    fun setEtaOnBar(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("eta_bar", on).apply()
     fun turnVoice(ctx: Context): Boolean = prefs(ctx).getBoolean("turn_voice", true)
     fun setTurnVoice(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("turn_voice", on).apply()
 

@@ -145,4 +145,7 @@
     <string name="dline_add">Direct line to here</string>
     <string name="dline_remove">Remove this direct line</string>
     <string name="dline_remove_all">Remove all direct lines</string>
+    <string name="nav_eta_wp">Waypoint %1$d: %2$s</string>
+    <string name="eta_waypoint">Arrival time at the next waypoint</string>
+    <string name="eta_on_bar">Arrival time at the end of the progress bar</string>
 </resources>

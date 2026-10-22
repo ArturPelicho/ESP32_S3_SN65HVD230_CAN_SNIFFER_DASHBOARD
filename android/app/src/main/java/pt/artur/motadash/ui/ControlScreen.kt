@@ -52,6 +52,7 @@ import pt.artur.motadash.MainActivity
 import pt.artur.motadash.MotaService
 import pt.artur.motadash.Orientation
 import pt.artur.motadash.Units
+import pt.artur.motadash.MapStore
 import pt.artur.motadash.DistUnit
 import pt.artur.motadash.TempUnit
 import pt.artur.motadash.FuelUnit
@@ -90,8 +91,9 @@ private fun parsed(text: String, s: ParamSpec): Int? =
 
 
 /** The groups of Definições, listed on the left; only the chosen one shows on the right. */
-private enum class SetCat(@StringRes val res: Int) {
-    LOOK(R.string.set_cat_look), BIKE(R.string.set_cat_bike),
+/** [panel]: a shortcut that opens that panel on the map instead of a group here. */
+private enum class SetCat(@StringRes val res: Int, val panel: String? = null) {
+    LOOK(R.string.set_cat_look), MAPS(R.string.set_cat_maps, "maps"), GPX(R.string.set_cat_gpx, "gpx"), BIKE(R.string.set_cat_bike),
     PHONE(R.string.set_cat_phone), ABOUT(R.string.set_cat_about),
 }
 
@@ -114,12 +116,14 @@ fun ControlScreen(activity: MainActivity) {
             SetCat.entries.forEach { c ->
                 val on = c == cat
                 Row(
-                    Modifier.fillMaxWidth().height(52.dp).clickable { cat = c }
+                    Modifier.fillMaxWidth().height(52.dp).clickable {
+                        if (c.panel != null) { MapStore.openPanel.value = c.panel; activity.openMap.value++ } else cat = c
+                    }
                         .background(if (on) Palette.bg else Color.Transparent),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.width(4.dp).fillMaxHeight().background(if (on) Palette.amber else Color.Transparent))
-                    Text(stringResource(c.res), color = if (on) Palette.amber else Palette.text, fontSize = 16.sp,
+                    Text(stringResource(c.res) + if (c.panel != null) "  ›" else "", color = if (on) Palette.amber else Palette.text, fontSize = 16.sp,
                         fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 12.dp))
                 }
             }
@@ -127,6 +131,7 @@ fun ControlScreen(activity: MainActivity) {
         // The chosen group, with room to breathe.
         Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
             when (cat) {
+                SetCat.MAPS, SetCat.GPX -> {}
                 SetCat.LOOK -> {
                     Section(stringResource(R.string.settings_language)) {
                         val current = remember { AppLocale.tag(ctx) }

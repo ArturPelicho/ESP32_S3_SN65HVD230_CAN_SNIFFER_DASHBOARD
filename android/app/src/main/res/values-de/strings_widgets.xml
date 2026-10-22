@@ -78,4 +78,5 @@
     <string name="w_trip_a">Fahrt A</string>
     <string name="w_trip_b">Fahrt B</string>
     <string name="w_odo">Kilometerzähler</string>
+    <string name="w_att_zeroed">Tariert: diese Lage gilt jetzt als aufrecht und waagrecht</string>
 </resources>

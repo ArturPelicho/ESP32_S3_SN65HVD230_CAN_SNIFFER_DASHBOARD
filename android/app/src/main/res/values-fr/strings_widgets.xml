@@ -78,4 +78,5 @@
     <string name="w_trip_a">Trajet A</string>
     <string name="w_trip_b">Trajet B</string>
     <string name="w_odo">Odomètre</string>
+    <string name="w_att_zeroed">Tare faite : cette position est maintenant droite et à niveau</string>
 </resources>

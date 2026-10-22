@@ -51,12 +51,15 @@ object Attitude : SensorEventListener {
     private var maxLeft = 0f
     private var maxRight = 0f
     private var lastEmit = 0L
+    private var wm: WindowManager? = null
+    private var rotationAt = 0L
 
     @Suppress("DEPRECATION")
     fun start(ctx: Context) {
         val m = ctx.getSystemService(SensorManager::class.java) ?: return
         sm = m
-        rotation = ctx.getSystemService(WindowManager::class.java)?.defaultDisplay?.rotation ?: Surface.ROTATION_0
+        wm = ctx.getSystemService(WindowManager::class.java)
+        rotation = wm?.defaultDisplay?.rotation ?: Surface.ROTATION_0
         val p = ctx.getSharedPreferences("app", Context.MODE_PRIVATE)
         pitch0 = p.getFloat("att_pitch0", 0f)
         lean0 = p.getFloat("att_lean0", 0f)
@@ -83,7 +86,11 @@ object Attitude : SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
+    @Suppress("DEPRECATION")
     override fun onSensorChanged(e: SensorEvent) {
+        // The screen can turn while running (reverse landscape, auto): the axes must follow it.
+        val t = SystemClock.elapsedRealtime()
+        if (t - rotationAt > 1000) { rotationAt = t; wm?.defaultDisplay?.rotation?.let { rotation = it } }
         when (e.sensor.type) {
             Sensor.TYPE_ROTATION_VECTOR -> {
                 SensorManager.getRotationMatrixFromVector(rot, e.values)
@@ -130,8 +137,9 @@ object Attitude : SensorEventListener {
         val kmh = Link.telemetry.value?.displaySpeed ?: Link.gps.value.speedKmh ?: 0.0
         val v = kmh / 3.6
         val target = if (v > 4.0) -Math.toDegrees(atan(v * yawRate / 9.81)).toFloat() else wrap(rawLean - lean0)
-        lean += (target - lean) * 0.25f
-        pitch += (wrap(rawPitch - pitch0) - pitch) * 0.2f
+        // Smoothed the short way round (never through a whole turn), and never past lying flat.
+        lean = wrap(lean + wrap(target - lean) * 0.25f).coerceIn(-90f, 90f)
+        pitch = wrap(pitch + wrap(wrap(rawPitch - pitch0) - pitch) * 0.2f).coerceIn(-90f, 90f)
         if (v > 4.0) {
             maxRight = max(maxRight, lean)
             maxLeft = max(maxLeft, -lean)

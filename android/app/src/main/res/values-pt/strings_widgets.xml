@@ -78,4 +78,5 @@
     <string name="w_trip_a">Viagem A</string>
     <string name="w_trip_b">Viagem B</string>
     <string name="w_odo">Odómetro</string>
+    <string name="w_att_zeroed">Tara feita: esta posição é agora direita e nivelada</string>
 </resources>

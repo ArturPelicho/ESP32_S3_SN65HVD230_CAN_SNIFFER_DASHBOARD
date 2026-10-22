@@ -3,6 +3,7 @@ package pt.artur.motadash.ui
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.widget.Toast
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -77,6 +78,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -108,12 +111,12 @@ import pt.artur.motadash.Telemetry
 enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val cols: Int, val rows: Int) {
     CLUSTER(R.string.w_cluster, 320f, 320f, 3, 5),
     SHIFT(R.string.w_shift, 400f, 16f, 0, 0),
-    SPEED(R.string.w_speed, 160f, 64f, 2, 1),
+    SPEED(R.string.w_speed, 120f, 60f, 1, 1),
     GEAR(R.string.w_gear, 80f, 80f, 1, 1),
     RPM(R.string.w_rpm, 130f, 60f, 1, 1),
     FUEL(R.string.w_fuel, 280f, 110f, 2, 2),
     RANGE(R.string.w_range, 140f, 70f, 1, 1),
-    CHT(R.string.w_cht, 280f, 70f, 2, 1),
+    CHT(R.string.w_cht, 120f, 60f, 1, 1),
     FUEL_NOW(R.string.w_fuel_now, 140f, 70f, 1, 1),
     FUEL_AVG(R.string.w_fuel_avg, 140f, 70f, 1, 1),
     CLOCK(R.string.w_clock, 120f, 50f, 1, 1),
@@ -134,9 +137,9 @@ enum class Widget(@StringRes val res: Int, val refW: Float, val refH: Float, val
     PROFILE(R.string.w_profile, 400f, 64f, 0, 0),
 }
 
-/** Slot size; Medium is 120 x 60 dp. */
+/** Slot size; Large is 120 x 60 dp (it was Medium, and Medium was Small, until 0.1.118). */
 enum class SlotSize(val k: Float, @StringRes val res: Int) {
-    SMALL(0.8f, R.string.w_size_s), MEDIUM(1f, R.string.w_size_m), LARGE(1.3f, R.string.w_size_l)
+    SMALL(0.65f, R.string.w_size_s), MEDIUM(0.8f, R.string.w_size_m), LARGE(1f, R.string.w_size_l)
 }
 
 /** Where the map's buttons sit; they arrange themselves along that edge. */
@@ -164,13 +167,15 @@ class WidgetData(
     val bearing: Float? = null, val tilt: Float? = null,
     /** The followed track's heights and how far along it the bike is, for the profile strip. */
     val profile: ElevProfile? = null, val doneM: Double? = null,
+    /** Arrival time at the end of the followed track, shown at the end of the profile strip. */
+    val arrival: Long? = null,
 )
 
 /** Board data plus a 4 Hz blink and a clock; [speed] null means the board's speed. */
 @Composable
 fun widgetData(
     speed: Double? = null, limit: Int? = null, lat: Double? = null, lon: Double? = null, altM: Double? = null,
-    bearing: Float? = null, tilt: Float? = null, profile: ElevProfile? = null, doneM: Double? = null,
+    bearing: Float? = null, tilt: Float? = null, profile: ElevProfile? = null, doneM: Double? = null, arrival: Long? = null,
 ): WidgetData {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val status by Link.status.collectAsStateWithLifecycle()
@@ -185,7 +190,7 @@ fun widgetData(
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(5_000) } }
     return WidgetData(
         t, status, gps, dtc, blink > 0.5f, now, params["TANK_DL"]?.value?.div(10.0) ?: 16.0,
-        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt, profile, doneM,
+        speed ?: t?.displaySpeed, limit, lat ?: gps.lat, lon ?: gps.lon, altM ?: gps.altM, bearing, tilt, profile, doneM, arrival,
     )
 }
 
@@ -266,8 +271,30 @@ object LayoutStore {
 
     fun size(ctx: Context, screen: String): SlotSize {
         version
+        migrateSizes(ctx)
         return SlotSize.entries.firstOrNull { it.name == prefs(ctx).getString("size_$screen", null) } ?: SlotSize.MEDIUM
     }
+    /** Sizes moved down one name (Small became Medium, Medium became Large): saved choices and places follow. */
+    private fun migrateSizes(ctx: Context) {
+        val p = prefs(ctx)
+        if (p.getBoolean("sizes_v2", false)) return
+        val e = p.edit()
+        val next = mapOf("SMALL" to "MEDIUM", "MEDIUM" to "LARGE", "LARGE" to "LARGE")
+        for ((k, v) in p.all) {
+            if (k.startsWith("size_") && v is String) next[v]?.let { e.putString(k, it) }
+        }
+        // Places: the old LARGE ones go (no size matches them now), then MEDIUM -> LARGE, SMALL -> MEDIUM.
+        val slots = p.all.filter { (k, v) -> k.startsWith("slots_") && v is String }
+        slots.keys.filter { it.endsWith("_LARGE") || it.endsWith("_MEDIUM") || it.endsWith("_SMALL") }.forEach { e.remove(it) }
+        slots.forEach { (k, v) ->
+            when {
+                k.endsWith("_MEDIUM") -> e.putString(k.removeSuffix("_MEDIUM") + "_LARGE", v as String)
+                k.endsWith("_SMALL") -> e.putString(k.removeSuffix("_SMALL") + "_MEDIUM", v as String)
+            }
+        }
+        e.putBoolean("sizes_v2", true).apply()
+    }
+
     fun setSize(ctx: Context, screen: String, s: SlotSize) { prefs(ctx).edit().putString("size_$screen", s.name).apply(); changed() }
 
     /** Opacity of the elements' backgrounds, 0.2 (almost see-through) to 1. */
@@ -485,7 +512,7 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
             }
         }
         if (prof != null) {
-            ProfileStrip(prof, data.doneM, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
+            ProfileStrip(prof, data.doneM, data.arrival, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(profH))
         }
         if (moving) {
@@ -604,6 +631,13 @@ fun BarSettings() {
 /** One element in its box, text scaled to the box. */
 @Composable
 private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
+    // Text scales with the box, not with the phone's font size setting: it always fits its slot.
+    val dens = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(dens.density, 1f)) { WidgetCellBody(w, d, bg, editing) }
+}
+
+@Composable
+private fun WidgetCellBody(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val u = minOf(maxWidth.value / w.refW, maxHeight.value / w.refH).coerceIn(0.4f, 4f)
         when (w) {
@@ -642,17 +676,17 @@ private fun WidgetCell(w: Widget, d: WidgetData, bg: Color, editing: Boolean) {
             }
             Widget.RANGE -> ValueTile(stringResource(R.string.w_range), fmt(Units.dist(d.t?.rangeKm), 0), Units.distUnit, rangeColor(d), bg, u)
             Widget.CHT -> {
+                // Just the value in its colour, with a thin gauge; STOP flashes over it when critical.
                 val cht = d.t?.chtC
                 val critical = d.t?.chtCritical == true
-                Cell(if (critical && d.blinkOn) Palette.red else bg, u) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp),
-                            color = if (critical) Palette.text else Palette.label, fontSize = (12 * u).sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                        BigValue(fmt(Units.temp(cht), 0), Units.tempUnit, if (critical) Palette.text else chtColor(cht), u, 24f)
-                    }
+                Cell(if (critical && d.blinkOn) Palette.red else bg, u, center = true) {
+                    Text(stringResource(if (critical) R.string.dash_stop_engine else R.string.dash_head_temp),
+                        color = if (critical) Palette.text else Palette.label, fontSize = (10 * u).sp, fontWeight = FontWeight.Bold,
+                        maxLines = 1, lineHeight = (11 * u).sp)
+                    BigValue(fmt(Units.temp(cht), 0), Units.tempUnit, if (critical) Palette.text else chtColor(cht), u, 26f)
                     val frac = cht?.let { ((it - CHT_MIN) / (CHT_MAX - CHT_MIN)).coerceIn(0.0, 1.0) }
-                    SegmentBar(frac, 13, Modifier.fillMaxWidth().height((14 * u).dp)) { i ->
-                        chtColor(CHT_MIN + (i + 0.5) * (CHT_MAX - CHT_MIN) / 13)
+                    SegmentBar(frac, 10, Modifier.fillMaxWidth().height((5 * u).dp)) { i ->
+                        chtColor(CHT_MIN + (i + 0.5) * (CHT_MAX - CHT_MIN) / 10)
                     }
                 }
             }
@@ -794,16 +828,16 @@ private fun SpeedBox(d: WidgetData, u: Float, bg: Color) {
     val speed = d.speed
     val over = d.limit != null && speed != null && speed > d.limit + 2
     Row(
-        Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)).padding(horizontal = (12 * u).dp),
+        Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)).outline().padding(horizontal = (6 * u).dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text(Units.speed(speed)?.let { "%.0f".format(it) } ?: "--", color = if (over) Palette.red else Palette.text,
-                fontSize = (40 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (42 * u).sp)
-            Text(Units.speedUnit, color = Palette.label, fontSize = (12 * u).sp)
+                fontSize = (34 * u).sp, fontWeight = FontWeight.Bold, lineHeight = (34 * u).sp, maxLines = 1)
+            Text(Units.speedUnit, color = Palette.label, fontSize = (10 * u).sp, lineHeight = (11 * u).sp, maxLines = 1)
         }
-        d.limit?.let { LimitSign(it, scale = u) }
+        d.limit?.let { LimitSign(it, small = true, scale = u) }
     }
 }
 
@@ -867,7 +901,10 @@ private fun AttitudeGauge(bg: Color, u: Float) {
     val amber = Palette.amber
     Row(
         Modifier.fillMaxSize().background(bg, RoundedCornerShape(12.dp)).outline()
-            .pointerInput(Unit) { detectTapGestures(onLongPress = { Attitude.zero(ctx) }) }
+            // Long press: tare (this is upright and level), and the maxima start again.
+            .pointerInput(Unit) { detectTapGestures(onLongPress = {
+                Attitude.zero(ctx); Toast.makeText(ctx, ctx.getString(R.string.w_att_zeroed), Toast.LENGTH_SHORT).show()
+            }) }
             .padding((6 * u).dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -930,7 +967,7 @@ private fun Modifier.outline(): Modifier =
  * in cyan, what is left in amber, a marker where the bike is.
  */
 @Composable
-private fun ProfileStrip(p: ElevProfile, doneM: Double?, bg: Color, modifier: Modifier) {
+private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, bg: Color, modifier: Modifier) {
     val frac = ((doneM ?: 0.0) / p.totalM).toFloat().coerceIn(0f, 1f)
     val here = doneM?.let { p.at(it) }
     val span = (p.maxE - p.minE).coerceAtLeast(20f)
@@ -975,7 +1012,8 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, bg: Color, modifier: Mo
             if (here != null) Text(if (p.ride) "%.0f %s".format(Units.alt(here.toDouble()), Units.altUnit)
                 else "%.0f %s · %d%%".format(Units.alt(here.toDouble()), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(Units.short(p.totalM.toDouble(), 1), color = Palette.label,
+            Text((if (arrival != null) "🏁 " + clockOf(arrival) + " · " else "") + Units.short(p.totalM.toDouble(), 1),
+                color = if (arrival != null) Palette.text else Palette.label,
                 fontSize = 11.sp, maxLines = 1)
         }
     }

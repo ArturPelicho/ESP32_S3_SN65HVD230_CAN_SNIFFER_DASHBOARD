@@ -33,4 +33,6 @@
     <string name="set_cat_bike">Bike</string>
     <string name="set_cat_phone">Phone</string>
     <string name="set_cat_about">About</string>
+    <string name="set_cat_maps">Maps</string>
+    <string name="set_cat_gpx">Tracks (GPX)</string>
 </resources>

@@ -324,11 +324,11 @@ object MapStyle {
             mapOf("id" to "trk-casing", "type" to "line", "source" to "tracks",
                 "filter" to listOf("==", kind, "line"),
                 "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
-                "paint" to mapOf("line-color" to c.halo, "line-opacity" to dimmed(0.85, 0.15), "line-width" to trackWidth(3.0))),
+                "paint" to mapOf("line-color" to c.halo, "line-opacity" to dimmed(0.85, 0.3), "line-width" to trackWidth(3.0))),
             mapOf("id" to "trk-line", "type" to "line", "source" to "tracks",
                 "filter" to listOf("==", kind, "line"),
                 "layout" to mapOf("line-cap" to "round", "line-join" to "round"),
-                "paint" to mapOf("line-color" to listOf("get", "color"), "line-opacity" to dimmed(1.0, 0.4), "line-width" to trackWidth(0.0))),
+                "paint" to mapOf("line-color" to listOf("get", "color"), "line-opacity" to dimmed(1.0, 0.55), "line-width" to trackWidth(0.0))),
             // Nav's way back when off the track: the line to ride now, over the faded track.
             mapOf("id" to "trk-route-casing", "type" to "line", "source" to "join",
                 "filter" to listOf("==", kind, "route"),
@@ -340,7 +340,8 @@ object MapStyle {
                 "paint" to mapOf("line-color" to listOf("get", "color"), "line-width" to listOf("interpolate", listOf("linear"), listOf("zoom"), 8, 3.5, 14, 7, 18, 11))),
             // Arrows along the followed track, in the riding direction.
             mapOf("id" to "trk-arrow", "type" to "symbol", "source" to "tracks",
-                "filter" to listOf("all", listOf("==", kind, "line"), listOf("==", listOf("get", "active"), true)),
+                "filter" to listOf("all", listOf("==", kind, "line"), listOf("==", listOf("get", "active"), true),
+                    listOf("!=", listOf("get", "done"), true)),
                 "layout" to mapOf("symbol-placement" to "line", "symbol-spacing" to 90, "icon-image" to "trk-arrow",
                     "icon-size" to 0.55, "icon-allow-overlap" to true, "icon-ignore-placement" to true),
                 "minzoom" to 11),
@@ -447,7 +448,8 @@ object MapStyle {
     private const val DLINE = "#e040fb"
 
     private fun trackWidth(extra: Double): List<Any> {
-        val w = listOf("case", listOf("==", listOf("get", "dim"), true), 0.5, listOf("get", "w"))
+        // Faded (Nav took another way) it stays thin but plainly visible.
+        val w = listOf("case", listOf("==", listOf("get", "dim"), true), 1.2, listOf("get", "w"))
         val e = listOf("case", listOf("==", listOf("get", "dim"), true), 0.0, 1.0)
         return listOf(
             "interpolate", listOf("linear"), listOf("zoom"),
@@ -459,7 +461,8 @@ object MapStyle {
 
     /** Opacity of the followed track: [normal], or [faded] while Nav takes another way. */
     private fun dimmed(normal: Double, faded: Double): List<Any> =
-        listOf("case", listOf("==", listOf("get", "dim"), true), faded, normal)
+        listOf("case", listOf("==", listOf("get", "dim"), true), faded,
+            listOf("==", listOf("get", "done"), true), normal * 0.3, normal)
 
     /** True when the sun is below the horizon at this place and time (good enough for day/night maps). */
     fun isNight(lat: Double, lon: Double, millis: Long = System.currentTimeMillis()): Boolean {
