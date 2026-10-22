@@ -45,6 +45,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -520,8 +523,12 @@ fun WidgetBoard(screen: String, data: WidgetData, modifier: Modifier = Modifier,
             }
         }
         if (prof != null) {
+            // Long press: the same bar bigger, with what each figure means; a tap outside closes it.
+            var big by remember { mutableStateOf(false) }
             ProfileStrip(prof, data.doneM, data.arrival, data.wx, Palette.panel.copy(alpha = maxOf(alpha, 0.6f)),
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(profH))
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(profH)
+                    .then(if (moving) Modifier else Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { big = true }) }))
+            if (big) ProfileDetails(prof, data.doneM, data.arrival, data.wx) { big = false }
         }
         if (moving) {
             Row(
@@ -984,6 +991,48 @@ private fun AttitudeGauge(bg: Color, u: Float) {
 /** A thin outline on the OLED scheme, where panels are as black as the background. */
 private fun Modifier.outline(): Modifier =
     if (Palette.outlined) border(1.dp, Palette.frame, RoundedCornerShape(12.dp)) else this
+
+/** The progress bar bigger, each figure on it explained. */
+@Composable
+private fun ProfileDetails(p: ElevProfile, doneM: Double?, arrival: Long?, wx: List<WxCell>?, onClose: () -> Unit) {
+    val h = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
+    androidx.compose.ui.window.Dialog(onDismissRequest = onClose) {
+        Column(Modifier.widthIn(max = 560.dp).fillMaxWidth().heightIn(max = (h * 0.9f).dp)
+            .background(Palette.panel, RoundedCornerShape(14.dp)).verticalScroll(rememberScrollState()).padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(if (p.ride) R.string.prof_title_ride else R.string.prof_title), color = Palette.amber, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            ProfileStrip(p, doneM, arrival, wx, Palette.overlay, Modifier.fillMaxWidth().height(150.dp))
+            val done = doneM ?: 0.0
+            val left = (p.totalM - done).coerceAtLeast(0.0)
+            @Composable fun line(sym: String, value: String, what: String) = Row(verticalAlignment = Alignment.Top) {
+                Text(sym, color = Palette.text, fontSize = 18.sp, modifier = Modifier.width(30.dp))
+                Column {
+                    Text(value, color = Palette.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(what, color = Palette.label, fontSize = 13.sp)
+                }
+            }
+            val u = Units.altUnit
+            line("▲", "%.0f %s".format(Units.alt(p.maxE.toDouble()), u), stringResource(R.string.prof_max))
+            line("▼", "%.0f %s".format(Units.alt(p.minE.toDouble()), u), stringResource(R.string.prof_min))
+            line("↗", "%.0f %s".format(Units.alt(p.climbM.toDouble()), u), stringResource(R.string.prof_climb))
+            line("↘", "%.0f %s".format(Units.alt(p.descentM.toDouble()), u), stringResource(R.string.prof_descent))
+            doneM?.let { d -> p.at(d) }?.let { e ->
+                line("●", "%.0f %s".format(Units.alt(e.toDouble()), u) + if (p.ride) "" else " · %d%%".format((done / p.totalM * 100).roundToInt()),
+                    stringResource(if (p.ride) R.string.prof_here_ride else R.string.prof_here))
+            }
+            if (p.ride) line("↔", Units.short(p.totalM.toDouble(), 1), stringResource(R.string.prof_ridden))
+            else line("↔", Units.short(left, 1) + " / " + Units.short(p.totalM.toDouble(), 1), stringResource(R.string.prof_left))
+            if (arrival != null) line("🏁", clockOf(arrival), stringResource(R.string.prof_arrival))
+            if (wx != null) {
+                val first = wx.firstOrNull { it.rainThen >= RouteWeather.WET && it.toM > done }
+                line("🌧", if (first != null) Units.short(first.fromM - done, 1) + " · " + clockOf(first.etaMs) else stringResource(R.string.prof_dry),
+                    stringResource(R.string.prof_rain))
+            }
+            Text(stringResource(R.string.prof_colours), color = Palette.label, fontSize = 13.sp)
+            Text(stringResource(R.string.prof_close), color = Palette.label, fontSize = 12.sp)
+        }
+    }
+}
 
 /**
  * The followed track's height from start (left) to finish (right), whatever its length: ridden part

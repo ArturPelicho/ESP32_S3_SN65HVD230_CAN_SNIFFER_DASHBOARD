@@ -118,4 +118,19 @@
     <string name="search_busy">Buscando…</string>
     <string name="search_none">No se encontró nada (¿sin internet?)</string>
     <string name="search_saved">Guardado: %1$s</string>
+    <string name="prof_title">Progreso</string>
+    <string name="prof_title_ride">Viaje hasta ahora</string>
+    <string name="prof_max">Punto más alto del recorrido</string>
+    <string name="prof_min">Punto más bajo del recorrido</string>
+    <string name="prof_climb">Subida total (todas las subidas sumadas, sin oscilaciones de menos de 3 m)</string>
+    <string name="prof_descent">Bajada total</string>
+    <string name="prof_here">Altitud donde estás y cuánto del recorrido llevas</string>
+    <string name="prof_here_ride">Altitud donde estás</string>
+    <string name="prof_left">Falta / recorrido entero</string>
+    <string name="prof_ridden">Distancia recorrida</string>
+    <string name="prof_arrival">Hora de llegada al final, a tu ritmo</string>
+    <string name="prof_rain">Lluvia donde y cuando llegues</string>
+    <string name="prof_dry">Sin lluvia prevista en el camino</string>
+    <string name="prof_colours">Cian: hecho. Ámbar: por hacer. Franja azul arriba: lluvia prevista para cuando pases por cada sitio (más oscuro = más fuerte); contorno azul: llueve ahora pero debería haber parado cuando llegues.</string>
+    <string name="prof_close">Toca fuera para cerrar.</string>
 </resources>

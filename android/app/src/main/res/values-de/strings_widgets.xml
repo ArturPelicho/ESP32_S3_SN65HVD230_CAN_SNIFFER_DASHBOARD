@@ -118,4 +118,19 @@
     <string name="search_busy">Suche…</string>
     <string name="search_none">Nichts gefunden (kein Internet?)</string>
     <string name="search_saved">Gespeichert: %1$s</string>
+    <string name="prof_title">Fortschritt</string>
+    <string name="prof_title_ride">Fahrt bisher</string>
+    <string name="prof_max">Höchster Punkt der Strecke</string>
+    <string name="prof_min">Tiefster Punkt der Strecke</string>
+    <string name="prof_climb">Anstieg gesamt (alle Anstiege addiert, ohne Schwankungen unter 3 m)</string>
+    <string name="prof_descent">Abstieg gesamt</string>
+    <string name="prof_here">Höhe hier und wie viel der Strecke geschafft ist</string>
+    <string name="prof_here_ride">Höhe hier</string>
+    <string name="prof_left">Rest / ganze Strecke</string>
+    <string name="prof_ridden">Gefahrene Strecke</string>
+    <string name="prof_arrival">Ankunft am Ende, in deinem Tempo</string>
+    <string name="prof_rain">Regen dort und dann, wenn du ankommst</string>
+    <string name="prof_dry">Kein Regen unterwegs vorhergesagt</string>
+    <string name="prof_colours">Cyan: gefahren. Bernstein: noch zu fahren. Blaues Band oben: Regen, wenn du an jedem Ort ankommst (dunkler = stärker); blauer Rahmen: regnet jetzt, sollte aber aufgehört haben, wenn du dort bist.</string>
+    <string name="prof_close">Außerhalb tippen zum Schließen.</string>
 </resources>

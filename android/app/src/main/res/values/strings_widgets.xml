@@ -118,4 +118,19 @@
     <string name="search_busy">Searching…</string>
     <string name="search_none">Nothing found (no internet?)</string>
     <string name="search_saved">Saved: %1$s</string>
+    <string name="prof_title">Progress</string>
+    <string name="prof_title_ride">Ride so far</string>
+    <string name="prof_max">Highest point of the track</string>
+    <string name="prof_min">Lowest point of the track</string>
+    <string name="prof_climb">Total climb (ups added together, ignoring wiggles under 3 m)</string>
+    <string name="prof_descent">Total descent</string>
+    <string name="prof_here">Height where you are, and how much of the track is done</string>
+    <string name="prof_here_ride">Height where you are</string>
+    <string name="prof_left">Left / whole track</string>
+    <string name="prof_ridden">Distance ridden</string>
+    <string name="prof_arrival">Arrival time at the end, at your pace</string>
+    <string name="prof_rain">Rain where and when you get there</string>
+    <string name="prof_dry">No rain forecast on the way</string>
+    <string name="prof_colours">Cyan: ridden. Amber: still to ride. Blue lane on top: rain forecast for when you reach each place (deeper = heavier); a blue outline: raining there now but it should have stopped by then.</string>
+    <string name="prof_close">Tap outside to close.</string>
 </resources>

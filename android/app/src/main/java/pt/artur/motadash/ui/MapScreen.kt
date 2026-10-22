@@ -2131,6 +2131,10 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
     } else ScrollMenu(onDismiss) {
         DropdownMenuItem(text = { Text("■  " + stringResource(R.string.nav_stop), color = Palette.red, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
             onClick = { onDismiss(); Speech.stop(); TrackStore.setActive(ctx, null) })
+        // Nav or Track first: it is the choice that changes most.
+        header(R.string.track_mode_title)
+        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
+        HorizontalDivider()
         check(stringResource(R.string.turn_voice), MapStore.turnVoice(ctx)) {
             val on = !MapStore.turnVoice(ctx); MapStore.setTurnVoice(ctx, on); if (!on) Speech.stop(); tick++
         }
@@ -2148,9 +2152,6 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
             })
         }
         check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
-        HorizontalDivider()
-        header(R.string.track_mode_title)
-        TrackMode.entries.forEach { m -> check(m.label, mode == m) { onMode(m); onDismiss() } }
         HorizontalDivider()
         DropdownMenuItem(text = { Text("     " + stringResource(R.string.route_title) + ": " + style.label + "  ›", fontSize = 16.sp) },
             onClick = { routePage = true })
