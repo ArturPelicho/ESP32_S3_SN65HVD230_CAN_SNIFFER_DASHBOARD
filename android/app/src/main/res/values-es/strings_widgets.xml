@@ -133,4 +133,5 @@
     <string name="prof_dry">Sin lluvia prevista en el camino</string>
     <string name="prof_colours">Cian: hecho. Ámbar: por hacer. Franja azul arriba: lluvia prevista para cuando pases por cada sitio (más oscuro = más fuerte); contorno azul: llueve ahora pero debería haber parado cuando llegues.</string>
     <string name="prof_close">Toca fuera para cerrar.</string>
+    <string name="layer_tracks">Recorridos en el mapa</string>
 </resources>

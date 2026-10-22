@@ -133,4 +133,5 @@
     <string name="prof_dry">Nessuna pioggia prevista lungo la strada</string>
     <string name="prof_colours">Ciano: fatto. Ambra: da fare. Fascia blu in alto: pioggia prevista quando passi in ogni punto (più scuro = più forte); contorno blu: piove ora ma dovrebbe aver smesso al tuo arrivo.</string>
     <string name="prof_close">Tocca fuori per chiudere.</string>
+    <string name="layer_tracks">Tracce sulla mappa</string>
 </resources>

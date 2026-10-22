@@ -212,6 +212,8 @@ import pt.artur.motadash.R
 /** A speed camera ahead on the road. */
 data class CameraAlert(val meters: Int, val kmh: Int?, val key: String)
 
+private val TRACK_LAYERS = listOf("trk-casing", "trk-line", "trk-arrow", "trk-wpt", "trk-wpt-label", "rte-pt", "rte-num")
+
 private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, private val trackArrow: Bitmap) {
     var map: MapLibreMap? = null
     var view: MapView? = null
@@ -260,6 +262,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             pin?.let { setPin(it, fly = false) }
             radarShown = null; showRadar()
             show3dBuildings()
+            showTracksLayer()
             drawMarker()
             tracks?.let { s.getSourceAs<GeoJsonSource>("tracks")?.setGeoJson(it) }
         }
@@ -308,6 +311,14 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
         val l = RasterLayer("rain", "rain").withProperties(PropertyFactory.rasterOpacity(0.55f))
         val below = s.layers.firstOrNull { it is SymbolLayer }?.id
         if (below != null) s.addLayerBelow(l, below) else s.addLayer(l)
+    }
+
+    /** The tracks' own lines and points on the map (the way back to them stays). */
+    var tracksShown = true
+    fun showTracksLayer() {
+        val s = style ?: return
+        val v = if (tracksShown) Property.VISIBLE else Property.NONE
+        for (id in TRACK_LAYERS) s.getLayer(id)?.setProperties(PropertyFactory.visibility(v))
     }
 
     /** Buildings in volume only in the 3D follow mode. */
@@ -1038,7 +1049,8 @@ fun MapScreen() {
     }
     var minute by remember { mutableLongStateOf(0L) }
     val holder = remember {
-        MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on } }
+        MapHolder(arrowBitmap(), radarBitmap(), trackArrowBitmap()).also { it.mode = mode; it.autoZoom = autoZoom; it.onFollow = { on -> follow = on }
+            it.tracksShown = MapLayer.TRACKS in layers }
     }
     LaunchedEffect(azCfg) { holder.azCfg = azCfg }
 
@@ -1423,7 +1435,16 @@ fun MapScreen() {
             }
             MapCtl.SEARCH -> MapButton("🔍", active = showSearch) { showSearch = !showSearch }
             MapCtl.LAYERS -> LayersButton(active = showLayers) { showLayers = !showLayers }
-            MapCtl.GPX -> MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
+            // Tap: show or hide the track on the map (the list when nothing is followed); long press: the list.
+            MapCtl.GPX -> MapButton(if (MapLayer.TRACKS in layers) "GPX" else "GPX ⦸", active = activeTrack != null && MapLayer.TRACKS in layers, small = true,
+                onLong = { showTracks = true }) {
+                if (activeTrack == null) showTracks = true else {
+                    val on = MapLayer.TRACKS !in layers
+                    MapStore.setLayer(ctx, MapLayer.TRACKS, on)
+                    layers = if (on) layers + MapLayer.TRACKS else layers - MapLayer.TRACKS
+                    holder.tracksShown = on; holder.showTracksLayer()
+                }
+            }
             MapCtl.REC -> MapButton(if (trip != null) "● " + km(trip!!.distanceM) else "REC", active = trip != null, small = true) {
                 if (trip == null) {
                     TripRecorder.start(ctx)
@@ -1455,11 +1476,13 @@ fun MapScreen() {
 
         // GPS details and the layers list open next to the bar.
         val panelAlign = if (side == BarSide.LEFT) Alignment.TopStart else if (side == BarSide.RIGHT) Alignment.TopEnd else Alignment.TopStart
-        if (showGps) Box(Modifier.align(panelAlign).padding(inset).padding(10.dp)) { GpsPanel(fix, gnss, speed) }
+        if (showGps) Box(Modifier.align(panelAlign).padding(inset).padding(10.dp).heightIn(max = (maxHeight - 20.dp).coerceAtLeast(120.dp))
+            .verticalScroll(rememberScrollState())) { GpsPanel(fix, gnss, speed) }
         if (showLayers) {
             Column(
                 Modifier.align(barAlign).padding(inset).padding(10.dp)
-                    .background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
+                    .heightIn(max = (maxHeight - 20.dp).coerceAtLeast(120.dp))
+                    .background(Palette.overlay, RoundedCornerShape(14.dp)).verticalScroll(rememberScrollState()).padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 val detail = layerDetail
@@ -1479,6 +1502,7 @@ fun MapScreen() {
                             MapStore.setLayer(ctx, l, on)
                             layers = if (on) layers + l else layers - l
                             if (l == MapLayer.BUILDINGS_3D) { holder.buildings3d = on; holder.show3dBuildings() }
+                            if (l == MapLayer.TRACKS) { holder.tracksShown = on; holder.showTracksLayer() }
                         }, onLong = { if (l.hasOptions) layerDetail = l })
                     }
                     Text(stringResource(R.string.map_layers_long), color = Palette.label, fontSize = 12.sp)
@@ -2285,13 +2309,14 @@ private fun LayersButton(active: Boolean, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MapButton(label: String, active: Boolean = false, small: Boolean = false, onClick: () -> Unit) {
+private fun MapButton(label: String, active: Boolean = false, small: Boolean = false, onLong: (() -> Unit)? = null, onClick: () -> Unit) {
     Box(
         Modifier.size(52.dp)
             .background(Palette.overlay, RoundedCornerShape(14.dp))
             .border(2.dp, if (active) Palette.cyan else Palette.frame, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
+            .combinedClickable(onClick = onClick, onLongClick = onLong),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, color = if (active) Palette.cyan else Palette.text, fontSize = if (small) 12.sp else 22.sp, fontWeight = FontWeight.Bold)

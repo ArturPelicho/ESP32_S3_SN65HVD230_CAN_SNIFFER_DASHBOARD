@@ -73,6 +73,8 @@ enum class NavCorner(@StringRes private val res: Int) {
 }
 
 enum class MapLayer(@StringRes val res: Int) {
+    /** The tracks drawn on the map (navigation carries on when hidden). */
+    TRACKS(R.string.layer_tracks),
     SHADE(R.string.layer_shade), CONTOURS(R.string.layer_contours), ROADS(R.string.layer_roads), BUILDINGS_3D(R.string.layer_3d), CAMERAS(R.string.layer_cameras), DIRT(R.string.layer_dirt),
     /** Wind, temperature, rain radar and UV from the internet; off until switched on. */
     WEATHER(R.string.layer_weather);

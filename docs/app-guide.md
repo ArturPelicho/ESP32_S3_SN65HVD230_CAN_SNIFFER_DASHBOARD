@@ -87,6 +87,7 @@ its options:
 
 | Layer | Long press options |
 |---|---|
+| Tracks on the map | Hide the followed track's line and points (navigation carries on); the GPX button does the same with a tap |
 | Shaded relief | Strength slider (10–100 %) |
 | Contour lines | Spacing (none, 10, 20, 50, 100 m) for the zoom level you are at; each zoom keeps its own, "Back to the general setting" clears them |
 | Roads | Each road class on or off: motorways, expressways, main, secondary, local, streets and minor roads, service roads |
@@ -97,7 +98,9 @@ its options:
 
 ## Tracks, routes and places
 
-Settings → **Tracks (GPX)**, or the tracks button on the map.
+Settings → **Tracks (GPX)**, or a long press on the GPX button on the map (a tap shows or hides the
+followed track; with nothing followed it opens the list too). Throughout the app a tap does the main
+thing and a long press opens the options.
 
 - **Import**: GPX, KML, KMZ, GeoJSON, TCX and FIT (or "Open with" NavExpress from another app).
 - **Plan on the map**: long press → start a new route here, then long press elsewhere to add

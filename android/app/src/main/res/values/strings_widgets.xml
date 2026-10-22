@@ -133,4 +133,5 @@
     <string name="prof_dry">No rain forecast on the way</string>
     <string name="prof_colours">Cyan: ridden. Amber: still to ride. Blue lane on top: rain forecast for when you reach each place (deeper = heavier); a blue outline: raining there now but it should have stopped by then.</string>
     <string name="prof_close">Tap outside to close.</string>
+    <string name="layer_tracks">Tracks on the map</string>
 </resources>
