@@ -37,8 +37,7 @@ The Android status bar and navigation buttons always stay visible.
 |---|---|
 | **Map** | Offline map, navigation, tracks, and any elements you place on it |
 | **Dashboard** | The bike's dashboard, built from elements (🚧 still being worked on, see below) |
-| **Diagnostics** | Live data from the bike unit, fault codes (read and clear), speed sources side by side |
-| **Settings** | General settings on the left (Preferences, Maps, Tracks, Bike, Phone, About), each opening in the panel on the right |
+| **Settings** | General settings on the left (Preferences, Maps, Tracks, Bike, Diagnostics, Phone, About), each opening in the panel on the right. Diagnostics holds the live data from the bike unit, the speed sources side by side and the fault codes; with faults stored the tab shows their count in orange |
 
 Settings that belong to one screen live on that screen: tap the ⚙ button in its corner.
 
@@ -212,7 +211,7 @@ When the ESP32-S3 unit on the bike is connected over Bluetooth the app also show
 
 - the full bike dashboard (RPM, gear, head temperature with a STOP ENGINE warning, fuel flow,
   range, battery…);
-- **Diagnostics**: every value the bike sends, all speed sources side by side, the learnt gears;
+- **Diagnostics** (Settings → Diagnostics): every value the bike sends, all speed sources side by side, the learnt gears;
 - **fault codes**, read and cleared;
 - **Bike settings** (Dashboard ⚙, and Settings → Bike for the connection and the unit's
   parameters): speed source for consumption, tank, fill-ups ("Fill to full" with the pump

@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnostic</string>
     <string name="tab_diag_count">Diagnostic (%1$d)</string>
     <string name="tab_settings">Réglages</string>
+    <string name="tab_settings_count">Réglages (%1$d)</string>
     <string name="dash_src_wheel">ROUE</string>
     <string name="dash_src_gear">RAPPORT</string>
     <string name="dash_src_gps">GPS</string>

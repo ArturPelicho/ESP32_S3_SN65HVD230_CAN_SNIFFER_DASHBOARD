@@ -95,7 +95,7 @@ private fun parsed(text: String, s: ParamSpec): Int? =
 /** [panel]: a shortcut that opens that panel on the map instead of a group here. */
 private enum class SetCat(@StringRes val res: Int) {
     LOOK(R.string.set_cat_look), MAPS(R.string.set_cat_maps), GPX(R.string.set_cat_gpx), BIKE(R.string.set_cat_bike),
-    PHONE(R.string.set_cat_phone), ABOUT(R.string.set_cat_about),
+    DIAG(R.string.tab_diag), PHONE(R.string.set_cat_phone), ABOUT(R.string.set_cat_about),
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -106,6 +106,7 @@ fun ControlScreen(activity: MainActivity) {
     val t by Link.telemetry.collectAsStateWithLifecycle()
     val connected = status == LinkStatus.CONNECTED
     val ctx = LocalContext.current
+    val dtc by Link.dtc.collectAsStateWithLifecycle()
     var cat by rememberSaveable { mutableStateOf(SetCat.LOOK) }
 
     Row(Modifier.fillMaxSize()) {
@@ -124,12 +125,14 @@ fun ControlScreen(activity: MainActivity) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.width(4.dp).fillMaxHeight().background(if (on) Palette.amber else Color.Transparent))
-                    Text(stringResource(c.res), color = if (on) Palette.amber else Palette.text, fontSize = 16.sp,
+                    val faults = c == SetCat.DIAG && dtc.total > 0
+                    Text(if (faults) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(c.res),
+                        color = if (on) Palette.amber else if (faults) Palette.orange else Palette.text, fontSize = 16.sp,
                         fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 12.dp))
                 }
             }
         }
-        // The chosen group, with room to breathe. Maps and GPX are the map's own panels, scrolling by themselves.
+        // The chosen group, with room to breathe. Maps, GPX and Diagnostics are panels scrolling by themselves.
         if (cat == SetCat.MAPS) Box(Modifier.weight(1f).fillMaxHeight()) {
             // Read from the settings each time one changes (the map reads them again when it opens).
             var tick by remember { mutableIntStateOf(0) }
@@ -147,9 +150,11 @@ fun ControlScreen(activity: MainActivity) {
                 onShow = { t -> MapStore.showTrack.value = t.id; activity.openMap.value++ },
                 onClose = { activity.openMap.value++ }, embedded = true,
             )
+        } else if (cat == SetCat.DIAG) Box(Modifier.weight(1f).fillMaxHeight()) {
+            DiagScreen()
         } else Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
             when (cat) {
-                SetCat.MAPS, SetCat.GPX -> {}
+                SetCat.MAPS, SetCat.GPX, SetCat.DIAG -> {}
                 SetCat.LOOK -> {
                     Section(stringResource(R.string.settings_language)) {
                         val current = remember { AppLocale.tag(ctx) }

@@ -50,7 +50,6 @@ import pt.artur.motadash.ui.ControlScreen
 import pt.artur.motadash.ui.UpdatePrompt
 import pt.artur.motadash.ui.CommsOverlay
 import pt.artur.motadash.ui.DashboardScreen
-import pt.artur.motadash.ui.DiagScreen
 import pt.artur.motadash.ui.MapScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pt.artur.motadash.ui.Palette
@@ -187,11 +186,10 @@ private fun App(activity: MainActivity) {
     val openMap by activity.openMap.collectAsStateWithLifecycle()
     LaunchedEffect(openMap) { if (openMap > 0) tab = 0 }
     val dtc by Link.dtc.collectAsStateWithLifecycle()
-    // Map and dashboard first, then diagnostics (with the fault codes), settings at the far end.
+    // Map and dashboard first, settings at the far end (diagnostics and fault codes live there).
     val titles = listOf(
         stringResource(R.string.tab_map), stringResource(R.string.tab_dashboard),
-        if (dtc.total > 0) stringResource(R.string.tab_diag_count, dtc.total) else stringResource(R.string.tab_diag),
-        stringResource(R.string.tab_settings),
+        if (dtc.total > 0) stringResource(R.string.tab_settings_count, dtc.total) else stringResource(R.string.tab_settings),
     )
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     // AUTO theme by sunset: look again every minute.
@@ -225,7 +223,6 @@ private fun App(activity: MainActivity) {
             when (tab) {
                 0 -> MapScreen()
                 1 -> DashboardScreen()
-                2 -> DiagScreen()
                 else -> ControlScreen(activity)
             }
             // Calls and messages show over any tab, away from the navigation boxes' corner so the next turn stays in view.
