@@ -99,6 +99,7 @@
     <string name="pn_counter">con controcurva</string>
     <string name="pacenotes">Note del navigatore in modalità Traccia</string>
     <string name="pacenote_numbers">Note in numeri (1–6)</string>
+    <string name="pacenote_lead">Anticipo delle note</string>
     <string name="section_times">Tempi per settore</string>
     <string name="split_fast">Veloce</string>
     <string name="split_slow">Lento</string>

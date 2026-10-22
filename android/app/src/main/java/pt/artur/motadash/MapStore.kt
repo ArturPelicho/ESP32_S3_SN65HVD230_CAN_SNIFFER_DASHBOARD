@@ -236,6 +236,11 @@ object MapStore {
     fun pacenoteNumbers(ctx: Context): Boolean = prefs(ctx).getBoolean("pacenote_numbers", false)
     fun setPacenoteNumbers(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("pacenote_numbers", on).apply()
 
+    /** Seconds ahead a pacenote is called at the latest; a co-driver also calls it as the corner before ends. */
+    fun pacenoteLead(ctx: Context): Int = prefs(ctx).getInt("pacenote_lead", 8)
+    fun setPacenoteLead(ctx: Context, s: Int) = prefs(ctx).edit().putInt("pacenote_lead", s).apply()
+    val PACENOTE_LEADS = listOf(5, 8, 11, 14)
+
     /** Times each section of a track ridden before, against the best: "Fast" or "Slow". */
     fun sectionTimes(ctx: Context): Boolean = prefs(ctx).getBoolean("section_times", true)
     fun setSectionTimes(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("section_times", on).apply()

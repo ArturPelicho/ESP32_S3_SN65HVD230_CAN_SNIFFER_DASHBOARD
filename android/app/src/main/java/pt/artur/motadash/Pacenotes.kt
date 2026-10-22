@@ -236,8 +236,14 @@ class PacenoteVoice {
         if (nextIdx < 0 || abs(doneM - lastDone) > 200) nextIdx = pn.notes.indexOfFirst { it.atM > doneM - 2 }.let { if (it < 0) pn.notes.size else it }
         lastDone = doneM
         if (nextIdx >= pn.notes.size || !MapStore.turnVoice(ctx)) return
-        val lead = (speedMs * 5.0).coerceIn(60.0, 300.0)
-        if (pn.notes[nextIdx].atM - doneM > lead) return
+        // The rally rhythm: the next call comes as the corner before it ends, so the rider hears it on the way
+        // out; on a long straight it waits until it is no more than the lead time away (never under 80 m).
+        val v = speedMs.toDouble().coerceAtLeast(8.0)
+        val lead = (v * MapStore.pacenoteLead(ctx)).coerceIn(80.0, 600.0)
+        val ahead = pn.notes[nextIdx].atM - doneM
+        val prevEnd = pn.notes.getOrNull(nextIdx - 1)?.endM
+        val outOfCorner = prevEnd != null && doneM >= prevEnd - v * 1.0
+        if (ahead > lead && !(outOfCorner && ahead <= lead * 1.6)) return
         val g = pn.group(nextIdx)
         nextIdx += g.size
         val gap = pn.notes.getOrNull(nextIdx)?.let { it.atM - g.last().endM }

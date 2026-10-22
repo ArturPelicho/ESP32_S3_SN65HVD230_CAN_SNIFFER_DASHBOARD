@@ -99,6 +99,7 @@
     <string name="pn_counter">mit Gegenkurve</string>
     <string name="pacenotes">Gebetbuch im Strecken-Modus</string>
     <string name="pacenote_numbers">Ansagen als Zahlen (1–6)</string>
+    <string name="pacenote_lead">Vorlauf der Ansagen</string>
     <string name="section_times">Abschnittszeiten</string>
     <string name="split_fast">Schnell</string>
     <string name="split_slow">Langsam</string>

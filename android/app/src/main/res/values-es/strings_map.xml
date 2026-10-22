@@ -99,6 +99,7 @@
     <string name="pn_counter">con contracurva</string>
     <string name="pacenotes">Notas de copiloto en modo Pista</string>
     <string name="pacenote_numbers">Notas en números (1–6)</string>
+    <string name="pacenote_lead">Antelación de las notas</string>
     <string name="section_times">Tiempos por sección</string>
     <string name="split_fast">Rápido</string>
     <string name="split_slow">Lento</string>

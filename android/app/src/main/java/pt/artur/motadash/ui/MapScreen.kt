@@ -1889,6 +1889,14 @@ private fun TrackOptionsMenu(t: Track, mode: TrackMode, onMode: (TrackMode) -> U
         check(stringResource(R.string.eta_on_bar), MapStore.etaOnBar(ctx)) { MapStore.setEtaOnBar(ctx, !MapStore.etaOnBar(ctx)); tick++ }
         check(stringResource(R.string.pacenotes), MapStore.pacenotes(ctx)) { MapStore.setPacenotes(ctx, !MapStore.pacenotes(ctx)); tick++ }
         check(stringResource(R.string.pacenote_numbers), MapStore.pacenoteNumbers(ctx), MapStore.pacenotes(ctx)) { MapStore.setPacenoteNumbers(ctx, !MapStore.pacenoteNumbers(ctx)); tick++ }
+        if (MapStore.pacenotes(ctx)) {
+            // Each tap: the next lead time.
+            val l = MapStore.pacenoteLead(ctx)
+            DropdownMenuItem(text = { Text("     " + stringResource(R.string.pacenote_lead) + ": $l s", fontSize = 16.sp) }, onClick = {
+                val all = MapStore.PACENOTE_LEADS
+                MapStore.setPacenoteLead(ctx, all[(all.indexOf(l) + 1).mod(all.size)]); tick++
+            })
+        }
         check(stringResource(R.string.section_times), MapStore.sectionTimes(ctx)) { MapStore.setSectionTimes(ctx, !MapStore.sectionTimes(ctx)); tick++ }
         HorizontalDivider()
         header(R.string.track_mode_title)

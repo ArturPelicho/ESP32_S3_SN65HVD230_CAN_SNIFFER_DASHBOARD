@@ -99,6 +99,7 @@
     <string name="pn_counter">into a counter-curve</string>
     <string name="pacenotes">Pacenotes in Track mode</string>
     <string name="pacenote_numbers">Pacenotes as numbers (1–6)</string>
+    <string name="pacenote_lead">Pacenote lead</string>
     <string name="section_times">Section times</string>
     <string name="split_fast">Fast</string>
     <string name="split_slow">Slow</string>
