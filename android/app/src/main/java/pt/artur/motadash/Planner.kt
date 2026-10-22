@@ -187,8 +187,9 @@ object Router {
 
     /** The road route with its turns, for the current route options. */
     fun route(ctx: Context, a: LatLon, b: LatLon): Routed? =
-        if (RouteOptions.style(ctx) == RouteStyle.FUN && !RouteOptions.avoidUnpaved(ctx)) dirt(ctx, a, b)
-        else routeWith(ctx, RouteOptions.params(ctx), a, b)
+        (if (RouteOptions.style(ctx) == RouteStyle.FUN && !RouteOptions.avoidUnpaved(ctx)) dirt(ctx, a, b)
+        else routeWith(ctx, RouteOptions.params(ctx), a, b))
+            ?.let { r -> RoadNames.label(MapStore.installed.value.filter { it.enabled }.map { it.map }, r) }
 
     private fun routeWith(ctx: Context, params: Map<String, String>, a: LatLon, b: LatLon): Routed? =
         (if (OfflineRouter.has(ctx, a, b)) OfflineRouter.route(ctx, a, b, params) else null)

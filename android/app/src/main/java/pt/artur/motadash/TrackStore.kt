@@ -186,7 +186,7 @@ object TrackStore {
         if (t.plan.isNotEmpty()) put("plan", JSONArray(t.plan.map { p -> JSONArray(listOf(p.lat, p.lon)) }))
         if (t.times.isNotEmpty()) put("times", JSONArray(t.times.map { JSONArray(it) }))
         if (t.secs.any { it.isNotEmpty() }) put("secs", JSONArray(t.secs.map { l -> JSONArray(l.map { Math.round(it * 10) / 10.0 }) }))
-        if (t.turns.isNotEmpty()) put("turns", JSONArray(t.turns.map { p -> JSONArray(listOf(p.lat, p.lon, p.kind.name, p.exit)) }))
+        if (t.turns.isNotEmpty()) put("turns", JSONArray(t.turns.map { p -> JSONArray(listOf(p.lat, p.lon, p.kind.name, p.exit, p.road ?: "")) }))
     }
 
     private fun fromJson(o: JSONObject): Track {
@@ -212,7 +212,7 @@ object TrackStore {
             secs = List(sc.length()) { i -> sc.getJSONArray(i).let { a -> List(a.length()) { a.getDouble(it) } } },
             turns = (0 until tu.length()).mapNotNull { i ->
                 val a = tu.getJSONArray(i)
-                TurnKind.entries.firstOrNull { it.name == a.optString(2) }?.let { TurnPt(a.getDouble(0), a.getDouble(1), it, a.optInt(3)) }
+                TurnKind.entries.firstOrNull { it.name == a.optString(2) }?.let { TurnPt(a.getDouble(0), a.getDouble(1), it, a.optInt(3), a.optString(4).ifEmpty { null }) }
             },
         )
     }

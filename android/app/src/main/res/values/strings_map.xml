@@ -57,6 +57,7 @@
     <string name="map_gps_sats_used">%1$d in use of %2$d</string>
     <string name="map_gps_best">Best signal</string>
     <string name="turn_in">In %1$s, %2$s</string>
+    <string name="turn_onto">%1$s onto %2$s</string>
     <string name="turn_metres">%1$d metres</string>
     <string name="turn_km">%1$s kilometres</string>
     <string name="turn_roundabout_exit">at the roundabout, take exit %1$d</string>

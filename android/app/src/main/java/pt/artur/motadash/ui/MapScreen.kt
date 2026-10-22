@@ -1672,7 +1672,7 @@ private fun TurnBanner(next: Pair<Maneuver, Double>) {
         }
         Column {
             Text(Turns.shown(dist), color = ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Text(Turns.phrase(m), color = ink, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+            Text(Turns.phrase(m), color = ink, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

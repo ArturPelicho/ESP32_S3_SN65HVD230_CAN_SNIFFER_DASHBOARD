@@ -2,10 +2,7 @@ package pt.artur.motadash
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.RandomAccessFile
-import java.util.zip.GZIPInputStream
 import kotlin.math.PI
 import kotlin.math.floor
 import kotlin.math.ln
@@ -80,99 +77,27 @@ class ElevProfile(val distM: FloatArray, val eleM: FloatArray, val ride: Boolean
 }
 
 /** Reads terrain heights from a relief file (PMTiles v3, Mapbox RGB raster-dem tiles) on the phone. */
-class Dem private constructor(private val f: RandomAccessFile) {
-    private var rootOff = 0L; private var rootLen = 0L
-    private var leafOff = 0L; private var dataOff = 0L
-    private var gzipDirs = false; private var gzipTiles = false
-    private var maxZoom = 0
+class Dem private constructor(private val pm: PmTiles) {
     private val tiles = object : LinkedHashMap<Long, Bitmap?>(16, 0.75f, true) {
         override fun removeEldestEntry(e: MutableMap.MutableEntry<Long, Bitmap?>) = size > 12
     }
 
     companion object {
-        fun open(file: File): Dem? = runCatching {
-            Dem(RandomAccessFile(file, "r")).takeIf { it.header() }
-        }.getOrNull()
+        fun open(file: File): Dem? = PmTiles.open(file)?.let { Dem(it) }
     }
 
-    fun close() = runCatching { f.close() }
-
-    private fun read(off: Long, len: Int): ByteArray = ByteArray(len).also { f.seek(off); f.readFully(it) }
-
-    private fun header(): Boolean {
-        val h = read(0, 127)
-        if (String(h, 0, 7) != "PMTiles" || h[7].toInt() != 3) return false
-        fun u64(o: Int): Long { var v = 0L; for (i in 7 downTo 0) v = (v shl 8) or (h[o + i].toLong() and 0xff); return v }
-        rootOff = u64(8); rootLen = u64(16); leafOff = u64(40); dataOff = u64(56)
-        gzipDirs = h[97].toInt() == 2
-        gzipTiles = h[98].toInt() == 2
-        maxZoom = h[101].toInt()
-        return true
-    }
-
-    private class Entry(val id: Long, val off: Long, val len: Int, val run: Int)
-
-    private fun directory(off: Long, len: Long): List<Entry> {
-        var b = read(off, len.toInt())
-        if (gzipDirs) b = GZIPInputStream(ByteArrayInputStream(b)).readBytes()
-        var p = 0
-        fun varint(): Long {
-            var v = 0L; var s = 0
-            while (true) { val c = b[p++].toInt() and 0xff; v = v or ((c and 0x7f).toLong() shl s); if (c < 0x80) return v; s += 7 }
-        }
-        val n = varint().toInt()
-        val ids = LongArray(n); var last = 0L
-        for (i in 0 until n) { last += varint(); ids[i] = last }
-        val runs = IntArray(n) { varint().toInt() }
-        val lens = IntArray(n) { varint().toInt() }
-        val offs = LongArray(n)
-        for (i in 0 until n) {
-            val v = varint()
-            offs[i] = if (v == 0L && i > 0) offs[i - 1] + lens[i - 1] else v - 1
-        }
-        return List(n) { Entry(ids[it], offs[it], lens[it], runs[it]) }
-    }
-
-    private fun find(id: Long): ByteArray? {
-        var off = rootOff; var len = rootLen
-        repeat(4) {
-            val dir = directory(off, len)
-            val e = dir.lastOrNull { it.id <= id } ?: return null
-            if (e.run == 0) { off = leafOff + e.off; len = e.len.toLong() }
-            else return if (id < e.id + e.run) read(dataOff + e.off, e.len) else null
-        }
-        return null
-    }
-
-    private fun tileId(z: Int, x: Long, y: Long): Long {
-        var acc = 0L
-        for (t in 0 until z) acc += (1L shl t) * (1L shl t)
-        var xx = x; var yy = y; var d = 0L
-        var s = (1L shl z) / 2
-        while (s > 0) {
-            val rx = if ((xx and s) > 0) 1L else 0L
-            val ry = if ((yy and s) > 0) 1L else 0L
-            d += s * s * ((3 * rx) xor ry)
-            if (ry == 0L) {
-                if (rx == 1L) { xx = s - 1 - xx; yy = s - 1 - yy }
-                val t = xx; xx = yy; yy = t
-            }
-            s /= 2
-        }
-        return acc + d
-    }
+    fun close() = pm.close()
 
     /** Metres above sea level, or null outside this file. */
     fun height(lat: Double, lon: Double): Double? = runCatching {
-        val z = maxZoom
+        val z = pm.maxZoom
         val n = (1L shl z).toDouble()
         val fx = (lon + 180) / 360 * n
         val r = Math.toRadians(lat)
         val fy = (1 - ln(tan(r) + 1 / kotlin.math.cos(r)) / PI) / 2 * n
         val x = floor(fx).toLong(); val y = floor(fy).toLong()
-        val id = tileId(z, x, y)
-        val bmp = if (tiles.containsKey(id)) tiles[id] else find(id)?.let { raw ->
-            val b = if (gzipTiles) GZIPInputStream(ByteArrayInputStream(raw)).readBytes() else raw
+        val id = pm.tileId(z, x, y)
+        val bmp = if (tiles.containsKey(id)) tiles[id] else pm.tile(z, x, y)?.let { b ->
             BitmapFactory.decodeByteArray(b, 0, b.size)
         }.also { tiles[id] = it }
         bmp ?: return@runCatching null

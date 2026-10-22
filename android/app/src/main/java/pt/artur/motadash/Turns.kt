@@ -34,15 +34,15 @@ enum class TurnKind {
     }
 }
 
-/** A turn where a road route makes it, kept with the trajeto. [exit]: roundabout exit (0 when unknown). */
-data class TurnPt(val lat: Double, val lon: Double, val kind: TurnKind, val exit: Int = 0)
+/** A turn where a road route makes it, kept with the trajeto. [exit]: roundabout exit (0 when unknown); [road]: the road taken ("N2"). */
+data class TurnPt(val lat: Double, val lon: Double, val kind: TurnKind, val exit: Int = 0, val road: String? = null)
 
 /** A road route with its turns. */
 /** A road route: its points, turns, and the router's expected time at each point (seconds from the start). */
 class Routed(val pts: List<LatLon>, val turns: List<TurnPt>, val secs: List<Double> = emptyList())
 
 /** A turn on the line being followed, [atM] metres along it. [then]: way out of a roundabout when its exit is unknown. */
-data class Maneuver(val atM: Double, val kind: TurnKind, val exit: Int = 0, val then: TurnKind? = null)
+data class Maneuver(val atM: Double, val kind: TurnKind, val exit: Int = 0, val then: TurnKind? = null, val road: String? = null)
 
 /**
  * The turns along a followed line: the router's own where the line came from it (planned trajetos,
@@ -60,7 +60,7 @@ class Guidance(lines: List<List<LatLon>>, stored: List<TurnPt>, arrive: Boolean 
     val totalM = cum.lastOrNull() ?: 0.0
 
     val maneuvers: List<Maneuver> = run {
-        val fromRouter = stored.mapNotNull { s -> along(LatLon(s.lat, s.lon))?.let { Maneuver(it, s.kind, s.exit) } }
+        val fromRouter = stored.mapNotNull { s -> along(LatLon(s.lat, s.lon))?.let { Maneuver(it, s.kind, s.exit, road = s.road) } }
         val list = if (fromRouter.isNotEmpty()) fromRouter.sortedBy { it.atM } else lines.flatMapIndexed { i, l -> fromShape(l, start(i, lines)) }
         if (arrive && totalM > 50) list + Maneuver(totalM, TurnKind.ARRIVE) else list
     }
@@ -171,7 +171,10 @@ class TurnVoice {
 }
 
 object Turns {
-    fun phrase(m: Maneuver): String = when (m.kind) {
+    /** What to do, with the road taken when known ("turn left onto N4"). */
+    fun phrase(m: Maneuver): String = m.road?.let { L.s(R.string.turn_onto, action(m), it) } ?: action(m)
+
+    private fun action(m: Maneuver): String = when (m.kind) {
         TurnKind.ROUNDABOUT -> when {
             m.exit > 0 -> L.s(R.string.turn_roundabout_exit, m.exit)
             m.then != null && m.then != TurnKind.STRAIGHT -> L.s(R.string.turn_roundabout_then, plain(m.then))
