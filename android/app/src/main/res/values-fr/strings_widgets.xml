@@ -113,4 +113,9 @@
     <string name="detail_street_names">Noms de rues</string>
     <string name="detail_road_refs">Numéros de routes</string>
     <string name="detail_hint">Plus haut = n\'apparaît que plus près. Sous un certain zoom les fichiers de carte n\'ont pas cette classe (secondaires vers 9, rues vers 12), donc plus bas n\'affiche rien de plus.</string>
+    <string name="w_btn_search">Rechercher</string>
+    <string name="search_hint">Adresse ou lieu</string>
+    <string name="search_busy">Recherche…</string>
+    <string name="search_none">Rien trouvé (pas d’internet ?)</string>
+    <string name="search_saved">Enregistré : %1$s</string>
 </resources>

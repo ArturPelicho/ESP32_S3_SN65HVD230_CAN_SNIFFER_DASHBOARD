@@ -338,7 +338,7 @@ private fun DetailSliders() {
     Column(Modifier.fillMaxWidth().padding(start = 8.dp)) {
         Detail.entries.forEach { d ->
             var v by remember(o.detailAt[d]) { mutableStateOf(o.from(d).toFloat()) }
-            Text(stringResource(R.string.detail_from, d.label, v.roundToInt())), color = Palette.text, fontSize = 14.sp)
+            Text(stringResource(R.string.detail_from, d.label, v.roundToInt()), color = Palette.text, fontSize = 14.sp)
             Slider(value = v, onValueChange = { v = it }, valueRange = d.floor.toFloat()..18f, steps = (18 - d.floor - 1).coerceAtLeast(0),
                 onValueChangeFinished = {
                     val z = v.roundToInt()

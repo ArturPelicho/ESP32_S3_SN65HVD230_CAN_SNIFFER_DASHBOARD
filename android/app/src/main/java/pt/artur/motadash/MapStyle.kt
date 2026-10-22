@@ -437,6 +437,17 @@ object MapStyle {
                 "paint" to mapOf("text-color" to listOf("match", kind, "mpt", MEASURE, DLINE),
                     "text-halo-color" to c.halo, "text-halo-width" to 2)),
         )
+        // A place found by the search: a red pin with its name.
+        labels.addAll(listOf(
+            mapOf("id" to "pin", "type" to "circle", "source" to "pin",
+                "paint" to mapOf("circle-radius" to 10, "circle-color" to "#e2463c",
+                    "circle-stroke-color" to "#ffffff", "circle-stroke-width" to 3)),
+            mapOf("id" to "pin-label", "type" to "symbol", "source" to "pin",
+                "layout" to mapOf("text-field" to listOf("get", "name"), "text-font" to listOf(MEDIUM), "text-size" to 14,
+                    "text-offset" to listOf(0, 1.2), "text-anchor" to "top", "text-allow-overlap" to true),
+                "paint" to mapOf("text-color" to c.label, "text-halo-color" to c.halo, "text-halo-width" to 2)),
+        ))
+        sources["pin"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["tools"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["tracks"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))
         sources["join"] = mapOf("type" to "geojson", "data" to mapOf("type" to "FeatureCollection", "features" to emptyList<Any>()))

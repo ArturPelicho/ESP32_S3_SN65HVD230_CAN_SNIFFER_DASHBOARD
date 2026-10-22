@@ -113,4 +113,9 @@
     <string name="detail_street_names">Nomes de ruas</string>
     <string name="detail_road_refs">Números das estradas</string>
     <string name="detail_hint">Mais alto = só aparece mais perto. Abaixo de um certo zoom os ficheiros do mapa não têm essa classe (secundárias cerca de 9, ruas cerca de 12), por isso mais baixo não mostra mais.</string>
+    <string name="w_btn_search">Pesquisar</string>
+    <string name="search_hint">Morada ou local</string>
+    <string name="search_busy">A procurar…</string>
+    <string name="search_none">Nada encontrado (sem internet?)</string>
+    <string name="search_saved">Guardado: %1$s</string>
 </resources>

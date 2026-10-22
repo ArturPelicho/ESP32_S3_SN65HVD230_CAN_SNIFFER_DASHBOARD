@@ -113,4 +113,9 @@
     <string name="detail_street_names">Straßennamen</string>
     <string name="detail_road_refs">Straßennummern</string>
     <string name="detail_hint">Höher = erst näher sichtbar. Unter einem gewissen Zoom enthalten die Kartendateien diese Klasse nicht (Nebenstraßen ca. 9, Straßen ca. 12), tiefer zeigt also nicht mehr.</string>
+    <string name="w_btn_search">Suchen</string>
+    <string name="search_hint">Adresse oder Ort</string>
+    <string name="search_busy">Suche…</string>
+    <string name="search_none">Nichts gefunden (kein Internet?)</string>
+    <string name="search_saved">Gespeichert: %1$s</string>
 </resources>

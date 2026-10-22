@@ -59,6 +59,9 @@ Settings → **Maps** (or the Maps button on the map).
 - **Map view**: follow mode (heading up, 3D, north up), auto zoom by speed with your own
   speed and zoom ranges, day/night map theme, names in the app's language or as written
   locally, the corner for the navigation boxes, the speed camera beep, contour spacing.
+- **Detail by zoom**: a slider per road class, rivers and streams, water names, street names and
+  road numbers for the zoom they start at. The map files hold some classes only from a certain
+  zoom (secondary roads about 9, streets about 12), so lower than that shows nothing more.
 
 Map data © OpenStreetMap contributors, base map Protomaps, relief Copernicus DEM.
 
@@ -70,6 +73,9 @@ Map data © OpenStreetMap contributors, base map Protomaps, relief Copernicus DE
   view mode (▲ / 3D / N), follow, zoom, GPS details, day/night, layers, tracks, record, maps.
 - **Speed limit sign** from OpenStreetMap, red when you are over it; **speed camera** warning
   with a beep.
+- **Search** (🔍): type an address or a place; your favourite places come first, then results
+  from OpenStreetMap (needs internet). Pick one to see it pinned, then **Go there** for a route
+  from where you are, or save it as a favourite.
 - **Long press on the map**: start a route or add a waypoint, go there, save a favourite place,
   measure from here, draw a direct line.
 - In tunnels the position carries on by dead reckoning for up to 3 minutes.

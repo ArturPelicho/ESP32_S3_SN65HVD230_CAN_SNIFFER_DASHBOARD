@@ -7,6 +7,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -64,6 +65,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.mutableIntStateOf
 import pt.artur.motadash.MapLayer
+import pt.artur.motadash.Found
+import pt.artur.motadash.Search
 import pt.artur.motadash.RouteWeather
 import pt.artur.motadash.Weather
 import pt.artur.motadash.WxKind
@@ -89,6 +92,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -249,6 +257,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             s.addImage("wx-arrow", windArrow, true)
             style = s
             wx?.let { s.getSourceAs<GeoJsonSource>("wx")?.setGeoJson(it) }
+            pin?.let { setPin(it, fly = false) }
             radarShown = null; showRadar()
             show3dBuildings()
             drawMarker()
@@ -262,6 +271,22 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
     var radarTiles: String? = null
         set(v) { field = v; showRadar() }
     private var radarShown: String? = null
+
+    private var pin: Found? = null
+
+    /** The place found by the search, pinned on the map (null clears it), and the map taken there. */
+    fun setPin(f: Found?, fly: Boolean = true) {
+        pin = f
+        style?.getSourceAs<GeoJsonSource>("pin")?.setGeoJson(f?.let {
+            FeatureCollection.fromFeature(Feature.fromGeometry(Point.fromLngLat(it.at.lon, it.at.lat)).apply { addStringProperty("name", it.name) })
+        } ?: FeatureCollection.fromFeatures(emptyList()))
+        val m = map ?: return
+        if (f != null && fly) {
+            setFollow(false)
+            m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder().target(LatLng(f.at.lat, f.at.lon))
+                .zoom(15.0).tilt(0.0).build()), 800)
+        }
+    }
 
     /** The weather layer's points; empty to clear it. */
     fun setWeather(fc: FeatureCollection) {
@@ -923,6 +948,8 @@ fun MapScreen() {
     var stopTrip by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     var showLayers by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
+    var found by remember { mutableStateOf<Found?>(null) }
     var layerDetail by remember { mutableStateOf<MapLayer?>(null) }
     var layers by remember { mutableStateOf(MapStore.layers(ctx)) }
     var themeTick by remember { mutableIntStateOf(0) }
@@ -1394,6 +1421,7 @@ fun MapScreen() {
                     else { theme = MapTheme.entries[(theme.ordinal + 1) % MapTheme.entries.size]; MapStore.setTheme(ctx, theme) }
                 }
             }
+            MapCtl.SEARCH -> MapButton("🔍", active = showSearch) { showSearch = !showSearch }
             MapCtl.LAYERS -> LayersButton(active = showLayers) { showLayers = !showLayers }
             MapCtl.GPX -> MapButton("GPX", active = activeTrack != null, small = true) { showTracks = true }
             MapCtl.REC -> MapButton(if (trip != null) "● " + km(trip!!.distanceM) else "REC", active = trip != null, small = true) {
@@ -1459,6 +1487,19 @@ fun MapScreen() {
                     }
                 }
             }
+        }
+
+        // The search: type an address or a place, pick one, then go there or keep it.
+        if (showSearch) Box(Modifier.align(Alignment.TopCenter).padding(inset).padding(10.dp)) {
+            SearchPanel(near = fix?.let { LatLon(it.latitude, it.longitude) } ?: holder.map?.cameraPosition?.target?.let { LatLon(it.latitude, it.longitude) },
+                onPick = { f -> found = f; showSearch = false; holder.setPin(f) }, onClose = { showSearch = false })
+        }
+        found?.takeIf { !showSearch }?.let { f ->
+            FoundCard(f, here = fix?.let { LatLon(it.latitude, it.longitude) },
+                onGo = { h -> Planner.goThere(ctx, h, f.at, f.name); found = null; holder.setPin(null); holder.setFollow(true) },
+                onSave = { Places.add(ctx, f.name, f.at); Toast.makeText(ctx, ctx.getString(R.string.search_saved, f.name), Toast.LENGTH_SHORT).show() },
+                onClose = { found = null; holder.setPin(null) },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(inset).padding(bottom = 80.dp))
         }
 
         Column(
@@ -1829,6 +1870,74 @@ private fun MeasureBar(holder: MapHolder, onAdd: () -> Unit, onUndo: () -> Unit,
             OutlinedButton(onClick = onClose) { Text("✕") }
         }
         Text(stringResource(R.string.measure_hint), color = Palette.label, fontSize = 12.sp)
+    }
+}
+
+/** Search box and its results: the rider's own places first, then addresses and places from the internet. */
+@Composable
+private fun SearchPanel(near: LatLon?, onPick: (Found) -> Unit, onClose: () -> Unit) {
+    val ctx = LocalContext.current
+    var q by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<Found>>(emptyList()) }
+    var busy by remember { mutableStateOf(false) }
+    var offline by remember { mutableStateOf(false) }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    val lang = pt.artur.motadash.AppLocale.tag(ctx).ifEmpty { java.util.Locale.getDefault().toLanguageTag() }.substringBefore('-')
+    // A moment after the last letter, so typing does not send a question per key.
+    LaunchedEffect(q) {
+        val mine = Search.mine(q)
+        results = mine
+        offline = false
+        if (q.trim().length < 3) { busy = false; return@LaunchedEffect }
+        delay(600)
+        busy = true
+        val web = Search.online(q, near, lang)
+        busy = false
+        offline = web.isEmpty() && mine.isEmpty()
+        results = mine + web
+    }
+    Column(
+        Modifier.widthIn(max = 480.dp).fillMaxWidth().background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(value = q, onValueChange = { q = it }, singleLine = true,
+                label = { Text(stringResource(R.string.search_hint)) },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { results.firstOrNull()?.let(onPick) }),
+                modifier = Modifier.weight(1f).focusRequester(focus))
+            TextButton(onClick = onClose) { Text("✕", color = Palette.amber, fontSize = 22.sp) }
+        }
+        if (busy) Text(stringResource(R.string.search_busy), color = Palette.label, fontSize = 13.sp)
+        else if (offline && q.trim().length >= 3) Text(stringResource(R.string.search_none), color = Palette.label, fontSize = 13.sp)
+        Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
+            results.forEach { f ->
+                Column(Modifier.fillMaxWidth().clickable { onPick(f) }.padding(vertical = 8.dp, horizontal = 4.dp)) {
+                    Text((if (f.mine) "★ " else "") + f.name, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    val d = near?.let { Units.short(pt.artur.motadash.metres(it, f.at), 1) }
+                    val sub = listOfNotNull(d, f.detail.takeIf { it.isNotBlank() && !f.mine }).joinToString(" · ")
+                    if (sub.isNotEmpty()) Text(sub, color = Palette.label, fontSize = 13.sp, maxLines = 2)
+                }
+            }
+        }
+    }
+}
+
+/** The place picked from the search: go there (a route from the bike), keep it as a favourite, or close. */
+@Composable
+private fun FoundCard(f: Found, here: LatLon?, onGo: (LatLon) -> Unit, onSave: () -> Unit, onClose: () -> Unit, modifier: Modifier) {
+    Column(modifier.widthIn(max = 480.dp).background(Palette.overlay, RoundedCornerShape(14.dp)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(f.name, color = Palette.text, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+        if (f.detail.isNotBlank() && !f.mine) Text(f.detail, color = Palette.label, fontSize = 13.sp, maxLines = 2)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (here != null) Button(onClick = { onGo(here) }, modifier = Modifier.height(52.dp)) {
+                Text(stringResource(R.string.map_go_there), fontSize = 16.sp)
+            }
+            if (!f.mine) OutlinedButton(onClick = onSave, modifier = Modifier.height(52.dp)) { Text(stringResource(R.string.place_add), fontSize = 15.sp) }
+            TextButton(onClick = onClose) { Text("✕", color = Palette.amber, fontSize = 22.sp) }
+        }
     }
 }
 

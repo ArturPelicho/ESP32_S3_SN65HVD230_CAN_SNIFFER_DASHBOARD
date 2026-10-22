@@ -113,4 +113,9 @@
     <string name="detail_street_names">Street names</string>
     <string name="detail_road_refs">Road numbers</string>
     <string name="detail_hint">Higher = shows only when closer in. Below a certain zoom the map files hold nothing of a class (secondary roads about 9, streets about 12), so going lower shows no more.</string>
+    <string name="w_btn_search">Search</string>
+    <string name="search_hint">Address or place</string>
+    <string name="search_busy">Searching…</string>
+    <string name="search_none">Nothing found (no internet?)</string>
+    <string name="search_saved">Saved: %1$s</string>
 </resources>
