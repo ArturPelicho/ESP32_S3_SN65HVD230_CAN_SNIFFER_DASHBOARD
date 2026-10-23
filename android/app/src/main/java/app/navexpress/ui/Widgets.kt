@@ -1107,16 +1107,21 @@ private fun ProfileStrip(p: ElevProfile, doneM: Double?, arrival: Long?, wx: Lis
                 modifier = Modifier.padding(start = x, top = 1.dp).background(bg.copy(alpha = 0.7f), RoundedCornerShape(4.dp)).padding(horizontal = 3.dp))
         }
         }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // On a narrow strip (portrait) only the climb and descent, so the three texts never run into each other.
+        val narrow = maxWidth < 480.dp
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             // Highest and lowest point, then the total climb and descent.
-            Text("▲ %.0f  ▼ %.0f  ↗ %.0f  ↘ %.0f %s".format(Units.alt(p.maxE.toDouble()), Units.alt(p.minE.toDouble()),
-                Units.alt(p.climbM.toDouble()), Units.alt(p.descentM.toDouble()), Units.altUnit), color = Palette.label, fontSize = 11.sp, maxLines = 1)
+            val climb = "↗ %.0f  ↘ %.0f %s".format(Units.alt(p.climbM.toDouble()), Units.alt(p.descentM.toDouble()), Units.altUnit)
+            Text(if (narrow) climb else "▲ %.0f  ▼ %.0f  ".format(Units.alt(p.maxE.toDouble()), Units.alt(p.minE.toDouble())) + climb,
+                color = Palette.label, fontSize = 11.sp, maxLines = 1)
             if (here != null) Text(if (p.ride) "%.0f %s".format(Units.alt(here.toDouble()), Units.altUnit)
                 else "%.0f %s · %d%%".format(Units.alt(here.toDouble()), Units.altUnit, (frac * 100).roundToInt()), color = Palette.text,
                 fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text((if (arrival != null) "🏁 " + clockOf(arrival) + " · " else "") + Units.short(p.totalM.toDouble(), 1),
                 color = if (arrival != null) Palette.text else Palette.label,
                 fontSize = 11.sp, maxLines = 1)
+        }
         }
     }
 }

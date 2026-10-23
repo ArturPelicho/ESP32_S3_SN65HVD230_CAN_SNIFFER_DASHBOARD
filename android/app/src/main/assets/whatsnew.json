@@ -81,6 +81,17 @@
     "Definições → Telemóvel volta a ler a otimização de bateria e a localização quando regressas das definições do Android.",
     "Definições do mapa → No ecrã diz a orientação certa (horizontal ou vertical) para os elementos que escolhes."
    ]
+  },
+  {
+   "id": 7,
+   "en": [
+    "Wind arrows stay spread over the screen at any zoom, also close in.",
+    "Portrait: the progress bar keeps its texts apart (climb and descent only when the screen is narrow)."
+   ],
+   "pt": [
+    "As setas do vento ficam espalhadas pelo ecrã em qualquer zoom, também de perto.",
+    "Vertical: a barra de progresso já não encavalita os textos (só subida e descida quando o ecrã é estreito)."
+   ]
   }
  ]
 }
