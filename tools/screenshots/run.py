@@ -263,10 +263,19 @@ def tap_scrolling(label, near, exact=True):
         a = find(near, True, ns) or find(near, False, ns)
         if not a:
             break
-        sh(f"input swipe {a[1]} {a[2] + 300} {a[1]} {a[2] - 300} 600")
+        h = screen_h()  # swipe through the middle of the list, never off the top edge
+        sh(f"input swipe {a[1]} {h * 3 // 4} {a[1]} {h // 4} 600")
         time.sleep(1.5)
     log(f"not found after scrolling: {label!r}")
     return False
+
+
+def screen_h():
+    """Height of the screen in landscape."""
+    m = re.findall(r"(\d+)x(\d+)", sh("wm size"))
+    if not m:
+        return 1080
+    return min(map(int, m[-1]))  # the menus are shot in landscape
 
 
 def back():
@@ -406,11 +415,8 @@ def main():
         shot(out, "map-settings")
         if tap("Detail"):
             shot(out, "map-detail")
-        if tap_scrolling("Regions", "Detail"):
-            time.sleep(4)
-            shot(out, "map-regions")
         back()
-    if tap("🔍"):
+    if tap("🔍") or (time.sleep(3) or tap("🔍")):
         sh("input text Funchal")
         time.sleep(1)
         sh("input keyevent ENTER")
@@ -433,6 +439,9 @@ def main():
             if tap_scrolling(name, "Preferences"):
                 time.sleep(2)
                 shot(out, file)
+                if name == "Maps" and tap("Regions"):
+                    time.sleep(4)
+                    shot(out, "map-regions")
 
     # North up, flat.
     rider.jump(cum[-1] * 0.5)
