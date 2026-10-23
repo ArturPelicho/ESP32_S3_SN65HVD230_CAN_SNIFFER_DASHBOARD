@@ -218,6 +218,14 @@ def nodes():
                 if label and len(b) == 4:
                     x1, y1, x2, y2 = map(int, b)
                     res.append((label, (x1 + x2) // 2, (y1 + y2) // 2, (x1, y1, x2, y2)))
+            # A slow emulator now and then shows "<some app> isn't responding" over everything.
+            anr = next((n for n in res if n[0].endswith("isn't responding")), None)
+            wait = next((n for n in res if n[0] == "Wait"), None)
+            if anr and wait:
+                log("closing:", anr[0])
+                sh(f"input tap {wait[1]} {wait[2]}")
+                time.sleep(2)
+                continue
             return res
         time.sleep(2)
     log("UI tree not readable")
@@ -287,6 +295,7 @@ def back():
 
 
 def shot(out, name):
+    nodes()  # clears an "isn't responding" dialog first
     png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True).stdout
     (Path(out) / f"{name}.png").write_bytes(png)
     log(f"saved {name}.png ({len(png) // 1024} KB)")
