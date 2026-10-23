@@ -15,6 +15,8 @@ bar** in the track box menu.
 
 ## Weather on the map
 
+![The weather layer: temperature tint, wind arrows and values](../img/app/weather.jpg)
+
 Tap the layers button and switch on **Weather**. The map is tinted by **temperature**, from
 blue (cold) through green to red (hot), with **wind arrows** across the whole screen: each
 points where the wind blows to, larger and redder the stronger it is. Values are written on

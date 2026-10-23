@@ -3,7 +3,7 @@
 NavExpress keeps its maps on the phone, so the map, the speed limits and (with offline
 routing) the route all work with no signal.
 
-![Map settings: Regions is the last tab](../img/app/settings-maps.jpg)
+![Regions in Map settings](../img/app/map-regions.jpg)
 
 ## Download a region
 
