@@ -18,7 +18,7 @@ bar** in the track box menu.
 Tap the layers button and switch on **Weather**. The map is tinted by **temperature**, from
 blue (cold) through green to red (hot), with **wind arrows** across the whole screen: each
 points where the wind blows to, larger and redder the stronger it is. Values are written on
-every other arrow.
+some of the arrows, spread evenly.
 
 Long press **Weather** to choose what it shows:
 
