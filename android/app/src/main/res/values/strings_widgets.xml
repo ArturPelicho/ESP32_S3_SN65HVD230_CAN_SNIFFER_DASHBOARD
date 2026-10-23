@@ -98,6 +98,7 @@
     <string name="layer_contour_none">None</string>
     <string name="layer_contour_reset">Back to the general setting</string>
     <string name="layer_contour_hint">Each zoom level keeps its own spacing; zoom in or out and long press again to set another.</string>
+    <string name="layer_contour_zoom_in">Contour lines show from zoom %1$d (the map is at %2$d). Zoom in to set their spacing.</string>
     <string name="layer_weather">Weather</string>
     <string name="wx_wind">Wind</string>
     <string name="wx_temp">Temperature</string>

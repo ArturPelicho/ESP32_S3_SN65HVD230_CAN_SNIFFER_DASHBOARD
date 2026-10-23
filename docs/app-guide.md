@@ -102,12 +102,12 @@ its options:
 |---|---|
 | Tracks on the map | Hide the followed track's line and points (navigation carries on); the GPX button does the same with a tap |
 | Shaded relief | Strength slider (10–100 %) |
-| Contour lines | Spacing (none, 10, 20, 50, 100 m) for the zoom level you are at; each zoom keeps its own, "Back to the general setting" clears them |
+| Contour lines | Spacing (none, 10, 20, 50, 100 m) for the zoom level you are at; each zoom keeps its own, "Back to the general setting" clears them. Contour lines start at zoom 11 |
 | Roads | Each road class on or off: motorways, expressways, main, secondary, local, streets and minor roads, service roads |
 | Dirt roads by difficulty | Each kind on or off: easy (green), medium (yellow), hard (red), not graded (brown), private or closed (black, gates may be shut) |
 | 3D buildings | Shown in the 3D view from zoom 15 |
 | Speed cameras | Icons with the limit |
-| Weather (needs internet, off by default) | Wind arrows (coloured by strength, with gusts), temperature, rain radar and forecast, UV, each on or off. The last forecast is kept for when there is no signal |
+| Weather (needs internet, off by default) | Temperature as a colour field (wind strength when temperature is off), wind arrows coloured by strength with gusts, rain radar and forecast, UV, each on or off. It follows the map as it moves; places already seen keep their forecast for when there is no signal |
 
 ## Tracks, routes and places
 

@@ -87,9 +87,12 @@ object MapStyle {
         return listOf("interpolate", listOf("linear"), listOf("zoom"), 6, (0.95 * k).coerceAtMost(1.0), 14, 0.7 * k)
     }
 
+    /** The contour files hold lines from this zoom in (maps/build_region.sh, -Z11). */
+    const val CONTOUR_MIN_ZOOM = 11
+
     /** Contour spacing the general setting gives at zoom [z] (-1 none), before any choice for that zoom. */
     fun defaultStep(contourStep: Int, z: Int): Int = when {
-        z < 11 -> -1
+        z < CONTOUR_MIN_ZOOM -> -1
         contourStep in setOf(10, 20, 50, 100) -> contourStep
         z == 11 -> 100; z == 12 -> 50; z == 13 -> 20
         else -> 10

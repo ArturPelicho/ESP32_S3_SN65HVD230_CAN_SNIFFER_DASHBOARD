@@ -98,6 +98,7 @@
     <string name="layer_contour_none">Keine</string>
     <string name="layer_contour_reset">Zur allgemeinen Einstellung</string>
     <string name="layer_contour_hint">Jede Zoomstufe behält ihren Abstand; zoomen und erneut lange drücken, um eine andere einzustellen.</string>
+    <string name="layer_contour_zoom_in">Höhenlinien erscheinen ab Zoom %1$d (die Karte steht auf %2$d). Hineinzoomen, um ihren Abstand zu wählen.</string>
     <string name="layer_weather">Wetter</string>
     <string name="wx_wind">Wind</string>
     <string name="wx_temp">Temperatur</string>

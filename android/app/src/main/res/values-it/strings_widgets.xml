@@ -98,6 +98,7 @@
     <string name="layer_contour_none">Nessuna</string>
     <string name="layer_contour_reset">Torna all\'impostazione generale</string>
     <string name="layer_contour_hint">Ogni livello di zoom tiene il suo intervallo; ingrandisci o riduci e premi a lungo di nuovo per cambiarne un altro.</string>
+    <string name="layer_contour_zoom_in">Le curve di livello compaiono dallo zoom %1$d (la mappa è a %2$d). Avvicina per sceglierne la distanza.</string>
     <string name="layer_weather">Meteo</string>
     <string name="wx_wind">Vento</string>
     <string name="wx_temp">Temperatura</string>

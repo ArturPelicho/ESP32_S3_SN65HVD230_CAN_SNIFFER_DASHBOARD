@@ -60,6 +60,7 @@ import app.navexpress.ui.LightSensor
 import androidx.compose.runtime.SideEffect
 import kotlinx.coroutines.delay
 import app.navexpress.ui.UiScale
+import app.navexpress.ui.ScreenShape
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -115,12 +116,18 @@ class MainActivity : ComponentActivity() {
     fun exportBackup() = saveBackup.launch(Backup.fileName())
     fun importBackup() = loadBackup.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        ScreenShape.landscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+    }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocale.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ScreenShape.landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         Feedback.catchCrashes(this)
         L.init(this)
         Units.load(this)

@@ -435,8 +435,16 @@ fun dropped(slots: Map<Widget, Slot>, w: Widget, to: Pair<Int, Int>, cols: Int, 
     }
 }
 
+/**
+ * Whether the screen is in landscape now, kept by the activity. Dialogs can't ask their own
+ * configuration: with a language chosen in the app it keeps the orientation the app started in.
+ */
+object ScreenShape {
+    var landscape by mutableStateOf(false)
+}
+
 @Composable
-fun isLandscape() = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+fun isLandscape() = ScreenShape.landscape
 
 /**
  * The screen's elements in their slots. In move mode the slots show, an element follows the finger

@@ -46,6 +46,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import app.navexpress.Feedback
 import app.navexpress.Link
 import app.navexpress.LinkStatus
@@ -281,12 +283,14 @@ fun ControlScreen(activity: MainActivity) {
                 SetCat.PHONE -> {
                     CommsSettings(activity)
                     Section(stringResource(R.string.set_cat_phone)) {
-                        val bg = Permissions.background(ctx)
+                        // Read again each time the app comes back from Android's own settings screens.
+                        val life by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+                        val bg = remember(life) { Permissions.background(ctx) }
                         KeyValue(stringResource(R.string.set_location_always),
                             stringResource(if (bg) R.string.set_yes else R.string.set_location_needed),
                             if (bg) Palette.green else Palette.orange)
                         if (!bg) Button(onClick = { activity.requestBackgroundLocation() }) { Text(stringResource(R.string.set_allow_always)) }
-                        val opt = activity.batteryOptimised()
+                        val opt = remember(life) { activity.batteryOptimised() }
                         KeyValue(stringResource(R.string.set_battery_opt),
                             stringResource(if (opt) R.string.set_battery_opt_on else R.string.set_battery_opt_off),
                             if (opt) Palette.orange else Palette.green)

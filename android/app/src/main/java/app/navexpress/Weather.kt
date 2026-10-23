@@ -10,6 +10,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
 
 /** The weather at one place and time: rain (mm/h), temperature (°C), wind and gusts (km/h, from where it blows), UV. */
@@ -56,14 +57,7 @@ object Weather {
         if (pts.isEmpty()) return@withContext null
         val file = File(File(ctx.filesDir, "weather").apply { mkdirs() }, "$key.json")
         val fresh = runCatching {
-            val all = JSONArray()
-            for (part in pts.chunked(CHUNK)) {
-                val text = get(url(part))
-                val v = text.trimStart()
-                if (v.startsWith("[")) { val a = JSONArray(v); for (i in 0 until a.length()) all.put(a.getJSONObject(i)) }
-                else all.put(JSONObject(v))
-            }
-            if (all.length() != pts.size) error("got ${all.length()} of ${pts.size}")
+            val all = download(pts)
             file.writeText(JSONObject().put("at", System.currentTimeMillis()).put("data", all).toString())
             all
         }.getOrNull()
@@ -75,6 +69,20 @@ object Weather {
         val out = (0 until data.length()).mapNotNull { runCatching { parse(data.getJSONObject(it)) }.getOrNull() }
         if (out.size != pts.size || pts.indices.any { abs(out[it].lat - pts[it].lat) > 0.1 || abs(out[it].lon - pts[it].lon) > 0.1 }) null else out
     }
+
+    /** Open-Meteo's answer for [pts], one object per place in the same order; throws without network. */
+    internal fun download(pts: List<LatLon>): JSONArray {
+        val all = JSONArray()
+        for (part in pts.chunked(CHUNK)) {
+            val v = get(url(part)).trimStart()
+            if (v.startsWith("[")) { val a = JSONArray(v); for (i in 0 until a.length()) all.put(a.getJSONObject(i)) }
+            else all.put(JSONObject(v))
+        }
+        if (all.length() != pts.size) error("got ${all.length()} of ${pts.size}")
+        return all
+    }
+
+    internal fun series(o: JSONObject): Series = parse(o)
 
     /** When the forecast kept under [key] was fetched, or null. */
     fun keptAt(ctx: Context, key: String): Long? =
@@ -119,6 +127,109 @@ object Weather {
             val past = o.getJSONObject("radar").getJSONArray("past")
             o.getString("host") + past.getJSONObject(past.length() - 1).getString("path") + "/256/{z}/{x}/{y}/2/1_1.png"
         }.getOrNull()
+    }
+}
+
+/**
+ * The weather layer's forecasts on a fixed grid of the world, a few cells across the screen at any
+ * zoom. Cells are fetched as the map shows new ground and again when older than 15 minutes; they are
+ * kept on the phone for 36 h, so ground already seen still has its weather with no network.
+ */
+object WxGrid {
+    /** Cell sizes in degrees, finest first; the map picks the one that puts about six rows on screen. */
+    private val SIZES = doubleArrayOf(0.025, 0.05, 0.1, 0.2, 0.4, 0.8, 1.6, 3.2)
+    private const val ROWS = 6
+    private const val FRESH_MS = 15 * 60_000L
+    private const val KEEP_MS = 36 * 3600_000L
+    private const val MAX_CELLS = 500
+    /** At most this many places per fetch, so a big jump does not ask for hundreds at once. */
+    private const val MAX_FETCH = 120
+
+    private class Cell(val raw: JSONObject, val s: Weather.Series, val at: Long)
+
+    private val cells = java.util.concurrent.ConcurrentHashMap<String, Cell>()
+    private var loaded = false
+    private var failedAt = 0L
+
+    /** The cells covering a part of the map: [level] picks the size, rows [i0]..[i1] (south to north), columns [j0]..[j1]. */
+    data class View(val level: Int, val i0: Int, val i1: Int, val j0: Int, val j1: Int) {
+        val size: Double get() = SIZES[level]
+        val rows: Int get() = i1 - i0 + 1
+        val cols: Int get() = j1 - j0 + 1
+    }
+
+    /** One cell's centre and its forecast. */
+    class Spot(val i: Int, val j: Int, val lat: Double, val lon: Double, val s: Weather.Series)
+
+    /** The cells for the map between [south], [west], [north] and [east], with one cell more all round. */
+    fun view(south: Double, west: Double, north: Double, east: Double): View {
+        val span = (north - south).coerceAtLeast(0.005)
+        val level = SIZES.indexOfFirst { it >= span / ROWS }.let { if (it < 0) SIZES.lastIndex else it }
+        val d = SIZES[level]
+        return View(level, floor(south / d).toInt() - 1, floor(north / d).toInt() + 1,
+            floor(west / d).toInt() - 1, floor(east / d).toInt() + 1)
+    }
+
+    private fun key(l: Int, i: Int, j: Int) = "$l:$i:$j"
+    private fun centre(v: View, i: Int, j: Int) = LatLon((i + 0.5) * v.size, (j + 0.5) * v.size)
+
+    /** Fetches the cells of [v] that are missing or old; true when anything new came. */
+    suspend fun update(ctx: Context, v: View): Boolean = withContext(Dispatchers.IO) {
+        load(ctx)
+        val now = System.currentTimeMillis()
+        val want = ArrayList<Pair<String, LatLon>>()
+        for (i in v.i0..v.i1) for (j in v.j0..v.j1) {
+            val c = cells[key(v.level, i, j)]
+            if (c == null || now - c.at > FRESH_MS) want += key(v.level, i, j) to centre(v, i, j)
+        }
+        // Without network, try again a minute later rather than on every look.
+        if (want.isEmpty() || now - failedAt < 60_000L) return@withContext false
+        val ask = want.take(MAX_FETCH)
+        val got = runCatching { Weather.download(ask.map { it.second }) }.getOrNull()
+            ?: run { failedAt = now; return@withContext false }
+        for (n in ask.indices) runCatching {
+            val o = got.getJSONObject(n)
+            cells[ask[n].first] = Cell(o, Weather.series(o), now)
+        }
+        save(ctx)
+        true
+    }
+
+    /** The cells of [v] that have a forecast. */
+    fun spots(v: View): List<Spot> {
+        val out = ArrayList<Spot>()
+        val now = System.currentTimeMillis()
+        for (i in v.i0..v.i1) for (j in v.j0..v.j1) {
+            val c = cells[key(v.level, i, j)]?.takeIf { now - it.at < KEEP_MS } ?: continue
+            val p = centre(v, i, j)
+            out += Spot(i, j, p.lat, p.lon, c.s)
+        }
+        return out
+    }
+
+    private fun file(ctx: Context) = File(File(ctx.filesDir, "weather").apply { mkdirs() }, "grid.json")
+
+    private fun load(ctx: Context) {
+        if (loaded) return
+        loaded = true
+        runCatching {
+            val o = JSONObject(file(ctx).readText())
+            val now = System.currentTimeMillis()
+            for (k in o.keys()) runCatching {
+                val e = o.getJSONObject(k)
+                val at = e.getLong("at")
+                if (now - at < KEEP_MS) cells[k] = Cell(e.getJSONObject("d"), Weather.series(e.getJSONObject("d")), at)
+            }
+        }
+    }
+
+    private fun save(ctx: Context) {
+        if (cells.size > MAX_CELLS) cells.entries.sortedBy { it.value.at }.take(cells.size - MAX_CELLS).forEach { cells.remove(it.key) }
+        runCatching {
+            val o = JSONObject()
+            for ((k, c) in cells) o.put(k, JSONObject().put("at", c.at).put("d", c.raw))
+            file(ctx).writeText(o.toString())
+        }
     }
 }
 

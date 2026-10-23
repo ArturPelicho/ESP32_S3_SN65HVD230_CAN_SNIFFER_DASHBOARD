@@ -66,6 +66,21 @@
     "O som de amostra do aviso toca no volume de multimédia, como a voz.",
     "Numa instalação nova a barra de botões começa à esquerda."
    ]
+  },
+  {
+   "id": 6,
+   "en": [
+    "Weather layer: temperature (or wind, with temperature off) as a colour field over the map, wind arrows across the whole screen. It follows the map as you move it and keeps the weather of places already seen.",
+    "Contour spacing is only offered at zooms where contour lines show; further out the layer says from which zoom they start.",
+    "Settings → Phone shows the battery optimisation and location state again when you come back from Android's settings.",
+    "Map settings → On screen names the right orientation (landscape or portrait) for the elements you pick."
+   ],
+   "pt": [
+    "Camada de meteo: temperatura (ou vento, com a temperatura desligada) como mancha de cores sobre o mapa, setas do vento em todo o ecrã. Acompanha o mapa quando o mexes e guarda a meteo dos sítios já vistos.",
+    "O espaçamento das curvas de nível só aparece nos zooms em que as curvas se veem; mais longe, a camada diz a partir de que zoom começam.",
+    "Definições → Telemóvel volta a ler a otimização de bateria e a localização quando regressas das definições do Android.",
+    "Definições do mapa → No ecrã diz a orientação certa (horizontal ou vertical) para os elementos que escolhes."
+   ]
   }
  ]
 }

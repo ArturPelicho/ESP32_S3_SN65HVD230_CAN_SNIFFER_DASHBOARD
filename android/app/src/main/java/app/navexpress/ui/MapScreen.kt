@@ -70,6 +70,7 @@ import app.navexpress.Search
 import app.navexpress.RouteWeather
 import app.navexpress.Weather
 import app.navexpress.WxKind
+import app.navexpress.WxGrid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -180,6 +181,8 @@ import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.RasterSource
+import org.maplibre.android.style.sources.ImageSource
+import org.maplibre.android.geometry.LatLngQuad
 import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
@@ -260,6 +263,7 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             wx?.let { s.getSourceAs<GeoJsonSource>("wx")?.setGeoJson(it) }
             pin?.let { setPin(it, fly = false) }
             radarShown = null; showRadar()
+            showWxField()
             show3dBuildings()
             showTracksLayer()
             drawMarker()
@@ -288,6 +292,32 @@ private class MapHolder(private val arrow: Bitmap, private val radar: Bitmap, pr
             m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder().target(LatLng(f.at.lat, f.at.lon))
                 .zoom(15.0).tilt(0.0).build()), 800)
         }
+    }
+
+    private var wxField: WxField? = null
+
+    /** The weather colour field (null clears it), under the map's labels. */
+    fun setWxField(f: WxField?) {
+        wxField = f
+        showWxField()
+    }
+
+    private fun showWxField() {
+        val s = style ?: return
+        val f = wxField
+        if (f == null) {
+            s.getLayer("wx-field")?.let { s.removeLayer(it) }
+            s.getSource("wx-field")?.let { s.removeSource(it) }
+            return
+        }
+        val src = s.getSourceAs<ImageSource>("wx-field")
+        if (src != null) { src.setCoordinates(f.quad); src.setImage(f.bmp); return }
+        s.addSource(ImageSource("wx-field", f.quad, f.bmp))
+        val l = RasterLayer("wx-field", "wx-field").withProperties(
+            PropertyFactory.rasterOpacity(0.45f), PropertyFactory.rasterResampling(Property.RASTER_RESAMPLING_LINEAR),
+            PropertyFactory.rasterFadeDuration(0f))
+        val below = s.layers.firstOrNull { it is SymbolLayer }?.id
+        if (below != null) s.addLayerBelow(l, below) else s.addLayer(l)
     }
 
     /** The weather layer's points; empty to clear it. */
@@ -867,14 +897,18 @@ private fun trackArrowBitmap(): Bitmap {
     return b
 }
 
-/** The weather layer's points: wind arrow, and the values chosen, at the time now. */
-private fun wxFeatures(s: List<Weather.Series>, off: Set<WxKind>): FeatureCollection {
+/**
+ * The weather layer's points, one per grid cell: the wind arrow, and the values chosen as text on
+ * every other cell (the colour field shows the rest), at the time now.
+ */
+private fun wxFeatures(spots: List<WxGrid.Spot>, off: Set<WxKind>): FeatureCollection {
     val now = System.currentTimeMillis()
-    return FeatureCollection.fromFeatures(s.mapNotNull { x ->
-        val w = x.at(now) ?: return@mapNotNull null
+    return FeatureCollection.fromFeatures(spots.mapNotNull { x ->
+        val w = x.s.at(now) ?: return@mapNotNull null
         Feature.fromGeometry(Point.fromLngLat(x.lon, x.lat)).apply {
             val lines = ArrayList<String>()
             val kmh = w.windKmh; val from = w.windFrom
+            val labelled = Math.floorMod(x.i, 2) == 0 && Math.floorMod(x.j, 2) == 0
             if (WxKind.WIND !in off && kmh != null && from != null) {
                 addNumberProperty("rot", (from + 180) % 360); addNumberProperty("kmh", kmh)
                 val gust = w.gustKmh?.takeIf { it > kmh + 10 }?.let { "–%.0f".format(Units.speed(it.toDouble())) } ?: ""
@@ -883,10 +917,57 @@ private fun wxFeatures(s: List<Weather.Series>, off: Set<WxKind>): FeatureCollec
             w.tempC?.takeIf { WxKind.TEMP !in off }?.let { lines += "%.0f%s".format(Units.temp(it.toDouble()), Units.tempUnit) }
             if (WxKind.RAIN !in off && w.rainMmH >= RouteWeather.WET) lines += "%.1f mm/h".format(w.rainMmH)
             w.uv?.takeIf { WxKind.UV !in off && it >= 1 }?.let { lines += "UV %.0f".format(it) }
-            if (lines.isNotEmpty()) addStringProperty("label", lines.joinToString("\n"))
+            if (labelled && lines.isNotEmpty()) addStringProperty("label", lines.joinToString("\n"))
         }
     })
 }
+
+/** Colour stops of the weather field: value, colour. */
+private val TEMP_RAMP = listOf(-10f to 0xFF6A4CFF.toInt(), 0f to 0xFF3B82F6.toInt(), 8f to 0xFF22C1C3.toInt(), 15f to 0xFF4CAF50.toInt(),
+    22f to 0xFFFFD23F.toInt(), 28f to 0xFFFF8C1A.toInt(), 35f to 0xFFE53935.toInt(), 42f to 0xFF8B1A1A.toInt())
+private val WIND_RAMP = listOf(0f to 0xFF5EC6FF.toInt(), 15f to 0xFF4CAF50.toInt(), 30f to 0xFFFFD23F.toInt(), 45f to 0xFFFF8C1A.toInt(),
+    60f to 0xFFE53935.toInt(), 80f to 0xFF9C27B0.toInt())
+
+private fun ramp(stops: List<Pair<Float, Int>>, v: Float): Int {
+    if (v <= stops.first().first) return stops.first().second
+    for (k in 1 until stops.size) {
+        val (b, cb) = stops[k]
+        if (v <= b) {
+            val (a, ca) = stops[k - 1]
+            val f = (v - a) / (b - a)
+            fun ch(sh: Int) = (((ca shr sh) and 0xFF) + (((cb shr sh) and 0xFF) - ((ca shr sh) and 0xFF)) * f).toInt()
+            return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
+        }
+    }
+    return stops.last().second
+}
+
+/**
+ * The colour field under the map's labels: one pixel per grid cell, smoothed by the map between them.
+ * Temperature when it is on, otherwise wind strength; null when neither is wanted or nothing came yet.
+ */
+private fun wxField(v: WxGrid.View, spots: List<WxGrid.Spot>, off: Set<WxKind>): WxField? {
+    val temp = WxKind.TEMP !in off
+    if (!temp && WxKind.WIND in off) return null
+    val now = System.currentTimeMillis()
+    val bmp = Bitmap.createBitmap(v.cols, v.rows, Bitmap.Config.ARGB_8888)
+    var any = false
+    for (x in spots) {
+        val w = x.s.at(now) ?: continue
+        val value = (if (temp) w.tempC else w.windKmh) ?: continue
+        // Rows of the picture run north to south.
+        bmp.setPixel(x.j - v.j0, v.i1 - x.i, ramp(if (temp) TEMP_RAMP else WIND_RAMP, value))
+        any = true
+    }
+    if (!any) return null
+    val d = v.size
+    return WxField(bmp, LatLngQuad(
+        LatLng((v.i1 + 1) * d, v.j0 * d), LatLng((v.i1 + 1) * d, (v.j1 + 1) * d),
+        LatLng(v.i0 * d, (v.j1 + 1) * d), LatLng(v.i0 * d, v.j0 * d)))
+}
+
+/** A picture laid on the map between four corners. */
+class WxField(val bmp: Bitmap, val quad: LatLngQuad)
 
 /** Wind arrow (tinted by the style), pointing north before rotation: where the wind blows to. */
 private fun windArrowBitmap(): Bitmap {
@@ -1066,34 +1147,40 @@ fun MapScreen() {
             delay(if (w.ready) 15 * 60_000L else 2 * 60_000L)
         }
     }
-    // The weather layer: a grid over what the map shows, fetched again when the map moves on or every 15 minutes.
+    // The weather layer: a grid of cells over what the map shows, fetched as the map moves onto new
+    // ground (a moment after it stops) and again every 15 minutes; a colour field under the labels
+    // (temperature, or wind when temperature is off) and wind arrows on top.
     val wxOn = MapLayer.WEATHER in layers
     LaunchedEffect(wxOn, layerOpts.wxOff) {
-        if (!wxOn) { holder.setWeather(FeatureCollection.fromFeatures(emptyList())); holder.radarTiles = null; return@LaunchedEffect }
-        var lastAt = 0L; var triedAt = 0L; var lastC: LatLng? = null; var lastSpan = 0.0; var radarAt = 0L
-        var series: List<Weather.Series>? = null
+        if (!wxOn) {
+            holder.setWeather(FeatureCollection.fromFeatures(emptyList())); holder.setWxField(null); holder.radarTiles = null
+            return@LaunchedEffect
+        }
+        var radarAt = 0L
+        var lastView: WxGrid.View? = null
+        var shownView: WxGrid.View? = null
+        var shownAt = 0L
         while (true) {
             val b = holder.map?.projection?.visibleRegion?.latLngBounds
             val now = System.currentTimeMillis()
-            if (b != null && now - triedAt > 60_000L) {
-                val c = b.center
-                val span = b.latitudeSpan.coerceAtLeast(0.01)
-                val lc = lastC
-                val moved = lc == null || abs(c.latitude - lc.latitude) > lastSpan / 3 || abs(c.longitude - lc.longitude) > b.longitudeSpan / 3 ||
-                    span > lastSpan * 1.8 || span < lastSpan / 1.8
-                if (moved || now - lastAt > 15 * 60_000L) {
-                    triedAt = now
-                    val pts = ArrayList<LatLon>()
-                    for (r in 0 until 3) for (k in 0 until 4)
-                        pts += LatLon(b.latitudeSouth + span * (r + 0.5) / 3, b.longitudeWest + b.longitudeSpan * (k + 0.5) / 4)
-                    Weather.fetch(ctx, "area", pts)?.let { series = it; lastAt = now; lastC = c; lastSpan = span }
+            if (b != null) {
+                val v = WxGrid.view(b.latitudeSouth, b.longitudeWest, b.latitudeNorth, b.longitudeEast)
+                // Wait for the map to settle (the same cells twice in a row) before asking for more.
+                if (v == lastView) {
+                    val fresh = WxGrid.update(ctx, v)
+                    if (fresh || v != shownView || now - shownAt > 60_000L) {
+                        val spots = WxGrid.spots(v)
+                        holder.setWeather(wxFeatures(spots, layerOpts.wxOff))
+                        holder.setWxField(wxField(v, spots, layerOpts.wxOff))
+                        shownView = v; shownAt = now
+                    }
                 }
+                lastView = v
             }
-            series?.let { holder.setWeather(wxFeatures(it, layerOpts.wxOff)) }
             if (WxKind.RAIN !in layerOpts.wxOff) {
                 if (now - radarAt > 10 * 60_000L) Weather.radarTiles()?.let { holder.radarTiles = it; radarAt = now }
             } else holder.radarTiles = null
-            delay(20_000)
+            delay(1500)
         }
     }
 
@@ -2352,8 +2439,11 @@ private fun LayerOptions(l: MapLayer, o: LayerOpts, contourStep: Int, zoom: Doub
             MapLayer.CONTOURS -> {
                 val z = kotlin.math.floor(zoom).toInt().coerceIn(8, 19)
                 val cur = o.contourAt[z] ?: MapStyle.defaultStep(contourStep, z)
-                Text(stringResource(R.string.layer_contour_at_zoom, z), color = Palette.text, fontSize = 14.sp)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // The contour files start at zoom 11: further out a spacing would change nothing.
+                if (z < MapStyle.CONTOUR_MIN_ZOOM) Text(stringResource(R.string.layer_contour_zoom_in, MapStyle.CONTOUR_MIN_ZOOM, z),
+                    color = Palette.orange, fontSize = 14.sp)
+                else Text(stringResource(R.string.layer_contour_at_zoom, z), color = Palette.text, fontSize = 14.sp)
+                if (z >= MapStyle.CONTOUR_MIN_ZOOM) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(-1, 10, 20, 50, 100).forEach { st ->
                         Chip(selected = cur == st, onClick = { set(o.copy(contourAt = o.contourAt + (z to st))) },
                             label = { Text(if (st < 0) stringResource(R.string.layer_contour_none) else stringResource(R.string.mapopts_contour_m, st)) })

@@ -15,11 +15,20 @@ bar** in the track box menu.
 
 ## Weather on the map
 
-Tap the layers button and switch on **Weather**. Long press it to choose:
+Tap the layers button and switch on **Weather**. The map is tinted by **temperature**, from
+blue (cold) through green to red (hot), with **wind arrows** across the whole screen: each
+points where the wind blows to, larger and redder the stronger it is. Values are written on
+every other arrow.
 
-- **Wind**: arrows coloured by strength, with gusts;
-- **Temperature**;
-- **Rain**: the radar now and the forecast;
+Long press **Weather** to choose what it shows:
+
+- **Wind**: the arrows, with gusts in the values. With temperature off, the tint shows wind
+  strength instead.
+- **Temperature**: the tint and the values.
+- **Rain**: the radar now, and the forecast in the values.
 - **UV**.
+
+Move or zoom the map and the weather follows a moment after it stops. Places you have already
+looked at keep their weather on the phone for a day and a half, for when there is no signal.
 
 Forecast: Open-Meteo. Rain radar: RainViewer.
