@@ -58,7 +58,7 @@ jobs:
           cp android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
           gh release create "app-v${VER}" "$APK_NAME" --latest --target "$GITHUB_SHA" \
             --title "NavExpress v${VER}" \
-            --notes "App do telemóvel v${VER}, branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Instalar por cima da versão anterior."
+            --notes "NavExpress phone app v${VER}, built from commit ${GITHUB_SHA::7} (${GITHUB_REF_NAME}). Install it over the previous version; settings are kept. What changed: [changelog](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md). First install: [getting started](https://github.com/${GITHUB_REPOSITORY}/blob/main/docs/getting-started.md)."
           # Drafts left by the old app-latest delete-and-recreate.
           # Only app drafts: a maps-* release is a draft while its files upload.
           gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[] | select(.draft and (.tag_name | startswith("app-"))) | .id' |

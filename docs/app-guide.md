@@ -1,11 +1,13 @@
-# NavExpress Mobile: user guide
+# NavExpress: user guide
 
-How to set up and use every part of the phone app. The app speaks English, Portuguese,
+Every screen and option of the phone app, for reference. For a first install see
+[Getting started](getting-started.md); for step-by-step tasks see the
+[how-to guides](how-to/README.md). The app speaks English, Portuguese,
 Spanish, French, Italian and German (Settings → Preferences → Language); this guide uses
 the English names.
 
 - [Install and update](#install-and-update)
-- [The four tabs](#the-four-tabs)
+- [The three tabs](#the-three-tabs)
 - [Offline maps](#offline-maps)
 - [The map screen](#the-map-screen)
 - [Layers](#layers)
@@ -22,16 +24,15 @@ the English names.
 
 ## Install and update
 
-1. Download the newest APK from [the latest release](../../../releases/latest). The file name
-   always carries the version, for example `navexpress-v0.1.135-abc1234.apk`.
-2. Open it on the phone and allow installing from that app when Android asks. If Play Protect
-   hangs on "Installing…", restart the phone and install from the Files app.
-3. Updates: every time the app starts it checks GitHub for a newer build and offers
-   **Update** or **Dismiss**. You can also check by hand in Settings → About.
+Download the newest APK from [the latest release](../../../releases/latest) on the phone and
+open it; the file name always carries the version, for example `navexpress-v0.1.168-76f52c2.apk`.
+Every time the app starts it checks for a newer build and offers **Update**; Settings → About
+checks by hand. Permissions and background running for any phone are explained in
+[Getting started](getting-started.md).
 
 The Android status bar and navigation buttons always stay visible.
 
-## The four tabs
+## The three tabs
 
 | Tab | What it is |
 |---|---|
