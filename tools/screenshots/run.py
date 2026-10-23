@@ -183,7 +183,7 @@ def prefs(name, values):
     put_private(f"shared_prefs/{name}.xml", xml_prefs(values))
 
 
-def set_state(theme="DAY", track_mode="NAV", follow="THREE_D", orientation="LANDSCAPE", maps_files=None):
+def set_state(theme="DAY", track_mode="NAV", follow="THREE_D", orientation="LANDSCAPE", maps_files=None, weather=False):
     adb("shell", f"am force-stop {PKG}")
     time.sleep(1)
     prefs("app", {"whatsnew_seen": 9999, "theme_mode": theme, "theme_day": "SAND", "lang": "en"})
@@ -191,7 +191,8 @@ def set_state(theme="DAY", track_mode="NAV", follow="THREE_D", orientation="LAND
     prefs("mota", {"orientation": orientation, "screen_on": True})
     prefs("tracks", {"active": "demo"})
     m = {"follow": follow, "track_mode": track_mode, "theme": theme, "auto_zoom": True,
-         "pacenotes": True, "section_times": True, "turn_banner": True, "camera_beep": False}
+         "pacenotes": True, "section_times": True, "turn_banner": True, "camera_beep": False,
+         "layer_weather": weather}
     if maps_files:
         m.update(maps_files)
     prefs("maps", m)
@@ -253,6 +254,21 @@ def in_front():
     return PKG in sh("dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'")
 
 
+def tap_scrolling(label, near, exact=True):
+    """Taps [label], scrolling the list that holds [near] up to bring it into view."""
+    for _ in range(4):
+        ns = nodes()
+        if find(label, exact, ns):
+            return tap(label, exact)
+        a = find(near, True, ns) or find(near, False, ns)
+        if not a:
+            break
+        sh(f"input swipe {a[1]} {a[2] + 300} {a[1]} {a[2] - 300} 600")
+        time.sleep(1.5)
+    log(f"not found after scrolling: {label!r}")
+    return False
+
+
 def back():
     """Closes a dialog or panel; if that left the app, brings it back."""
     sh("input keyevent BACK")
@@ -294,6 +310,12 @@ def main():
     sh(f"dumpsys deviceidle whitelist +{PKG}")
     sh("settings put system screen_off_timeout 1800000")
     sh("svc power stayon true")
+    sh("settings put system time_12_24 24")
+    # No camera cutout: in landscape it leaves a black strip down one side of the pictures.
+    for line in sh("cmd overlay list").splitlines():
+        if "cutout" in line and "[x]" in line:
+            sh(f"cmd overlay disable {line.split()[-1]}")
+    log("overlays:", [l.strip() for l in sh("cmd overlay list").splitlines() if "cutout" in l])
     # First start creates the app's folders.
     start()
     adb("shell", f"am force-stop {PKG}")
@@ -339,9 +361,9 @@ def main():
         dismiss_dialogs()
 
     # 1. Navigating up the mountain by day.
-    rider.jump(cum[-1] * 0.35)
+    rider.jump(cum[-1] * 0.32)
     scene(theme="DAY", track_mode="NAV")
-    rider.ride(25)
+    rider.ride(40)
     shot(out, "nav-day")
     log("location:", sh("dumpsys location | grep -m3 -i 'last location'"))
     log("ui:", [n[0] for n in nodes()])
@@ -377,14 +399,14 @@ def main():
         tap_xy(lx, ly)
     if tap(a.name, long=True):
         shot(out, "track-menu")
-        if tap("Route type", exact=False):
+        if tap_scrolling("Route type", "Stop navigation", exact=False):
             shot(out, "route-type")
         back()
     if tap("☰"):
         shot(out, "map-settings")
         if tap("Detail"):
             shot(out, "map-detail")
-        if tap("Regions", exact=False):
+        if tap_scrolling("Regions", "Detail"):
             time.sleep(4)
             shot(out, "map-regions")
         back()
@@ -392,10 +414,13 @@ def main():
         sh("input text Funchal")
         time.sleep(1)
         sh("input keyevent ENTER")
-        time.sleep(6)
+        time.sleep(4)
+        sh("input keyevent BACK")  # the keyboard down, the results in view
+        time.sleep(3)
+        log("search:", [n[0] for n in nodes()][:40])
         shot(out, "search")
-        back()
-        back()
+        if not tap("🔍"):
+            back()
 
     # 5. Dashboard and Settings.
     if tap("Dashboard"):
@@ -405,9 +430,21 @@ def main():
         shot(out, "settings-preferences")
         for name, file in (("Tracks (GPX)", "settings-tracks"), ("Maps", "settings-maps"),
                            ("Diagnostics", "settings-diagnostics"), ("About", "settings-about")):
-            if tap(name):
+            if tap_scrolling(name, "Preferences"):
                 time.sleep(2)
                 shot(out, file)
+
+    # North up, flat.
+    rider.jump(cum[-1] * 0.5)
+    scene(theme="DAY", track_mode="NAV", follow="NORTH")
+    rider.ride(20)
+    shot(out, "nav-north")
+
+    # Weather over the map.
+    rider.jump(cum[-1] * 0.6)
+    scene(theme="DAY", track_mode="NAV", follow="NORTH", weather=True)
+    rider.ride(35)
+    shot(out, "weather")
 
     # 6. Portrait.
     rider.jump(cum[-1] * 0.45)

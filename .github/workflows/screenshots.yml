@@ -50,7 +50,7 @@ jobs:
           profile: pixel_6
           ram-size: 4096M
           disk-size: 6G
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swangle_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: python3 tools/screenshots/run.py --apk work/app.apk --maps work/maps --route work/route.gpx --out work/shots
       - uses: actions/upload-artifact@v4
