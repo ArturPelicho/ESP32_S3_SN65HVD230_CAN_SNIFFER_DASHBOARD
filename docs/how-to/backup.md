@@ -1,6 +1,6 @@
 # Back up and move to a new phone
 
-![Settings → About](../img/app/settings-about.png)
+![Settings → About](../img/app/settings-about.jpg)
 
 ## Save
 

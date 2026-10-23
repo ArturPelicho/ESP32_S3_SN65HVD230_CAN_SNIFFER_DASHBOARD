@@ -2,7 +2,7 @@
 
 The Map and the Dashboard are built from **elements** you choose and place yourself.
 
-![The Dashboard tab](../img/app/dashboard.png)
+![The Dashboard tab](../img/app/dashboard.jpg)
 
 ## Pick what shows
 
@@ -14,6 +14,8 @@ RPM, rev counter, shift lights, fuel tank, range, head temperature, consumption 
 average, clock, bike and GPS link, battery, intake air, throttle, trips A and B, odometer,
 coordinates, altitude, engine faults, north, lean and pitch, and on the map the track
 progress bar. Landscape and portrait each keep their own choice.
+
+<img src="../img/app/nav-portrait.jpg" width="40%" alt="The map in portrait, with the buttons in one column">
 
 ## Place and size them
 

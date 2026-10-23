@@ -898,17 +898,23 @@ private fun trackArrowBitmap(): Bitmap {
 }
 
 /**
- * The weather layer's points, one per grid cell: the wind arrow, and the values chosen as text on
- * every other cell (the colour field shows the rest), at the time now.
+ * The weather layer's points: wind arrows evenly over the screen at any zoom (each with the forecast of
+ * the cell it falls in, as the forecast is no finer than that), and the values chosen as text on every
+ * other one, at the time now.
  */
-private fun wxFeatures(spots: List<WxGrid.Spot>, off: Set<WxKind>): FeatureCollection {
+private fun wxFeatures(v: WxGrid.View, spots: List<WxGrid.Spot>, b: LatLngBounds, off: Set<WxKind>): FeatureCollection {
     val now = System.currentTimeMillis()
-    return FeatureCollection.fromFeatures(spots.mapNotNull { x ->
-        val w = x.s.at(now) ?: return@mapNotNull null
-        Feature.fromGeometry(Point.fromLngLat(x.lon, x.lat)).apply {
+    val byCell = spots.associateBy { it.i to it.j }
+    val out = ArrayList<Feature>()
+    val rows = 4; val cols = 7
+    for (r in 0 until rows) for (k in 0 until cols) {
+        val lat = b.latitudeSouth + b.latitudeSpan * (r + 0.5) / rows
+        val lon = b.longitudeWest + b.longitudeSpan * (k + 0.5) / cols
+        val x = byCell[kotlin.math.floor(lat / v.size).toInt() to kotlin.math.floor(lon / v.size).toInt()] ?: continue
+        val w = x.s.at(now) ?: continue
+        out += Feature.fromGeometry(Point.fromLngLat(lon, lat)).apply {
             val lines = ArrayList<String>()
             val kmh = w.windKmh; val from = w.windFrom
-            val labelled = Math.floorMod(x.i, 2) == 0 && Math.floorMod(x.j, 2) == 0
             if (WxKind.WIND !in off && kmh != null && from != null) {
                 addNumberProperty("rot", (from + 180) % 360); addNumberProperty("kmh", kmh)
                 val gust = w.gustKmh?.takeIf { it > kmh + 10 }?.let { "–%.0f".format(Units.speed(it.toDouble())) } ?: ""
@@ -917,9 +923,10 @@ private fun wxFeatures(spots: List<WxGrid.Spot>, off: Set<WxKind>): FeatureColle
             w.tempC?.takeIf { WxKind.TEMP !in off }?.let { lines += "%.0f%s".format(Units.temp(it.toDouble()), Units.tempUnit) }
             if (WxKind.RAIN !in off && w.rainMmH >= RouteWeather.WET) lines += "%.1f mm/h".format(w.rainMmH)
             w.uv?.takeIf { WxKind.UV !in off && it >= 1 }?.let { lines += "UV %.0f".format(it) }
-            if (labelled && lines.isNotEmpty()) addStringProperty("label", lines.joinToString("\n"))
+            if ((r + k) % 2 == 0 && lines.isNotEmpty()) addStringProperty("label", lines.joinToString("\n"))
         }
-    })
+    }
+    return FeatureCollection.fromFeatures(out)
 }
 
 /** Colour stops of the weather field: value, colour. */
@@ -1168,9 +1175,10 @@ fun MapScreen() {
                 // Wait for the map to settle (the same cells twice in a row) before asking for more.
                 if (v == lastView) {
                     val fresh = WxGrid.update(ctx, v)
+                    val spots = WxGrid.spots(v)
+                    // The arrows sit on the screen, so they follow every settled move; the field only changes with the cells.
+                    holder.setWeather(wxFeatures(v, spots, b, layerOpts.wxOff))
                     if (fresh || v != shownView || now - shownAt > 60_000L) {
-                        val spots = WxGrid.spots(v)
-                        holder.setWeather(wxFeatures(spots, layerOpts.wxOff))
                         holder.setWxField(wxField(v, spots, layerOpts.wxOff))
                         shownView = v; shownAt = now
                     }

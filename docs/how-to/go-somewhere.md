@@ -1,7 +1,5 @@
 # Go somewhere
 
-![Searching for a place](../img/app/search.png)
-
 ## Search an address or a place
 
 1. Tap **🔍** on the button bar.

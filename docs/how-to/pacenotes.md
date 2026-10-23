@@ -3,7 +3,7 @@
 In **Track** mode NavExpress reads the road ahead like a rally co-driver, from the shape of
 the track itself.
 
-![Pacenotes in Track mode](../img/app/pacenotes.png)
+![Pacenotes in Track mode](../img/app/pacenotes.jpg)
 
 ## Turn it on
 

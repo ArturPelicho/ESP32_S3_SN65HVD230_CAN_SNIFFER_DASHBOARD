@@ -1,6 +1,6 @@
 # Set the map's look and detail
 
-![Map settings](../img/app/map-settings.png)
+![Map settings](../img/app/map-settings.jpg)
 
 ## Day and night
 
@@ -9,7 +9,7 @@ Settings → Preferences → **Theme**: **Sand** or **Graphite** by day; warm **
 from the light sensor or with the phone's dark mode; or set it by hand. The **DAY / NIGHT**
 button on the map switches it on the spot.
 
-![Night map in 3D](../img/app/nav-night.png)
+![Night map in 3D](../img/app/nav-night.jpg)
 
 ## The view
 
@@ -21,7 +21,7 @@ the two sliders (the slow, closer end is on the left).
 
 Tap the layers button. Tap a layer to switch it, and long press one marked ⋯ for its options.
 
-![Layers](../img/app/layers.png)
+![Layers](../img/app/layers.jpg)
 
 | Layer | Options |
 |---|---|
@@ -41,7 +41,7 @@ streams, water names, street names and road numbers. Choose **Very close**, **Cl
 **Middle**, **Far** or **Very far**. The many small details stop at Middle so the map stays
 readable; a level is only offered where the map files hold that detail.
 
-![Detail by zoom](../img/app/map-detail.png)
+![Detail by zoom](../img/app/map-detail.jpg)
 
 ## Names, units, size and language
 

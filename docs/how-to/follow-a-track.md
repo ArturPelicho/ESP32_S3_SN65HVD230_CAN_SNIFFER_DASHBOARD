@@ -2,7 +2,7 @@
 
 For a route a friend sent you, a rally road book or a track from a ride website.
 
-![Following a track by day](../img/app/nav-day.png)
+![Following a track by day](../img/app/nav-day.jpg)
 
 ## Import it
 

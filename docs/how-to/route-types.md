@@ -1,6 +1,6 @@
 # Choose the kind of route
 
-![Route type page in the track box menu](../img/app/route-type.png)
+![The track box menu, where the route type is chosen](../img/app/track-menu.jpg)
 
 Long press the track box → **Route type ›** (or Settings → Tracks → Navigation).
 

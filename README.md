@@ -18,7 +18,7 @@ a smart dashboard for your bike
 [How-to guides](docs/how-to/README.md) · [User guide](docs/app-guide.md) ·
 [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
 
-<img src="docs/img/app/nav-day.png" width="92%" alt="NavExpress following a mountain road in Madeira by day">
+<img src="docs/img/app/nav-day.jpg" width="92%" alt="NavExpress following a mountain road in Madeira by day">
 
 </div>
 
@@ -48,7 +48,7 @@ Free, with no account, no ads and no tracking.
 
 ### 🧭 Navigation built for riders
 
-<img src="docs/img/app/nav-night.png" width="49%" alt="Night map in 3D following a route"> <img src="docs/img/app/route-type.png" width="49%" alt="Route type page: Fastest, Economical, Fun">
+<img src="docs/img/app/nav-night.jpg" width="49%" alt="Night map in 3D following a route"> <img src="docs/img/app/nav-north.jpg" width="49%" alt="North-up map with the next turn and the height profile">
 
 - Search an address or a place, or long press the map, and **Go there**.
 - **Offline routing** with three route types: **Fastest**, **Economical** and **Fun** (seeks
@@ -60,7 +60,7 @@ Free, with no account, no ads and no tracking.
 
 ### 🏁 Ride a track like a rally
 
-<img src="docs/img/app/pacenotes.png" width="49%" alt="Track mode with pacenotes"> <img src="docs/img/app/track-menu.png" width="49%" alt="Track box menu">
+<img src="docs/img/app/pacenotes.jpg" width="49%" alt="Track mode with pacenotes"> <img src="docs/img/app/track-menu.jpg" width="49%" alt="Track box menu">
 
 - Import GPX, KML, KMZ, GeoJSON, TCX or FIT, or plan your own with numbered waypoints.
 - **Nav** mode reroutes back to the line; **Track** mode keeps the line exact and guides you
@@ -71,7 +71,7 @@ Free, with no account, no ads and no tracking.
 
 ### 📱 Your screen, your way
 
-<img src="docs/img/app/dashboard.png" width="49%" alt="Dashboard tab"> <img src="docs/img/app/map-settings.png" width="49%" alt="Map settings">
+<img src="docs/img/app/dashboard.jpg" width="49%" alt="Dashboard tab"> <img src="docs/img/app/map-settings.jpg" width="49%" alt="Map settings">
 
 - The Map and the Dashboard are built from elements you pick, place and size: speed, gear,
   RPM, fuel, range, trips, clock, altitude, north, lean and more.
