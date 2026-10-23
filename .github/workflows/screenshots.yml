@@ -35,8 +35,7 @@ jobs:
           gh release download "$MAPS" -p 'madeira-*.pmtiles' -D work/maps
           ls -l work/maps
           # Funchal, up the ER103 past Poiso, to Pico do Arieiro.
-          curl -sf -o work/route.gpx "https://brouter.de/brouter?lonlats=-16.9087,32.6503|-16.8900,32.7090|-16.9284,32.7354&profile=car-fast&alternativeidx=0&format=gpx"
-          grep -c "<trkpt" work/route.gpx
+          python3 tools/screenshots/route.py work/route.gpx -16.9087,32.6503 -16.8900,32.7090 -16.9284,32.7354
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
