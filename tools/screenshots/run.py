@@ -103,14 +103,25 @@ def dm(v, lat):
     return (f"{d:02d}{m:07.4f}" if lat else f"{d:03d}{m:07.4f}"), ("N" if v >= 0 else "S") if lat else ("E" if v >= 0 else "W")
 
 
+GEO_ARGS = None
+
+
 def send_fix(lat, lon, ele, kmh, brg):
-    t = datetime.now(timezone.utc)
-    hms = t.strftime("%H%M%S") + ".00"
-    la, ns = dm(lat, True)
-    lo, ew = dm(lon, False)
-    kn = kmh / 1.852
-    adb("emu", "geo", "nmea", nmea(f"GPGGA,{hms},{la},{ns},{lo},{ew},1,10,0.8,{ele:.1f},M,0.0,M,,"), check=False)
-    adb("emu", "geo", "nmea", nmea(f"GPRMC,{hms},A,{la},{ns},{lo},{ew},{kn:.1f},{brg:.1f},{t.strftime('%d%m%y')},,,A"), check=False)
+    """A fix into the emulator's GPS: position, height, satellites, speed (knots) and, where
+    the emulator takes it, heading."""
+    global GEO_ARGS
+    kn = f"{kmh / 1.852:.1f}"
+    base = ["emu", "geo", "fix", f"{lon:.6f}", f"{lat:.6f}", f"{ele:.1f}", "10", kn]
+    if GEO_ARGS is None:  # find out once what this emulator accepts
+        for extra in ([f"{brg:.1f}"], []):
+            r = subprocess.run(["adb", *base, *extra], capture_output=True, text=True)
+            if r.returncode == 0 and "KO" not in r.stdout + r.stderr:
+                GEO_ARGS = len(extra)
+                log(f"geo fix with {'heading' if extra else 'no heading'}: {r.stdout.strip()}")
+                return
+        GEO_ARGS = 0
+        return
+    adb(*base, *([f"{brg:.1f}"] if GEO_ARGS else []), check=False)
 
 
 class Rider(threading.Thread):
@@ -238,9 +249,16 @@ def tap(label, exact=True, long=False):
     return True
 
 
+def in_front():
+    return PKG in sh("dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'")
+
+
 def back():
+    """Closes a dialog or panel; if that left the app, brings it back."""
     sh("input keyevent BACK")
     time.sleep(1.2)
+    if not in_front():
+        start()
 
 
 def shot(out, name):
@@ -326,6 +344,7 @@ def main():
     rider.ride(25)
     shot(out, "nav-day")
     log("location:", sh("dumpsys location | grep -m3 -i 'last location'"))
+    log("ui:", [n[0] for n in nodes()])
 
     # 2. Track mode with pacenotes.
     rider.jump(cum[-1] * 0.55)
@@ -348,10 +367,14 @@ def main():
     ns = nodes()
     log("map screen:", [n[0] for n in ns])
     dn, gpx = find("DAY", ns=ns), find("GPX", ns=ns)
+    lay = find("Layers", ns=ns)
+    if lay:
+        dn = gpx = lay
     if dn and gpx:  # the layers button sits between the day/night and GPX buttons
-        tap_xy((dn[1] + gpx[1]) // 2, (dn[2] + gpx[2]) // 2)
+        lx, ly = (dn[1] + gpx[1]) // 2, (dn[2] + gpx[2]) // 2
+        tap_xy(lx, ly)
         shot(out, "layers")
-        back()
+        tap_xy(lx, ly)
     if tap(a.name, long=True):
         shot(out, "track-menu")
         if tap("Route type", exact=False):

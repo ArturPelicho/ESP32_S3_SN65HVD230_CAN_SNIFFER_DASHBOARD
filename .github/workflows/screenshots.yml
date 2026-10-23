@@ -63,7 +63,7 @@ jobs:
         run: |
           ls work/shots/*.png >/dev/null 2>&1 || exit 0
           gh release view docs-shots >/dev/null 2>&1 ||
-            gh release create docs-shots --prerelease --latest=false --target "$GITHUB_SHA" \
+            gh release create docs-shots --prerelease --latest=false \
               --title "Screenshots for the documentation" \
               --notes "Pictures of the app taken on an emulator by the Screenshots workflow, for the README and the guides. Not an app version."
           gh release upload docs-shots work/shots/*.png work/route.gpx --clobber
