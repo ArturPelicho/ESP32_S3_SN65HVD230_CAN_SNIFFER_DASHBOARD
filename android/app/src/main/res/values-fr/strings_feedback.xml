@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fb_title">Suggestions et problèmes</string>
+    <string name="fb_hint">Ouvre une page déjà remplie sur le GitHub du projet (un compte GitHub gratuit est nécessaire pour l\'envoyer).</string>
+    <string name="fb_suggest">Envoyer une suggestion</string>
+    <string name="fb_problem">Signaler un problème</string>
+    <string name="fb_suggest_title">Suggestion : </string>
+    <string name="fb_suggest_body">Que voudriez-vous que l\'app fasse ?\n\n</string>
+    <string name="fb_problem_title">Problème : </string>
+    <string name="fb_problem_body">Que s\'est-il passé, et qu\'attendiez-vous ?\n\nÉtapes pour le revoir :\n1. \n</string>
+    <string name="fb_crash_title">Rapport de plantage</string>
+    <string name="fb_crash_body">L\'app s\'est fermée de façon inattendue. Que faisiez-vous à ce moment ?\n\n</string>
+    <string name="fb_crash_prompt_title">L\'app s\'est fermée de façon inattendue la dernière fois</string>
+    <string name="fb_crash_prompt_text">Envoyer un rapport pour la corriger ? Il contient l\'erreur, la version de l\'app et le modèle du téléphone, rien d\'autre. Vous le voyez avant l\'envoi.</string>
+    <string name="fb_crash_send">Envoyer sur GitHub</string>
+    <string name="fb_crash_share">Partager autrement</string>
+    <string name="fb_crash_ignore">Pas maintenant</string>
+    <string name="wn_title">Nouveautés de la %1$s</string>
+    <string name="wn_close">Touchez n\'importe où pour fermer.</string>
+    <string name="bk_title">Sauvegarde</string>
+    <string name="bk_hint">Réglages, traces, lieux favoris, lignes directes et temps par section dans un seul fichier, à charger sur un nouveau téléphone ou une nouvelle installation. Les cartes se téléchargent à nouveau.</string>
+    <string name="bk_save">Enregistrer dans un fichier</string>
+    <string name="bk_load">Charger depuis un fichier</string>
+    <string name="bk_saved">Enregistré : %1$d réglages, %2$d fichiers.</string>
+    <string name="bk_loaded">Chargé : %1$d réglages, %2$d fichiers. L\'app se rouvre.</string>
+    <string name="bk_failed">Impossible : %1$s</string>
+</resources>

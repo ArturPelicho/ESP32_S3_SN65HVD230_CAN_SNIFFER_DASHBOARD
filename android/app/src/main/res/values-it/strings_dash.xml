@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnostica</string>
     <string name="tab_diag_count">Diagnostica (%1$d)</string>
     <string name="tab_settings">Impostazioni</string>
+    <string name="tab_settings_count">Impostazioni (%1$d)</string>
     <string name="dash_src_wheel">RUOTA</string>
     <string name="dash_src_gear">MARCIA</string>
     <string name="dash_src_gps">GPS</string>
@@ -17,7 +18,7 @@
     <string name="dash_status_waiting">In attesa della moto (quadro acceso?)</string>
     <string name="dash_status_connecting">Connessione…</string>
     <string name="dash_status_connected">Connesso</string>
-    <string name="dash_range_at">autonomia a %1$s L/100</string>
+    <string name="dash_range_at">autonomia a %1$s %2$s</string>
     <string name="dash_stop_engine">SPEGNI MOTORE</string>
     <string name="dash_head_temp">TEMP. TESTATA</string>
     <string name="dash_fuel_cut">TAGLIO</string>
@@ -31,7 +32,7 @@
     <string name="dash_air">ARIA</string>
     <string name="dash_throttle">ACCELERATORE</string>
     <string name="dash_trip">VIAGGIO</string>
-    <string name="dash_since_refuel">dal rifornimento: %1$s km · %2$s L/100</string>
+    <string name="dash_since_refuel">dal rifornimento: %1$s %2$s · %3$s %4$s</string>
     <string name="dash_learning_gears">Apprendo le marce: %1$d di 5, %2$d s</string>
     <string name="set_fuel">Consumi</string>
     <string name="set_avg_reset">Azzera media</string>
@@ -45,7 +46,7 @@
     <string name="set_refuel_help">\"Pieno fatto\": il serbatoio risulta pieno e, dall\'ultimo pieno, i litri della pompa correggono la costante. Senza pieno: si somma al livello. \"Imposta livello\": litri presenti ora.</string>
     <string name="set_in_tank">Nel serbatoio</string>
     <string name="set_range">Autonomia</string>
-    <string name="set_range_value">%1$s km a %2$s L/100</string>
+    <string name="set_range_value">%1$s %2$s a %3$s %4$s</string>
     <string name="set_since_refuel">Dal rifornimento</string>
     <string name="set_calibration">Calibrazione: la pompa suggerisce %1$s L/h per INJ (attuale %2$s)</string>
     <string name="set_apply">Applica %1$s</string>
@@ -96,4 +97,19 @@
     <string name="set_param_spd_hold">Mantieni media senza velocità</string>
     <string name="set_param_spd_src">Fonte velocità dei consumi</string>
     <string name="set_param_spd_src_hint">Scegli sopra.</string>
+    <string name="turn_feet">%1$d piedi</string>
+    <string name="turn_miles">%1$s miglia</string>
+    <string name="set_units">Unità</string>
+    <string name="set_units_dist">Distanza e velocità</string>
+    <string name="set_units_temp">Temperatura</string>
+    <string name="set_units_fuel">Consumo</string>
+    <string name="unit_km">Chilometri (km/h)</string>
+    <string name="unit_mi">Miglia (mph)</string>
+    <string name="set_units_hint">Litri o galloni seguono il consumo. La scheda continua a lavorare in metrico.</string>
+    <string name="set_trips">Viaggi e contachilometri</string>
+    <string name="set_trip_since">dal %1$s</string>
+    <string name="set_trip_reset">Azzera</string>
+    <string name="set_odo">Contachilometri: %1$s %2$s</string>
+    <string name="set_odo_set">Imposta</string>
+    <string name="set_trips_hint">Contati dal telefono: con la scheda accesa, la sua distanza e il carburante; senza, il GPS del telefono. Scrivi una volta il contachilometri della moto e continua a contare da lì.</string>
 </resources>

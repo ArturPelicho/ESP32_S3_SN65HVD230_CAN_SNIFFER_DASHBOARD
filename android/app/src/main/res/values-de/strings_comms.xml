@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comms_title">Anrufe und Nachrichten</string>
+    <string name="comms_show_calls">Anrufe mit Annehmen / Ablehnen anzeigen</string>
+    <string name="comms_phone_perm">Telefonzugriff (Anrufe, Name des Anrufers)</string>
+    <string name="comms_needed">Fehlt</string>
+    <string name="comms_allow_phone">Telefonzugriff erlauben</string>
+    <string name="comms_show_msgs">Nachrichten anzeigen (SMS, WhatsApp...)</string>
+    <string name="comms_show_text">Nachrichtentext anzeigen</string>
+    <string name="comms_speak">Nachrichten vorlesen</string>
+    <string name="comms_notif_perm">Benachrichtigungszugriff (zum Lesen von Nachrichten)</string>
+    <string name="comms_allow_notif">Benachrichtigungszugriff erlauben</string>
+    <string name="comms_apps">Nachrichten von</string>
+    <string name="comms_sms">SMS</string>
+    <string name="comms_missed">Verpasster Anruf</string>
+    <string name="comms_say">%1$s von %2$s: %3$s</string>
+    <string name="comms_unknown">Unbekannte Nummer</string>
+    <string name="comms_calling">Eingehender Anruf</string>
+    <string name="comms_in_call">Im Gespräch %1$s</string>
+    <string name="comms_answer">Annehmen</string>
+    <string name="comms_reject">Ablehnen</string>
+    <string name="comms_hang_up">Auflegen</string>
+    <string name="track_mode_title">Strecke folgen</string>
+    <string name="track_mode_nav">Nav (berechnet neu)</string>
+    <string name="track_mode_track">Track (feste Linie)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">TRACK</string>
+    <string name="track_mode_hint">Nav: abseits der Strecke wird eine Route von deiner Position zum nächsten Wegpunkt oder zum Ziel berechnet. Track: die Linie bleibt die Linie, mit dem Weg zum nächsten Punkt. Lange auf das Streckenfeld der Karte drücken für dies und die Routenoptionen.</string>
+    <string name="track_box_long_press">Lange drücken für die Optionen</string>
+    <string name="nav_rejoin">%1$s zurück zur Strecke</string>
+    <string name="nav_to_end">%1$s bis zum Ziel</string>
+    <string name="nav_to_waypoint">%1$s bis Wegpunkt %2$d</string>
+    <string name="nav_recalc">Neuberechnung ab hier…</string>
+    <string name="nav_no_net">Keine Route (kein Netz, keine Offline-Routen hier): der gestrichelten Linie zurück folgen</string>
+    <string name="routes_none">Offline-Routen: nicht auf dem Handy</string>
+    <string name="routes_downloading">Offline-Routen: Download %1$s</string>
+    <string name="routes_installed">Offline-Routen: auf dem Handy (%1$s)</string>
+    <string name="routes_failed">Offline-Routen: Download fehlgeschlagen</string>
+</resources>

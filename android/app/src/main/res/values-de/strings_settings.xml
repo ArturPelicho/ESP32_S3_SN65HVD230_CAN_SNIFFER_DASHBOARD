@@ -28,9 +28,16 @@
     <string name="upd_error">Update fehlgeschlagen: %1$s</string>
     <string name="upd_no_network">Kein Netz</string>
     <string name="upd_no_release">Keine App-Version gefunden</string>
-    <string name="set_cat_look">Darstellung</string>
+    <string name="set_cat_look">Präferenzen</string>
     <string name="set_cat_screen">Bildschirm</string>
     <string name="set_cat_bike">Motorrad</string>
     <string name="set_cat_phone">Telefon</string>
     <string name="set_cat_about">Über</string>
+    <string name="set_cat_maps">Karten</string>
+    <string name="set_cat_gpx">Strecken (GPX)</string>
+    <string name="upd_prompt_title">Neue Version %1$s</string>
+    <string name="upd_prompt_text">Du hast %1$s. Jetzt auf %2$s aktualisieren?</string>
+    <string name="upd_prompt_update">Aktualisieren</string>
+    <string name="upd_prompt_dismiss">Später</string>
+    <string name="ble_no_service">Dieses Gerät hat keinen NavExpress-Dienst (alte Firmware?)</string>
 </resources>

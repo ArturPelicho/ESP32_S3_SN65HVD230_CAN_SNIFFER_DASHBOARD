@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnóstico</string>
     <string name="tab_diag_count">Diagnóstico (%1$d)</string>
     <string name="tab_settings">Definições</string>
+    <string name="tab_settings_count">Definições (%1$d)</string>
     <string name="dash_src_wheel">RODA</string>
     <string name="dash_src_gear">MUDANÇA</string>
     <string name="dash_src_gps">GPS</string>
@@ -17,7 +18,7 @@
     <string name="dash_status_waiting">À espera da mota (ignição?)</string>
     <string name="dash_status_connecting">A ligar…</string>
     <string name="dash_status_connected">Ligado</string>
-    <string name="dash_range_at">autonomia a %1$s L/100</string>
+    <string name="dash_range_at">autonomia a %1$s %2$s</string>
     <string name="dash_stop_engine">PARAR MOTOR</string>
     <string name="dash_head_temp">TEMP. CABEÇA</string>
     <string name="dash_fuel_cut">CORTE</string>
@@ -31,7 +32,7 @@
     <string name="dash_air">AR</string>
     <string name="dash_throttle">ACELERADOR</string>
     <string name="dash_trip">VIAGEM</string>
-    <string name="dash_since_refuel">desde o abastecimento: %1$s km · %2$s L/100</string>
+    <string name="dash_since_refuel">desde o abastecimento: %1$s %2$s · %3$s %4$s</string>
     <string name="dash_learning_gears">A aprender mudanças: %1$d de 5, %2$d s</string>
     <string name="set_fuel">Consumos</string>
     <string name="set_avg_reset">Reset da média</string>
@@ -45,7 +46,7 @@
     <string name="set_refuel_help">\"Atestei\": o depósito fica cheio e, desde o último atestar, os litros da bomba corrigem a constante. Sem atestar: soma ao nível. \"Definir nível\": litros que lá estão agora.</string>
     <string name="set_in_tank">No depósito</string>
     <string name="set_range">Autonomia</string>
-    <string name="set_range_value">%1$s km a %2$s L/100</string>
+    <string name="set_range_value">%1$s %2$s a %3$s %4$s</string>
     <string name="set_since_refuel">Desde o abastecimento</string>
     <string name="set_calibration">Calibração: a bomba sugere %1$s L/h por INJ (atual %2$s)</string>
     <string name="set_apply">Aplicar %1$s</string>
@@ -96,4 +97,19 @@
     <string name="set_param_spd_hold">Manter média sem velocidade</string>
     <string name="set_param_spd_src">Fonte de velocidade dos consumos</string>
     <string name="set_param_spd_src_hint">Escolhe em cima.</string>
+    <string name="turn_feet">%1$d pés</string>
+    <string name="turn_miles">%1$s milhas</string>
+    <string name="set_units">Unidades</string>
+    <string name="set_units_dist">Distância e velocidade</string>
+    <string name="set_units_temp">Temperatura</string>
+    <string name="set_units_fuel">Consumo</string>
+    <string name="unit_km">Quilómetros (km/h)</string>
+    <string name="unit_mi">Milhas (mph)</string>
+    <string name="set_units_hint">Litros ou galões seguem o consumo. A placa continua a trabalhar em métrico.</string>
+    <string name="set_trips">Viagens e odómetro</string>
+    <string name="set_trip_since">desde %1$s</string>
+    <string name="set_trip_reset">Pôr a zero</string>
+    <string name="set_odo">Odómetro: %1$s %2$s</string>
+    <string name="set_odo_set">Definir</string>
+    <string name="set_trips_hint">Contadas pelo telemóvel: com a placa ligada, a distância e o combustível dela; sem ela, o GPS do telemóvel. Escreve uma vez o valor do odómetro da mota e continua a contar a partir daí.</string>
 </resources>

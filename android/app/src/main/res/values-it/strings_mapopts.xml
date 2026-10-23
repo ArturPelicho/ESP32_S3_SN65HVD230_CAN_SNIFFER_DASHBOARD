@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Map options in the Mapas panel (MapsPanel.kt): auto zoom ranges, contour spacing. -->
 <resources>
-    <string name="mapopts_az_speed">Velocità: %1$d–%2$d km/h</string>
+    <string name="mapopts_az_speed">Velocità: %1$d–%2$d %3$s</string>
     <string name="mapopts_az_speed_hint">Zoom più vicino fino alla prima velocità, più lontano dalla seconda in su.</string>
     <string name="mapopts_az_zoom">Zoom: da %1$s (≈ %2$d m) a %3$s (≈ %4$d m)</string>
     <string name="mapopts_az_zoom_hint">Tra parentesi: il terreno coperto da 1,6 cm di schermo (100 dp).</string>

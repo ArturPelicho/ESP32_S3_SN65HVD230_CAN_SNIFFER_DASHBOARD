@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnostic</string>
     <string name="tab_diag_count">Diagnostic (%1$d)</string>
     <string name="tab_settings">Réglages</string>
+    <string name="tab_settings_count">Réglages (%1$d)</string>
     <string name="dash_src_wheel">ROUE</string>
     <string name="dash_src_gear">RAPPORT</string>
     <string name="dash_src_gps">GPS</string>
@@ -17,7 +18,7 @@
     <string name="dash_status_waiting">En attente de la moto (contact ?)</string>
     <string name="dash_status_connecting">Connexion…</string>
     <string name="dash_status_connected">Connecté</string>
-    <string name="dash_range_at">autonomie à %1$s L/100</string>
+    <string name="dash_range_at">autonomie à %1$s %2$s</string>
     <string name="dash_stop_engine">COUPER MOTEUR</string>
     <string name="dash_head_temp">TEMP. CULASSE</string>
     <string name="dash_fuel_cut">COUPURE</string>
@@ -31,7 +32,7 @@
     <string name="dash_air">AIR</string>
     <string name="dash_throttle">ACCÉLÉRATEUR</string>
     <string name="dash_trip">TRAJET</string>
-    <string name="dash_since_refuel">depuis le plein : %1$s km · %2$s L/100</string>
+    <string name="dash_since_refuel">depuis le plein : %1$s %2$s · %3$s %4$s</string>
     <string name="dash_learning_gears">Apprentissage des rapports : %1$d sur 5, %2$d s</string>
     <string name="set_fuel">Consommation</string>
     <string name="set_avg_reset">Réinit. moyenne</string>
@@ -45,7 +46,7 @@
     <string name="set_refuel_help">« Plein fait » : le réservoir est plein et, depuis le dernier plein, les litres de la pompe corrigent la constante. Sans plein : s\'ajoute au niveau. « Régler le niveau » : litres présents maintenant.</string>
     <string name="set_in_tank">Dans le réservoir</string>
     <string name="set_range">Autonomie</string>
-    <string name="set_range_value">%1$s km à %2$s L/100</string>
+    <string name="set_range_value">%1$s %2$s à %3$s %4$s</string>
     <string name="set_since_refuel">Depuis le plein</string>
     <string name="set_calibration">Calibration : la pompe suggère %1$s L/h par INJ (actuel %2$s)</string>
     <string name="set_apply">Appliquer %1$s</string>
@@ -96,4 +97,19 @@
     <string name="set_param_spd_hold">Garder la moyenne sans vitesse</string>
     <string name="set_param_spd_src">Source de vitesse de la consommation</string>
     <string name="set_param_spd_src_hint">Choisis plus haut.</string>
+    <string name="turn_feet">%1$d pieds</string>
+    <string name="turn_miles">%1$s miles</string>
+    <string name="set_units">Unités</string>
+    <string name="set_units_dist">Distance et vitesse</string>
+    <string name="set_units_temp">Température</string>
+    <string name="set_units_fuel">Consommation</string>
+    <string name="unit_km">Kilomètres (km/h)</string>
+    <string name="unit_mi">Miles (mph)</string>
+    <string name="set_units_hint">Litres ou gallons suivent la consommation. Le boîtier reste en métrique.</string>
+    <string name="set_trips">Trajets et odomètre</string>
+    <string name="set_trip_since">depuis %1$s</string>
+    <string name="set_trip_reset">Remettre à zéro</string>
+    <string name="set_odo">Odomètre : %1$s %2$s</string>
+    <string name="set_odo_set">Définir</string>
+    <string name="set_trips_hint">Comptés par le téléphone : boîtier allumé, sa distance et son carburant ; sans lui, le GPS du téléphone. Saisis une fois le compteur de la moto et il continue à partir de là.</string>
 </resources>

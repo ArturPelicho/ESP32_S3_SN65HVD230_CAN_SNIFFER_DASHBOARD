@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fb_title">Suggestions and problems</string>
+    <string name="fb_hint">Opens a ready-filled page on the project\'s GitHub (a free GitHub account is needed to send it).</string>
+    <string name="fb_suggest">Send a suggestion</string>
+    <string name="fb_problem">Report a problem</string>
+    <string name="fb_suggest_title">Suggestion: </string>
+    <string name="fb_suggest_body">What would you like the app to do?\n\n</string>
+    <string name="fb_problem_title">Problem: </string>
+    <string name="fb_problem_body">What happened, and what did you expect?\n\nSteps to see it again:\n1. \n</string>
+    <string name="fb_crash_title">Crash report</string>
+    <string name="fb_crash_body">The app closed unexpectedly. What were you doing at the time?\n\n</string>
+    <string name="fb_crash_prompt_title">The app closed unexpectedly last time</string>
+    <string name="fb_crash_prompt_text">Send a report so it can be fixed? It holds the error, the app version and the phone model, nothing else. You see it before it is sent.</string>
+    <string name="fb_crash_send">Send on GitHub</string>
+    <string name="fb_crash_share">Share another way</string>
+    <string name="fb_crash_ignore">Not now</string>
+    <string name="wn_title">What\'s new in %1$s</string>
+    <string name="wn_close">Tap anywhere to close.</string>
+    <string name="bk_title">Backup</string>
+    <string name="bk_hint">Settings, tracks, favourite places, direct lines and section times in one file, to load on a new phone or a new install. Maps download again.</string>
+    <string name="bk_save">Save to a file</string>
+    <string name="bk_load">Load from a file</string>
+    <string name="bk_saved">Saved: %1$d settings, %2$d files.</string>
+    <string name="bk_loaded">Loaded: %1$d settings, %2$d files. The app opens again.</string>
+    <string name="bk_failed">Could not do it: %1$s</string>
+</resources>

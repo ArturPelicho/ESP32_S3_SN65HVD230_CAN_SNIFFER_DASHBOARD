@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Speed limits and speed cameras for the Mota Dash map.
+"""Speed limits and speed cameras for the NavExpress map.
 
 Reads osmium GeoJSONSeq exports and writes compact GeoJSONSeq with only what the app needs:
   limits.py ways <in> <out>     lines: kmh, and kmh_f / kmh_b when they differ by direction
   limits.py cameras <in> <out>  points: kmh (if tagged), dir (degrees, if tagged)
+  limits.py dirt <in> <out>     lines: g = 1 easy, 2 medium, 3 hard, 0 ungraded track (unpaved roads and tracks);
+                                p = 1 where closed to the public or to motor vehicles (gates may be shut)
+  limits.py lowroads <in> <out> lines: k = tr/pr/se/te (trunk to tertiary), r = road number; for the zooms where
+                                the base map has no such roads yet (secondary and tertiary below about 9)
 """
 import json
 import re
@@ -73,6 +77,58 @@ def ways(src, dst):
     print(f"limits: {n} ways", file=sys.stderr)
 
 
+# How hard an unpaved way is: 1 easy, 2 medium, 3 hard (DMD2-style green / yellow / red).
+SMOOTH = {"excellent": 1, "good": 1, "intermediate": 1, "bad": 2, "very_bad": 3, "horrible": 3,
+          "very_horrible": 3, "impassable": 3}
+GRADE = {"grade1": 1, "grade2": 1, "grade3": 2, "grade4": 3, "grade5": 3}
+SURFACE = {"compacted": 1, "fine_gravel": 1, "gravel": 2, "unpaved": 2, "dirt": 2, "earth": 2, "ground": 2,
+           "pebblestone": 2, "grass": 2, "sand": 3, "mud": 3, "rock": 3}
+PAVED = {"asphalt", "paved", "concrete", "concrete:plates", "paving_stones", "sett", "cobblestone", "chipseal"}
+
+
+CLOSED = {"private", "no"}
+
+
+def closed(t):
+    """Private or closed to motor vehicles: access, then vehicle, motor_vehicle, motorcycle (most specific wins)."""
+    v = None
+    for k in ("access", "vehicle", "motor_vehicle", "motorcycle"):
+        if t.get(k):
+            v = t[k].split(";")[0]
+    return v in CLOSED
+
+
+def dirt(src, dst):
+    """Unpaved ways with a grade: smoothness when tagged, else tracktype, else surface; any other track ungraded (0)."""
+    n = 0
+    with open(src) as f, open(dst, "w") as o:
+        for line in f:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            ft = json.loads(line)
+            if ft["geometry"]["type"] not in ("LineString", "MultiLineString"):
+                continue
+            t = ft.get("properties") or {}
+            hw = t.get("highway")
+            if not hw or hw in ("footway", "path", "cycleway", "steps", "bridleway", "pedestrian"):
+                continue
+            surface = (t.get("surface") or "").split(";")[0]
+            if surface in PAVED:
+                continue
+            if hw != "track" and surface not in SURFACE:
+                continue
+            g = SMOOTH.get(t.get("smoothness")) or GRADE.get(t.get("tracktype")) or SURFACE.get(surface)
+            if not g and hw != "track":
+                continue
+            p = {"g": g or 0}
+            if closed(t):
+                p["p"] = 1
+            o.write(feature(ft["geometry"], p) + "\n")
+            n += 1
+    print(f"limits: {n} graded unpaved ways", file=sys.stderr)
+
+
 def cameras(src, dst):
     n = 0
     with open(src) as f, open(dst, "w") as o:
@@ -96,5 +152,31 @@ def cameras(src, dst):
     print(f"limits: {n} speed cameras", file=sys.stderr)
 
 
+LOW = {"trunk": "tr", "primary": "pr", "secondary": "se", "tertiary": "te"}
+
+
+def lowroads(src, dst):
+    n = 0
+    with open(src) as f, open(dst, "w") as o:
+        for line in f:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            ft = json.loads(line)
+            if ft["geometry"]["type"] not in ("LineString", "MultiLineString"):
+                continue
+            t = ft.get("properties") or {}
+            k = LOW.get(t.get("highway"))
+            if not k:
+                continue
+            props = {"k": k}
+            ref = (t.get("ref") or "").split(";")[0].strip()
+            if ref:
+                props["r"] = ref
+            o.write(feature(ft["geometry"], props) + "\n")
+            n += 1
+    print(f"lowroads: {n}")
+
+
 if __name__ == "__main__":
-    {"ways": ways, "cameras": cameras}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    {"ways": ways, "cameras": cameras, "dirt": dirt, "lowroads": lowroads}[sys.argv[1]](sys.argv[2], sys.argv[3])

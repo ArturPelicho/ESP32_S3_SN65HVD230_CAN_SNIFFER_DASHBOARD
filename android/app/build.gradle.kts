@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "pt.artur.motadash"
+    namespace = "app.navexpress"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "pt.artur.motadash"
+        applicationId = "app.navexpress"
         minSdk = 26
         targetSdk = 34
         // CI sets the build number so every APK installs over the last one.
@@ -45,6 +45,11 @@ android {
     buildFeatures {
         compose = true
     }
+    // BRouter (offline road routes): its plain Java modules, checked out by CI next to the app.
+    val brouterSrc = rootProject.file("brouter-src")
+    if (brouterSrc.exists()) sourceSets["main"].java.srcDirs(
+        listOf("brouter-core", "brouter-mapaccess", "brouter-util", "brouter-expressions", "brouter-codec")
+            .map { "$brouterSrc/$it/src/main/java" })
 }
 
 dependencies {

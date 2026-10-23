@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnose</string>
     <string name="tab_diag_count">Diagnose (%1$d)</string>
     <string name="tab_settings">Einstellungen</string>
+    <string name="tab_settings_count">Einstellungen (%1$d)</string>
     <string name="dash_src_wheel">RAD</string>
     <string name="dash_src_gear">GANG</string>
     <string name="dash_src_gps">GPS</string>
@@ -17,7 +18,7 @@
     <string name="dash_status_waiting">Warte auf Motorrad (Zündung?)</string>
     <string name="dash_status_connecting">Verbinde…</string>
     <string name="dash_status_connected">Verbunden</string>
-    <string name="dash_range_at">Reichweite bei %1$s L/100</string>
+    <string name="dash_range_at">Reichweite bei %1$s %2$s</string>
     <string name="dash_stop_engine">MOTOR AUS</string>
     <string name="dash_head_temp">KOPFTEMP.</string>
     <string name="dash_fuel_cut">SCHUB</string>
@@ -31,7 +32,7 @@
     <string name="dash_air">LUFT</string>
     <string name="dash_throttle">GASGRIFF</string>
     <string name="dash_trip">FAHRT</string>
-    <string name="dash_since_refuel">seit dem Tanken: %1$s km · %2$s L/100</string>
+    <string name="dash_since_refuel">seit dem Tanken: %1$s %2$s · %3$s %4$s</string>
     <string name="dash_learning_gears">Lerne Gänge: %1$d von 5, %2$d s</string>
     <string name="set_fuel">Verbrauch</string>
     <string name="set_avg_reset">Schnitt zurücksetzen</string>
@@ -45,7 +46,7 @@
     <string name="set_refuel_help">„Vollgetankt“: der Tank gilt als voll, und seit dem letzten Volltanken korrigieren die Liter der Zapfsäule die Konstante. Ohne Volltanken: wird zum Stand addiert. „Stand setzen“: Liter, die jetzt drin sind.</string>
     <string name="set_in_tank">Im Tank</string>
     <string name="set_range">Reichweite</string>
-    <string name="set_range_value">%1$s km bei %2$s L/100</string>
+    <string name="set_range_value">%1$s %2$s bei %3$s %4$s</string>
     <string name="set_since_refuel">Seit dem Tanken</string>
     <string name="set_calibration">Kalibrierung: die Zapfsäule schlägt %1$s L/h pro INJ vor (aktuell %2$s)</string>
     <string name="set_apply">%1$s übernehmen</string>
@@ -96,4 +97,19 @@
     <string name="set_param_spd_hold">Schnitt ohne Tempo halten</string>
     <string name="set_param_spd_src">Tempoquelle für Verbrauch</string>
     <string name="set_param_spd_src_hint">Oben wählen.</string>
+    <string name="turn_feet">%1$d Fuß</string>
+    <string name="turn_miles">%1$s Meilen</string>
+    <string name="set_units">Einheiten</string>
+    <string name="set_units_dist">Entfernung und Tempo</string>
+    <string name="set_units_temp">Temperatur</string>
+    <string name="set_units_fuel">Verbrauch</string>
+    <string name="unit_km">Kilometer (km/h)</string>
+    <string name="unit_mi">Meilen (mph)</string>
+    <string name="set_units_hint">Liter oder Gallonen folgen dem Verbrauch. Die Platine rechnet weiter metrisch.</string>
+    <string name="set_trips">Fahrten und Kilometerzähler</string>
+    <string name="set_trip_since">seit %1$s</string>
+    <string name="set_trip_reset">Zurücksetzen</string>
+    <string name="set_odo">Kilometerzähler: %1$s %2$s</string>
+    <string name="set_odo_set">Setzen</string>
+    <string name="set_trips_hint">Vom Handy gezählt: mit der Platine deren Strecke und Kraftstoff, ohne sie das GPS des Handys. Einmal den Kilometerstand des Motorrads eingeben, dann zählt es weiter.</string>
 </resources>

@@ -25,6 +25,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      # Offline road routes: the BRouter engine's sources and its car profile, built into the app.
+      - name: Fetch BRouter
+        run: |
+          git clone -q --branch v1.7.10 --depth 1 https://github.com/abrensch/brouter.git android/brouter-src
+          mkdir -p android/app/src/main/assets/brouter
+          cp android/brouter-src/misc/profiles2/{car-vario.brf,lookups.dat} android/app/src/main/assets/brouter/
       - name: Build APK
         working-directory: android
         run: gradle --no-daemon assembleDebug
@@ -50,9 +56,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
-          gh release create "app-v${VER}" "$APK_NAME" --latest --target "$GITHUB_SHA" \
-            --title "NavExpress v${VER}" \
-            --notes "App do telemóvel v${VER}, branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Instalar por cima da versão anterior."
+          NOTES="NavExpress phone app v${VER}, built from commit ${GITHUB_SHA::7} (${GITHUB_REF_NAME}). Install it over the previous version; settings are kept. What changed: [changelog](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md). First install: [getting started](https://github.com/${GITHUB_REPOSITORY}/blob/main/docs/getting-started.md)."
+          # The workflow token may not tag a commit whose branch changes workflow files that main
+          # lacks; the release then hangs on main's head, and the APK's name keeps the real commit.
+          gh release create "app-v${VER}" "$APK_NAME" --latest --target "$GITHUB_SHA" --title "NavExpress v${VER}" --notes "$NOTES" ||
+            gh release create "app-v${VER}" "$APK_NAME" --latest --title "NavExpress v${VER}" --notes "$NOTES"
           # Drafts left by the old app-latest delete-and-recreate.
           # Only app drafts: a maps-* release is a draft while its files upload.
           gh api "repos/${GITHUB_REPOSITORY}/releases" --jq '.[] | select(.draft and (.tag_name | startswith("app-"))) | .id' |

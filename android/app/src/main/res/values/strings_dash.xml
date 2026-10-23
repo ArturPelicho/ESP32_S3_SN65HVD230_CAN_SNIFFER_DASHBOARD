@@ -6,6 +6,7 @@
     <string name="tab_diag">Diagnostics</string>
     <string name="tab_diag_count">Diagnostics (%1$d)</string>
     <string name="tab_settings">Settings</string>
+    <string name="tab_settings_count">Settings (%1$d)</string>
     <string name="dash_src_wheel">WHEEL</string>
     <string name="dash_src_gear">GEAR</string>
     <string name="dash_src_gps">GPS</string>
@@ -17,7 +18,7 @@
     <string name="dash_status_waiting">Waiting for the bike (ignition?)</string>
     <string name="dash_status_connecting">Connecting…</string>
     <string name="dash_status_connected">Connected</string>
-    <string name="dash_range_at">range at %1$s L/100</string>
+    <string name="dash_range_at">range at %1$s %2$s</string>
     <string name="dash_stop_engine">STOP ENGINE</string>
     <string name="dash_head_temp">HEAD TEMP.</string>
     <string name="dash_fuel_cut">CUT-OFF</string>
@@ -31,7 +32,7 @@
     <string name="dash_air">AIR</string>
     <string name="dash_throttle">THROTTLE</string>
     <string name="dash_trip">TRIP</string>
-    <string name="dash_since_refuel">since refuel: %1$s km · %2$s L/100</string>
+    <string name="dash_since_refuel">since refuel: %1$s %2$s · %3$s %4$s</string>
     <string name="dash_learning_gears">Learning gears: %1$d of 5, %2$d s</string>
     <string name="set_fuel">Fuel consumption</string>
     <string name="set_avg_reset">Reset average</string>
@@ -45,7 +46,7 @@
     <string name="set_refuel_help">\"Filled up\": the tank counts as full and, since the last fill-up, the pump litres correct the constant. Without filling up: adds to the level. \"Set level\": litres in the tank right now.</string>
     <string name="set_in_tank">In the tank</string>
     <string name="set_range">Range</string>
-    <string name="set_range_value">%1$s km at %2$s L/100</string>
+    <string name="set_range_value">%1$s %2$s at %3$s %4$s</string>
     <string name="set_since_refuel">Since refuel</string>
     <string name="set_calibration">Calibration: the pump suggests %1$s L/h per INJ (current %2$s)</string>
     <string name="set_apply">Apply %1$s</string>
@@ -96,4 +97,25 @@
     <string name="set_param_spd_hold">Hold average without speed</string>
     <string name="set_param_spd_src">Speed source for consumption</string>
     <string name="set_param_spd_src_hint">Choose above.</string>
+    <string name="turn_feet">%1$d feet</string>
+    <string name="turn_miles">%1$s miles</string>
+    <string name="set_units">Units</string>
+    <string name="set_units_dist">Distance and speed</string>
+    <string name="set_units_temp">Temperature</string>
+    <string name="set_units_fuel">Fuel use</string>
+    <string name="unit_km">Kilometres (km/h)</string>
+    <string name="unit_mi">Miles (mph)</string>
+    <string name="set_units_hint">Litres and gallons follow the fuel use. The board keeps working in metric.</string>
+    <string name="unit_c" translatable="false">°C</string>
+    <string name="unit_f" translatable="false">°F</string>
+    <string name="unit_l100" translatable="false">L/100 km</string>
+    <string name="unit_kml" translatable="false">km/L</string>
+    <string name="unit_mpg_uk" translatable="false">mpg (UK)</string>
+    <string name="unit_mpg_us" translatable="false">mpg (US)</string>
+    <string name="set_trips">Trips and odometer</string>
+    <string name="set_trip_since">since %1$s</string>
+    <string name="set_trip_reset">Reset</string>
+    <string name="set_odo">Odometer: %1$s %2$s</string>
+    <string name="set_odo_set">Set</string>
+    <string name="set_trips_hint">Counted by the phone: with the board on, its distance and fuel; without it, the phone\'s GPS. Type the bike\'s odometer reading once and it counts on from there.</string>
 </resources>

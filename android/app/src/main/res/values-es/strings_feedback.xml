@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fb_title">Sugerencias y problemas</string>
+    <string name="fb_hint">Abre una página ya rellenada en el GitHub del proyecto (hace falta una cuenta gratuita de GitHub para enviarla).</string>
+    <string name="fb_suggest">Enviar sugerencia</string>
+    <string name="fb_problem">Informar de un problema</string>
+    <string name="fb_suggest_title">Sugerencia: </string>
+    <string name="fb_suggest_body">¿Qué te gustaría que hiciera la app?\n\n</string>
+    <string name="fb_problem_title">Problema: </string>
+    <string name="fb_problem_body">¿Qué pasó y qué esperabas?\n\nPasos para verlo de nuevo:\n1. \n</string>
+    <string name="fb_crash_title">Informe de fallo</string>
+    <string name="fb_crash_body">La app se cerró inesperadamente. ¿Qué estabas haciendo?\n\n</string>
+    <string name="fb_crash_prompt_title">La app se cerró inesperadamente la última vez</string>
+    <string name="fb_crash_prompt_text">¿Enviar un informe para corregirlo? Lleva el error, la versión de la app y el modelo del teléfono, nada más. Lo ves antes de enviarlo.</string>
+    <string name="fb_crash_send">Enviar en GitHub</string>
+    <string name="fb_crash_share">Compartir de otra forma</string>
+    <string name="fb_crash_ignore">Ahora no</string>
+    <string name="wn_title">Novedades de la %1$s</string>
+    <string name="wn_close">Toca en cualquier sitio para cerrar.</string>
+    <string name="bk_title">Copia de seguridad</string>
+    <string name="bk_hint">Ajustes, rutas, lugares favoritos, líneas directas y tiempos por tramo en un solo archivo, para cargar en un teléfono nuevo o una instalación nueva. Los mapas se vuelven a descargar.</string>
+    <string name="bk_save">Guardar en un archivo</string>
+    <string name="bk_load">Cargar de un archivo</string>
+    <string name="bk_saved">Guardado: %1$d ajustes, %2$d archivos.</string>
+    <string name="bk_loaded">Cargado: %1$d ajustes, %2$d archivos. La app se vuelve a abrir.</string>
+    <string name="bk_failed">No se pudo: %1$s</string>
+</resources>

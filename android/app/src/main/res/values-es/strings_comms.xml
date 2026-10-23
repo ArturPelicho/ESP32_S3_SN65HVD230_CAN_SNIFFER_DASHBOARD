@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comms_title">Llamadas y mensajes</string>
+    <string name="comms_show_calls">Mostrar llamadas con botones contestar / rechazar</string>
+    <string name="comms_phone_perm">Acceso al teléfono (llamadas, nombre de quien llama)</string>
+    <string name="comms_needed">Falta</string>
+    <string name="comms_allow_phone">Permitir acceso al teléfono</string>
+    <string name="comms_show_msgs">Mostrar mensajes (SMS, WhatsApp...)</string>
+    <string name="comms_show_text">Mostrar el texto del mensaje</string>
+    <string name="comms_speak">Leer mensajes en voz alta</string>
+    <string name="comms_notif_perm">Acceso a notificaciones (para leer mensajes)</string>
+    <string name="comms_allow_notif">Permitir acceso a notificaciones</string>
+    <string name="comms_apps">Mensajes de</string>
+    <string name="comms_sms">SMS</string>
+    <string name="comms_missed">Llamada perdida</string>
+    <string name="comms_say">%1$s de %2$s: %3$s</string>
+    <string name="comms_unknown">Número desconocido</string>
+    <string name="comms_calling">Llamada entrante</string>
+    <string name="comms_in_call">En llamada %1$s</string>
+    <string name="comms_answer">Contestar</string>
+    <string name="comms_reject">Rechazar</string>
+    <string name="comms_hang_up">Colgar</string>
+    <string name="track_mode_title">Seguir ruta</string>
+    <string name="track_mode_nav">Nav (recalcula)</string>
+    <string name="track_mode_track">Pista (no recalcula)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">PISTA</string>
+    <string name="track_mode_hint">Nav: fuera de la ruta, calcula una ruta por carretera desde donde estás hasta el siguiente punto o el final. Pista: la línea es la línea, con el camino al punto más cercano. Mantén pulsado el cuadro de la ruta en el mapa para esto y las opciones de ruta.</string>
+    <string name="track_box_long_press">Mantén pulsado para las opciones</string>
+    <string name="nav_rejoin">%1$s hasta volver a la ruta</string>
+    <string name="nav_to_end">%1$s hasta el destino</string>
+    <string name="nav_to_waypoint">%1$s hasta el punto %2$d</string>
+    <string name="nav_recalc">Recalculando desde aquí…</string>
+    <string name="nav_no_net">Sin ruta (sin red ni rutas offline aquí): vuelve por la línea discontinua</string>
+    <string name="routes_none">Rutas offline: no están en el teléfono</string>
+    <string name="routes_downloading">Rutas offline: descargando %1$s</string>
+    <string name="routes_installed">Rutas offline: en el teléfono (%1$s)</string>
+    <string name="routes_failed">Rutas offline: falló la descarga</string>
+</resources>

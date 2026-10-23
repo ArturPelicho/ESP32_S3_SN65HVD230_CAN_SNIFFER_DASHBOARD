@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="comms_title">Calls and messages</string>
+    <string name="comms_show_calls">Show calls with answer / reject buttons</string>
+    <string name="comms_phone_perm">Phone access (calls, caller name)</string>
+    <string name="comms_needed">Needed</string>
+    <string name="comms_allow_phone">Allow phone access</string>
+    <string name="comms_show_msgs">Show messages (SMS, WhatsApp...)</string>
+    <string name="comms_show_text">Show the message text</string>
+    <string name="comms_speak">Read messages aloud</string>
+    <string name="comms_notif_perm">Notification access (to read messages)</string>
+    <string name="comms_allow_notif">Allow notification access</string>
+    <string name="comms_apps">Messages from</string>
+    <string name="comms_sms">SMS</string>
+    <string name="comms_missed">Missed call</string>
+    <string name="comms_say">%1$s from %2$s: %3$s</string>
+    <string name="comms_unknown">Unknown number</string>
+    <string name="comms_calling">Incoming call</string>
+    <string name="comms_in_call">In call %1$s</string>
+    <string name="comms_answer">Answer</string>
+    <string name="comms_reject">Reject</string>
+    <string name="comms_hang_up">Hang up</string>
+    <string name="track_mode_title">Following a track</string>
+    <string name="track_mode_nav">Nav (reroutes)</string>
+    <string name="track_mode_track">Track (fixed line)</string>
+    <string name="track_badge_nav">NAV</string>
+    <string name="track_badge_track">TRACK</string>
+    <string name="track_mode_hint">Nav: off the track, a road route from where you are to the next waypoint or the end. Track: the line stays the line, with the way back to its nearest point. Long press the track box on the map for these and the route options.</string>
+    <string name="track_box_long_press">Long press for the options</string>
+    <string name="nav_rejoin">%1$s back to the track</string>
+    <string name="nav_to_end">%1$s to the destination</string>
+    <string name="nav_to_waypoint">%1$s to waypoint %2$d</string>
+    <string name="nav_recalc">Recalculating from here…</string>
+    <string name="nav_no_net">No route (no network, no offline routes here): head back along the dashed line</string>
+    <string name="routes_none">Offline routes: not on the phone</string>
+    <string name="routes_downloading">Offline routes: downloading %1$s</string>
+    <string name="routes_installed">Offline routes: on the phone (%1$s)</string>
+    <string name="routes_failed">Offline routes: download failed</string>
+</resources>

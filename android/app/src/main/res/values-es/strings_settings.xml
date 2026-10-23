@@ -28,9 +28,16 @@
     <string name="upd_error">La actualización falló: %1$s</string>
     <string name="upd_no_network">Sin red</string>
     <string name="upd_no_release">No se encontró ninguna versión de la app</string>
-    <string name="set_cat_look">Apariencia</string>
+    <string name="set_cat_look">Preferencias</string>
     <string name="set_cat_screen">Pantalla</string>
     <string name="set_cat_bike">Moto</string>
     <string name="set_cat_phone">Teléfono</string>
     <string name="set_cat_about">Acerca de</string>
+    <string name="set_cat_maps">Mapas</string>
+    <string name="set_cat_gpx">Rutas (GPX)</string>
+    <string name="upd_prompt_title">Nueva versión %1$s</string>
+    <string name="upd_prompt_text">Tienes la %1$s. ¿Actualizar a la %2$s ahora?</string>
+    <string name="upd_prompt_update">Actualizar</string>
+    <string name="upd_prompt_dismiss">Ignorar</string>
+    <string name="ble_no_service">Este dispositivo no tiene el servicio NavExpress (¿firmware antiguo?)</string>
 </resources>

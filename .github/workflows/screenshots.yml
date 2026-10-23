@@ -1,0 +1,69 @@
+name: Screenshots
+
+# Pictures of the phone app for the README and the guides, taken on an Android emulator
+# from the newest published APK and map build. They land on the "docs-shots" pre-release
+# (not marked latest, so the app's updater and the README's download link ignore it).
+on:
+  push:
+    paths:
+      - "tools/screenshots/**"
+      - ".github/workflows/screenshots.yml"
+  workflow_dispatch:
+    inputs:
+      app_tag:
+        description: "App release to photograph (empty: the newest)"
+        required: false
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the app, the Madeira map and a demo route
+        run: |
+          TAG="${{ github.event.inputs.app_tag }}"
+          [ -n "$TAG" ] || TAG=$(gh release list --limit 50 --json tagName -q '[.[] | select(.tagName | startswith("app-v"))][0].tagName')
+          MAPS=$(gh release list --limit 100 --json tagName -q '[.[] | select(.tagName | startswith("maps-"))][0].tagName')
+          echo "app $TAG, maps $MAPS"
+          mkdir -p work/maps work/shots
+          gh release download "$TAG" -p 'navexpress-v*.apk' -O work/app.apk
+          gh release download "$MAPS" -p 'madeira-*.pmtiles' -D work/maps
+          ls -l work/maps
+          # Funchal, up the ER103 past Poiso, to Pico do Arieiro.
+          python3 tools/screenshots/route.py work/route.gpx -16.9087,32.6503 -16.8900,32.7090 -16.9284,32.7354
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Take the pictures
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disk-size: 6G
+          emulator-options: -no-window -gpu swangle_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: python3 tools/screenshots/run.py --apk work/app.apk --maps work/maps --route work/route.gpx --out work/shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: work/shots
+      - name: Publish on the docs-shots pre-release
+        if: always()
+        run: |
+          ls work/shots/*.png >/dev/null 2>&1 || exit 0
+          gh release view docs-shots >/dev/null 2>&1 ||
+            gh release create docs-shots --prerelease --latest=false \
+              --title "Screenshots for the documentation" \
+              --notes "Pictures of the app taken on an emulator by the Screenshots workflow, for the README and the guides. Not an app version."
+          gh release upload docs-shots work/shots/*.png work/route.gpx --clobber

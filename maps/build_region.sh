@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds one map region for the Mota Dash app.
+# Builds one map region for the NavExpress app.
 #   build_region.sh <id> <version> <planet-url>
 # Reads the region from maps/regions.json and writes to out/:
 #   <id>-<version>.pmtiles          roads, places, water... (Protomaps basemap, OpenStreetMap data)

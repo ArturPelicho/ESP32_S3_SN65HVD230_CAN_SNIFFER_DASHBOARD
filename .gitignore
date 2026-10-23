@@ -7,3 +7,6 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+android/brouter-src/
+android/app/src/main/assets/brouter/
+__pycache__/
